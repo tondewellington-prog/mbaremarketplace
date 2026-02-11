@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Results - Mbare Marketplace</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-top">
+            <div class="container">
+                <div class="logo">
+                    <a href="index.html">Mbare Marketplace</a>
+                </div>
+                <div class="search-bar">
+                    <select class="search-category">
+                        <option>All</option>
+                        <option>Electronics</option>
+                        <option>Books</option>
+                        <option>Clothing</option>
+                        <option>Home & Kitchen</option>
+                    </select>
+                    <input type="text" id="searchInput" placeholder="Search Mbare Marketplace" class="search-input">
+                    <button class="search-btn" onclick="handleSearch()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="header-right">
+                    <div class="account-menu">
+                        <span class="account-label">Hello, Sign in</span>
+                        <a href="login.html" class="account-link">Account & Lists</a>
+                    </div>
+                    <div class="returns">
+                        <span class="returns-label">Returns</span>
+                        <span class="returns-link">& Orders</span>
+                    </div>
+                    <a href="Basket.html" class="basket">
+                        <div class="basket-icon">
+                            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                                <line x1="3" y1="6" x2="21" y2="6"></line>
+                                <path d="M16 10a4 4 0 0 1-8 0"></path>
+                            </svg>
+                            <span class="basket-count" id="basketCount">0</span>
+                        </div>
+                        <span class="basket-text">Basket</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <nav class="nav-menu">
+            <div class="container">
+                <a href="index.html" class="nav-item all-menu">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                    All
+                </a>
+                <a href="#" class="nav-item">Today's Deals</a>
+                <a href="#" class="nav-item">Customer Service</a>
+                <a href="#" class="nav-item">Registry</a>
+                <a href="#" class="nav-item">Gift Cards</a>
+                <a href="#" class="nav-item">Sell</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Search Results Content -->
+    <div class="search-results-container">
+        <div class="search-results-header">
+            <h1 id="searchQuery">Search Results</h1>
+            <div class="search-filters">
+                <div class="filter-group">
+                    <label>Sort by:</label>
+                    <select id="sortBy">
+                        <option value="relevance">Relevance</option>
+                        <option value="priceLow">Price: Low to High</option>
+                        <option value="priceHigh">Price: High to Low</option>
+                        <option value="rating">Customer Rating</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Price:</label>
+                    <select id="priceFilter">
+                        <option value="all">All Prices</option>
+                        <option value="under25">Under $25</option>
+                        <option value="25to50">$25 to $50</option>
+                        <option value="50to100">$50 to $100</option>
+                        <option value="over100">Over $100</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="search-results-grid" id="searchResults">
+            <!-- Search results will be loaded by JavaScript -->
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-top">
+            <a href="#" class="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">Back to top</a>
+        </div>
+        <div class="footer-content">
+            <div class="container">
+                <div class="footer-columns">
+                    <div class="footer-column">
+                        <h3>Get to Know Us</h3>
+                        <ul>
+                            <li><a href="#">Careers</a></li>
+                            <li><a href="#">Blog</a></li>
+                            <li><a href="#">About Mbare Marketplace</a></li>
+                            <li><a href="#">Investor Relations</a></li>
+                            <li><a href="#">Mbare Marketplace Devices</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h3>Make Money with Us</h3>
+                        <ul>
+                            <li><a href="#">Sell products on Mbare Marketplace</a></li>
+                            <li><a href="#">Sell on Mbare Marketplace Business</a></li>
+                            <li><a href="#">Sell apps on Mbare Marketplace</a></li>
+                            <li><a href="#">Become an Affiliate</a></li>
+                            <li><a href="#">Advertise Your Products</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h3>Mbare Marketplace Payment Products</h3>
+                        <ul>
+                            <li><a href="#">Mbare Marketplace Business Card</a></li>
+                            <li><a href="#">Shop with Points</a></li>
+                            <li><a href="#">Reload Your Balance</a></li>
+                            <li><a href="#">Mbare Marketplace Currency Converter</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h3>Need Help?</h3>
+                        <ul>
+                            <li><a href="#">COVID-19 and Mbare Marketplace</a></li>
+                            <li><a href="#">Your Account</a></li>
+                            <li><a href="#">Your Orders</a></li>
+                            <li><a href="#">Shipping Rates & Policies</a></li>
+                            <li><a href="#">Returns & Replacements</a></li>
+                            <li><a href="#">Help</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="container">
+                <div class="footer-logo">Mbare Marketplace</div>
+                <div class="footer-links">
+                    <a href="#">Conditions of Use</a>
+                    <a href="#">Privacy Notice</a>
+                    <a href="#">Interest-Based Ads</a>
+                </div>
+                <div class="footer-copyright">
+                    &copy; 2026, Mbare Marketplace.com, Inc. or its affiliates
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="api.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
+

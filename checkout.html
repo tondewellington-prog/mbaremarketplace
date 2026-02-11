@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - Mbare Marketplace</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-top">
+            <div class="container">
+                <div class="logo">
+                    <a href="index.html">Mbare Marketplace</a>
+                </div>
+                <div class="search-bar">
+                    <select class="search-category">
+                        <option>All</option>
+                        <option>Electronics</option>
+                        <option>Books</option>
+                        <option>Clothing</option>
+                        <option>Home & Kitchen</option>
+                    </select>
+                    <input type="text" id="searchInput" placeholder="Search Mbare Marketplace" class="search-input">
+                    <button class="search-btn" onclick="handleSearch()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="header-right">
+                    <div class="account-menu">
+                        <span class="account-label">Hello, Sign in</span>
+                        <a href="login.html" class="account-link">Account & Lists</a>
+                    </div>
+                    <div class="returns">
+                        <span class="returns-label">Returns</span>
+                        <span class="returns-link">& Orders</span>
+                    </div>
+                    <a href="Basket.html" class="basket">
+                        <div class="basket-icon">
+                            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                                <line x1="3" y1="6" x2="21" y2="6"></line>
+                                <path d="M16 10a4 4 0 0 1-8 0"></path>
+                            </svg>
+                            <span class="basket-count" id="basketCount">0</span>
+                        </div>
+                        <span class="basket-text">Basket</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <nav class="nav-menu">
+            <div class="container">
+                <a href="index.html" class="nav-item all-menu">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                    All
+                </a>
+                <a href="#" class="nav-item">Today's Deals</a>
+                <a href="#" class="nav-item">Customer Service</a>
+                <a href="#" class="nav-item">Registry</a>
+                <a href="#" class="nav-item">Gift Cards</a>
+                <a href="#" class="nav-item">Sell</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Checkout Content -->
+    <div class="checkout-container">
+        <div class="checkout-steps">
+            <div class="checkout-step active">
+                <div class="step-number">1</div>
+                <div class="step-label">Shipping Address</div>
+            </div>
+            <div class="checkout-step">
+                <div class="step-number">2</div>
+                <div class="step-label">Payment Method</div>
+            </div>
+            <div class="checkout-step">
+                <div class="step-number">3</div>
+                <div class="step-label">Review & Place Order</div>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 400px; gap: 20px;">
+            <div class="checkout-form">
+                <h2>Shipping Address</h2>
+                <form id="checkoutForm">
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Phone Number</label>
+                        <input type="tel" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Address Line 1</label>
+                        <input type="text" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Address Line 2 (Optional)</label>
+                        <input type="text">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>City</label>
+                            <input type="text" required>
+                        </div>
+                        <div class="form-group">
+                            <label>State</label>
+                            <input type="text" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>ZIP Code</label>
+                            <input type="text" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Country</label>
+                            <select required>
+                                <option>United States</option>
+                                <option>Canada</option>
+                                <option>United Kingdom</option>
+                                <option>Australia</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="checkout-form" style="margin-top: 30px;">
+                    <h2>Payment Method</h2>
+                    <div class="form-group">
+                        <label>Card Number</label>
+                        <input type="text" placeholder="1234 5678 9012 3456" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Expiry Date</label>
+                            <input type="text" placeholder="MM/YY" required>
+                        </div>
+                        <div class="form-group">
+                            <label>CVV</label>
+                            <input type="text" placeholder="123" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Cardholder Name</label>
+                        <input type="text" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="order-summary">
+                <h2>Order Summary</h2>
+                <div id="orderItems">
+                    <!-- Order items will be loaded by JavaScript -->
+                </div>
+                <div class="order-total">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Total:</span>
+                        <span id="orderTotal">$0.00</span>
+                    </div>
+                </div>
+                <button class="btn-place-order" onclick="placeOrder()">Place Your Order</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-top">
+            <a href="#" class="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">Back to top</a>
+        </div>
+        <div class="footer-content">
+            <div class="container">
+                <div class="footer-columns">
+                    <div class="footer-column">
+                        <h3>Get to Know Us</h3>
+                        <ul>
+                            <li><a href="#">Careers</a></li>
+                            <li><a href="#">Blog</a></li>
+                            <li><a href="#">About Mbare Marketplace</a></li>
+                            <li><a href="#">Investor Relations</a></li>
+                            <li><a href="#">Mbare Marketplace Devices</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h3>Make Money with Us</h3>
+                        <ul>
+                            <li><a href="#">Sell products on Mbare Marketplace</a></li>
+                            <li><a href="#">Sell on Mbare Marketplace Business</a></li>
+                            <li><a href="#">Sell apps on Mbare Marketplace</a></li>
+                            <li><a href="#">Become an Affiliate</a></li>
+                            <li><a href="#">Advertise Your Products</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h3>Mbare Marketplace Payment Products</h3>
+                        <ul>
+                            <li><a href="#">Mbare Marketplace Business Card</a></li>
+                            <li><a href="#">Shop with Points</a></li>
+                            <li><a href="#">Reload Your Balance</a></li>
+                            <li><a href="#">Mbare Marketplace Currency Converter</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h3>Need Help?</h3>
+                        <ul>
+                            <li><a href="#">COVID-19 and Mbare Marketplace</a></li>
+                            <li><a href="#">Your Account</a></li>
+                            <li><a href="#">Your Orders</a></li>
+                            <li><a href="#">Shipping Rates & Policies</a></li>
+                            <li><a href="#">Returns & Replacements</a></li>
+                            <li><a href="#">Help</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="container">
+                <div class="footer-logo">Mbare Marketplace</div>
+                <div class="footer-links">
+                    <a href="#">Conditions of Use</a>
+                    <a href="#">Privacy Notice</a>
+                    <a href="#">Interest-Based Ads</a>
+                </div>
+                <div class="footer-copyright">
+                    &copy; 1996-2024, Mbare Marketplace.com, Inc. or its affiliates
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="api.js"></script>
+    <script src="script.js"></script>
+    <script>
+        // Load order summary on checkout page
+        document.addEventListener('DOMContentLoaded', async function() {
+            let basket = [];
+            
+            try {
+                if (api.token) {
+                    const response = await api.getBasket();
+                    if (response.success) {
+                        basket = response.basket;
+                    }
+                } else {
+                    basket = JSON.parse(localStorage.getItem('basket')) || [];
+                }
+            } catch (error) {
+                basket = JSON.parse(localStorage.getItem('basket')) || [];
+            }
+            
+            const orderItems = document.getElementById('orderItems');
+            const orderTotal = document.getElementById('orderTotal');
+            
+            if (basket.length === 0) {
+                window.location.href = 'Basket.html';
+                return;
+            }
+            
+            let itemsHTML = '';
+            let subtotal = 0;
+            
+            basket.forEach(item => {
+                const itemTotal = parseFloat(item.price) * (item.quantity || 1);
+                subtotal += itemTotal;
+                itemsHTML += `
+                    <div class="order-item">
+                        <span>${item.title} (x${item.quantity || 1})</span>
+                        <span>$${itemTotal.toFixed(2)}</span>
+                    </div>
+                `;
+            });
+            
+            const shipping = subtotal > 35 ? 0 : 5.99;
+            const tax = subtotal * 0.08;
+            const total = subtotal + shipping + tax;
+            
+            itemsHTML += `
+                <div class="order-item">
+                    <span>Subtotal:</span>
+                    <span>$${subtotal.toFixed(2)}</span>
+                </div>
+                <div class="order-item">
+                    <span>Shipping:</span>
+                    <span>${shipping === 0 ? 'FREE' : '$' + shipping.toFixed(2)}</span>
+                </div>
+                <div class="order-item">
+                    <span>Tax:</span>
+                    <span>$${tax.toFixed(2)}</span>
+                </div>
+            `;
+            
+            orderItems.innerHTML = itemsHTML;
+            orderTotal.textContent = '$' + total.toFixed(2);
+        });
+        
+        async function placeOrder() {
+            const form = document.getElementById('checkoutForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            let basket = [];
+            try {
+                if (api.token) {
+                    const response = await api.getBasket();
+                    if (response.success) {
+                        basket = response.basket;
+                    }
+                } else {
+                    basket = JSON.parse(localStorage.getItem('basket')) || [];
+                }
+            } catch (error) {
+                basket = JSON.parse(localStorage.getItem('basket')) || [];
+            }
+            
+            if (basket.length === 0) {
+                alert('Your basket is empty');
+                return;
+            }
+            
+            const shippingAddress = {
+                name: form.querySelector('input[type="text"]').value,
+                phone: form.querySelector('input[type="tel"]').value,
+                street: form.querySelectorAll('input[type="text"]')[1].value,
+                city: form.querySelectorAll('input[type="text"]')[2].value,
+                state: form.querySelectorAll('input[type="text"]')[3].value,
+                zipCode: form.querySelectorAll('input[type="text"]')[4].value,
+                country: form.querySelector('select').value
+            };
+            
+            const orderData = {
+                items: basket.map(item => ({
+                    product: item.product || item.id,
+                    quantity: item.quantity || 1
+                })),
+                shippingAddress: shippingAddress,
+                paymentMethod: 'card'
+            };
+            
+            try {
+                if (api.token) {
+                    const response = await api.createOrder(orderData);
+                    if (response.success) {
+                        // Get seller IDs from order items
+                        const sellerIds = [...new Set(basket.map(item => {
+                            // Try to get seller_id from product
+                            return item.seller_id || item.seller?.id;
+                        }).filter(id => id))];
+                        
+                        if (sellerIds.length > 0) {
+                            // Redirect to rating page for first seller
+                            const firstSellerId = sellerIds[0];
+                            window.location.href = `rate-seller.html?sellerId=${firstSellerId}&orderId=${response.order.id}`;
+                        } else {
+                            alert('Order placed successfully! Thank you for your purchase.');
+                            await api.clearBasket();
+                            window.location.href = 'index.html';
+                        }
+                    }
+                } else {
+                    // Not logged in - just show success message
+                    alert('Order placed successfully! (Please login to save orders and rate sellers)');
+                    localStorage.removeItem('basket');
+                    window.location.href = 'index.html';
+                }
+            } catch (error) {
+                alert('Failed to place order: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
+

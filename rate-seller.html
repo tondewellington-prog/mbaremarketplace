@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rate Seller - Mbare Marketplace</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-top">
+            <div class="container">
+                <div class="logo">
+                    <a href="index.html">Mbare Marketplace</a>
+                </div>
+                <div class="search-bar">
+                    <select class="search-category">
+                        <option>All</option>
+                        <option>Electronics</option>
+                        <option>Books</option>
+                        <option>Clothing</option>
+                        <option>Home & Kitchen</option>
+                    </select>
+                    <input type="text" id="searchInput" placeholder="Search Mbare Marketplace" class="search-input">
+                    <button class="search-btn" onclick="handleSearch()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="header-right">
+                    <div class="account-menu">
+                        <span class="account-label">Hello, Sign in</span>
+                        <a href="login.html" class="account-link">Account & Lists</a>
+                    </div>
+                    <div class="returns">
+                        <span class="returns-label">Returns</span>
+                        <span class="returns-link">& Orders</span>
+                    </div>
+                    <a href="Basket.html" class="basket">
+                        <div class="basket-icon">
+                            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                                <line x1="3" y1="6" x2="21" y2="6"></line>
+                                <path d="M16 10a4 4 0 0 1-8 0"></path>
+                            </svg>
+                            <span class="basket-count" id="basketCount">0</span>
+                        </div>
+                        <span class="basket-text">Basket</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <nav class="nav-menu">
+            <div class="container">
+                <a href="index.html" class="nav-item all-menu">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                    All
+                </a>
+                <a href="#" class="nav-item">Today's Deals</a>
+                <a href="#" class="nav-item">Customer Service</a>
+                <a href="#" class="nav-item">Registry</a>
+                <a href="#" class="nav-item">Gift Cards</a>
+                <a href="#" class="nav-item">Sell</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Rating Content -->
+    <div class="login-container" style="max-width: 600px;">
+        <div class="login-box">
+            <h1>Rate Your Seller</h1>
+            <p style="margin-bottom: 20px; color: #666;">Help other buyers by rating your seller's service</p>
+            
+            <div id="sellerInfo" style="margin-bottom: 20px; padding: 15px; background: #f5f5f5; border-radius: 4px;">
+                <!-- Seller info will be loaded here -->
+            </div>
+            
+            <form class="login-form" onsubmit="handleSubmitRating(event)">
+                <div class="form-group">
+                    <label>Rating *</label>
+                    <div id="ratingStars" style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <span class="rating-star" data-rating="1" onclick="setRating(1)">☆</span>
+                        <span class="rating-star" data-rating="2" onclick="setRating(2)">☆</span>
+                        <span class="rating-star" data-rating="3" onclick="setRating(3)">☆</span>
+                        <span class="rating-star" data-rating="4" onclick="setRating(4)">☆</span>
+                        <span class="rating-star" data-rating="5" onclick="setRating(5)">☆</span>
+                    </div>
+                    <input type="hidden" id="ratingValue" required>
+                </div>
+                <div class="form-group">
+                    <label>Your Review (Optional)</label>
+                    <textarea id="reviewText" rows="4" placeholder="Share your experience with this seller..."></textarea>
+                </div>
+                <button type="submit" class="btn-login">Submit Rating</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-top">
+            <a href="#" class="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">Back to top</a>
+        </div>
+        <div class="footer-content">
+            <div class="container">
+                <div class="footer-columns">
+                    <div class="footer-column">
+                        <h3>Get to Know Us</h3>
+                        <ul>
+                            <li><a href="#">Careers</a></li>
+                            <li><a href="#">Blog</a></li>
+                            <li><a href="#">About Mbare Marketplace</a></li>
+                            <li><a href="#">Investor Relations</a></li>
+                            <li><a href="#">Mbare Marketplace Devices</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h3>Make Money with Us</h3>
+                        <ul>
+                            <li><a href="#">Sell products on Mbare Marketplace</a></li>
+                            <li><a href="#">Sell on Mbare Marketplace Business</a></li>
+                            <li><a href="#">Sell apps on Mbare Marketplace</a></li>
+                            <li><a href="#">Become an Affiliate</a></li>
+                            <li><a href="#">Advertise Your Products</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h3>Mbare Marketplace Payment Products</h3>
+                        <ul>
+                            <li><a href="#">Mbare Marketplace Business Card</a></li>
+                            <li><a href="#">Shop with Points</a></li>
+                            <li><a href="#">Reload Your Balance</a></li>
+                            <li><a href="#">Mbare Marketplace Currency Converter</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h3>Need Help?</h3>
+                        <ul>
+                            <li><a href="#">COVID-19 and Mbare Marketplace</a></li>
+                            <li><a href="#">Your Account</a></li>
+                            <li><a href="#">Your Orders</a></li>
+                            <li><a href="#">Shipping Rates & Policies</a></li>
+                            <li><a href="#">Returns & Replacements</a></li>
+                            <li><a href="#">Help</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="container">
+                <div class="footer-logo">Mbare Marketplace</div>
+                <div class="footer-links">
+                    <a href="#">Conditions of Use</a>
+                    <a href="#">Privacy Notice</a>
+                    <a href="#">Interest-Based Ads</a>
+                </div>
+                <div class="footer-copyright">
+                    &copy; 1996-2024, Mbare Marketplace.com, Inc. or its affiliates
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="api.js"></script>
+    <script src="script.js"></script>
+    <script>
+        let selectedRating = 0;
+        let sellerId = '';
+        let orderId = '';
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            sellerId = urlParams.get('sellerId');
+            orderId = urlParams.get('orderId');
+            
+            if (!sellerId) {
+                alert('Invalid seller ID');
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            loadSellerInfo();
+        });
+        
+        async function loadSellerInfo() {
+            try {
+                const response = await api.getSeller(sellerId);
+                if (response.success) {
+                    const seller = response.seller;
+                    document.getElementById('sellerInfo').innerHTML = `
+                        <h3 style="margin-bottom: 10px;">${seller.shop_name || seller.name}</h3>
+                        ${seller.seller_rating > 0 ? `<p>Current Rating: ${seller.seller_rating.toFixed(1)} ⭐ (${seller.total_ratings} reviews)</p>` : '<p>No ratings yet</p>'}
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading seller info:', error);
+            }
+        }
+        
+        function setRating(rating) {
+            selectedRating = rating;
+            document.getElementById('ratingValue').value = rating;
+            
+            const stars = document.querySelectorAll('.rating-star');
+            stars.forEach((star, index) => {
+                if (index < rating) {
+                    star.textContent = '★';
+                    star.style.color = '#FF9900';
+                } else {
+                    star.textContent = '☆';
+                    star.style.color = '#999';
+                }
+            });
+        }
+        
+        async function handleSubmitRating(event) {
+            event.preventDefault();
+            
+            if (!api.token) {
+                alert('Please login to submit a rating');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            if (selectedRating === 0) {
+                alert('Please select a rating');
+                return;
+            }
+            
+            const reviewText = document.getElementById('reviewText').value;
+            
+            try {
+                const response = await api.createReview({
+                    sellerId: sellerId,
+                    orderId: orderId || null,
+                    rating: selectedRating,
+                    reviewText: reviewText
+                });
+                
+                if (response.success) {
+                    alert('Thank you for your rating!');
+                    window.location.href = 'index.html';
+                }
+            } catch (error) {
+                alert('Failed to submit rating: ' + error.message);
+            }
+        }
+    </script>
+    <style>
+        .rating-star {
+            font-size: 32px;
+            cursor: pointer;
+            color: #999;
+            transition: color 0.2s;
+        }
+        .rating-star:hover {
+            color: #FF9900;
+        }
+    </style>
+</body>
+</html>
+
+
+
+
