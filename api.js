@@ -2,7 +2,7 @@
 // API Client for Mbare Marketplace Backend
 // ============================================
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'http://supabase.auth.signUp/api';
 
 class ApiClient {
     constructor() {
