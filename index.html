@@ -221,6 +221,23 @@
 
 <script src="api.js"></script>
 <script src="script.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const supabaseUrl = "https://fnncerdxfhwlrdopswpx.supabase.co";
+const supabaseKey = "PASTE_YOUR_ANON_PUBLIC_KEY_HERE";
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+async function checkUser() {
+    const { data } = await supabase.auth.getUser();
+
+    if (data.user) {
+        document.querySelector('.account-label').innerText =
+            "Hello, " + (data.user.user_metadata.full_name || "User");
+    }
+}
+
+checkUser();
+</script>
 
 </body>
 </html>
