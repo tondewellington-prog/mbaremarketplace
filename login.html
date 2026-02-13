@@ -1,166 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Mbare Marketplace - Login</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mbare Marketplace - Login</title>
+<link rel="stylesheet" href="styles.css">
 
-    <!-- Supabase MUST load first -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f3f3f3;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        .box {
-            background: white;
-            padding: 30px;
-            width: 350px;
-            border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-
-        h2 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        input {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 15px;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-        }
-
-        button {
-            width: 100%;
-            padding: 10px;
-            border: none;
-            background: #232F3E;
-            color: white;
-            cursor: pointer;
-            border-radius: 4px;
-        }
-
-        button:hover {
-            opacity: 0.9;
-        }
-
-        .switch {
-            margin-top: 15px;
-            text-align: center;
-            font-size: 14px;
-            cursor: pointer;
-            color: blue;
-        }
-
-        .message {
-            margin-top: 10px;
-            text-align: center;
-            font-size: 14px;
-        }
-    </style>
+<!-- Load Supabase FIRST -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
+
 <body>
 
-<div class="box">
-    <h2 id="formTitle">Sign In</h2>
+<div class="login-container">
+    <div class="login-box">
+        <h1>Sign In</h1>
 
-    <form id="authForm">
-        <input type="text" id="name" placeholder="Full Name (Register only)" style="display:none;">
-        <input type="email" id="email" placeholder="Email" required>
-        <input type="password" id="password" placeholder="Password" required>
-        <button type="submit">Submit</button>
-    </form>
+        <!-- LOGIN FORM -->
+        <form onsubmit="handleLogin(event)">
+            <input type="email" id="email" placeholder="Email" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <button type="submit">Sign In</button>
+        </form>
 
-    <div class="switch" onclick="toggleMode()">
-        Don't have an account? Register
+        <hr>
+
+        <h2>Create Account</h2>
+
+        <!-- REGISTER FORM -->
+        <form onsubmit="handleRegister(event)">
+            <input type="text" id="regName" placeholder="Full Name" required>
+            <input type="email" id="regEmail" placeholder="Email" required>
+            <input type="password" id="regPassword" placeholder="Password (min 6)" required>
+            <button type="submit">Register</button>
+        </form>
+
+        <p id="message" style="margin-top:15px;"></p>
     </div>
-
-    <div class="message" id="message"></div>
 </div>
 
 <script>
-    // ✅ YOUR SUPABASE DETAILS
-    const supabaseUrl = "https://fnncerdxfhwlrdopswpx.supabase.co";
-    const supabaseKey = "sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK";
-    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+/* ===============================
+   CONNECT TO SUPABASE
+================================ */
 
-    let isLogin = true;
+const supabaseUrl = "https://fnncerdxfhwlrdopswpx.supabase.co"; 
+const supabaseKey = "PASTE_YOUR_ANON_PUBLIC_KEY_HERE";  
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-    function toggleMode() {
-        isLogin = !isLogin;
 
-        document.getElementById("formTitle").innerText = 
-            isLogin ? "Sign In" : "Create Account";
+/* ===============================
+   LOGIN FUNCTION
+================================ */
 
-        document.getElementById("name").style.display = 
-            isLogin ? "none" : "block";
+async function handleLogin(event) {
+    event.preventDefault();
 
-        document.querySelector(".switch").innerText =
-            isLogin ? "Don't have an account? Register" :
-                      "Already have an account? Sign In";
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    const { error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password
+    });
+
+    if (error) {
+        showMessage(error.message, "red");
+        return;
     }
 
-    document.getElementById("authForm").addEventListener("submit", async function(e) {
-        e.preventDefault();
+    showMessage("Login successful!", "green");
 
-        const email = document.getElementById("email").value;
-        const password = document.getElementById("password").value;
-        const name = document.getElementById("name").value;
-        const messageBox = document.getElementById("message");
+    setTimeout(() => {
+        window.location.href = "index.html";
+    }, 1000);
+}
 
-        messageBox.innerText = "Processing...";
 
-        if (isLogin) {
-            // LOGIN
-            const { error } = await supabase.auth.signInWithPassword({
-                email: email,
-                password: password
-            });
+/* ===============================
+   REGISTER FUNCTION
+================================ */
 
-            if (error) {
-                messageBox.innerText = error.message;
-                messageBox.style.color = "red";
-                return;
+async function handleRegister(event) {
+    event.preventDefault();
+
+    const name = document.getElementById("regName").value;
+    const email = document.getElementById("regEmail").value;
+    const password = document.getElementById("regPassword").value;
+
+    const { error } = await supabase.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+            data: {
+                full_name: name
             }
-
-            messageBox.innerText = "Login successful!";
-            messageBox.style.color = "green";
-
-            setTimeout(() => {
-                window.location.href = "index.html";
-            }, 1000);
-
-        } else {
-            // REGISTER
-            const { error } = await supabase.auth.signUp({
-                email: email,
-                password: password,
-                options: {
-                    data: {
-                        full_name: name
-                    }
-                }
-            });
-
-            if (error) {
-                messageBox.innerText = error.message;
-                messageBox.style.color = "red";
-                return;
-            }
-
-            messageBox.innerText = "Account created! Check your email.";
-            messageBox.style.color = "green";
         }
     });
+
+    if (error) {
+        showMessage(error.message, "red");
+        return;
+    }
+
+    showMessage("Account created! Check your email.", "green");
+}
+
+
+/* ===============================
+   MESSAGE FUNCTION
+================================ */
+
+function showMessage(text, color) {
+    const msg = document.getElementById("message");
+    msg.innerText = text;
+    msg.style.color = color;
+}
 </script>
 
 </body>
