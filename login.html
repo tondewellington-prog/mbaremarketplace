@@ -190,103 +190,147 @@
 
     <script src="api.js"></script>
     <script src="script.js"></script>
-    <script>
-        async function handleLogin(event) {
-            event.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            if (!email || !password) {
-                showNotification('Please enter both email and password', 'error');
-                return;
-            }
-            
-            try {
-                const response = await api.login(email, password);
-                if (response.success) {
-                    showNotification('Login successful!', 'success');
-                    setTimeout(() => {
-                        window.location.href = 'index.html';
-                    }, 500);
-                }
-            } catch (error) {
-                showNotification('Login failed: ' + (error.message || 'Invalid credentials'), 'error');
-            }
+<script>
+    // Make sure api is loaded
+    console.log('API loaded:', window.api);
+    
+    async function handleLogin(event) {
+        event.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        
+        if (!email || !password) {
+            showNotification('Please enter both email and password', 'error');
+            return;
         }
         
-        async function handleRegister(event) {
-            event.preventDefault();
-            const name = document.getElementById('regName').value;
-            const email = document.getElementById('regEmail').value;
-            const password = document.getElementById('regPassword').value;
-            const phone = document.getElementById('regPhone').value;
-            
-            if (!name || !email || !password) {
-                showNotification('Please fill in all required fields', 'error');
-                return;
+        try {
+            showNotification('Logging in...', 'info');
+            // Check if api exists
+            if (!window.api) {
+                throw new Error('API not loaded. Please refresh the page.');
             }
             
-            if (password.length < 6) {
-                showNotification('Password must be at least 6 characters', 'error');
-                return;
+            const response = await window.api.login(email, password);
+            if (response.success) {
+                showNotification('Login successful!', 'success');
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1500);
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            showNotification('Login failed: ' + (error.message || 'Invalid credentials'), 'error');
+        }
+    }
+    
+    async function handleRegister(event) {
+        event.preventDefault();
+        
+        const name = document.getElementById('regName').value;
+        const email = document.getElementById('regEmail').value;
+        const password = document.getElementById('regPassword').value;
+        const phone = document.getElementById('regPhone').value;
+        
+        if (!name || !email || !password) {
+            showNotification('Please fill in all required fields', 'error');
+            return;
+        }
+        
+        if (password.length < 6) {
+            showNotification('Password must be at least 6 characters', 'error');
+            return;
+        }
+        
+        try {
+            showNotification('Creating account...', 'info');
+            
+            // Check if api exists
+            if (!window.api) {
+                throw new Error('API not loaded. Please refresh the page.');
             }
             
-            try {
-                const response = await api.register({
-                    name: name,
-                    email: email,
-                    password: password,
-                    phone: phone
-                });
-                
-                if (response.success) {
-                    showNotification('Account created successfully! Please login.', 'success');
-                    hideRegisterForm();
-                    // Clear registration form
-                    document.getElementById('regName').value = '';
-                    document.getElementById('regEmail').value = '';
-                    document.getElementById('regPassword').value = '';
-                    document.getElementById('regPhone').value = '';
-                }
-            } catch (error) {
-                showNotification('Registration failed: ' + (error.message || 'Please try again'), 'error');
+            const response = await window.api.register({
+                name: name,
+                email: email,
+                password: password,
+                phone: phone
+            });
+            
+            if (response.success) {
+                showNotification('Account created successfully! Please login.', 'success');
+                hideRegisterForm();
+                document.getElementById('regName').value = '';
+                document.getElementById('regEmail').value = '';
+                document.getElementById('regPassword').value = '';
+                document.getElementById('regPhone').value = '';
+            }
+        } catch (error) {
+            console.error('Registration error:', error);
+            showNotification('Registration failed: ' + (error.message || 'Please try again'), 'error');
+        }
+    }
+    
+    function showRegisterForm() {
+        document.getElementById('registerForm').style.display = 'block';
+        document.querySelector('.login-form').style.display = 'none';
+    }
+    
+    function hideRegisterForm() {
+        document.getElementById('registerForm').style.display = 'none';
+        document.querySelector('.login-form').style.display = 'block';
+    }
+    
+    function showNotification(message, type = 'info') {
+        // Remove any existing notification
+        const existing = document.querySelector('.custom-notification');
+        if (existing) existing.remove();
+        
+        const notification = document.createElement('div');
+        notification.className = 'custom-notification';
+        
+        const bgColor = type === 'error' ? '#d32f2f' : type === 'success' ? '#2e7d32' : '#232F3E';
+        
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: ${bgColor};
+            color: white;
+            padding: 15px 25px;
+            border-radius: 4px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 10000;
+            max-width: 400px;
+            animation: slideIn 0.3s ease;
+        `;
+        
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            notification.style.transition = 'opacity 0.3s';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+    
+    // Add animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
             }
         }
-        
-        function showRegisterForm() {
-            document.getElementById('registerForm').style.display = 'block';
-            document.querySelector('.login-form').style.display = 'none';
-        }
-        
-        function hideRegisterForm() {
-            document.getElementById('registerForm').style.display = 'none';
-            document.querySelector('.login-form').style.display = 'block';
-        }
-        
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            const bgColor = type === 'error' ? '#d32f2f' : type === 'success' ? '#2e7d32' : '#232F3E';
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background-color: ${bgColor};
-                color: white;
-                padding: 15px 25px;
-                border-radius: 4px;
-                box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-                z-index: 10000;
-                max-width: 400px;
-            `;
-            notification.textContent = message;
-            document.body.appendChild(notification);
-            setTimeout(() => {
-                notification.style.opacity = '0';
-                notification.style.transition = 'opacity 0.3s';
-                setTimeout(() => notification.remove(), 300);
-            }, 3000);
-        }
-    </script>
+    `;
+    document.head.appendChild(style);
+</script>
 </body>
 </html>
 
