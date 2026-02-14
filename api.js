@@ -1,176 +1,73 @@
-// ============================================
-// API Client for Mbare Marketplace Backend
-// ============================================
+// api.js
+const SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co'; // REPLACE THIS
+const SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK'; // REPLACE THIS
 
-const API_BASE_URL = 'http://localhost:5000/api';
-
-class ApiClient {
-    constructor() {
-        this.token = localStorage.getItem('token') || null;
-    }
-
-    setToken(token) {
-        this.token = token;
-        if (token) {
-            localStorage.setItem('token', token);
-        } else {
-            localStorage.removeItem('token');
-        }
-    }
-
-    async request(endpoint, options = {}) {
-        const url = `${API_BASE_URL}${endpoint}`;
-        const config = {
-            ...options,
-            headers: {
-                'Content-Type': 'application/json',
-                ...(this.token && { Authorization: `Bearer ${this.token}` }),
-                ...options.headers
-            }
-        };
-
-        if (options.body && typeof options.body === 'object') {
-            config.body = JSON.stringify(options.body);
-        }
-
+const api = {
+    async login(email, password) {
         try {
-            const response = await fetch(url, config);
+            const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': SUPABASE_ANON_KEY
+                },
+                body: JSON.stringify({
+                    email: email,
+                    password: password
+                })
+            });
+            
             const data = await response.json();
-
+            
             if (!response.ok) {
-                throw new Error(data.message || 'Request failed');
+                throw new Error(data.error_description || data.msg || 'Login failed');
             }
-
-            return data;
+            
+            if (data.access_token) {
+                localStorage.setItem('user', JSON.stringify(data.user));
+            }
+            
+            return { success: true, user: data.user };
         } catch (error) {
-            console.error('API Error:', error);
+            console.error('Login error:', error);
+            throw error;
+        }
+    },
+
+    async register(userData) {
+        try {
+            const response = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': SUPABASE_ANON_KEY
+                },
+                body: JSON.stringify({
+                    email: userData.email,
+                    password: userData.password,
+                    options: {
+                        data: {
+                            full_name: userData.name,
+                            phone: userData.phone || ''
+                        }
+                    }
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.msg || data.error_description || 'Registration failed');
+            }
+            
+            return { success: true, user: data.user };
+        } catch (error) {
+            console.error('Registration error:', error);
             throw error;
         }
     }
+};
 
-    // Auth methods
-    async register(userData) {
-        return this.request('/auth/register', {
-            method: 'POST',
-            body: userData
-        });
-    }
-
-    async login(email, password) {
-        const data = await this.request('/auth/login', {
-            method: 'POST',
-            body: { email, password }
-        });
-        if (data.token) {
-            this.setToken(data.token);
-        }
-        return data;
-    }
-
-    async getCurrentUser() {
-        return this.request('/auth/me');
-    }
-
-    async updateProfile(profileData) {
-        return this.request('/auth/update-profile', {
-            method: 'PUT',
-            body: profileData
-        });
-    }
-
-    // Product methods
-    async getProducts(params = {}) {
-        const queryString = new URLSearchParams(params).toString();
-        return this.request(`/products?${queryString}`);
-    }
-
-    async getProduct(id) {
-        return this.request(`/products/${id}`);
-    }
-
-    // Basket methods
-    async getBasket() {
-        return this.request('/basket');
-    }
-
-    async addToBasket(productId, quantity = 1) {
-        return this.request('/basket', {
-            method: 'POST',
-            body: { productId, quantity }
-        });
-    }
-
-    async updateBasketItem(productId, quantity) {
-        return this.request(`/basket/${productId}`, {
-            method: 'PUT',
-            body: { quantity }
-        });
-    }
-
-    async removeFromBasket(productId) {
-        return this.request(`/basket/${productId}`, {
-            method: 'DELETE'
-        });
-    }
-
-    async clearBasket() {
-        return this.request('/basket', {
-            method: 'DELETE'
-        });
-    }
-
-    // Order methods
-    async getOrders() {
-        return this.request('/orders');
-    }
-
-    async getOrder(id) {
-        return this.request(`/orders/${id}`);
-    }
-
-    async createOrder(orderData) {
-        return this.request('/orders', {
-            method: 'POST',
-            body: orderData
-        });
-    }
-
-    // Seller methods
-    async registerAsSeller(sellerData) {
-        return this.request('/sellers/register', {
-            method: 'POST',
-            body: sellerData
-        });
-    }
-
-    async getSeller(sellerId) {
-        return this.request(`/sellers/${sellerId}`);
-    }
-
-    async getSellerProducts() {
-        return this.request('/sellers/products');
-    }
-
-    async createSellerProduct(productData) {
-        return this.request('/sellers/products', {
-            method: 'POST',
-            body: productData
-        });
-    }
-
-    // Review methods
-    async createReview(reviewData) {
-        return this.request('/reviews', {
-            method: 'POST',
-            body: reviewData
-        });
-    }
-
-    async getSellerReviews(sellerId) {
-        return this.request(`/reviews/seller/${sellerId}`);
-    }
-}
-
-// Create global API instance
-const api = new ApiClient();
+// Make api available globally
+window.api = api;
 
