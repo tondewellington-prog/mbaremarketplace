@@ -8,8 +8,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Load Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+
     <!-- Header -->
     <header class="header">
         <div class="header-top">
@@ -26,11 +30,8 @@
                         <option>Home & Kitchen</option>
                     </select>
                     <input type="text" id="searchInput" placeholder="Search Mbare Marketplace" class="search-input">
-                    <button class="search-btn" onclick="handleSearch()">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <path d="m21 21-4.35-4.35"></path>
-                        </svg>
+                    <button class="search-btn">
+                        🔍
                     </button>
                 </div>
                 <div class="header-right">
@@ -43,46 +44,22 @@
                         <span class="returns-link">& Orders</span>
                     </div>
                     <a href="Basket.html" class="basket">
-                        <div class="basket-icon">
-                            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-                                <line x1="3" y1="6" x2="21" y2="6"></line>
-                                <path d="M16 10a4 4 0 0 1-8 0"></path>
-                            </svg>
-                            <span class="basket-count" id="basketCount">0</span>
-                        </div>
                         <span class="basket-text">Basket</span>
                     </a>
                 </div>
             </div>
         </div>
-        <nav class="nav-menu">
-            <div class="container">
-                <a href="index.html" class="nav-item all-menu">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <line x1="3" y1="12" x2="21" y2="12"></line>
-                        <line x1="3" y1="6" x2="21" y2="6"></line>
-                        <line x1="3" y1="18" x2="21" y2="18"></line>
-                    </svg>
-                    All
-                </a>
-                <a href="#" class="nav-item">Today's Deals</a>
-                <a href="#" class="nav-item">Customer Service</a>
-                <a href="#" class="nav-item">Registry</a>
-                <a href="#" class="nav-item">Gift Cards</a>
-                <a href="#" class="nav-item">Sell</a>
-            </div>
-        </nav>
     </header>
 
     <!-- Login Content -->
     <div class="login-container">
         <div class="login-box">
             <h1>Sign in</h1>
+
             <form class="login-form" onsubmit="handleLogin(event)">
                 <div class="form-group">
-                    <label>Email or mobile phone number</label>
-                    <input type="text" id="email" required>
+                    <label>Email</label>
+                    <input type="email" id="email" required>
                 </div>
                 <div class="form-group">
                     <label>Password</label>
@@ -90,12 +67,16 @@
                 </div>
                 <button type="submit" class="btn-login">Sign in</button>
             </form>
+
             <div class="login-divider">
                 New to Mbare Marketplace?
             </div>
-            <button class="btn-create-account" onclick="showRegisterForm()">Create your Mbare Marketplace account</button>
-            
-            <!-- Registration Form (Hidden by default) -->
+
+            <button class="btn-create-account" onclick="showRegisterForm()">
+                Create your Mbare Marketplace account
+            </button>
+
+            <!-- Registration Form -->
             <div id="registerForm" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
                 <h2 style="margin-bottom: 15px; font-size: 20px;">Create Account</h2>
                 <form class="login-form" onsubmit="handleRegister(event)">
@@ -111,182 +92,85 @@
                         <label>Password</label>
                         <input type="password" id="regPassword" required minlength="6">
                     </div>
-                    <div class="form-group">
-                        <label>Phone Number (Optional)</label>
-                        <input type="tel" id="regPhone">
-                    </div>
                     <button type="submit" class="btn-login">Create Account</button>
-                    <button type="button" class="btn-create-account" style="margin-top: 10px;" onclick="hideRegisterForm()">Cancel</button>
+                    <button type="button" class="btn-create-account" style="margin-top:10px;" onclick="hideRegisterForm()">Cancel</button>
                 </form>
             </div>
+
+            <p id="message" style="margin-top:15px; text-align:center;"></p>
+
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-top">
-            <a href="#" class="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">Back to top</a>
-        </div>
-        <div class="footer-content">
-            <div class="container">
-                <div class="footer-columns">
-                    <div class="footer-column">
-                        <h3>Get to Know Us</h3>
-                        <ul>
-                            <li><a href="#">Careers</a></li>
-                            <li><a href="#">Blog</a></li>
-                            <li><a href="#">About Mbare Marketplace</a></li>
-                            <li><a href="#">Investor Relations</a></li>
-                            <li><a href="#">Mbare Marketplace Devices</a></li>
-                        </ul>
-                    </div>
-                    <div class="footer-column">
-                        <h3>Make Money with Us</h3>
-                        <ul>
-                            <li><a href="#">Sell products on Mbare Marketplace</a></li>
-                            <li><a href="#">Sell on Mbare Marketplace Business</a></li>
-                            <li><a href="#">Sell apps on Mbare Marketplace</a></li>
-                            <li><a href="#">Become an Affiliate</a></li>
-                            <li><a href="#">Advertise Your Products</a></li>
-                        </ul>
-                    </div>
-                    <div class="footer-column">
-                        <h3>Mbare Marketplace Payment Products</h3>
-                        <ul>
-                            <li><a href="#">Mbare Marketplace Business Card</a></li>
-                            <li><a href="#">Shop with Points</a></li>
-                            <li><a href="#">Reload Your Balance</a></li>
-                            <li><a href="#">Mbare Marketplace Currency Converter</a></li>
-                        </ul>
-                    </div>
-                    <div class="footer-column">
-                        <h3>Need Help?</h3>
-                        <ul>
-                            <li><a href="#">COVID-19 and Mbare Marketplace</a></li>
-                            <li><a href="#">Your Account</a></li>
-                            <li><a href="#">Your Orders</a></li>
-                            <li><a href="#">Shipping Rates & Policies</a></li>
-                            <li><a href="#">Returns & Replacements</a></li>
-                            <li><a href="#">Help</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <div class="container">
-                <div class="footer-logo">Mbare Marketplace</div>
-                <div class="footer-links">
-                    <a href="#">Conditions of Use</a>
-                    <a href="#">Privacy Notice</a>
-                    <a href="#">Interest-Based Ads</a>
-                </div>
-                <div class="footer-copyright">
-                    &copy; 2025, Mbaremarketplace.com, Inc. or its affiliates
-                </div>
-            </div>
-        </div>
-    </footer>
+<script>
+const supabaseUrl = "https://fnncerdxfhwlrdopswpx.supabase.co";
+const supabaseKey = "sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK";
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-    <script src="api.js"></script>
-    <script src="script.js"></script>
-    <script>
-        async function handleLogin(event) {
-            event.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            if (!email || !password) {
-                showNotification('Please enter both email and password', 'error');
-                return;
-            }
-            
-            try {
-                const response = await api.login(email, password);
-                if (response.success) {
-                    showNotification('Login successful!', 'success');
-                    setTimeout(() => {
-                        window.location.href = 'index.html';
-                    }, 500);
-                }
-            } catch (error) {
-                showNotification('Login failed: ' + (error.message || 'Invalid credentials'), 'error');
-            }
-        }
-        
-        async function handleRegister(event) {
-            event.preventDefault();
-            const name = document.getElementById('regName').value;
-            const email = document.getElementById('regEmail').value;
-            const password = document.getElementById('regPassword').value;
-            const phone = document.getElementById('regPhone').value;
-            
-            if (!name || !email || !password) {
-                showNotification('Please fill in all required fields', 'error');
-                return;
-            }
-            
-            if (password.length < 6) {
-                showNotification('Password must be at least 6 characters', 'error');
-                return;
-            }
-            
-            try {
-                const response = await api.register({
-                    name: name,
-                    email: email,
-                    password: password,
-                    phone: phone
-                });
-                
-                if (response.success) {
-                    showNotification('Account created successfully! Please login.', 'success');
-                    hideRegisterForm();
-                    // Clear registration form
-                    document.getElementById('regName').value = '';
-                    document.getElementById('regEmail').value = '';
-                    document.getElementById('regPassword').value = '';
-                    document.getElementById('regPhone').value = '';
-                }
-            } catch (error) {
-                showNotification('Registration failed: ' + (error.message || 'Please try again'), 'error');
+async function handleLogin(event) {
+    event.preventDefault();
+
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    const { error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password
+    });
+
+    if (error) {
+        showMessage(error.message, "red");
+        return;
+    }
+
+    showMessage("Login successful!", "green");
+
+    setTimeout(() => {
+        window.location.href = "index.html";
+    }, 800);
+}
+
+async function handleRegister(event) {
+    event.preventDefault();
+
+    const name = document.getElementById('regName').value;
+    const email = document.getElementById('regEmail').value;
+    const password = document.getElementById('regPassword').value;
+
+    const { error } = await supabase.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+            data: {
+                full_name: name
             }
         }
-        
-        function showRegisterForm() {
-            document.getElementById('registerForm').style.display = 'block';
-            document.querySelector('.login-form').style.display = 'none';
-        }
-        
-        function hideRegisterForm() {
-            document.getElementById('registerForm').style.display = 'none';
-            document.querySelector('.login-form').style.display = 'block';
-        }
-        
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            const bgColor = type === 'error' ? '#d32f2f' : type === 'success' ? '#2e7d32' : '#232F3E';
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background-color: ${bgColor};
-                color: white;
-                padding: 15px 25px;
-                border-radius: 4px;
-                box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-                z-index: 10000;
-                max-width: 400px;
-            `;
-            notification.textContent = message;
-            document.body.appendChild(notification);
-            setTimeout(() => {
-                notification.style.opacity = '0';
-                notification.style.transition = 'opacity 0.3s';
-                setTimeout(() => notification.remove(), 300);
-            }, 3000);
-        }
-    </script>
+    });
+
+    if (error) {
+        showMessage(error.message, "red");
+        return;
+    }
+
+    showMessage("Account created! Check your email to confirm.", "green");
+
+    hideRegisterForm();
+}
+
+function showRegisterForm() {
+    document.getElementById('registerForm').style.display = 'block';
+}
+
+function hideRegisterForm() {
+    document.getElementById('registerForm').style.display = 'none';
+}
+
+function showMessage(text, color) {
+    const msg = document.getElementById("message");
+    msg.innerText = text;
+    msg.style.color = color;
+}
+</script>
+
 </body>
 </html>
-
