@@ -77,6 +77,29 @@ const api = {
         window.location.href = 'index.html';
         return { success: true };
     }
+    // Add this inside the api object, before the closing }
+async getProducts() {
+    try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*`, {
+            method: 'GET',
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error('Failed to fetch products');
+        }
+        
+        return data;
+    } catch (error) {
+        console.error('Error fetching products:', error);
+        return []; // Return empty array on error
+    }
+},
 };
 
 // Make api available globally
