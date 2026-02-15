@@ -213,64 +213,132 @@
     
     <script src="script.js"></script>
     <script>
-        async function handleSellerRegister(event) {
-            event.preventDefault();
+    
+    // Make sure this runs when the form is submitted
+    async function handleSellerRegistration(event) {
+        event.preventDefault(); // Stop form from submitting normally
+        
+        // CHECK IF USER IS LOGGED IN
+        const sessionData = localStorage.getItem('supabase_session');
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        
+        if (!isLoggedIn || !sessionData) {
+            alert('You must be logged in to register as a seller');
+            window.location.href = 'login.html?redirect=' + window.location.pathname;
+            return;
+        }
+        
+        // Parse the session to get the access token
+        let session;
+        try {
+            session = JSON.parse(sessionData);
+        } catch (e) {
+            alert('Session error. Please log in again.');
+            window.location.href = 'login.html';
+            return;
+        }
+        
+        const accessToken = session.access_token;
+        const userId = session.user?.id;
+        
+        if (!accessToken || !userId) {
+            alert('Invalid session. Please log in again.');
+            window.location.href = 'login.html';
+            return;
+        }
+        
+        // GET FORM DATA - UPDATE THESE IDs TO MATCH YOUR FORM
+        const businessName = document.getElementById('businessName')?.value;
+        const businessType = document.getElementById('businessType')?.value;
+        const businessAddress = document.getElementById('businessAddress')?.value;
+        const businessPhone = document.getElementById('businessPhone')?.value;
+        const businessEmail = document.getElementById('businessEmail')?.value;
+        const businessDescription = document.getElementById('businessDescription')?.value;
+        
+        // Validate required fields
+        if (!businessName || !businessType) {
+            alert('Please fill in all required fields');
+            return;
+        }
+        
+        // SHOW LOADING INDICATOR
+        const submitBtn = event.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Registering...';
+        submitBtn.disabled = true;
+        
+        try {
+            // SEND DATA TO SUPABASE
+            const response = await fetch(`${SUPABASE_URL}/rest/v1/sellers`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${accessToken}` // THIS IS THE KEY PART!
+                },
+                body: JSON.stringify({
+                    user_id: userId,
+                    business_name: businessName,
+                    business_type: businessType,
+                    business_address: businessAddress || '',
+                    business_phone: businessPhone || '',
+                    business_email: businessEmail || '',
+                    business_description: businessDescription || '',
+                    status: 'pending', // or 'active' depending on your flow
+                    created_at: new Date().toISOString()
+                })
+            });
             
-            // Check if user is logged in
-            if (!api.token) {
-                alert('Please login first to become a seller');
-                window.location.href = 'login.html';
-                return;
+            const data = await response.json();
+            
+            if (response.ok) {
+                alert('Successfully registered as a seller!');
+                window.location.href = 'seller-dashboard.html'; // or wherever you want to redirect
+            } else {
+                throw new Error(data.message || data.error || 'Registration failed');
             }
-            
-            const shopName = document.getElementById('shopName').value;
-            const whatsappNumber = document.getElementById('whatsappNumber').value;
-            const shopStreet = document.getElementById('shopStreet').value;
-            const shopCity = document.getElementById('shopCity').value;
-            const shopArea = document.getElementById('shopArea').value;
-            const shopLocationDetails = document.getElementById('shopLocationDetails').value;
-            
-            if (!shopName || !whatsappNumber) {
-                alert('Please fill in shop name and WhatsApp number');
-                return;
-            }
-            
-            const shopLocation = {
-                street: shopStreet,
-                city: shopCity,
-                area: shopArea,
-                details: shopLocationDetails
-            };
-            
+        } catch (error) {
+            console.error('Seller registration error:', error);
+            alert('Error registering as seller: ' + error.message);
+        } finally {
+            // RESET BUTTON
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        }
+    }
+    
+    // Add this to display logged-in user info on the page
+    document.addEventListener('DOMContentLoaded', function() {
+        const sessionData = localStorage.getItem('supabase_session');
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        
+        if (isLoggedIn && sessionData) {
             try {
-                const response = await fetch('http://localhost:5000/api/sellers/register', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${api.token}`
-                    },
-                    body: JSON.stringify({
-                        shopName,
-                        whatsappNumber,
-                        shopLocation
-                    })
-                });
+                const session = JSON.parse(sessionData);
+                const userEmail = session.user?.email || 'User';
                 
-                const data = await response.json();
-                
-                if (data.success) {
-                    alert('Successfully registered as seller! You can now post products.');
-                    window.location.href = 'seller-dashboard.html';
-                } else {
-                    alert('Registration failed: ' + (data.message || 'Please try again'));
+                // Show welcome message if there's an element for it
+                const welcomeEl = document.getElementById('welcomeMessage');
+                if (welcomeEl) {
+                    welcomeEl.textContent = `Logged in as: ${userEmail}`;
                 }
-            } catch (error) {
-                alert('Error: ' + error.message);
+                
+                // Pre-fill email if there's a field for it
+                const emailField = document.getElementById('businessEmail');
+                if (emailField) {
+                    emailField.value = userEmail;
+                    emailField.readOnly = true; // Optional: make it read-only
+                }
+            } catch (e) {
+                console.error('Error parsing session:', e);
             }
         }
-    </script>
+    });
+</script>
+    
 </body>
 </html>
+
 
 
 
