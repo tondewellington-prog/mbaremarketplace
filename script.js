@@ -9,6 +9,13 @@ let basket = [];
 // Initialize page
 document.addEventListener('DOMContentLoaded', async function() {
     try {
+        // ADD THIS CHECK FOR API
+        if (!window.api) {
+            console.log('Waiting for API to load...');
+            // Wait a moment for API to load
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
         // Load products from API
         await loadProductsFromAPI();
         
@@ -54,10 +61,15 @@ document.addEventListener('DOMContentLoaded', async function() {
         loadFallbackProducts();
     }
 });
-
 // Load products from API
 async function loadProductsFromAPI() {
     try {
+        // ADD THIS CHECK AT THE BEGINNING
+        if (!window.api || typeof window.api.getProducts !== 'function') {
+            console.log('API or getProducts not ready yet');
+            throw new Error('API not ready');
+        }
+        
         const response = await api.getProducts({ limit: 50 });
         if (response.success && response.products) {
             products = response.products.map(p => ({
@@ -78,7 +90,6 @@ async function loadProductsFromAPI() {
         throw error;
     }
 }
-
 // Load basket from API (if user is logged in)
 async function loadBasketFromAPI() {
     try {
@@ -734,8 +745,8 @@ function applyFilters() {
 }
 
 // Add CSS animation for notifications
-const style = document.createElement('style');
-style.textContent = `
+const styleElement = document.createElement('style');
+styleElement.textContent = `
     @keyframes slideIn {
         from {
             transform: translateX(100%);
@@ -758,4 +769,4 @@ style.textContent = `
         }
     }
 `;
-document.head.appendChild(style);
+document.head.appendChild(styleElement);
