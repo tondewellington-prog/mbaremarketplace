@@ -1,9 +1,8 @@
 // api.js
 const SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co'; // REPLACE THIS
-const SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
+const SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK'; // REPLACE THIS
 
 const api = {
-    // Login function - FIXED VERSION
     async login(email, password) {
         try {
             const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
@@ -36,7 +35,6 @@ const api = {
         }
     },
 
-    // Register function
     async register(userData) {
         try {
             const response = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
@@ -70,39 +68,37 @@ const api = {
         }
     },
 
-    // Logout function
+    async getProducts() {
+        try {
+            const response = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*`, {
+                method: 'GET',
+                headers: {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch products');
+            }
+            
+            return data;
+        } catch (error) {
+            console.error('Error fetching products:', error);
+            return [];
+        }
+    },
+
     async logout() {
         localStorage.removeItem('supabase_session');
         localStorage.removeItem('isLoggedIn');
         window.location.href = 'index.html';
         return { success: true };
     }
-    // Add this inside the api object, before the closing }
-async getProducts() {
-    try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*`, {
-            method: 'GET',
-            headers: {
-                'apikey': SUPABASE_ANON_KEY,
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-            }
-        });
-        
-        const data = await response.json();
-        
-        if (!response.ok) {
-            throw new Error('Failed to fetch products');
-        }
-        
-        return data;
-    } catch (error) {
-        console.error('Error fetching products:', error);
-        return []; // Return empty array on error
-    }
-},
 };
 
-// Make api available globally
+// THIS MUST BE THE VERY LAST LINE - NO EXTRA async KEYWORDS
 window.api = api;
-
-console.log('API loaded successfully!');
+console.log('API loaded successfully');
