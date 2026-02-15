@@ -1,4 +1,5 @@
 // auth-check.js
+
 document.addEventListener('DOMContentLoaded', function() {
     checkLoginStatus();
 });
@@ -45,3 +46,4 @@ window.logout = function() {
     localStorage.removeItem('supabase_session');
     window.location.href = 'index.html';
 };
+ 
