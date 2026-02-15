@@ -1,38 +1,42 @@
 // api.js
 const SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co'; // REPLACE THIS
-const SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK'; // REPLACE THIS
+const SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
 
 const api = {
-   async login(email, password) {
-    try {
-        const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'apikey': SUPABASE_ANON_KEY
-            },
-            body: JSON.stringify({ email, password })
-        });
-        
-        const data = await response.json();
-        
-        if (!response.ok) {
-            throw new Error(data.error_description || data.msg || 'Login failed');
+    // Login function - FIXED VERSION
+    async login(email, password) {
+        try {
+            const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': SUPABASE_ANON_KEY
+                },
+                body: JSON.stringify({ 
+                    email: email, 
+                    password: password 
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.error_description || data.msg || 'Login failed');
+            }
+            
+            if (data.access_token) {
+                localStorage.setItem('supabase_session', JSON.stringify(data));
+                localStorage.setItem('isLoggedIn', 'true');
+            }
+            
+            return { success: true, user: data.user };
+        } catch (error) {
+            console.error('Login error:', error);
+            throw error;
         }
-        
-        if (data.access_token) {
-            // Store session data
-            localStorage.setItem('supabase_session', JSON.stringify(data));
-            localStorage.setItem('isLoggedIn', 'true');
-        }
-        
-        return { success: true, user: data.user };
-    } catch (error) {
-        console.error('Login error:', error);
-        throw error;
-    }
-}},
+    },
 
+    // Register function
     async register(userData) {
         try {
             const response = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
@@ -64,9 +68,18 @@ const api = {
             console.error('Registration error:', error);
             throw error;
         }
+    },
+
+    // Logout function
+    async logout() {
+        localStorage.removeItem('supabase_session');
+        localStorage.removeItem('isLoggedIn');
+        window.location.href = 'index.html';
+        return { success: true };
     }
 };
 
 // Make api available globally
 window.api = api;
 
+console.log('API loaded successfully!');
