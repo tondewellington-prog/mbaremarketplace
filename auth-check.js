@@ -11,6 +11,7 @@ function checkLoginStatus() {
     // Find the account menu elements
     const accountLabel = document.querySelector('.account-label');
     const accountLink = document.querySelector('.account-link');
+    const logoutBtn = document.getElementById('logoutBtn');
     
     if (isLoggedIn && sessionData && accountLabel && accountLink) {
         try {
@@ -22,28 +23,37 @@ function checkLoginStatus() {
             accountLabel.textContent = 'Hello,';
             accountLink.textContent = userName;
             accountLink.href = '#'; // Change this to your account page if you have one
+            
+            // Show logout button
+            if (logoutBtn) {
+                logoutBtn.style.display = 'inline-block';
+            }
         } catch (e) {
             console.error('Error parsing session:', e);
             // If error, clear storage and show logged out state
             localStorage.removeItem('isLoggedIn');
             localStorage.removeItem('supabase_session');
-            setLoggedOutState(accountLabel, accountLink);
+            setLoggedOutState(accountLabel, accountLink, logoutBtn);
         }
     } else if (accountLabel && accountLink) {
-        setLoggedOutState(accountLabel, accountLink);
+        setLoggedOutState(accountLabel, accountLink, logoutBtn);
     }
 }
 
-function setLoggedOutState(accountLabel, accountLink) {
+function setLoggedOutState(accountLabel, accountLink, logoutBtn) {
     accountLabel.textContent = 'Hi there, Sign in';
     accountLink.textContent = 'Account & Lists';
     accountLink.href = 'login.html';
+    
+    // Hide logout button
+    if (logoutBtn) {
+        logoutBtn.style.display = 'none';
+    }
 }
 
-// Optional: Add logout function
+// Logout function
 window.logout = function() {
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('supabase_session');
     window.location.href = 'index.html';
 };
- 
