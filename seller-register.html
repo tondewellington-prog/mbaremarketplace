@@ -35,10 +35,10 @@
                 </div>
                 <div class="header-right">
                     <div class="account-menu">
-    <span class="account-label">Hello, Sign in</span>
-    <a href="login.html" class="account-link">Account & Lists</a>
-    <button id="logoutBtn" onclick="logout()" style="display: none; background: none; border: none; color: #fff; cursor: pointer; margin-left: 10px;">Logout</button>
-</div>
+                        <span class="account-label">Hello, Sign in</span>
+                        <a href="login.html" class="account-link">Account & Lists</a>
+                        <button id="logoutBtn" onclick="logout()" style="display: none; background: none; border: none; color: #fff; cursor: pointer; margin-left: 10px;">Logout</button>
+                    </div>
                     <div class="returns">
                         <span class="returns-label">Returns</span>
                         <span class="returns-link">& Orders</span>
@@ -82,34 +82,60 @@
             <h1>Become a Seller</h1>
             <p style="margin-bottom: 20px; color: #666;">Register your shop and start selling on Mbare Marketplace</p>
             
+            <!-- Welcome message will appear here if logged in -->
+            <div id="welcomeMessage" style="margin-bottom: 15px; font-weight: bold; color: #0066c0;"></div>
+            
             <form class="login-form" onsubmit="handleSellerRegistration(event)">
+                <!-- IMPORTANT: IDs updated to match JavaScript -->
                 <div class="form-group">
                     <label>Shop Name *</label>
-                    <input type="text" id="shopName" required placeholder="e.g., John's Electronics Shop">
+                    <input type="text" id="businessName" required placeholder="e.g., John's Electronics Shop">
                 </div>
+                
                 <div class="form-group">
                     <label>WhatsApp Number *</label>
-                    <input type="tel" id="whatsappNumber" required placeholder="e.g., +263771234567">
+                    <input type="tel" id="businessPhone" required placeholder="e.g., +263771234567">
                     <small style="color: #666; font-size: 12px;">Buyers will contact you via this number</small>
                 </div>
+                
+                <div class="form-group">
+                    <label>Business Type *</label>
+                    <select id="businessType" required>
+                        <option value="">Select business type...</option>
+                        <option value="Electronics">Electronics</option>
+                        <option value="Clothing">Clothing</option>
+                        <option value="Books">Books</option>
+                        <option value="Home & Kitchen">Home & Kitchen</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Business Email</label>
+                    <input type="email" id="businessEmail" placeholder="your@email.com">
+                </div>
+                
                 <div class="form-group">
                     <label>Shop Location - Street</label>
-                    <input type="text" id="shopStreet" placeholder="Street address">
+                    <input type="text" id="businessAddress" placeholder="Street address">
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
+                
+                <div class="form-row" style="display: flex; gap: 15px;">
+                    <div class="form-group" style="flex: 1;">
                         <label>City</label>
                         <input type="text" id="shopCity" placeholder="City">
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" style="flex: 1;">
                         <label>Area/Suburb</label>
                         <input type="text" id="shopArea" placeholder="Area">
                     </div>
                 </div>
+                
                 <div class="form-group">
                     <label>Additional Location Details</label>
-                    <textarea id="shopLocationDetails" rows="3" placeholder="Landmarks, directions, etc."></textarea>
+                    <textarea id="businessDescription" rows="3" placeholder="Landmarks, directions, etc."></textarea>
                 </div>
+                
                 <button type="submit" class="btn-login">Register as Seller</button>
             </form>
             
@@ -187,12 +213,17 @@
         </div>
     </footer>
 
+    <!-- SCRIPTS - CORRECT ORDER -->
     <script src="api.js"></script>
     <script src="script.js"></script>
-    <script scr="auth-check.js"></script>
-    <script>
+    <script src="auth-check.js"></script>
     
-    // Make sure this runs when the form is submitted
+    <script>
+    // Make sure Supabase variables are available
+    const SUPABASE_URL = 'https://your-project-id.supabase.co'; // REPLACE WITH YOUR ACTUAL URL
+    const SUPABASE_ANON_KEY = 'your-anon-key-here'; // REPLACE WITH YOUR ACTUAL KEY
+    
+    // Handle seller registration
     async function handleSellerRegistration(event) {
         event.preventDefault(); // Stop form from submitting normally
         
@@ -225,17 +256,22 @@
             return;
         }
         
-        // GET FORM DATA - UPDATE THESE IDs TO MATCH YOUR FORM
+        // GET FORM DATA - IDs now match the form
         const businessName = document.getElementById('businessName')?.value;
-        const businessType = document.getElementById('businessType')?.value;
-        const businessAddress = document.getElementById('businessAddress')?.value;
         const businessPhone = document.getElementById('businessPhone')?.value;
+        const businessType = document.getElementById('businessType')?.value;
         const businessEmail = document.getElementById('businessEmail')?.value;
+        const businessAddress = document.getElementById('businessAddress')?.value;
         const businessDescription = document.getElementById('businessDescription')?.value;
         
+        // Combine location fields if you want to store them together
+        const shopCity = document.getElementById('shopCity')?.value;
+        const shopArea = document.getElementById('shopArea')?.value;
+        const fullAddress = businessAddress + (shopCity ? ', ' + shopCity : '') + (shopArea ? ', ' + shopArea : '');
+        
         // Validate required fields
-        if (!businessName || !businessType) {
-            alert('Please fill in all required fields');
+        if (!businessName || !businessPhone || !businessType) {
+            alert('Please fill in all required fields (Shop Name, WhatsApp Number, and Business Type)');
             return;
         }
         
@@ -252,17 +288,17 @@
                 headers: {
                     'Content-Type': 'application/json',
                     'apikey': SUPABASE_ANON_KEY,
-                    'Authorization': `Bearer ${accessToken}` // THIS IS THE KEY PART!
+                    'Authorization': `Bearer ${accessToken}`
                 },
                 body: JSON.stringify({
                     user_id: userId,
                     business_name: businessName,
+                    business_phone: businessPhone,
                     business_type: businessType,
-                    business_address: businessAddress || '',
-                    business_phone: businessPhone || '',
                     business_email: businessEmail || '',
+                    business_address: fullAddress || businessAddress || '',
                     business_description: businessDescription || '',
-                    status: 'pending', // or 'active' depending on your flow
+                    status: 'pending',
                     created_at: new Date().toISOString()
                 })
             });
@@ -271,7 +307,7 @@
             
             if (response.ok) {
                 alert('Successfully registered as a seller!');
-                window.location.href = 'seller-dashboard.html'; // or wherever you want to redirect
+                window.location.href = 'seller-dashboard.html'; // Change this to your dashboard page
             } else {
                 throw new Error(data.message || data.error || 'Registration failed');
             }
@@ -285,7 +321,7 @@
         }
     }
     
-    // Add this to display logged-in user info on the page
+    // Display logged-in user info
     document.addEventListener('DOMContentLoaded', function() {
         const sessionData = localStorage.getItem('supabase_session');
         const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
@@ -295,34 +331,22 @@
                 const session = JSON.parse(sessionData);
                 const userEmail = session.user?.email || 'User';
                 
-                // Show welcome message if there's an element for it
+                // Show welcome message
                 const welcomeEl = document.getElementById('welcomeMessage');
                 if (welcomeEl) {
                     welcomeEl.textContent = `Logged in as: ${userEmail}`;
                 }
                 
-                // Pre-fill email if there's a field for it
+                // Pre-fill email field
                 const emailField = document.getElementById('businessEmail');
                 if (emailField) {
                     emailField.value = userEmail;
-                    emailField.readOnly = true; // Optional: make it read-only
                 }
             } catch (e) {
                 console.error('Error parsing session:', e);
             }
         }
     });
-</script>
-    
+    </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
