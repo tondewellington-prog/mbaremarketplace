@@ -188,31 +188,8 @@
     </footer>
 
     <script src="api.js"></script>
-    <script>
-    // Check if user is logged in before loading seller page
-    document.addEventListener('DOMContentLoaded', function() {
-        const sessionData = localStorage.getItem('supabase_session');
-        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-        
-        if (!isLoggedIn || !sessionData) {
-            // Not logged in - redirect to login
-            alert('Please log in first to register as a seller');
-            window.location.href = 'login.html?redirect=seller-register.html';
-            return;
-        }
-        
-        // Optional: Display user info on the page
-        try {
-            const session = JSON.parse(sessionData);
-            const userEmail = session.user?.email || 'User';
-            document.getElementById('userEmail').textContent = userEmail;
-        } catch (e) {
-            console.error('Error parsing session:', e);
-        }
-    });
-</script>
-    
     <script src="script.js"></script>
+    <script scr="auth-check.js"></script>
     <script>
     
     // Make sure this runs when the form is submitted
@@ -339,6 +316,7 @@
     
 </body>
 </html>
+
 
 
 
