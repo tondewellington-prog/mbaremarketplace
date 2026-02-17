@@ -82,11 +82,11 @@
             <h1>Become a Seller</h1>
             <p style="margin-bottom: 20px; color: #666;">Register your shop and start selling on Mbare Marketplace</p>
             
-            <!-- Welcome message will appear here if logged in -->
+            <!-- Welcome Message (will show if logged in) -->
             <div id="welcomeMessage" style="margin-bottom: 15px; font-weight: bold; color: #0066c0;"></div>
             
             <form class="login-form" onsubmit="handleSellerRegistration(event)">
-                <!-- IMPORTANT: IDs updated to match JavaScript -->
+                <!-- IMPORTANT: IDs match what JavaScript expects -->
                 <div class="form-group">
                     <label>Shop Name *</label>
                     <input type="text" id="businessName" required placeholder="e.g., John's Electronics Shop">
@@ -213,23 +213,25 @@
         </div>
     </footer>
 
-    <!-- SCRIPTS - CORRECT ORDER -->
     <script src="api.js"></script>
     <script src="script.js"></script>
     <script src="auth-check.js"></script>
-    
     <script>
     // Make sure Supabase variables are available
-    const SUPABASE_URL = 'https://your-project-id.supabase.co'; // REPLACE WITH YOUR ACTUAL URL
-    const SUPABASE_ANON_KEY = 'your-anon-key-here'; // REPLACE WITH YOUR ACTUAL KEY
+    const SUPABASE_URL = window.SUPABASE_URL || 'https://your-project-id.supabase.co'; // REPLACE WITH YOUR URL
+    const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'your-anon-key'; // REPLACE WITH YOUR KEY
     
     // Handle seller registration
     async function handleSellerRegistration(event) {
         event.preventDefault(); // Stop form from submitting normally
         
+        console.log('=== SELLER REGISTRATION STARTED ===');
+        
         // CHECK IF USER IS LOGGED IN
         const sessionData = localStorage.getItem('supabase_session');
         const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        
+        console.log('Login check:', { isLoggedIn, hasSession: !!sessionData });
         
         if (!isLoggedIn || !sessionData) {
             alert('You must be logged in to register as a seller');
@@ -241,7 +243,9 @@
         let session;
         try {
             session = JSON.parse(sessionData);
+            console.log('Session parsed successfully for:', session.user?.email);
         } catch (e) {
+            console.error('Session parse error:', e);
             alert('Session error. Please log in again.');
             window.location.href = 'login.html';
             return;
@@ -251,6 +255,7 @@
         const userId = session.user?.id;
         
         if (!accessToken || !userId) {
+            console.error('Missing token or userId');
             alert('Invalid session. Please log in again.');
             window.location.href = 'login.html';
             return;
@@ -264,10 +269,14 @@
         const businessAddress = document.getElementById('businessAddress')?.value;
         const businessDescription = document.getElementById('businessDescription')?.value;
         
-        // Combine location fields if you want to store them together
+        // Get optional location fields
         const shopCity = document.getElementById('shopCity')?.value;
         const shopArea = document.getElementById('shopArea')?.value;
+        
+        // Combine address
         const fullAddress = businessAddress + (shopCity ? ', ' + shopCity : '') + (shopArea ? ', ' + shopArea : '');
+        
+        console.log('Form data:', { businessName, businessPhone, businessType });
         
         // Validate required fields
         if (!businessName || !businessPhone || !businessType) {
@@ -282,6 +291,8 @@
         submitBtn.disabled = true;
         
         try {
+            console.log('Sending data to Supabase...');
+            
             // SEND DATA TO SUPABASE
             const response = await fetch(`${SUPABASE_URL}/rest/v1/sellers`, {
                 method: 'POST',
@@ -303,12 +314,24 @@
                 })
             });
             
+            console.log('Response status:', response.status);
+            
             const data = await response.json();
+            console.log('Response data:', data);
             
             if (response.ok) {
                 alert('Successfully registered as a seller!');
-                window.location.href = 'seller-dashboard.html'; // Change this to your dashboard page
+                
+                // Store seller info in localStorage
+                localStorage.setItem('seller_status', 'pending');
+                localStorage.setItem('seller_name', businessName);
+                localStorage.setItem('just_registered_as_seller', 'true');
+                
+                // Redirect to dashboard
+                console.log('Redirecting to seller dashboard...');
+                window.location.href = 'seller-dashboard.html';
             } else {
+                console.error('Registration failed:', data);
                 throw new Error(data.message || data.error || 'Registration failed');
             }
         } catch (error) {
@@ -318,11 +341,14 @@
             // RESET BUTTON
             submitBtn.textContent = originalText;
             submitBtn.disabled = false;
+            console.log('=== SELLER REGISTRATION ENDED ===');
         }
     }
     
-    // Display logged-in user info
+    // Display logged-in user info on page load
     document.addEventListener('DOMContentLoaded', function() {
+        console.log('Seller registration page loaded');
+        
         const sessionData = localStorage.getItem('supabase_session');
         const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
         
@@ -342,8 +368,17 @@
                 if (emailField) {
                     emailField.value = userEmail;
                 }
+                
+                console.log('User is logged in:', userEmail);
             } catch (e) {
                 console.error('Error parsing session:', e);
+            }
+        } else {
+            console.log('User is NOT logged in');
+            const welcomeEl = document.getElementById('welcomeMessage');
+            if (welcomeEl) {
+                welcomeEl.textContent = 'Please log in to register as a seller';
+                welcomeEl.style.color = 'red';
             }
         }
     });
