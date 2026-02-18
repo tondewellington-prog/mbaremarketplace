@@ -9,6 +9,38 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
+    <!-- Add this temporary test button -->
+<div style="margin-bottom: 20px; padding: 10px; background: #f0f0f0; border-radius: 4px;">
+    <button onclick="testDashboardLink()" style="padding: 8px 15px; background: #0066c0; color: white; border: none; border-radius: 4px; cursor: pointer;">
+        Test Dashboard Link
+    </button>
+    <span id="testResult" style="margin-left: 10px;"></span>
+</div>
+
+<script>
+function testDashboardLink() {
+    const result = document.getElementById('testResult');
+    result.textContent = 'Checking...';
+    result.style.color = 'blue';
+    
+    fetch('seller-dashboard.html', { method: 'HEAD' })
+        .then(response => {
+            if (response.ok) {
+                result.textContent = '✅ Dashboard file exists!';
+                result.style.color = 'green';
+                // Try redirecting
+                window.location.href = 'seller-dashboard.html';
+            } else {
+                result.textContent = '❌ Dashboard file NOT found (404)';
+                result.style.color = 'red';
+            }
+        })
+        .catch(error => {
+            result.textContent = '❌ Error checking: ' + error.message;
+            result.style.color = 'red';
+        });
+}
+</script>
 <body>
     <!-- Header -->
     <header class="header">
@@ -382,3 +414,4 @@
     </script>
 </body>
 </html>
+
