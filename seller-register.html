@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
-  <body>
+<body>
     <!-- Header -->
     <header class="header">
         <div class="header-top">
@@ -84,6 +84,9 @@
             
             <!-- Welcome Message -->
             <div id="welcomeMessage" style="margin-bottom: 15px; font-weight: bold; color: #0066c0;"></div>
+            
+            <!-- Status Message -->
+            <div id="statusMessage" style="display: none; margin-bottom: 15px; padding: 10px; border-radius: 4px;"></div>
             
             <form class="login-form" onsubmit="handleSellerRegistration(event)">
                 <div class="form-group">
@@ -216,9 +219,9 @@
     <script src="script.js"></script>
     <script src="auth-check.js"></script>
     <script>
-    // IMPORTANT: Replace these with your actual Supabase credentials
-    const SUPABASE_URL = 'https://your-project-id.supabase.co';
-    const SUPABASE_ANON_KEY = 'your-anon-key';
+    // IMPORTANT: Use the same credentials from api.js
+    const SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
     
     // Handle seller registration
     async function handleSellerRegistration(event) {
@@ -229,6 +232,10 @@
         // Get submit button
         const submitBtn = document.getElementById('submitBtn');
         const originalText = submitBtn.textContent;
+        const statusDiv = document.getElementById('statusMessage');
+        
+        // Clear previous status
+        statusDiv.style.display = 'none';
         
         // CHECK LOGIN
         const sessionData = localStorage.getItem('supabase_session');
@@ -237,8 +244,10 @@
         console.log('Login check:', { isLoggedIn, hasSession: !!sessionData });
         
         if (!isLoggedIn || !sessionData) {
-            alert('You must be logged in to register as a seller');
-            window.location.href = 'login.html?redirect=seller-register.html';
+            statusDiv.style.display = 'block';
+            statusDiv.style.backgroundColor = '#f8d7da';
+            statusDiv.style.color = '#721c24';
+            statusDiv.innerHTML = 'You must be logged in to register as a seller. <a href="login.html">Login here</a>';
             return;
         }
         
@@ -248,8 +257,10 @@
             session = JSON.parse(sessionData);
             console.log('Session parsed for:', session.user?.email);
         } catch (e) {
-            alert('Session error. Please log in again.');
-            window.location.href = 'login.html';
+            statusDiv.style.display = 'block';
+            statusDiv.style.backgroundColor = '#f8d7da';
+            statusDiv.style.color = '#721c24';
+            statusDiv.innerHTML = 'Session error. Please <a href="login.html">login again</a>.';
             return;
         }
         
@@ -257,8 +268,10 @@
         const userId = session.user?.id;
         
         if (!accessToken || !userId) {
-            alert('Invalid session. Please log in again.');
-            window.location.href = 'login.html';
+            statusDiv.style.display = 'block';
+            statusDiv.style.backgroundColor = '#f8d7da';
+            statusDiv.style.color = '#721c24';
+            statusDiv.innerHTML = 'Invalid session. Please <a href="login.html">login again</a>.';
             return;
         }
         
@@ -279,7 +292,10 @@
         
         // Validate
         if (!businessName || !businessPhone || !businessType) {
-            alert('Please fill in all required fields');
+            statusDiv.style.display = 'block';
+            statusDiv.style.backgroundColor = '#f8d7da';
+            statusDiv.style.color = '#721c24';
+            statusDiv.innerHTML = 'Please fill in all required fields (Shop Name, WhatsApp Number, and Business Type)';
             return;
         }
         
@@ -289,6 +305,7 @@
         
         try {
             console.log('Sending to Supabase...');
+            console.log('URL:', `${SUPABASE_URL}/rest/v1/sellers`);
             
             const response = await fetch(`${SUPABASE_URL}/rest/v1/sellers`, {
                 method: 'POST',
@@ -312,36 +329,36 @@
             
             console.log('Response status:', response.status);
             
-            const data = await response.json();
-            console.log('Response data:', data);
-            
             if (response.ok) {
-                alert('Successfully registered as a seller!');
-                
                 // Store seller info
                 localStorage.setItem('seller_status', 'pending');
                 localStorage.setItem('seller_name', businessName);
                 localStorage.setItem('just_registered_as_seller', 'true');
                 
-                // REDIRECT - Multiple methods to ensure it works
-                console.log('Redirecting to seller dashboard...');
+                console.log('✅ Registration successful! Redirecting...');
                 
-                // Method 1: Direct
-                window.location.href = 'seller-dashboard.html';
+                // Show success message
+                statusDiv.style.display = 'block';
+                statusDiv.style.backgroundColor = '#d4edda';
+                statusDiv.style.color = '#155724';
+                statusDiv.innerHTML = 'Registration successful! Redirecting to dashboard...';
                 
-                // Method 2: Backup
+                // FORCE REDIRECT - Multiple methods
                 setTimeout(() => {
-                    if (window.location.pathname.includes('seller-register')) {
-                        window.location.replace('seller-dashboard.html');
-                    }
+                    window.location.href = 'seller-dashboard.html';
                 }, 500);
                 
             } else {
-                throw new Error(data.message || data.error || 'Registration failed');
+                const error = await response.json();
+                console.error('Registration failed:', error);
+                throw new Error(error.message || error.error || 'Registration failed');
             }
         } catch (error) {
             console.error('Registration error:', error);
-            alert('Error: ' + error.message);
+            statusDiv.style.display = 'block';
+            statusDiv.style.backgroundColor = '#f8d7da';
+            statusDiv.style.color = '#721c24';
+            statusDiv.innerHTML = 'Error: ' + error.message;
         } finally {
             submitBtn.textContent = originalText;
             submitBtn.disabled = false;
@@ -380,40 +397,5 @@
         }
     });
     </script>
-        <!-- Add this temporary test button -->
-<div style="margin-bottom: 20px; padding: 10px; background: #f0f0f0; border-radius: 4px;">
-    <button onclick="testDashboardLink()" style="padding: 8px 15px; background: #0066c0; color: white; border: none; border-radius: 4px; cursor: pointer;">
-        Test Dashboard Link
-    </button>
-    <span id="testResult" style="margin-left: 10px;"></span>
-</div>
-
-<script>
-function testDashboardLink() {
-    const result = document.getElementById('testResult');
-    result.textContent = 'Checking...';
-    result.style.color = 'blue';
-    
-    fetch('seller-dashboard.html', { method: 'HEAD' })
-        .then(response => {
-            if (response.ok) {
-                result.textContent = '✅ Dashboard file exists!';
-                result.style.color = 'green';
-                // Try redirecting
-                window.location.href = 'seller-dashboard.html';
-            } else {
-                result.textContent = '❌ Dashboard file NOT found (404)';
-                result.style.color = 'red';
-            }
-        })
-        .catch(error => {
-            result.textContent = '❌ Error checking: ' + error.message;
-            result.style.color = 'red';
-        });
-}
-</script>
-
 </body>
 </html>
-
-
