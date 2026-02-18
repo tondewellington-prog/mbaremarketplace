@@ -37,6 +37,7 @@
                     <div class="account-menu">
                         <span class="account-label">Hi there, Sign in</span>
                         <a href="login.html" class="account-link">Account & Lists</a>
+                        <button id="logoutBtn" onclick="logout()" style="display: none; background: none; border: none; color: #fff; cursor: pointer; margin-left: 10px;">Logout</button>
                     </div>
                     <div class="returns">
                         <span class="returns-label">Returns</span>
@@ -190,8 +191,8 @@
 
     <script src="api.js"></script>
     <script src="script.js"></script>
-    <script scr="auth-check.js"></script>
-<script>
+    <script src="auth-check.js"></script>
+    <script>
     // Make sure api is loaded
     console.log('API loaded:', window.api);
     
@@ -331,8 +332,6 @@
         }
     `;
     document.head.appendChild(style);
-</script>
+    </script>
 </body>
 </html>
-
-
