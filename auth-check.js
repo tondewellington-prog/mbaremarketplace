@@ -4,6 +4,13 @@ document.addEventListener('DOMContentLoaded', function() {
     checkLoginStatus();
 });
 
+// Also check when page becomes visible (in case user logs in/out in another tab)
+document.addEventListener('visibilitychange', function() {
+    if (!document.hidden) {
+        checkLoginStatus();
+    }
+});
+
 function checkLoginStatus() {
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
     const sessionData = localStorage.getItem('supabase_session');
@@ -12,6 +19,8 @@ function checkLoginStatus() {
     const accountLabel = document.querySelector('.account-label');
     const accountLink = document.querySelector('.account-link');
     const logoutBtn = document.getElementById('logoutBtn');
+    
+    console.log('Checking login status:', { isLoggedIn, hasSession: !!sessionData });
     
     if (isLoggedIn && sessionData && accountLabel && accountLink) {
         try {
@@ -28,6 +37,8 @@ function checkLoginStatus() {
             if (logoutBtn) {
                 logoutBtn.style.display = 'inline-block';
             }
+            
+            console.log('User is logged in:', userEmail);
         } catch (e) {
             console.error('Error parsing session:', e);
             // If error, clear storage and show logged out state
@@ -37,6 +48,7 @@ function checkLoginStatus() {
         }
     } else if (accountLabel && accountLink) {
         setLoggedOutState(accountLabel, accountLink, logoutBtn);
+        console.log('User is not logged in');
     }
 }
 
@@ -53,6 +65,7 @@ function setLoggedOutState(accountLabel, accountLink, logoutBtn) {
 
 // Logout function
 window.logout = function() {
+    console.log('Logging out...');
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('supabase_session');
     window.location.href = 'index.html';
