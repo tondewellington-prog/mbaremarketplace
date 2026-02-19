@@ -2,435 +2,94 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Become a Seller - Mbare Marketplace</title>
+    <title>Seller Registration - Mbare Marketplace</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Header -->
-    <header class="header">
-        <div class="header-top">
-            <div class="container">
-                <div class="logo">
-                    <a href="index.html">Mbare Marketplace</a>
-                </div>
-                <div class="search-bar">
-                    <select class="search-category">
-                        <option>All</option>
-                        <option>Electronics</option>
-                        <option>Books</option>
-                        <option>Clothing</option>
-                        <option>Home & Kitchen</option>
-                    </select>
-                    <input type="text" id="searchInput" placeholder="Search Mbare Marketplace" class="search-input">
-                    <button class="search-btn" onclick="handleSearch()">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <path d="m21 21-4.35-4.35"></path>
-                        </svg>
-                    </button>
-                </div>
-                <div class="header-right">
-                    <div class="account-menu">
-                        <span class="account-label">Hello, Sign in</span>
-                        <a href="login.html" class="account-link">Account & Lists</a>
-                        <button id="logoutBtn" onclick="logout()" style="display: none; background: none; border: none; color: #fff; cursor: pointer; margin-left: 10px;">Logout</button>
-                    </div>
-                    <div class="returns">
-                        <span class="returns-label">Returns</span>
-                        <span class="returns-link">& Orders</span>
-                    </div>
-                    <a href="Basket.html" class="basket">
-                        <div class="basket-icon">
-                            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-                                <line x1="3" y1="6" x2="21" y2="6"></line>
-                                <path d="M16 10a4 4 0 0 1-8 0"></path>
-                            </svg>
-                            <span class="basket-count" id="basketCount">0</span>
-                        </div>
-                        <span class="basket-text">Basket</span>
-                    </a>
-                </div>
-            </div>
-        </div>
-        <nav class="nav-menu">
-            <div class="container">
-                <a href="index.html" class="nav-item all-menu">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <line x1="3" y1="12" x2="21" y2="12"></line>
-                        <line x1="3" y1="6" x2="21" y2="6"></line>
-                        <line x1="3" y1="18" x2="21" y2="18"></line>
-                    </svg>
-                    All
-                </a>
-                <a href="#" class="nav-item">Today's Deals</a>
-                <a href="#" class="nav-item">Customer Service</a>
-                <a href="#" class="nav-item">Registry</a>
-                <a href="#" class="nav-item">Gift Cards</a>
-                <a href="#" class="nav-item">Sell</a>
-            </div>
-        </nav>
-    </header>
 
-    <!-- Seller Registration Content -->
-    <div class="login-container" style="max-width: 600px;">
-        <div class="login-box">
-            <h1>Become a Seller</h1>
-            <p style="margin-bottom: 20px; color: #666;">Register your shop and start selling on Mbare Marketplace</p>
-            
-            <!-- Welcome Message -->
-            <div id="welcomeMessage" style="margin-bottom: 15px; font-weight: bold; color: #0066c0;"></div>
-            
-            <!-- Status Message -->
-            <div id="statusMessage" style="display: none; margin-bottom: 15px; padding: 10px; border-radius: 4px;"></div>
-            
-            <!-- Test Redirect Button -->
-            <div style="margin-bottom: 20px; padding: 10px; background: #f0f0f0; border-radius: 4px;">
-                <button type="button" onclick="testRedirect()" style="padding: 5px 10px; background: #0066c0; color: white; border: none; border-radius: 4px; cursor: pointer;">Test Dashboard Link</button>
-                <span id="testResult" style="margin-left: 10px;"></span>
-            </div>
-            
-            <form class="login-form" onsubmit="handleSellerRegistration(event)">
-                <div class="form-group">
-                    <label>Shop Name *</label>
-                    <input type="text" id="businessName" required placeholder="e.g., John's Electronics Shop">
-                </div>
-                
-                <div class="form-group">
-                    <label>WhatsApp Number *</label>
-                    <input type="tel" id="businessPhone" required placeholder="e.g., +263771234567">
-                    <small style="color: #666; font-size: 12px;">Buyers will contact you via this number</small>
-                </div>
-                
-                <div class="form-group">
-                    <label>Business Type *</label>
-                    <select id="businessType" required>
-                        <option value="">Select business type...</option>
-                        <option value="Electronics">Electronics</option>
-                        <option value="Clothing">Clothing</option>
-                        <option value="Books">Books</option>
-                        <option value="Home & Kitchen">Home & Kitchen</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label>Business Email</label>
-                    <input type="email" id="businessEmail" placeholder="your@email.com">
-                </div>
-                
-                <div class="form-group">
-                    <label>Shop Location - Street</label>
-                    <input type="text" id="businessAddress" placeholder="Street address">
-                </div>
-                
-                <div class="form-row" style="display: flex; gap: 15px;">
-                    <div class="form-group" style="flex: 1;">
-                        <label>City</label>
-                        <input type="text" id="shopCity" placeholder="City">
-                    </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label>Area/Suburb</label>
-                        <input type="text" id="shopArea" placeholder="Area">
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label>Additional Location Details</label>
-                    <textarea id="businessDescription" rows="3" placeholder="Landmarks, directions, etc."></textarea>
-                </div>
-                
-                <button type="submit" class="btn-login" id="submitBtn">Register as Seller</button>
-            </form>
-            
-            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
-                <p style="font-size: 14px; color: #666;">
-                    Already have an account? <a href="login.html" style="color: #007185;">Sign in</a>
-                </p>
-            </div>
-        </div>
-    </div>
+<div class="container" style="max-width:600px;margin:50px auto;background:white;padding:30px;border-radius:6px;">
+    <h2>Register as a Seller</h2>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-top">
-            <a href="#" class="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">Back to top</a>
+    <form id="sellerForm">
+        <div class="form-group">
+            <label>Business Name *</label>
+            <input type="text" id="businessName" required>
         </div>
-        <div class="footer-content">
-            <div class="container">
-                <div class="footer-columns">
-                    <div class="footer-column">
-                        <h3>Get to Know Us</h3>
-                        <ul>
-                            <li><a href="#">Careers</a></li>
-                            <li><a href="#">Blog</a></li>
-                            <li><a href="#">About Mbare Marketplace</a></li>
-                            <li><a href="#">Investor Relations</a></li>
-                            <li><a href="#">Mbare Marketplace Devices</a></li>
-                        </ul>
-                    </div>
-                    <div class="footer-column">
-                        <h3>Make Money with Us</h3>
-                        <ul>
-                            <li><a href="#">Sell products on Mbare Marketplace</a></li>
-                            <li><a href="#">Sell on Mbare Marketplace Business</a></li>
-                            <li><a href="#">Sell apps on Mbare Marketplace</a></li>
-                            <li><a href="#">Become an Affiliate</a></li>
-                            <li><a href="#">Advertise Your Products</a></li>
-                        </ul>
-                    </div>
-                    <div class="footer-column">
-                        <h3>Mbare Marketplace Payment Products</h3>
-                        <ul>
-                            <li><a href="#">Mbare Marketplace Business Card</a></li>
-                            <li><a href="#">Shop with Points</a></li>
-                            <li><a href="#">Reload Your Balance</a></li>
-                            <li><a href="#">Mbare Marketplace Currency Converter</a></li>
-                        </ul>
-                    </div>
-                    <div class="footer-column">
-                        <h3>Need Help?</h3>
-                        <ul>
-                            <li><a href="#">COVID-19 and Mbare Marketplace</a></li>
-                            <li><a href="#">Your Account</a></li>
-                            <li><a href="#">Your Orders</a></li>
-                            <li><a href="#">Shipping Rates & Policies</a></li>
-                            <li><a href="#">Returns & Replacements</a></li>
-                            <li><a href="#">Help</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <div class="container">
-                <div class="footer-logo">Mbare Marketplace</div>
-                <div class="footer-links">
-                    <a href="#">Conditions of Use</a>
-                    <a href="#">Privacy Notice</a>
-                    <a href="#">Interest-Based Ads</a>
-                </div>
-                <div class="footer-copyright">
-                    &copy; 2026, Mbare Marketplace.com, Inc. or its affiliates
-                </div>
-            </div>
-        </div>
-    </footer>
 
-    <script src="api.js"></script>
-    <script src="script.js"></script>
-    <script src="auth-check.js"></script>
-    <script>
-    // Supabase credentials
-    const SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
-    
-    // Test redirect function
-    function testRedirect() {
-        const result = document.getElementById('testResult');
-        result.innerHTML = 'Checking...';
-        result.style.color = 'blue';
-        
-        // Try to fetch the dashboard
-        fetch('seller-dashboard.html', { method: 'HEAD' })
-            .then(response => {
-                if (response.ok) {
-                    result.innerHTML = '✅ Dashboard exists! Redirecting...';
-                    result.style.color = 'green';
-                    // Force redirect
-                    window.location.href = 'seller-dashboard.html';
-                } else {
-                    result.innerHTML = '❌ Dashboard not found (404)';
-                    result.style.color = 'red';
-                }
-            })
-            .catch(error => {
-                result.innerHTML = '❌ Error: ' + error.message;
-                result.style.color = 'red';
-            });
+        <div class="form-group">
+            <label>Phone Number *</label>
+            <input type="text" id="phoneNumber" required>
+        </div>
+
+        <div class="form-group">
+            <label>Business Address *</label>
+            <input type="text" id="businessAddress" required>
+        </div>
+
+        <button type="submit" class="btn-login">Register</button>
+    </form>
+
+    <div id="message" style="margin-top:20px;"></div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
+
+document.getElementById('sellerForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const sessionData = localStorage.getItem('supabase_session');
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+
+    if (!isLoggedIn || !sessionData) {
+        alert("Please login first");
+        window.location.href = "login.html";
+        return;
     }
-    
-    async function handleSellerRegistration(event) {
-        event.preventDefault();
-        
-        console.log('=== SELLER REGISTRATION STARTED ===');
-        
-        const submitBtn = document.getElementById('submitBtn');
-        const originalText = submitBtn.textContent;
-        const statusDiv = document.getElementById('statusMessage');
-        
-        statusDiv.style.display = 'none';
-        
-        // CHECK LOGIN
-        const sessionData = localStorage.getItem('supabase_session');
-        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-        
-        console.log('Login check:', { isLoggedIn, hasSession: !!sessionData });
-        
-        if (!isLoggedIn || !sessionData) {
-            statusDiv.style.display = 'block';
-            statusDiv.style.backgroundColor = '#f8d7da';
-            statusDiv.style.color = '#721c24';
-            statusDiv.innerHTML = 'You must be logged in to register as a seller. <a href="login.html">Login here</a>';
-            return;
-        }
-        
-        // PARSE SESSION
-        let session;
-        try {
-            session = JSON.parse(sessionData);
-            console.log('Logged in as:', session.user?.email);
-        } catch (e) {
-            statusDiv.style.display = 'block';
-            statusDiv.style.backgroundColor = '#f8d7da';
-            statusDiv.style.color = '#721c24';
-            statusDiv.innerHTML = 'Session error. Please <a href="login.html">login again</a>.';
-            return;
-        }
-        
-        const accessToken = session.access_token;
-        const userId = session.user?.id;
-        
-        if (!accessToken || !userId) {
-            statusDiv.style.display = 'block';
-            statusDiv.style.backgroundColor = '#f8d7da';
-            statusDiv.style.color = '#721c24';
-            statusDiv.innerHTML = 'Invalid session. Please <a href="login.html">login again</a>.';
-            return;
-        }
-        
-        // GET FORM DATA
-        const businessName = document.getElementById('businessName')?.value;
-        const businessPhone = document.getElementById('businessPhone')?.value;
-        const businessType = document.getElementById('businessType')?.value;
-        const businessEmail = document.getElementById('businessEmail')?.value;
-        const businessAddress = document.getElementById('businessAddress')?.value;
-        const businessDescription = document.getElementById('businessDescription')?.value;
-        const shopCity = document.getElementById('shopCity')?.value;
-        const shopArea = document.getElementById('shopArea')?.value;
-        
-        const fullAddress = businessAddress + (shopCity ? ', ' + shopCity : '') + (shopArea ? ', ' + shopArea : '');
-        
-        console.log('Form data:', { businessName, businessPhone, businessType });
-        
-        if (!businessName || !businessPhone || !businessType) {
-            statusDiv.style.display = 'block';
-            statusDiv.style.backgroundColor = '#f8d7da';
-            statusDiv.style.color = '#721c24';
-            statusDiv.innerHTML = 'Please fill in all required fields';
-            return;
-        }
-        
-        // Show loading
-        submitBtn.textContent = 'Registering...';
-        submitBtn.disabled = true;
-        statusDiv.style.display = 'block';
-        statusDiv.style.backgroundColor = '#cce5ff';
-        statusDiv.style.color = '#004085';
-        statusDiv.innerHTML = 'Registering... Please wait.';
-        
-        try {
-            console.log('Sending to Supabase...');
-            
-            const response = await fetch(`${SUPABASE_URL}/rest/v1/sellers`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'apikey': SUPABASE_ANON_KEY,
-                    'Authorization': `Bearer ${accessToken}`
-                },
-                body: JSON.stringify({
-                    user_id: userId,
-                    business_name: businessName,
-                    business_phone: businessPhone,
-                    business_type: businessType,
-                    business_email: businessEmail || '',
-                    business_address: fullAddress || businessAddress || '',
-                    business_description: businessDescription || '',
-                    status: 'pending',
-                    created_at: new Date().toISOString()
-                })
-            });
-            
-            console.log('Response status:', response.status);
-            
-            if (response.ok) {
-                // Store seller info
-                localStorage.setItem('seller_status', 'pending');
-                localStorage.setItem('seller_name', businessName);
-                localStorage.setItem('just_registered_as_seller', 'true');
-                
-                statusDiv.style.backgroundColor = '#d4edda';
-                statusDiv.style.color = '#155724';
-                statusDiv.innerHTML = '✅ Registration successful! Redirecting to dashboard...';
-                
-                console.log('✅ Registration successful! Redirecting...');
-                
-                // FORCE REDIRECT - multiple methods to ensure it works
-                setTimeout(() => {
-                    // Method 1: Direct
-                    window.location.href = 'seller-dashboard.html';
-                }, 500);
-                
-                // Method 2: Backup
-                setTimeout(() => {
-                    if (window.location.pathname.includes('seller-register')) {
-                        window.location.replace('seller-dashboard.html');
-                    }
-                }, 1000);
-                
-                // Method 3: Last resort
-                setTimeout(() => {
-                    if (window.location.pathname.includes('seller-register')) {
-                        window.location.assign('seller-dashboard.html');
-                    }
-                }, 1500);
-                
-            } else {
-                const errorData = await response.json().catch(() => ({}));
-                console.error('Registration failed:', errorData);
-                throw new Error(errorData.message || errorData.error || `Error ${response.status}`);
-            }
-        } catch (error) {
-            console.error('Registration error:', error);
-            statusDiv.style.backgroundColor = '#f8d7da';
-            statusDiv.style.color = '#721c24';
-            statusDiv.innerHTML = '❌ Error: ' + error.message;
-        } finally {
-            submitBtn.textContent = originalText;
-            submitBtn.disabled = false;
-        }
-    }
-    
-    // Display logged-in user info
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('Seller registration page loaded');
-        
-        const sessionData = localStorage.getItem('supabase_session');
-        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-        
-        const welcomeEl = document.getElementById('welcomeMessage');
-        
-        if (isLoggedIn && sessionData) {
-            try {
-                const session = JSON.parse(sessionData);
-                const userEmail = session.user?.email || 'User';
-                welcomeEl.textContent = `✓ Logged in as: ${userEmail}`;
-                welcomeEl.style.color = '#0066c0';
-                
-                const emailField = document.getElementById('businessEmail');
-                if (emailField) emailField.value = userEmail;
-            } catch (e) {
-                welcomeEl.innerHTML = '⚠️ Please <a href="login.html">log in</a>';
-            }
+
+    const session = JSON.parse(sessionData);
+    const userId = session.user.id;
+    const accessToken = session.access_token;
+
+    const sellerData = {
+        user_id: userId,
+        business_name: document.getElementById("businessName").value,
+        phone: document.getElementById("phoneNumber").value,
+        address: document.getElementById("businessAddress").value,
+        status: "pending",
+        created_at: new Date().toISOString()
+    };
+
+    try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/sellers`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "apikey": SUPABASE_ANON_KEY,
+                "Authorization": `Bearer ${accessToken}`
+            },
+            body: JSON.stringify(sellerData)
+        });
+
+        if (response.ok) {
+            document.getElementById("message").innerHTML =
+                "<div style='color:green;'>Registration successful! Redirecting...</div>";
+
+            setTimeout(() => {
+                window.location.href = "seller-dashboard.html";
+            }, 1500);
         } else {
-            welcomeEl.innerHTML = '⚠️ Please <a href="login.html">log in</a> to register as a seller';
+            const error = await response.json();
+            alert("Error: " + (error.message || "Registration failed"));
         }
-    });
-    </script>
+
+    } catch (err) {
+        alert("Network error: " + err.message);
+    }
+});
+</script>
+
 </body>
 </html>
+
