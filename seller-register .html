@@ -50,7 +50,7 @@
                     <div class="account-menu">
                         <span class="account-label">Hello,</span>
                         <a href="#" class="account-link">Seller Dashboard</a>
-                        <button id="logoutBtn" onclick="logout()" style="display: none; background: none; border: none; color: #fff; cursor: pointer; margin-left: 10px;">Logout</button>
+                        <button id="logoutBtn" onclick="logout()" style="background: none; border: none; color: #fff; cursor: pointer; margin-left: 10px;">Logout</button>
                     </div>
                     <div class="returns">
                         <span class="returns-label">Returns</span>
@@ -230,21 +230,45 @@
         </div>
     </footer>
 
-    <script src="api.js"></script>
-    <script src="script.js"></script>
-    <script src="auth-check.js"></script>
+    <!-- Configuration -->
     <script>
         // Supabase configuration
         const SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
+    </script>
+
+    <!-- Main Scripts -->
+    <script>
+        // ===== GLOBAL FUNCTIONS =====
         
+        // Handle search
+        function handleSearch() {
+            const searchTerm = document.getElementById('searchInput').value;
+            const category = document.querySelector('.search-category').value;
+            if (searchTerm.trim()) {
+                window.location.href = `search.html?q=${encodeURIComponent(searchTerm)}&cat=${encodeURIComponent(category)}`;
+            }
+        }
+
+        // Logout function
+        function logout() {
+            localStorage.removeItem('supabase_session');
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('userEmail');
+            window.location.href = 'index.html';
+        }
+
+        // Update basket count
+        function updateBasketCount() {
+            const basket = JSON.parse(localStorage.getItem('basket')) || [];
+            document.getElementById('basketCount').textContent = basket.length;
+        }
+
         // Global variables
         let currentSellerId = null;
         let currentAccessToken = null;
         let sellerStatus = null;
 
-        // ===== GLOBAL FUNCTIONS (defined at top level) =====
-        
         // Show add product form
         function showAddProductForm() {
             console.log('showAddProductForm called, status:', sellerStatus);
@@ -258,6 +282,7 @@
         // Hide add product form
         function hideAddProductForm() {
             document.getElementById('addProductForm').style.display = 'none';
+            document.getElementById('addProductForm').querySelector('form').reset();
         }
 
         // Handle add product
@@ -307,7 +332,6 @@
                 if (response.ok) {
                     alert('Product added successfully!');
                     hideAddProductForm();
-                    document.getElementById('addProductForm').querySelector('form').reset();
                     await loadMyProducts();
                 } else {
                     const error = await response.json();
@@ -348,42 +372,10 @@
             }
         }
 
-        // Edit product (placeholder)
+        // Edit product
         function editProduct(productId) {
             alert('Edit functionality coming soon!');
         }
-
-        // ===== MAIN DASHBOARD FUNCTIONS =====
-
-        // Load dashboard
-        document.addEventListener('DOMContentLoaded', async function() {
-            console.log('Dashboard loading...');
-            
-            // Check if user is logged in
-            const sessionData = localStorage.getItem('supabase_session');
-            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-            
-            if (!isLoggedIn || !sessionData) {
-                alert('Please login first');
-                window.location.href = 'login.html?redirect=seller-dashboard.html';
-                return;
-            }
-            
-            try {
-                const session = JSON.parse(sessionData);
-                currentSellerId = session.user?.id;
-                currentAccessToken = session.access_token;
-                console.log('Logged in as:', currentSellerId);
-                
-                // Check if user is a registered seller
-                await checkSellerStatus();
-                
-            } catch (error) {
-                console.error('Session error:', error);
-                alert('Session error. Please login again.');
-                window.location.href = 'login.html';
-            }
-        });
 
         // Check seller status
         async function checkSellerStatus() {
@@ -413,7 +405,6 @@
                         statusDiv.className = 'status-message status-approved';
                         statusDiv.innerHTML = '✅ Your seller account is approved! You can now add products.';
                         if (addButton) addButton.disabled = false;
-                        // Load products
                         await loadMyProducts();
                     } else if (sellerStatus === 'pending') {
                         statusDiv.className = 'status-message status-pending';
@@ -472,8 +463,8 @@
             
             container.innerHTML = products.map(product => `
                 <div class="product-card">
-                    <img src="${product.image_url || 'https://via.placeholder.com/300x300?text=Product'}" alt="${product.title}">
-                    <h3 style="margin: 10px 0;">${product.title}</h3>
+                    <img src="${product.image_url || 'https://via.placeholder.com/300x300?text=Product'}" alt="${product.title.replace(/[<>]/g, '')}">
+                    <h3 style="margin: 10px 0;">${product.title.replace(/[<>]/g, '')}</h3>
                     <div style="font-size: 20px; font-weight: 600; color: #B12704;">$${parseFloat(product.price).toFixed(2)}</div>
                     <div style="margin: 10px 0; color: #666;">Stock: ${product.stock || 0}</div>
                     <div style="margin-top: 15px;">
@@ -484,12 +475,61 @@
             `).join('');
         }
 
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('Dashboard loading...');
+            
+            // Update basket count
+            updateBasketCount();
+            
+            // Check if user is logged in
+            const sessionData = localStorage.getItem('supabase_session');
+            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+            
+            if (!isLoggedIn || !sessionData) {
+                alert('Please login first');
+                window.location.href = 'login.html?redirect=seller-dashboard.html';
+                return;
+            }
+            
+            try {
+                const session = JSON.parse(sessionData);
+                currentSellerId = session.user?.id;
+                currentAccessToken = session.access_token;
+                console.log('Logged in as:', currentSellerId);
+                
+                // Check if user is a registered seller
+                await checkSellerStatus();
+                
+            } catch (error) {
+                console.error('Session error:', error);
+                alert('Session error. Please login again.');
+                window.location.href = 'login.html';
+            }
+        });
+
         // Make functions globally available
         window.showAddProductForm = showAddProductForm;
         window.hideAddProductForm = hideAddProductForm;
         window.handleAddProduct = handleAddProduct;
         window.deleteProduct = deleteProduct;
         window.editProduct = editProduct;
+        window.handleSearch = handleSearch;
+        window.logout = logout;
+    </script>
+
+    <!-- Fallback for external scripts -->
+    <script>
+        // Create empty placeholder functions if external scripts don't exist
+        window.addEventListener('error', function(e) {
+            if (e.target.tagName === 'SCRIPT') {
+                console.warn('External script failed to load:', e.target.src);
+                // Create placeholder functions
+                window.updateBasketCount = window.updateBasketCount || function() {};
+                window.handleSearch = window.handleSearch || function() {};
+                window.logout = window.logout || function() {};
+            }
+        }, true);
     </script>
 </body>
 </html>
