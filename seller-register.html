@@ -3,24 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seller Dashboard - Mbare Marketplace</title>
+    <title>Become a Seller - Mbare Marketplace</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        .status-message { padding: 15px; border-radius: 4px; margin-bottom: 20px; }
-        .status-approved { background-color: #d4edda; color: #155724; }
-        .status-pending { background-color: #fff3cd; color: #856404; }
-        .status-rejected { background-color: #f8d7da; color: #721c24; }
-        .product-card { border: 1px solid #ddd; border-radius: 4px; padding: 15px; background: white; }
-        .product-card img { width: 100%; height: 200px; object-fit: cover; border-radius: 4px; }
-        .btn-edit { padding: 8px 15px; background: #FFD814; border: none; border-radius: 4px; cursor: pointer; margin-right: 5px; }
-        .btn-delete { padding: 8px 15px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        .btn-disabled { opacity: 0.5; cursor: not-allowed; }
-        .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
-        .form-row .form-group { flex: 1; }
-    </style>
 </head>
 <body>
     <!-- Header -->
@@ -48,8 +35,8 @@
                 </div>
                 <div class="header-right">
                     <div class="account-menu">
-                        <span class="account-label">Hello,</span>
-                        <a href="#" class="account-link">Seller Dashboard</a>
+                        <span class="account-label">Hello, Sign in</span>
+                        <a href="login.html" class="account-link">Account & Lists</a>
                         <button id="logoutBtn" onclick="logout()" style="display: none; background: none; border: none; color: #fff; cursor: pointer; margin-left: 10px;">Logout</button>
                     </div>
                     <div class="returns">
@@ -84,82 +71,80 @@
                 <a href="#" class="nav-item">Customer Service</a>
                 <a href="#" class="nav-item">Registry</a>
                 <a href="#" class="nav-item">Gift Cards</a>
-                <a href="seller-register.html" class="nav-item">Sell</a>
+                <a href="#" class="nav-item">Sell</a>
             </div>
         </nav>
     </header>
 
-    <!-- Seller Dashboard Content -->
-    <div class="container" style="max-width: 1200px; margin: 30px auto; padding: 0 15px;">
-        <div style="background: white; padding: 30px; border-radius: 4px;">
-            <h1 style="margin-bottom: 30px;">Seller Dashboard</h1>
+    <!-- Seller Registration Content -->
+    <div class="login-container" style="max-width: 600px;">
+        <div class="login-box">
+            <h1>Become a Seller</h1>
+            <p style="margin-bottom: 20px; color: #666;">Register your shop and start selling on Mbare Marketplace</p>
             
-            <!-- Seller Status Message -->
-            <div id="sellerStatus" class="status-message" style="display: none;"></div>
+            <!-- Welcome Message -->
+            <div id="welcomeMessage" style="margin-bottom: 15px; font-weight: bold; color: #0066c0;"></div>
             
-            <!-- Add Product Button -->
-            <div style="margin-bottom: 30px;">
-                <button class="btn-login" id="addProductBtn" onclick="showAddProductForm()" style="width: auto; padding: 12px 30px;">+ Add New Product</button>
-            </div>
+            <!-- Status Message -->
+            <div id="statusMessage" style="display: none; margin-bottom: 15px; padding: 10px; border-radius: 4px;"></div>
             
-            <!-- Add Product Form (Hidden by default) -->
-            <div id="addProductForm" style="display: none; margin-bottom: 30px; padding: 20px; background: #f5f5f5; border-radius: 4px;">
-                <h2 style="margin-bottom: 20px;">Add New Product</h2>
-                <form onsubmit="handleAddProduct(event)">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Product Title *</label>
-                            <input type="text" id="prodTitle" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Category *</label>
-                            <select id="prodCategory" required>
-                                <option value="">Select Category</option>
-                                <option>Electronics</option>
-                                <option>Books</option>
-                                <option>Clothing</option>
-                                <option>Home & Kitchen</option>
-                                <option>Sports & Outdoors</option>
-                                <option>Bags & Luggage</option>
-                                <option>Home & Office</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Description *</label>
-                        <textarea id="prodDescription" rows="4" required></textarea>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Price ($) *</label>
-                            <input type="number" id="prodPrice" step="0.01" min="0" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Stock Quantity *</label>
-                            <input type="number" id="prodStock" min="0" required>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Product Image URL</label>
-                        <input type="url" id="prodImage" placeholder="https://example.com/image.jpg">
-                    </div>
-                    <div class="form-group">
-                        <label>Features (one per line)</label>
-                        <textarea id="prodFeatures" rows="3" placeholder="Feature 1&#10;Feature 2&#10;Feature 3"></textarea>
-                    </div>
-                    <div style="display: flex; gap: 10px;">
-                        <button type="submit" class="btn-login">Add Product</button>
-                        <button type="button" class="btn-create-account" onclick="hideAddProductForm()">Cancel</button>
-                    </div>
-                </form>
-            </div>
-            
-            <!-- My Products -->
-            <div>
-                <h2 style="margin-bottom: 20px;">My Products</h2>
-                <div id="myProducts" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px;">
-                    <!-- Products will be loaded here -->
+            <form class="login-form" onsubmit="handleSellerRegistration(event)">
+                <div class="form-group">
+                    <label>Shop Name *</label>
+                    <input type="text" id="businessName" required placeholder="e.g., John's Electronics Shop">
                 </div>
+                
+                <div class="form-group">
+                    <label>WhatsApp Number *</label>
+                    <input type="tel" id="businessPhone" required placeholder="e.g., +263771234567">
+                    <small style="color: #666; font-size: 12px;">Buyers will contact you via this number</small>
+                </div>
+                
+                <div class="form-group">
+                    <label>Business Type *</label>
+                    <select id="businessType" required>
+                        <option value="">Select business type...</option>
+                        <option value="Electronics">Electronics</option>
+                        <option value="Clothing">Clothing</option>
+                        <option value="Books">Books</option>
+                        <option value="Home & Kitchen">Home & Kitchen</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Business Email</label>
+                    <input type="email" id="businessEmail" placeholder="your@email.com">
+                </div>
+                
+                <div class="form-group">
+                    <label>Shop Location - Street</label>
+                    <input type="text" id="businessAddress" placeholder="Street address">
+                </div>
+                
+                <div class="form-row" style="display: flex; gap: 15px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label>City</label>
+                        <input type="text" id="shopCity" placeholder="City">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Area/Suburb</label>
+                        <input type="text" id="shopArea" placeholder="Area">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Additional Location Details</label>
+                    <textarea id="businessDescription" rows="3" placeholder="Landmarks, directions, etc."></textarea>
+                </div>
+                
+                <button type="submit" class="btn-login" id="submitBtn">Register as Seller</button>
+            </form>
+            
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
+                <p style="font-size: 14px; color: #666;">
+                    Already have an account? <a href="login.html" style="color: #007185;">Sign in</a>
+                </p>
             </div>
         </div>
     </div>
@@ -234,262 +219,154 @@
     <script src="script.js"></script>
     <script src="auth-check.js"></script>
     <script>
-        // Supabase configuration
-        const SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
+    // Supabase credentials from api.js
+    const SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
+    
+    async function handleSellerRegistration(event) {
+        event.preventDefault();
         
-        // Global variables
-        let currentSellerId = null;
-        let currentAccessToken = null;
-        let sellerStatus = null;
-
-        // ===== GLOBAL FUNCTIONS (defined at top level) =====
+        console.log('=== SELLER REGISTRATION STARTED ===');
         
-        // Show add product form
-        function showAddProductForm() {
-            console.log('showAddProductForm called, status:', sellerStatus);
-            if (sellerStatus === 'approved') {
-                document.getElementById('addProductForm').style.display = 'block';
+        const submitBtn = document.getElementById('submitBtn');
+        const originalText = submitBtn.textContent;
+        const statusDiv = document.getElementById('statusMessage');
+        
+        statusDiv.style.display = 'none';
+        
+        // CHECK LOGIN
+        const sessionData = localStorage.getItem('supabase_session');
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        
+        if (!isLoggedIn || !sessionData) {
+            statusDiv.style.display = 'block';
+            statusDiv.style.backgroundColor = '#f8d7da';
+            statusDiv.style.color = '#721c24';
+            statusDiv.innerHTML = 'You must be logged in to register as a seller. <a href="login.html">Login here</a>';
+            return;
+        }
+        
+        // PARSE SESSION
+        let session;
+        try {
+            session = JSON.parse(sessionData);
+        } catch (e) {
+            statusDiv.style.display = 'block';
+            statusDiv.style.backgroundColor = '#f8d7da';
+            statusDiv.style.color = '#721c24';
+            statusDiv.innerHTML = 'Session error. Please <a href="login.html">login again</a>.';
+            return;
+        }
+        
+        const accessToken = session.access_token;
+        const userId = session.user?.id;
+        
+        if (!accessToken || !userId) {
+            statusDiv.style.display = 'block';
+            statusDiv.style.backgroundColor = '#f8d7da';
+            statusDiv.style.color = '#721c24';
+            statusDiv.innerHTML = 'Invalid session. Please <a href="login.html">login again</a>.';
+            return;
+        }
+        
+        // GET FORM DATA
+        const businessName = document.getElementById('businessName')?.value;
+        const businessPhone = document.getElementById('businessPhone')?.value;
+        const businessType = document.getElementById('businessType')?.value;
+        const businessEmail = document.getElementById('businessEmail')?.value;
+        const businessAddress = document.getElementById('businessAddress')?.value;
+        const businessDescription = document.getElementById('businessDescription')?.value;
+        const shopCity = document.getElementById('shopCity')?.value;
+        const shopArea = document.getElementById('shopArea')?.value;
+        
+        const fullAddress = businessAddress + (shopCity ? ', ' + shopCity : '') + (shopArea ? ', ' + shopArea : '');
+        
+        if (!businessName || !businessPhone || !businessType) {
+            statusDiv.style.display = 'block';
+            statusDiv.style.backgroundColor = '#f8d7da';
+            statusDiv.style.color = '#721c24';
+            statusDiv.innerHTML = 'Please fill in all required fields';
+            return;
+        }
+        
+        // Show loading
+        submitBtn.textContent = 'Registering...';
+        submitBtn.disabled = true;
+        
+        try {
+            const response = await fetch(`${SUPABASE_URL}/rest/v1/sellers`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${accessToken}`
+                },
+                body: JSON.stringify({
+                    user_id: userId,
+                    business_name: businessName,
+                    business_phone: businessPhone,
+                    business_type: businessType,
+                    business_email: businessEmail || '',
+                    business_address: fullAddress || businessAddress || '',
+                    business_description: businessDescription || '',
+                    status: 'pending',
+                    created_at: new Date().toISOString()
+                })
+            });
+            
+            if (response.ok) {
+                // Store seller info
+                localStorage.setItem('seller_status', 'pending');
+                localStorage.setItem('seller_name', businessName);
+                localStorage.setItem('just_registered_as_seller', 'true');
+                
+                statusDiv.style.display = 'block';
+                statusDiv.style.backgroundColor = '#d4edda';
+                statusDiv.style.color = '#155724';
+                statusDiv.innerHTML = 'Registration successful! Redirecting to dashboard...';
+                
+                // Redirect to dashboard
+                setTimeout(() => {
+                    window.location.href = 'seller-dashboard.html';
+                }, 1500);
             } else {
-                alert('Your seller account must be approved before adding products.');
+                const error = await response.json();
+                throw new Error(error.message || error.error || 'Registration failed');
             }
+        } catch (error) {
+            console.error('Registration error:', error);
+            statusDiv.style.display = 'block';
+            statusDiv.style.backgroundColor = '#f8d7da';
+            statusDiv.style.color = '#721c24';
+            statusDiv.innerHTML = 'Error: ' + error.message;
+        } finally {
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
         }
-
-        // Hide add product form
-        function hideAddProductForm() {
-            document.getElementById('addProductForm').style.display = 'none';
-        }
-
-        // Handle add product
-        async function handleAddProduct(event) {
-            event.preventDefault();
-            
-            if (sellerStatus !== 'approved') {
-                alert('Your seller account must be approved before adding products.');
-                return;
-            }
-            
-            const features = document.getElementById('prodFeatures').value
-                .split('\n')
-                .filter(f => f.trim())
-                .map(f => f.trim());
-            
-            const productData = {
-                seller_id: currentSellerId,
-                title: document.getElementById('prodTitle').value,
-                description: document.getElementById('prodDescription').value,
-                price: parseFloat(document.getElementById('prodPrice').value),
-                category: document.getElementById('prodCategory').value,
-                stock: parseInt(document.getElementById('prodStock').value),
-                image_url: document.getElementById('prodImage').value || 'https://via.placeholder.com/300x300?text=Product',
-                features: features,
-                created_at: new Date().toISOString()
-            };
-            
-            const submitBtn = event.target.querySelector('button[type="submit"]');
-            const originalText = submitBtn.textContent;
-            submitBtn.textContent = 'Adding...';
-            submitBtn.disabled = true;
-            
-            try {
-                console.log('Adding product:', productData);
-                
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/products`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${currentAccessToken}`
-                    },
-                    body: JSON.stringify(productData)
-                });
-                
-                if (response.ok) {
-                    alert('Product added successfully!');
-                    hideAddProductForm();
-                    document.getElementById('addProductForm').querySelector('form').reset();
-                    await loadMyProducts();
-                } else {
-                    const error = await response.json();
-                    console.error('Add product error:', error);
-                    alert('Failed to add product: ' + (error.message || 'Please try again'));
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error adding product: ' + error.message);
-            } finally {
-                submitBtn.textContent = originalText;
-                submitBtn.disabled = false;
-            }
-        }
-
-        // Delete product
-        async function deleteProduct(productId) {
-            if (!confirm('Are you sure you want to delete this product?')) return;
-            
-            try {
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${productId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${currentAccessToken}`
-                    }
-                });
-                
-                if (response.ok) {
-                    alert('Product deleted');
-                    await loadMyProducts();
-                } else {
-                    alert('Failed to delete product');
-                }
-            } catch (error) {
-                console.error('Error deleting product:', error);
-                alert('Error deleting product');
-            }
-        }
-
-        // Edit product (placeholder)
-        function editProduct(productId) {
-            alert('Edit functionality coming soon!');
-        }
-
-        // ===== MAIN DASHBOARD FUNCTIONS =====
-
-        // Load dashboard
-        document.addEventListener('DOMContentLoaded', async function() {
-            console.log('Dashboard loading...');
-            
-            // Check if user is logged in
-            const sessionData = localStorage.getItem('supabase_session');
-            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-            
-            if (!isLoggedIn || !sessionData) {
-                alert('Please login first');
-                window.location.href = 'login.html?redirect=seller-dashboard.html';
-                return;
-            }
-            
+    }
+    
+    // Display logged-in user info
+    document.addEventListener('DOMContentLoaded', function() {
+        const sessionData = localStorage.getItem('supabase_session');
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        
+        const welcomeEl = document.getElementById('welcomeMessage');
+        
+        if (isLoggedIn && sessionData) {
             try {
                 const session = JSON.parse(sessionData);
-                currentSellerId = session.user?.id;
-                currentAccessToken = session.access_token;
-                console.log('Logged in as:', currentSellerId);
+                const userEmail = session.user?.email || 'User';
+                welcomeEl.textContent = `✓ Logged in as: ${userEmail}`;
                 
-                // Check if user is a registered seller
-                await checkSellerStatus();
-                
-            } catch (error) {
-                console.error('Session error:', error);
-                alert('Session error. Please login again.');
-                window.location.href = 'login.html';
+                const emailField = document.getElementById('businessEmail');
+                if (emailField) emailField.value = userEmail;
+            } catch (e) {
+                welcomeEl.innerHTML = '⚠️ Please <a href="login.html">log in</a>';
             }
-        });
-
-        // Check seller status
-        async function checkSellerStatus() {
-            try {
-                console.log('Checking seller status for:', currentSellerId);
-                
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/sellers?user_id=eq.${currentSellerId}&select=*`, {
-                    headers: {
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${currentAccessToken}`
-                    }
-                });
-                
-                const sellers = await response.json();
-                console.log('Seller check response:', sellers);
-                
-                const statusDiv = document.getElementById('sellerStatus');
-                const addButton = document.getElementById('addProductBtn');
-                
-                if (sellers && sellers.length > 0) {
-                    const seller = sellers[0];
-                    sellerStatus = seller.status || 'pending';
-                    
-                    statusDiv.style.display = 'block';
-                    
-                    if (sellerStatus === 'approved') {
-                        statusDiv.className = 'status-message status-approved';
-                        statusDiv.innerHTML = '✅ Your seller account is approved! You can now add products.';
-                        if (addButton) addButton.disabled = false;
-                        // Load products
-                        await loadMyProducts();
-                    } else if (sellerStatus === 'pending') {
-                        statusDiv.className = 'status-message status-pending';
-                        statusDiv.innerHTML = '⏳ Your seller registration is pending approval. You cannot add products yet.';
-                        if (addButton) addButton.disabled = true;
-                    } else {
-                        statusDiv.className = 'status-message status-rejected';
-                        statusDiv.innerHTML = '❌ Your seller application was not approved. Please contact support.';
-                        if (addButton) addButton.disabled = true;
-                    }
-                } else {
-                    statusDiv.style.display = 'block';
-                    statusDiv.className = 'status-message status-rejected';
-                    statusDiv.innerHTML = '❌ You are not registered as a seller. <a href="seller-register.html" style="color: #721c24; font-weight: bold;">Register here</a>';
-                    if (addButton) addButton.disabled = true;
-                }
-            } catch (error) {
-                console.error('Error checking seller status:', error);
-                const statusDiv = document.getElementById('sellerStatus');
-                statusDiv.style.display = 'block';
-                statusDiv.className = 'status-message status-rejected';
-                statusDiv.innerHTML = 'Error checking seller status. Please refresh.';
-            }
+        } else {
+            welcomeEl.innerHTML = '⚠️ Please <a href="login.html">log in</a> to register as a seller';
         }
-
-        // Load my products
-        async function loadMyProducts() {
-            try {
-                console.log('Loading products for seller:', currentSellerId);
-                
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/products?seller_id=eq.${currentSellerId}&select=*`, {
-                    headers: {
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${currentAccessToken}`
-                    }
-                });
-                
-                const products = await response.json();
-                console.log('Products loaded:', products);
-                
-                displayMyProducts(products || []);
-            } catch (error) {
-                console.error('Error loading products:', error);
-                document.getElementById('myProducts').innerHTML = '<p>Error loading products. Please try again.</p>';
-            }
-        }
-
-        // Display products
-        function displayMyProducts(products) {
-            const container = document.getElementById('myProducts');
-            
-            if (!products || products.length === 0) {
-                container.innerHTML = '<p>You haven\'t posted any products yet. Click "Add New Product" to get started.</p>';
-                return;
-            }
-            
-            container.innerHTML = products.map(product => `
-                <div class="product-card">
-                    <img src="${product.image_url || 'https://via.placeholder.com/300x300?text=Product'}" alt="${product.title}">
-                    <h3 style="margin: 10px 0;">${product.title}</h3>
-                    <div style="font-size: 20px; font-weight: 600; color: #B12704;">$${parseFloat(product.price).toFixed(2)}</div>
-                    <div style="margin: 10px 0; color: #666;">Stock: ${product.stock || 0}</div>
-                    <div style="margin-top: 15px;">
-                        <button class="btn-edit" onclick="editProduct('${product.id}')">Edit</button>
-                        <button class="btn-delete" onclick="deleteProduct('${product.id}')">Delete</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // Make functions globally available
-        window.showAddProductForm = showAddProductForm;
-        window.hideAddProductForm = hideAddProductForm;
-        window.handleAddProduct = handleAddProduct;
-        window.deleteProduct = deleteProduct;
-        window.editProduct = editProduct;
+    });
     </script>
 </body>
 </html>
