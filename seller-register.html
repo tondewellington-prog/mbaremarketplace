@@ -88,6 +88,12 @@
             <!-- Status Message -->
             <div id="statusMessage" style="display: none; margin-bottom: 15px; padding: 10px; border-radius: 4px;"></div>
             
+            <!-- Test Redirect Button -->
+            <div style="margin-bottom: 20px; padding: 10px; background: #f0f0f0; border-radius: 4px;">
+                <button type="button" onclick="testRedirect()" style="padding: 5px 10px; background: #0066c0; color: white; border: none; border-radius: 4px; cursor: pointer;">Test Dashboard Link</button>
+                <span id="testResult" style="margin-left: 10px;"></span>
+            </div>
+            
             <form class="login-form" onsubmit="handleSellerRegistration(event)">
                 <div class="form-group">
                     <label>Shop Name *</label>
@@ -219,9 +225,34 @@
     <script src="script.js"></script>
     <script src="auth-check.js"></script>
     <script>
-    // Supabase credentials from api.js
+    // Supabase credentials
     const SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
+    
+    // Test redirect function
+    function testRedirect() {
+        const result = document.getElementById('testResult');
+        result.innerHTML = 'Checking...';
+        result.style.color = 'blue';
+        
+        // Try to fetch the dashboard
+        fetch('seller-dashboard.html', { method: 'HEAD' })
+            .then(response => {
+                if (response.ok) {
+                    result.innerHTML = '✅ Dashboard exists! Redirecting...';
+                    result.style.color = 'green';
+                    // Force redirect
+                    window.location.href = 'seller-dashboard.html';
+                } else {
+                    result.innerHTML = '❌ Dashboard not found (404)';
+                    result.style.color = 'red';
+                }
+            })
+            .catch(error => {
+                result.innerHTML = '❌ Error: ' + error.message;
+                result.style.color = 'red';
+            });
+    }
     
     async function handleSellerRegistration(event) {
         event.preventDefault();
@@ -238,6 +269,8 @@
         const sessionData = localStorage.getItem('supabase_session');
         const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
         
+        console.log('Login check:', { isLoggedIn, hasSession: !!sessionData });
+        
         if (!isLoggedIn || !sessionData) {
             statusDiv.style.display = 'block';
             statusDiv.style.backgroundColor = '#f8d7da';
@@ -250,6 +283,7 @@
         let session;
         try {
             session = JSON.parse(sessionData);
+            console.log('Logged in as:', session.user?.email);
         } catch (e) {
             statusDiv.style.display = 'block';
             statusDiv.style.backgroundColor = '#f8d7da';
@@ -281,6 +315,8 @@
         
         const fullAddress = businessAddress + (shopCity ? ', ' + shopCity : '') + (shopArea ? ', ' + shopArea : '');
         
+        console.log('Form data:', { businessName, businessPhone, businessType });
+        
         if (!businessName || !businessPhone || !businessType) {
             statusDiv.style.display = 'block';
             statusDiv.style.backgroundColor = '#f8d7da';
@@ -292,8 +328,14 @@
         // Show loading
         submitBtn.textContent = 'Registering...';
         submitBtn.disabled = true;
+        statusDiv.style.display = 'block';
+        statusDiv.style.backgroundColor = '#cce5ff';
+        statusDiv.style.color = '#004085';
+        statusDiv.innerHTML = 'Registering... Please wait.';
         
         try {
+            console.log('Sending to Supabase...');
+            
             const response = await fetch(`${SUPABASE_URL}/rest/v1/sellers`, {
                 method: 'POST',
                 headers: {
@@ -314,31 +356,50 @@
                 })
             });
             
+            console.log('Response status:', response.status);
+            
             if (response.ok) {
                 // Store seller info
                 localStorage.setItem('seller_status', 'pending');
                 localStorage.setItem('seller_name', businessName);
                 localStorage.setItem('just_registered_as_seller', 'true');
                 
-                statusDiv.style.display = 'block';
                 statusDiv.style.backgroundColor = '#d4edda';
                 statusDiv.style.color = '#155724';
-                statusDiv.innerHTML = 'Registration successful! Redirecting to dashboard...';
+                statusDiv.innerHTML = '✅ Registration successful! Redirecting to dashboard...';
                 
-                // Redirect to dashboard
+                console.log('✅ Registration successful! Redirecting...');
+                
+                // FORCE REDIRECT - multiple methods to ensure it works
                 setTimeout(() => {
+                    // Method 1: Direct
                     window.location.href = 'seller-dashboard.html';
+                }, 500);
+                
+                // Method 2: Backup
+                setTimeout(() => {
+                    if (window.location.pathname.includes('seller-register')) {
+                        window.location.replace('seller-dashboard.html');
+                    }
+                }, 1000);
+                
+                // Method 3: Last resort
+                setTimeout(() => {
+                    if (window.location.pathname.includes('seller-register')) {
+                        window.location.assign('seller-dashboard.html');
+                    }
                 }, 1500);
+                
             } else {
-                const error = await response.json();
-                throw new Error(error.message || error.error || 'Registration failed');
+                const errorData = await response.json().catch(() => ({}));
+                console.error('Registration failed:', errorData);
+                throw new Error(errorData.message || errorData.error || `Error ${response.status}`);
             }
         } catch (error) {
             console.error('Registration error:', error);
-            statusDiv.style.display = 'block';
             statusDiv.style.backgroundColor = '#f8d7da';
             statusDiv.style.color = '#721c24';
-            statusDiv.innerHTML = 'Error: ' + error.message;
+            statusDiv.innerHTML = '❌ Error: ' + error.message;
         } finally {
             submitBtn.textContent = originalText;
             submitBtn.disabled = false;
@@ -347,6 +408,8 @@
     
     // Display logged-in user info
     document.addEventListener('DOMContentLoaded', function() {
+        console.log('Seller registration page loaded');
+        
         const sessionData = localStorage.getItem('supabase_session');
         const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
         
@@ -357,6 +420,7 @@
                 const session = JSON.parse(sessionData);
                 const userEmail = session.user?.email || 'User';
                 welcomeEl.textContent = `✓ Logged in as: ${userEmail}`;
+                welcomeEl.style.color = '#0066c0';
                 
                 const emailField = document.getElementById('businessEmail');
                 if (emailField) emailField.value = userEmail;
