@@ -8,8 +8,58 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Add this small style for product images */
+        .product-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .product-card img:hover {
+            transform: scale(1.02);
+        }
+        /* Modal for image preview (optional) */
+        .image-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+        }
+        .modal-image {
+            margin: auto;
+            display: block;
+            max-width: 90%;
+            max-height: 90%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
+    <!-- Image Preview Modal -->
+    <div id="imageModal" class="image-modal" onclick="closeImageModal()">
+        <span class="close-modal" onclick="closeImageModal()">&times;</span>
+        <img class="modal-image" id="modalImage">
+    </div>
+
     <!-- Header -->
     <header class="header">
         <div class="header-top">
@@ -33,11 +83,11 @@
                         </svg>
                     </button>
                 </div>
-                <div class="header-right"><div class="account-menu">
-    <span class="account-label">Hello, Sign in</span>
-    <a href="login.html" class="account-link">Account & Lists</a>
-    <button id="logoutBtn" onclick="logout()" style="display: none; background: none; border: none; color: #fff; cursor: pointer; margin-left: 10px;">Logout</button>
-</div>
+                <div class="header-right">
+                    <div class="account-menu">
+                        <span class="account-label">Hello, Sign in</span>
+                        <a href="login.html" class="account-link">Account & Lists</a>
+                    </div>
                     <div class="returns">
                         <span class="returns-label">Returns</span>
                         <span class="returns-link">& Orders</span>
@@ -122,7 +172,7 @@
                     <a href="#" class="see-all">See all deals</a>
                 </div>
                 <div class="product-grid" id="todaysDeals">
-                    <!-- Products will be populated by JavaScript -->
+                    <!-- Products will be populated by JavaScript with images -->
                 </div>
             </section>
 
@@ -133,7 +183,7 @@
                     <a href="#" class="see-all">See more</a>
                 </div>
                 <div class="product-grid" id="bestSellers">
-                    <!-- Products will be populated by JavaScript -->
+                    <!-- Products will be populated by JavaScript with images -->
                 </div>
             </section>
 
@@ -144,7 +194,18 @@
                     <a href="#" class="see-all">See more</a>
                 </div>
                 <div class="product-grid" id="recommended">
-                    <!-- Products will be populated by JavaScript -->
+                    <!-- Products will be populated by JavaScript with images -->
+                </div>
+            </section>
+            
+            <!-- All Products Section (New - shows everything) -->
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>All Products</h2>
+                    <a href="#" class="see-all">Browse all</a>
+                </div>
+                <div class="product-grid" id="allProducts">
+                    <!-- All products will be loaded here with images -->
                 </div>
             </section>
         </div>
@@ -218,6 +279,106 @@
 
     <script src="api.js"></script>
     <script src="script.js"></script>
-<script src="auth-check.js"></script>
+    <script src="auth-check.js"></script>
+    <script>
+        // Image modal functions
+        function openImageModal(imageSrc) {
+            document.getElementById('modalImage').src = imageSrc;
+            document.getElementById('imageModal').style.display = 'block';
+        }
+
+        function closeImageModal() {
+            document.getElementById('imageModal').style.display = 'none';
+        }
+
+        // Load all products with images
+        async function loadAllProducts() {
+            try {
+                const SUPABASE_URL = window.SUPABASE_URL;
+                const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
+                
+                // Fetch all products
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+                
+                const products = await response.json();
+                console.log('Loaded products:', products);
+                
+                if (products && products.length > 0) {
+                    // Display products in different sections
+                    displayProducts('allProducts', products);
+                    
+                    // Today's Deals - show 4 most recent
+                    displayProducts('todaysDeals', products.slice(0, 4));
+                    
+                    // Best Sellers - show next 4
+                    displayProducts('bestSellers', products.slice(4, 8));
+                    
+                    // Recommended - show last 4
+                    displayProducts('recommended', products.slice(8, 12));
+                }
+            } catch (error) {
+                console.error('Error loading products:', error);
+            }
+        }
+
+        // Display products in a specific grid
+        function displayProducts(gridId, products) {
+            const container = document.getElementById(gridId);
+            if (!container) return;
+            
+            if (!products || products.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 20px;">No products available</p>';
+                return;
+            }
+            
+            container.innerHTML = products.map(product => `
+                <div class="product-card">
+                    <img 
+                        src="${product.image_url || 'https://via.placeholder.com/300x300?text=No+Image'}" 
+                        alt="${product.title}"
+                        onclick="openImageModal('${product.image_url || 'https://via.placeholder.com/300x300?text=No+Image'}')"
+                    >
+                    <h3 style="margin: 10px 0; font-size: 16px;">${product.title}</h3>
+                    <div style="font-size: 20px; font-weight: 600; color: #B12704;">$${parseFloat(product.price).toFixed(2)}</div>
+                    <div style="margin: 5px 0; color: #666; font-size: 14px;">${product.category || 'Uncategorized'}</div>
+                    <div style="margin-top: 10px;">
+                        <button 
+                            onclick="addToBasket('${product.id}')" 
+                            style="width: 100%; padding: 8px; background: #FFD814; border: none; border-radius: 4px; cursor: pointer;"
+                        >
+                            Add to Basket
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Add to basket function (placeholder - implement based on your basket system)
+        window.addToBasket = function(productId) {
+            console.log('Adding product to basket:', productId);
+            alert('Product added to basket!');
+            // Update basket count
+            const basketCount = document.getElementById('basketCount');
+            if (basketCount) {
+                let count = parseInt(basketCount.textContent) || 0;
+                basketCount.textContent = count + 1;
+            }
+        };
+
+        // Load products when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAllProducts();
+            
+            // Also keep your existing carousel functions if they exist
+            if (typeof window.moveCarousel === 'function') {
+                // Your existing carousel code is preserved
+            }
+        });
+    </script>
 </body>
 </html>
