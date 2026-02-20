@@ -191,10 +191,8 @@
     <script src="script.js"></script>
     <script src="auth-check.js"></script>
     <script>
-        // Supabase configuration
-        const SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
-
+        // REMOVED the duplicate SUPABASE declarations - now using the ones from api.js
+        
         async function handleSellerRegistration(event) {
             event.preventDefault();
             
@@ -211,6 +209,10 @@
             const session = JSON.parse(sessionData);
             const userId = session.user?.id;
             const accessToken = session.access_token;
+
+            // Get the Supabase config from the global window object (set in api.js)
+            const SUPABASE_URL = window.SUPABASE_URL;
+            const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
 
             // Check if already registered
             const checkResponse = await fetch(`${SUPABASE_URL}/rest/v1/sellers?user_id=eq.${userId}&select=id`, {
