@@ -1,6 +1,11 @@
 // api.js
-const SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co'; // REPLACE THIS
-const SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK'; // REPLACE THIS
+// Make these available globally by attaching to window
+window.SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
+window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
+
+// Also keep them as const for use within this file
+const SUPABASE_URL = window.SUPABASE_URL;
+const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
 
 const api = {
     async login(email, password) {
@@ -99,6 +104,6 @@ const api = {
     }
 };
 
-// THIS MUST BE THE VERY LAST LINE - NO EXTRA async KEYWORDS
+// Make api available globally
 window.api = api;
 console.log('API loaded successfully');
