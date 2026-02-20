@@ -191,10 +191,12 @@
     <script src="script.js"></script>
     <script src="auth-check.js"></script>
     <script>
-        // REMOVED the duplicate SUPABASE declarations - now using the ones from api.js
-        
         async function handleSellerRegistration(event) {
             event.preventDefault();
+            
+            // Get Supabase config
+            const SUPABASE_URL = window.SUPABASE_URL;
+            const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
             
             // Check if user is logged in
             const sessionData = localStorage.getItem('supabase_session');
@@ -206,13 +208,59 @@
                 return;
             }
 
-            const session = JSON.parse(sessionData);
-            const userId = session.user?.id;
-            const accessToken = session.access_token;
+            let session = JSON.parse(sessionData);
+            let userId = session.user?.id;
+            let accessToken = session.access_token;
+            let refreshToken = session.refresh_token;
 
-            // Get the Supabase config from the global window object (set in api.js)
-            const SUPABASE_URL = window.SUPABASE_URL;
-            const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
+            // Try to refresh the token if needed
+            try {
+                // First, check if token is valid by making a simple request
+                const testResponse = await fetch(`${SUPABASE_URL}/rest/v1/sellers?user_id=eq.${userId}&select=id`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+
+                // If token is expired (401), refresh it
+                if (testResponse.status === 401) {
+                    console.log('Token expired, refreshing...');
+                    
+                    const refreshResponse = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': SUPABASE_ANON_KEY
+                        },
+                        body: JSON.stringify({
+                            refresh_token: refreshToken
+                        })
+                    });
+
+                    const refreshData = await refreshResponse.json();
+                    
+                    if (refreshResponse.ok) {
+                        // Update session with new tokens
+                        session = refreshData;
+                        accessToken = refreshData.access_token;
+                        refreshToken = refreshData.refresh_token;
+                        
+                        // Save updated session
+                        localStorage.setItem('supabase_session', JSON.stringify(refreshData));
+                        console.log('Token refreshed successfully');
+                    } else {
+                        // If refresh fails, require login again
+                        alert('Your session has expired. Please login again.');
+                        localStorage.removeItem('supabase_session');
+                        localStorage.removeItem('isLoggedIn');
+                        window.location.href = 'login.html?redirect=seller-register.html';
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.log('Token check failed, proceeding with current token');
+            }
 
             // Check if already registered
             const checkResponse = await fetch(`${SUPABASE_URL}/rest/v1/sellers?user_id=eq.${userId}&select=id`, {
@@ -230,13 +278,18 @@
                 return;
             }
 
-            // Simple seller data
+            // Get form values
+            const businessName = document.getElementById('businessName').value;
+            const phone = document.getElementById('phone').value;
+            const email = document.getElementById('email').value;
+            const category = document.getElementById('category').value;
+
             const sellerData = {
                 user_id: userId,
-                business_name: document.getElementById('businessName').value,
-                phone: document.getElementById('phone').value,
-                email: document.getElementById('email').value,
-                category: document.getElementById('category').value,
+                business_name: businessName,
+                phone: phone,
+                email: email,
+                category: category,
                 created_at: new Date().toISOString()
             };
 
@@ -270,9 +323,20 @@
                     }, 1000);
                 } else {
                     const error = await response.json();
-                    alert('Failed to register: ' + (error.message || 'Please try again'));
+                    console.error('Registration failed:', error);
+                    
+                    // Check if it's a JWT error
+                    if (error.message && error.message.includes('JWT')) {
+                        alert('Session expired. Please login again.');
+                        localStorage.removeItem('supabase_session');
+                        localStorage.removeItem('isLoggedIn');
+                        window.location.href = 'login.html?redirect=seller-register.html';
+                    } else {
+                        alert('Failed to register: ' + (error.message || 'Please try again'));
+                    }
                 }
             } catch (error) {
+                console.error('Error:', error);
                 alert('Error submitting registration: ' + error.message);
             } finally {
                 submitBtn.textContent = originalText;
