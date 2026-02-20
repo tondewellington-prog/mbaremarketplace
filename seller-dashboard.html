@@ -9,12 +9,14 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        /* Existing styles plus new ones */
         .product-card {
             border: 1px solid #ddd;
             border-radius: 8px;
             padding: 15px;
             background: white;
             transition: transform 0.2s;
+            position: relative;
         }
         .product-card:hover {
             transform: translateY(-2px);
@@ -25,6 +27,7 @@
             height: 200px;
             object-fit: cover;
             border-radius: 4px;
+            cursor: pointer;
         }
         .btn-edit {
             padding: 8px 15px;
@@ -46,9 +49,11 @@
             display: flex;
             gap: 15px;
             margin-bottom: 15px;
+            flex-wrap: wrap;
         }
         .form-row .form-group {
             flex: 1;
+            min-width: 200px;
         }
         .stats-card {
             background: white;
@@ -62,10 +67,109 @@
             font-weight: 700;
             color: #B12704;
         }
+        
+        /* New styles for image upload */
+        .image-upload-container {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            background: #f9f9f9;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 15px;
+        }
+        .image-upload-container:hover {
+            border-color: #f90;
+            background: #fff3e0;
+        }
+        .image-upload-container.dragover {
+            border-color: #f90;
+            background: #fff3e0;
+        }
+        .image-preview {
+            max-width: 100%;
+            max-height: 200px;
+            margin-top: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        .upload-progress {
+            width: 100%;
+            height: 4px;
+            background: #f0f0f0;
+            border-radius: 2px;
+            margin-top: 10px;
+            display: none;
+        }
+        .upload-progress-bar {
+            width: 0%;
+            height: 100%;
+            background: #f90;
+            border-radius: 2px;
+            transition: width 0.3s;
+        }
+        .camera-btn {
+            background: #232f3e;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .camera-btn:hover {
+            background: #131921;
+        }
+        .image-url-input {
+            display: none;
+        }
+        .product-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255,255,255,0.9);
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #666;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+        }
+        .modal-content {
+            margin: auto;
+            display: block;
+            max-width: 90%;
+            max-height: 90%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
-    <!-- Header -->
+    <!-- Header (same as before) -->
     <header class="header">
         <div class="header-top">
             <div class="container">
@@ -131,12 +235,18 @@
         </nav>
     </header>
 
+    <!-- Image Preview Modal -->
+    <div id="imageModal" class="modal">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <img class="modal-content" id="modalImage">
+    </div>
+
     <!-- Seller Dashboard Content -->
     <div class="container" style="max-width: 1200px; margin: 30px auto; padding: 0 15px;">
         <!-- Welcome Banner -->
         <div style="background: linear-gradient(135deg, #232f3e 0%, #131921 100%); color: white; padding: 30px; border-radius: 8px; margin-bottom: 30px;">
             <h1 style="margin: 0;">Seller Dashboard</h1>
-            <p style="margin: 10px 0 0; opacity: 0.9;">Manage your products and track your sales</p>
+            <p style="margin: 10px 0 0; opacity: 0.9;">Upload product photos - Take pictures or choose from gallery</p>
         </div>
 
         <!-- Stats Cards -->
@@ -165,6 +275,44 @@
             <!-- Add Product Form (Hidden by default) -->
             <div id="addProductForm" style="display: none; padding: 20px; background: #f5f5f5; border-radius: 4px;">
                 <form onsubmit="handleAddProduct(event)">
+                    <!-- Image Upload Section -->
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 10px; font-weight: 600;">Product Photos *</label>
+                        
+                        <!-- Hidden file input -->
+                        <input type="file" id="imageUpload" accept="image/*" style="display: none;" onchange="handleImageSelect(event)">
+                        
+                        <!-- Drag & Drop / Click to upload area -->
+                        <div class="image-upload-container" id="uploadArea" onclick="document.getElementById('imageUpload').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#999" style="margin-bottom: 10px;">
+                                <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+                                <path d="M7 2v20M17 2v20M2 12h20M2 7h5M2 17h5M17 17h5M17 7h5"></path>
+                            </svg>
+                            <p style="color: #666; margin: 5px 0;">Click to upload or drag and drop</p>
+                            <p style="color: #999; font-size: 12px;">PNG, JPG, GIF up to 10MB</p>
+                            
+                            <!-- Camera button for mobile -->
+                            <button type="button" class="camera-btn" onclick="event.stopPropagation(); openCamera()">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                    <circle cx="12" cy="13" r="4"></circle>
+                                </svg>
+                                Take Photo
+                            </button>
+                        </div>
+                        
+                        <!-- Image Preview -->
+                        <img id="imagePreview" class="image-preview" alt="Preview">
+                        
+                        <!-- Upload Progress -->
+                        <div class="upload-progress" id="uploadProgress">
+                            <div class="upload-progress-bar" id="uploadProgressBar"></div>
+                        </div>
+                        
+                        <!-- Hidden input for image URL (will be filled after upload) -->
+                        <input type="hidden" id="prodImage" required>
+                    </div>
+
                     <div class="form-row">
                         <div class="form-group">
                             <label>Product Title *</label>
@@ -179,13 +327,17 @@
                                 <option>Clothing</option>
                                 <option>Home & Kitchen</option>
                                 <option>Sports & Outdoors</option>
+                                <option>Bags & Luggage</option>
+                                <option>Other</option>
                             </select>
                         </div>
                     </div>
+                    
                     <div class="form-group" style="margin-bottom: 15px;">
                         <label>Description *</label>
                         <textarea id="prodDescription" rows="3" required style="width: 100%; padding: 10px;"></textarea>
                     </div>
+                    
                     <div class="form-row">
                         <div class="form-group">
                             <label>Price ($) *</label>
@@ -196,12 +348,9 @@
                             <input type="number" id="prodStock" min="0" required style="width: 100%; padding: 10px;">
                         </div>
                     </div>
-                    <div class="form-group" style="margin-bottom: 15px;">
-                        <label>Product Image URL</label>
-                        <input type="url" id="prodImage" placeholder="https://example.com/image.jpg" style="width: 100%; padding: 10px;">
-                    </div>
-                    <div style="display: flex; gap: 10px;">
-                        <button type="submit" class="btn-login">Add Product</button>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button type="submit" class="btn-login" id="submitProductBtn">Add Product</button>
                         <button type="button" class="btn-create-account" onclick="toggleProductForm()">Cancel</button>
                     </div>
                 </form>
@@ -217,7 +366,7 @@
         </div>
     </div>
 
-    <!-- Footer -->
+    <!-- Footer (same as before) -->
     <footer class="footer">
         <div class="footer-top">
             <a href="#" class="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">Back to top</a>
@@ -287,11 +436,144 @@
     <script src="script.js"></script>
     <script src="auth-check.js"></script>
     <script>
-        // REMOVED duplicate SUPABASE declarations - now using the ones from api.js
-        
+        // ImgBB API Key - Sign up at https://api.imgbb.com/ to get your free key
+        const IMGBB_API_KEY = 'YOUR_IMGBB_API_KEY_HERE'; // Replace with your actual API key
+
         // Global variables
         let currentSellerId = null;
         let currentAccessToken = null;
+        let currentImageFile = null;
+
+        // Modal functions
+        function openModal(imageSrc) {
+            document.getElementById('modalImage').src = imageSrc;
+            document.getElementById('imageModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('imageModal').style.display = 'none';
+        }
+
+        // Image upload handlers
+        function handleDragOver(event) {
+            event.preventDefault();
+            document.getElementById('uploadArea').classList.add('dragover');
+        }
+
+        function handleDragLeave(event) {
+            event.preventDefault();
+            document.getElementById('uploadArea').classList.remove('dragover');
+        }
+
+        function handleDrop(event) {
+            event.preventDefault();
+            document.getElementById('uploadArea').classList.remove('dragover');
+            
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                handleImageFile(files[0]);
+            }
+        }
+
+        function handleImageSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                handleImageFile(file);
+            }
+        }
+
+        function handleImageFile(file) {
+            // Check file type
+            if (!file.type.match('image.*')) {
+                alert('Please select an image file');
+                return;
+            }
+
+            // Check file size (max 10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('Image size should be less than 10MB');
+                return;
+            }
+
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('imagePreview');
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+
+            // Store file for upload
+            currentImageFile = file;
+
+            // Upload to ImgBB
+            uploadToImgBB(file);
+        }
+
+        function openCamera() {
+            // Check if device has camera
+            if ('mediaDevices' in navigator && 'getUserMedia' in navigator.mediaDevices) {
+                // Create a file input with capture attribute
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                input.capture = 'environment'; // Use rear camera
+                input.onchange = handleImageSelect;
+                input.click();
+            } else {
+                // Fallback to regular file input
+                document.getElementById('imageUpload').click();
+            }
+        }
+
+        async function uploadToImgBB(file) {
+            const progressBar = document.getElementById('uploadProgress');
+            const progressBarFill = document.getElementById('uploadProgressBar');
+            const submitBtn = document.getElementById('submitProductBtn');
+            
+            progressBar.style.display = 'block';
+            progressBarFill.style.width = '0%';
+            submitBtn.disabled = true;
+
+            const formData = new FormData();
+            formData.append('image', file);
+            formData.append('key', IMGBB_API_KEY);
+
+            try {
+                // Simulate progress (ImgBB doesn't support progress tracking)
+                progressBarFill.style.width = '50%';
+
+                const response = await fetch('https://api.imgbb.com/1/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    progressBarFill.style.width = '100%';
+                    
+                    // Set the image URL to hidden input
+                    document.getElementById('prodImage').value = data.data.url;
+                    
+                    setTimeout(() => {
+                        progressBar.style.display = 'none';
+                    }, 500);
+                    
+                    alert('Image uploaded successfully!');
+                } else {
+                    throw new Error(data.error?.message || 'Upload failed');
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                alert('Failed to upload image: ' + error.message);
+                document.getElementById('imagePreview').style.display = 'none';
+                document.getElementById('prodImage').value = '';
+            } finally {
+                submitBtn.disabled = false;
+            }
+        }
 
         // Toggle product form
         window.toggleProductForm = function() {
@@ -303,6 +585,11 @@
             } else {
                 form.style.display = 'none';
                 btn.textContent = '+ Add Product';
+                // Reset form
+                document.getElementById('addProductForm').querySelector('form').reset();
+                document.getElementById('imagePreview').style.display = 'none';
+                document.getElementById('prodImage').value = '';
+                currentImageFile = null;
             }
         };
 
@@ -310,9 +597,12 @@
         window.handleAddProduct = async function(event) {
             event.preventDefault();
             
-            // Get Supabase config from window (set in api.js)
-            const SUPABASE_URL = window.SUPABASE_URL;
-            const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
+            const imageUrl = document.getElementById('prodImage').value;
+            
+            if (!imageUrl) {
+                alert('Please upload a product image first');
+                return;
+            }
             
             const productData = {
                 seller_id: currentSellerId,
@@ -321,7 +611,7 @@
                 price: parseFloat(document.getElementById('prodPrice').value),
                 category: document.getElementById('prodCategory').value,
                 stock: parseInt(document.getElementById('prodStock').value),
-                image_url: document.getElementById('prodImage').value || 'https://via.placeholder.com/300x300?text=Product',
+                image_url: imageUrl,
                 created_at: new Date().toISOString()
             };
             
@@ -331,6 +621,9 @@
             submitBtn.disabled = true;
             
             try {
+                const SUPABASE_URL = window.SUPABASE_URL;
+                const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
+                
                 const response = await fetch(`${SUPABASE_URL}/rest/v1/products`, {
                     method: 'POST',
                     headers: {
@@ -345,9 +638,13 @@
                     alert('Product added successfully!');
                     toggleProductForm();
                     document.getElementById('addProductForm').querySelector('form').reset();
+                    document.getElementById('imagePreview').style.display = 'none';
+                    document.getElementById('prodImage').value = '';
+                    currentImageFile = null;
                     await loadMyProducts();
                 } else {
-                    alert('Failed to add product. Please try again.');
+                    const error = await response.json();
+                    alert('Failed to add product: ' + (error.message || 'Please try again'));
                 }
             } catch (error) {
                 alert('Error adding product: ' + error.message);
@@ -361,11 +658,10 @@
         window.deleteProduct = async function(productId) {
             if (!confirm('Are you sure you want to delete this product?')) return;
             
-            // Get Supabase config from window
-            const SUPABASE_URL = window.SUPABASE_URL;
-            const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
-            
             try {
+                const SUPABASE_URL = window.SUPABASE_URL;
+                const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
+                
                 const response = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${productId}`, {
                     method: 'DELETE',
                     headers: {
@@ -411,11 +707,10 @@
 
         // Load my products
         async function loadMyProducts() {
-            // Get Supabase config from window
-            const SUPABASE_URL = window.SUPABASE_URL;
-            const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
-            
             try {
+                const SUPABASE_URL = window.SUPABASE_URL;
+                const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
+                
                 const response = await fetch(`${SUPABASE_URL}/rest/v1/products?seller_id=eq.${currentSellerId}&select=*`, {
                     headers: {
                         'apikey': SUPABASE_ANON_KEY,
@@ -453,11 +748,11 @@
             
             container.innerHTML = products.map(product => `
                 <div class="product-card">
-                    <img src="${product.image_url}" alt="${product.title}">
+                    <img src="${product.image_url}" alt="${product.title}" onclick="openModal('${product.image_url}')">
+                    <div class="product-badge">${product.category}</div>
                     <h3 style="margin: 10px 0; font-size: 16px;">${product.title}</h3>
                     <div style="font-size: 20px; font-weight: 600; color: #B12704;">$${parseFloat(product.price).toFixed(2)}</div>
                     <div style="margin: 5px 0; color: #666;">Stock: ${product.stock || 0}</div>
-                    <div style="color: #666; font-size: 14px;">${product.category}</div>
                     <div style="margin-top: 15px;">
                         <button class="btn-edit" onclick="alert('Edit coming soon')">Edit</button>
                         <button class="btn-delete" onclick="deleteProduct('${product.id}')">Delete</button>
