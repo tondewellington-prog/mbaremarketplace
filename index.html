@@ -67,6 +67,127 @@
         .logout-btn:hover {
             background: rgba(255,255,255,0.1);
         }
+        /* Modal for seller contact info */
+        .contact-modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .contact-modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 30px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+            animation: slideDown 0.3s ease-out;
+        }
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        .close-contact-modal {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            color: #666;
+            cursor: pointer;
+        }
+        .close-contact-modal:hover {
+            color: #000;
+        }
+        .seller-info {
+            margin-top: 20px;
+        }
+        .info-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 4px;
+        }
+        .info-icon {
+            width: 40px;
+            height: 40px;
+            background: #232f3e;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+        }
+        .info-text {
+            flex: 1;
+        }
+        .info-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 3px;
+        }
+        .info-value {
+            font-size: 16px;
+            font-weight: 500;
+            color: #232f3e;
+        }
+        .contact-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .contact-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+            text-decoration: none;
+        }
+        .call-btn {
+            background: #28a745;
+            color: white;
+        }
+        .call-btn:hover {
+            background: #218838;
+        }
+        .whatsapp-btn {
+            background: #25D366;
+            color: white;
+        }
+        .whatsapp-btn:hover {
+            background: #128C7E;
+        }
+        .email-btn {
+            background: #007bff;
+            color: white;
+        }
+        .email-btn:hover {
+            background: #0056b3;
+        }
+        .product-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #232f3e;
+        }
     </style>
 </head>
 <body>
@@ -74,6 +195,16 @@
     <div id="imageModal" class="image-modal" onclick="closeImageModal()">
         <span class="close-modal" onclick="closeImageModal()">&times;</span>
         <img class="modal-image" id="modalImage">
+    </div>
+
+    <!-- Seller Contact Modal -->
+    <div id="sellerContactModal" class="contact-modal">
+        <div class="contact-modal-content">
+            <span class="close-contact-modal" onclick="closeContactModal()">&times;</span>
+            <div id="sellerContactContent">
+                <!-- Content will be dynamically inserted here -->
+            </div>
+        </div>
     </div>
 
     <!-- Header -->
@@ -299,6 +430,9 @@
     <script src="script.js"></script>
     <script src="auth-check.js"></script>
     <script>
+        // Store products with seller info
+        let productsWithSellers = [];
+
         // Image modal functions
         function openImageModal(imageSrc) {
             document.getElementById('modalImage').src = imageSrc;
@@ -309,14 +443,85 @@
             document.getElementById('imageModal').style.display = 'none';
         }
 
-        // Load all products with images
+        // Contact modal functions
+        function openContactModal(sellerInfo, productInfo) {
+            const modalContent = document.getElementById('sellerContactContent');
+            
+            // Format phone number for WhatsApp and call
+            const phone = sellerInfo.phone || 'Not provided';
+            const phoneDigits = phone.replace(/\D/g, '');
+            const whatsappLink = phoneDigits ? `https://wa.me/${phoneDigits}` : '#';
+            const callLink = phoneDigits ? `tel:${phoneDigits}` : '#';
+            
+            modalContent.innerHTML = `
+                <div class="product-title">${productInfo.title}</div>
+                <div class="seller-info">
+                    <div class="info-row">
+                        <div class="info-icon">🏪</div>
+                        <div class="info-text">
+                            <div class="info-label">Seller</div>
+                            <div class="info-value">${sellerInfo.business_name || 'Unknown Seller'}</div>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-icon">📞</div>
+                        <div class="info-text">
+                            <div class="info-label">Phone Number</div>
+                            <div class="info-value">${sellerInfo.phone || 'Not provided'}</div>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-icon">📧</div>
+                        <div class="info-text">
+                            <div class="info-label">Email</div>
+                            <div class="info-value">${sellerInfo.email || 'Not provided'}</div>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-icon">📍</div>
+                        <div class="info-text">
+                            <div class="info-label">Shop Location</div>
+                            <div class="info-value">${sellerInfo.address || 'Location not specified'}</div>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-icon">📦</div>
+                        <div class="info-text">
+                            <div class="info-label">Price</div>
+                            <div class="info-value">$${parseFloat(productInfo.price).toFixed(2)}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="contact-actions">
+                    <a href="${callLink}" class="contact-btn call-btn" ${!phoneDigits ? 'onclick="alert(\'Phone number not available\'); return false;"' : ''}>
+                        📞 Call Seller
+                    </a>
+                    <a href="${whatsappLink}" class="contact-btn whatsapp-btn" target="_blank" ${!phoneDigits ? 'onclick="alert(\'Phone number not available\'); return false;"' : ''}>
+                        💬 WhatsApp
+                    </a>
+                </div>
+                <div style="margin-top: 10px;">
+                    <a href="mailto:${sellerInfo.email || ''}" class="contact-btn email-btn" style="display: block; text-align: center; text-decoration: none;" ${!sellerInfo.email ? 'onclick="alert(\'Email not available\'); return false;"' : ''}>
+                        📧 Send Email
+                    </a>
+                </div>
+            `;
+            
+            document.getElementById('sellerContactModal').style.display = 'block';
+        }
+
+        function closeContactModal() {
+            document.getElementById('sellerContactModal').style.display = 'none';
+        }
+
+        // Load all products with images and seller info
         async function loadAllProducts() {
             try {
                 const SUPABASE_URL = window.SUPABASE_URL;
                 const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
                 
-                // Fetch all products
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
+                // Fetch all products with seller information
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*,sellers(*)&order=created_at.desc`, {
                     headers: {
                         'apikey': SUPABASE_ANON_KEY,
                         'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
@@ -325,6 +530,8 @@
                 
                 const products = await response.json();
                 console.log('Loaded products:', products);
+                
+                productsWithSellers = products || [];
                 
                 if (products && products.length > 0) {
                     // Display products in different sections
@@ -354,7 +561,9 @@
                 return;
             }
             
-            container.innerHTML = products.map(product => `
+            container.innerHTML = products.map(product => {
+                const seller = product.sellers || {};
+                return `
                 <div class="product-card">
                     <img 
                         src="${product.image_url || 'https://via.placeholder.com/300x300?text=No+Image'}" 
@@ -364,19 +573,42 @@
                     <h3 style="margin: 10px 0; font-size: 16px;">${product.title}</h3>
                     <div style="font-size: 20px; font-weight: 600; color: #B12704;">$${parseFloat(product.price).toFixed(2)}</div>
                     <div style="margin: 5px 0; color: #666; font-size: 14px;">${product.category || 'Uncategorized'}</div>
+                    <div style="margin: 5px 0; color: #666; font-size: 12px;">Seller: ${seller.business_name || 'Unknown'}</div>
                     <div style="margin-top: 10px;">
                         <button 
-                            onclick="addToBasket('${product.id}')" 
-                            style="width: 100%; padding: 8px; background: #FFD814; border: none; border-radius: 4px; cursor: pointer;"
+                            onclick="showSellerContact('${product.id}')" 
+                            style="width: 100%; padding: 8px; background: #FFD814; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;"
                         >
-                            Add to Basket
+                            Contact Seller
                         </button>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
-        // Add to basket function
+        // Show seller contact information
+        function showSellerContact(productId) {
+            const product = productsWithSellers.find(p => p.id == productId);
+            if (product) {
+                const sellerInfo = {
+                    business_name: product.sellers?.business_name,
+                    phone: product.sellers?.phone,
+                    email: product.sellers?.email,
+                    address: product.sellers?.address || 'Shop location not specified'
+                };
+                
+                const productInfo = {
+                    title: product.title,
+                    price: product.price
+                };
+                
+                openContactModal(sellerInfo, productInfo);
+            } else {
+                alert('Seller information not available');
+            }
+        }
+
+        // Add to basket function (kept for compatibility)
         window.addToBasket = function(productId) {
             console.log('Adding product to basket:', productId);
             alert('Product added to basket!');
@@ -430,6 +662,14 @@
                     }
                 }
             }
+            
+            // Close modal when clicking outside
+            window.onclick = function(event) {
+                const modal = document.getElementById('sellerContactModal');
+                if (event.target == modal) {
+                    closeContactModal();
+                }
+            };
         });
     </script>
 </body>
