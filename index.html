@@ -51,6 +51,22 @@
             font-weight: bold;
             cursor: pointer;
         }
+        /* Add this small style for the logout button */
+        .logout-btn {
+            background: none;
+            border: 1px solid #fff;
+            color: #fff;
+            padding: 5px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 15px;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
     </style>
 </head>
 <body>
@@ -87,6 +103,8 @@
                     <div class="account-menu">
                         <span class="account-label">Hello, Sign in</span>
                         <a href="login.html" class="account-link">Account & Lists</a>
+                        <!-- Logout Button Added Here -->
+                        <button id="logoutBtn" class="logout-btn" onclick="logout()" style="display: none;">Logout</button>
                     </div>
                     <div class="returns">
                         <span class="returns-label">Returns</span>
@@ -358,7 +376,7 @@
             `).join('');
         }
 
-        // Add to basket function (placeholder - implement based on your basket system)
+        // Add to basket function
         window.addToBasket = function(productId) {
             console.log('Adding product to basket:', productId);
             alert('Product added to basket!');
@@ -370,13 +388,47 @@
             }
         };
 
-        // Load products when page loads
+        // Logout function
+        window.logout = function() {
+            if (window.api && window.api.logout) {
+                window.api.logout();
+            } else {
+                localStorage.removeItem('supabase_session');
+                localStorage.removeItem('isLoggedIn');
+                window.location.href = 'index.html';
+            }
+        };
+
+        // Check login status and show/hide logout button
         document.addEventListener('DOMContentLoaded', function() {
             loadAllProducts();
             
             // Also keep your existing carousel functions if they exist
             if (typeof window.moveCarousel === 'function') {
                 // Your existing carousel code is preserved
+            }
+            
+            // Check login status for logout button
+            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+            const logoutBtn = document.getElementById('logoutBtn');
+            
+            if (isLoggedIn && logoutBtn) {
+                logoutBtn.style.display = 'inline-block';
+                
+                // Update the welcome text
+                const sessionData = localStorage.getItem('supabase_session');
+                if (sessionData) {
+                    try {
+                        const session = JSON.parse(sessionData);
+                        const userEmail = session.user?.email || 'User';
+                        const accountLabel = document.querySelector('.account-label');
+                        if (accountLabel) {
+                            accountLabel.textContent = `Hello, ${userEmail.split('@')[0]}`;
+                        }
+                    } catch (e) {
+                        console.error('Error parsing session:', e);
+                    }
+                }
             }
         });
     </script>
