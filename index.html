@@ -175,18 +175,21 @@
         .whatsapp-btn:hover {
             background: #128C7E;
         }
-        .email-btn {
-            background: #007bff;
-            color: white;
-        }
-        .email-btn:hover {
-            background: #0056b3;
-        }
         .product-title {
             font-size: 18px;
             font-weight: 600;
             margin-bottom: 10px;
             color: #232f3e;
+        }
+        /* Debug info styling */
+        .debug-info {
+            background: #f0f0f0;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #666;
+            display: none; /* Hide by default, remove 'none' to see debug info */
         }
     </style>
 </head>
@@ -448,11 +451,30 @@
         function openContactModal(sellerInfo, productInfo) {
             const modalContent = document.getElementById('sellerContactContent');
             
+            // Log the seller info to see what we're getting
+            console.log('Seller info for contact modal:', sellerInfo);
+            
             // Format phone number for WhatsApp and call
-            const phone = sellerInfo.phone || 'Not provided';
+            const phone = sellerInfo.phone || sellerInfo.Phone || sellerInfo.contact || 'Not provided';
             const phoneDigits = phone.replace(/\D/g, '');
             const whatsappLink = phoneDigits ? `https://wa.me/${phoneDigits}` : '#';
             const callLink = phoneDigits ? `tel:${phoneDigits}` : '#';
+            
+            // Get business name - try different possible field names
+            const businessName = sellerInfo.business_name || 
+                                 sellerInfo.businessName || 
+                                 sellerInfo.store_name || 
+                                 sellerInfo.storeName || 
+                                 sellerInfo.name || 
+                                 'Unknown Seller';
+            
+            // Get location - try different possible field names
+            const location = sellerInfo.address || 
+                             sellerInfo.location || 
+                             sellerInfo.shop_location || 
+                             sellerInfo.shopLocation || 
+                             sellerInfo.business_address || 
+                             'Location not specified';
             
             modalContent.innerHTML = `
                 <div class="product-title">${productInfo.title}</div>
@@ -461,28 +483,21 @@
                         <div class="info-icon">🏪</div>
                         <div class="info-text">
                             <div class="info-label">Seller</div>
-                            <div class="info-value">${sellerInfo.business_name || 'Unknown Seller'}</div>
+                            <div class="info-value">${businessName}</div>
                         </div>
                     </div>
                     <div class="info-row">
                         <div class="info-icon">📞</div>
                         <div class="info-text">
                             <div class="info-label">Phone Number</div>
-                            <div class="info-value">${sellerInfo.phone || 'Not provided'}</div>
-                        </div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-icon">📧</div>
-                        <div class="info-text">
-                            <div class="info-label">Email</div>
-                            <div class="info-value">${sellerInfo.email || 'Not provided'}</div>
+                            <div class="info-value">${phone}</div>
                         </div>
                     </div>
                     <div class="info-row">
                         <div class="info-icon">📍</div>
                         <div class="info-text">
                             <div class="info-label">Shop Location</div>
-                            <div class="info-value">${sellerInfo.address || 'Location not specified'}</div>
+                            <div class="info-value">${location}</div>
                         </div>
                     </div>
                     <div class="info-row">
@@ -492,6 +507,10 @@
                             <div class="info-value">$${parseFloat(productInfo.price).toFixed(2)}</div>
                         </div>
                     </div>
+                    <div class="debug-info">
+                        <strong>Debug Info:</strong><br>
+                        Raw seller data: ${JSON.stringify(sellerInfo)}
+                    </div>
                 </div>
                 <div class="contact-actions">
                     <a href="${callLink}" class="contact-btn call-btn" ${!phoneDigits ? 'onclick="alert(\'Phone number not available\'); return false;"' : ''}>
@@ -499,11 +518,6 @@
                     </a>
                     <a href="${whatsappLink}" class="contact-btn whatsapp-btn" target="_blank" ${!phoneDigits ? 'onclick="alert(\'Phone number not available\'); return false;"' : ''}>
                         💬 WhatsApp
-                    </a>
-                </div>
-                <div style="margin-top: 10px;">
-                    <a href="mailto:${sellerInfo.email || ''}" class="contact-btn email-btn" style="display: block; text-align: center; text-decoration: none;" ${!sellerInfo.email ? 'onclick="alert(\'Email not available\'); return false;"' : ''}>
-                        📧 Send Email
                     </a>
                 </div>
             `;
@@ -521,6 +535,7 @@
                 const SUPABASE_URL = window.SUPABASE_URL;
                 const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
                 
+                console.log('Fetching sellers from Supabase...');
                 const response = await fetch(`${SUPABASE_URL}/rest/v1/sellers?select=*`, {
                     headers: {
                         'apikey': SUPABASE_ANON_KEY,
@@ -533,8 +548,12 @@
                 
                 // Create a map of seller_id -> seller info
                 sellers.forEach(seller => {
+                    // Log each seller to see their field names
+                    console.log('Individual seller data:', seller);
                     sellersMap[seller.user_id] = seller;
                 });
+                
+                console.log('Sellers map created:', sellersMap);
                 
                 // After loading sellers, load products
                 await loadAllProducts();
@@ -552,6 +571,7 @@
                 const SUPABASE_URL = window.SUPABASE_URL;
                 const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
                 
+                console.log('Fetching products from Supabase...');
                 // Fetch all products
                 const response = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
                     headers: {
@@ -602,6 +622,12 @@
             container.innerHTML = products.map(product => {
                 // Get seller info from the map using seller_id
                 const seller = sellersMap[product.seller_id] || {};
+                const businessName = seller.business_name || 
+                                    seller.businessName || 
+                                    seller.store_name || 
+                                    seller.name || 
+                                    'Unknown Seller';
+                
                 return `
                 <div class="product-card">
                     <img 
@@ -612,7 +638,7 @@
                     <h3 style="margin: 10px 0; font-size: 16px;">${product.title}</h3>
                     <div style="font-size: 20px; font-weight: 600; color: #B12704;">$${parseFloat(product.price).toFixed(2)}</div>
                     <div style="margin: 5px 0; color: #666; font-size: 14px;">${product.category || 'Uncategorized'}</div>
-                    <div style="margin: 5px 0; color: #666; font-size: 12px;">Seller: ${seller.business_name || 'Unknown Seller'}</div>
+                    <div style="margin: 5px 0; color: #666; font-size: 12px;">Seller: ${businessName}</div>
                     <div style="margin-top: 10px;">
                         <button 
                             onclick="showSellerContact('${product.id}', '${product.seller_id}')" 
@@ -630,20 +656,11 @@
             const product = allProducts.find(p => p.id == productId);
             const seller = sellersMap[sellerId] || {};
             
+            console.log('Showing contact for product:', product);
+            console.log('Seller data for this product:', seller);
+            
             if (product) {
-                const sellerInfo = {
-                    business_name: seller.business_name,
-                    phone: seller.phone,
-                    email: seller.email,
-                    address: seller.address || 'Shop location not specified'
-                };
-                
-                const productInfo = {
-                    title: product.title,
-                    price: product.price
-                };
-                
-                openContactModal(sellerInfo, productInfo);
+                openContactModal(seller, product);
             } else {
                 alert('Seller information not available');
             }
