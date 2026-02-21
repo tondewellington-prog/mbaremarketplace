@@ -430,8 +430,9 @@
     <script src="script.js"></script>
     <script src="auth-check.js"></script>
     <script>
-        // Store products with seller info
-        let productsWithSellers = [];
+        // Store products and sellers separately
+        let allProducts = [];
+        let sellersMap = {};
 
         // Image modal functions
         function openImageModal(imageSrc) {
@@ -514,14 +515,45 @@
             document.getElementById('sellerContactModal').style.display = 'none';
         }
 
-        // Load all products with images and seller info
+        // Load all sellers first, then products
+        async function loadAllSellers() {
+            try {
+                const SUPABASE_URL = window.SUPABASE_URL;
+                const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
+                
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/sellers?select=*`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+                
+                const sellers = await response.json();
+                console.log('Loaded sellers:', sellers);
+                
+                // Create a map of seller_id -> seller info
+                sellers.forEach(seller => {
+                    sellersMap[seller.user_id] = seller;
+                });
+                
+                // After loading sellers, load products
+                await loadAllProducts();
+                
+            } catch (error) {
+                console.error('Error loading sellers:', error);
+                // Still try to load products even if sellers fail
+                await loadAllProducts();
+            }
+        }
+
+        // Load all products with images
         async function loadAllProducts() {
             try {
                 const SUPABASE_URL = window.SUPABASE_URL;
                 const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
                 
-                // Fetch all products with seller information
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*,sellers(*)&order=created_at.desc`, {
+                // Fetch all products
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
                     headers: {
                         'apikey': SUPABASE_ANON_KEY,
                         'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
@@ -531,7 +563,7 @@
                 const products = await response.json();
                 console.log('Loaded products:', products);
                 
-                productsWithSellers = products || [];
+                allProducts = products || [];
                 
                 if (products && products.length > 0) {
                     // Display products in different sections
@@ -545,6 +577,12 @@
                     
                     // Recommended - show last 4
                     displayProducts('recommended', products.slice(8, 12));
+                } else {
+                    // Show empty states
+                    displayProducts('allProducts', []);
+                    displayProducts('todaysDeals', []);
+                    displayProducts('bestSellers', []);
+                    displayProducts('recommended', []);
                 }
             } catch (error) {
                 console.error('Error loading products:', error);
@@ -562,7 +600,8 @@
             }
             
             container.innerHTML = products.map(product => {
-                const seller = product.sellers || {};
+                // Get seller info from the map using seller_id
+                const seller = sellersMap[product.seller_id] || {};
                 return `
                 <div class="product-card">
                     <img 
@@ -573,10 +612,10 @@
                     <h3 style="margin: 10px 0; font-size: 16px;">${product.title}</h3>
                     <div style="font-size: 20px; font-weight: 600; color: #B12704;">$${parseFloat(product.price).toFixed(2)}</div>
                     <div style="margin: 5px 0; color: #666; font-size: 14px;">${product.category || 'Uncategorized'}</div>
-                    <div style="margin: 5px 0; color: #666; font-size: 12px;">Seller: ${seller.business_name || 'Unknown'}</div>
+                    <div style="margin: 5px 0; color: #666; font-size: 12px;">Seller: ${seller.business_name || 'Unknown Seller'}</div>
                     <div style="margin-top: 10px;">
                         <button 
-                            onclick="showSellerContact('${product.id}')" 
+                            onclick="showSellerContact('${product.id}', '${product.seller_id}')" 
                             style="width: 100%; padding: 8px; background: #FFD814; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;"
                         >
                             Contact Seller
@@ -587,14 +626,16 @@
         }
 
         // Show seller contact information
-        function showSellerContact(productId) {
-            const product = productsWithSellers.find(p => p.id == productId);
+        function showSellerContact(productId, sellerId) {
+            const product = allProducts.find(p => p.id == productId);
+            const seller = sellersMap[sellerId] || {};
+            
             if (product) {
                 const sellerInfo = {
-                    business_name: product.sellers?.business_name,
-                    phone: product.sellers?.phone,
-                    email: product.sellers?.email,
-                    address: product.sellers?.address || 'Shop location not specified'
+                    business_name: seller.business_name,
+                    phone: seller.phone,
+                    email: seller.email,
+                    address: seller.address || 'Shop location not specified'
                 };
                 
                 const productInfo = {
@@ -633,7 +674,8 @@
 
         // Check login status and show/hide logout button
         document.addEventListener('DOMContentLoaded', function() {
-            loadAllProducts();
+            // Load sellers first, then products
+            loadAllSellers();
             
             // Also keep your existing carousel functions if they exist
             if (typeof window.moveCarousel === 'function') {
