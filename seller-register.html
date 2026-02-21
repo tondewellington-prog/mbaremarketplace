@@ -123,6 +123,11 @@
                 </div>
 
                 <div class="form-group" style="margin-bottom: 20px;">
+                    <label>Business Address *</label>
+                    <textarea id="address" rows="3" placeholder="Your shop location" required style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
                     <label>What will you sell? *</label>
                     <select id="category" required style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
                         <option value="">Select a category</option>
@@ -399,13 +404,26 @@
                 const businessName = document.getElementById('businessName').value;
                 const phone = document.getElementById('phone').value;
                 const email = document.getElementById('email').value;
+                const address = document.getElementById('address').value;
                 const category = document.getElementById('category').value;
+
+                // Log the data being sent
+                console.log('Sending seller data:', {
+                    user_id: userId,
+                    business_name: businessName,
+                    phone: phone,
+                    email: email,
+                    address: address,
+                    category: category,
+                    created_at: new Date().toISOString()
+                });
 
                 const sellerData = {
                     user_id: userId,
                     business_name: businessName,
                     phone: phone,
                     email: email,
+                    address: address,
                     category: category,
                     created_at: new Date().toISOString()
                 };
@@ -424,6 +442,9 @@
                 document.getElementById('loadingSpinner').style.display = 'none';
 
                 if (response.ok) {
+                    const result = await response.json();
+                    console.log('Registration successful:', result);
+                    
                     // Show success message
                     const messageDiv = document.getElementById('message');
                     messageDiv.style.display = 'block';
@@ -434,16 +455,20 @@
                     // Store that user is now a seller
                     localStorage.setItem('isSeller', 'true');
                     
-                    // Redirect to dashboard after 1 second
+                    // Redirect to dashboard after 1.5 seconds
                     setTimeout(() => {
                         window.location.href = 'seller-dashboard.html';
-                    }, 1000);
+                    }, 1500);
                 } else {
                     const error = await response.json();
                     console.error('Registration failed:', error);
                     
+                    // Check if table doesn't exist
+                    if (error.code === '42P01' || (error.message && error.message.includes('relation'))) {
+                        alert('Database error: sellers table does not exist. Please create it in Supabase first.');
+                    }
                     // Check if it's a JWT error
-                    if (response.status === 401 || (error.message && error.message.includes('JWT'))) {
+                    else if (response.status === 401 || (error.message && error.message.includes('JWT'))) {
                         alert('Your session has expired. Please login again.');
                         localStorage.removeItem('supabase_session');
                         localStorage.removeItem('isLoggedIn');
@@ -452,7 +477,7 @@
                         // They somehow registered in between
                         window.location.href = 'seller-dashboard.html';
                     } else {
-                        alert('Failed to register: ' + (error.message || 'Please try again'));
+                        alert('Failed to register: ' + (error.message || 'Please check if sellers table exists in Supabase'));
                     }
                 }
             } catch (error) {
