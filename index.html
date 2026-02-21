@@ -181,16 +181,6 @@
             margin-bottom: 10px;
             color: #232f3e;
         }
-        /* Debug info styling */
-        .debug-info {
-            background: #f0f0f0;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 4px;
-            font-size: 12px;
-            color: #666;
-            display: none; /* Hide by default, remove 'none' to see debug info */
-        }
     </style>
 </head>
 <body>
@@ -433,9 +423,8 @@
     <script src="script.js"></script>
     <script src="auth-check.js"></script>
     <script>
-        // Store products and sellers separately
+        // Store products
         let allProducts = [];
-        let sellersMap = {};
 
         // Image modal functions
         function openImageModal(imageSrc) {
@@ -451,30 +440,17 @@
         function openContactModal(sellerInfo, productInfo) {
             const modalContent = document.getElementById('sellerContactContent');
             
-            // Log the seller info to see what we're getting
-            console.log('Seller info for contact modal:', sellerInfo);
-            
             // Format phone number for WhatsApp and call
-            const phone = sellerInfo.phone || sellerInfo.Phone || sellerInfo.contact || 'Not provided';
+            const phone = sellerInfo.phone || 'Not provided';
             const phoneDigits = phone.replace(/\D/g, '');
             const whatsappLink = phoneDigits ? `https://wa.me/${phoneDigits}` : '#';
             const callLink = phoneDigits ? `tel:${phoneDigits}` : '#';
             
-            // Get business name - try different possible field names
-            const businessName = sellerInfo.business_name || 
-                                 sellerInfo.businessName || 
-                                 sellerInfo.store_name || 
-                                 sellerInfo.storeName || 
-                                 sellerInfo.name || 
-                                 'Unknown Seller';
+            // Get business name
+            const businessName = sellerInfo.business_name || 'Unknown Seller';
             
-            // Get location - try different possible field names
-            const location = sellerInfo.address || 
-                             sellerInfo.location || 
-                             sellerInfo.shop_location || 
-                             sellerInfo.shopLocation || 
-                             sellerInfo.business_address || 
-                             'Location not specified';
+            // Get location
+            const location = sellerInfo.address || 'Location not specified';
             
             modalContent.innerHTML = `
                 <div class="product-title">${productInfo.title}</div>
@@ -507,10 +483,6 @@
                             <div class="info-value">$${parseFloat(productInfo.price).toFixed(2)}</div>
                         </div>
                     </div>
-                    <div class="debug-info">
-                        <strong>Debug Info:</strong><br>
-                        Raw seller data: ${JSON.stringify(sellerInfo)}
-                    </div>
                 </div>
                 <div class="contact-actions">
                     <a href="${callLink}" class="contact-btn call-btn" ${!phoneDigits ? 'onclick="alert(\'Phone number not available\'); return false;"' : ''}>
@@ -529,74 +501,70 @@
             document.getElementById('sellerContactModal').style.display = 'none';
         }
 
-        // Load all sellers first, then products
-        async function loadAllSellers() {
-            try {
-                const SUPABASE_URL = window.SUPABASE_URL;
-                const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
-                
-                console.log('Fetching sellers from Supabase...');
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/sellers?select=*`, {
-                    headers: {
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                    }
-                });
-                
-                const sellers = await response.json();
-                console.log('Loaded sellers:', sellers);
-                
-                // Create a map of seller_id -> seller info
-                sellers.forEach(seller => {
-                    // Log each seller to see their field names
-                    console.log('Individual seller data:', seller);
-                    sellersMap[seller.user_id] = seller;
-                });
-                
-                console.log('Sellers map created:', sellersMap);
-                
-                // After loading sellers, load products
-                await loadAllProducts();
-                
-            } catch (error) {
-                console.error('Error loading sellers:', error);
-                // Still try to load products even if sellers fail
-                await loadAllProducts();
-            }
-        }
-
-        // Load all products with images
+        // Load all products with seller info using a join query
         async function loadAllProducts() {
             try {
                 const SUPABASE_URL = window.SUPABASE_URL;
                 const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
                 
-                console.log('Fetching products from Supabase...');
-                // Fetch all products
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
+                console.log('Fetching products with seller info...');
+                
+                // First, get all sellers
+                const sellersResponse = await fetch(`${SUPABASE_URL}/rest/v1/sellers?select=*`, {
                     headers: {
                         'apikey': SUPABASE_ANON_KEY,
                         'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
                     }
                 });
                 
-                const products = await response.json();
-                console.log('Loaded products:', products);
+                const sellers = await sellersResponse.json();
+                console.log('Sellers from database:', sellers);
                 
-                allProducts = products || [];
+                // Create a map of sellers by user_id
+                const sellersMap = {};
+                if (sellers && sellers.length > 0) {
+                    sellers.forEach(seller => {
+                        sellersMap[seller.user_id] = seller;
+                    });
+                    console.log('Sellers map created:', sellersMap);
+                } else {
+                    console.log('No sellers found in database');
+                }
                 
-                if (products && products.length > 0) {
+                // Get all products
+                const productsResponse = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+                
+                const products = await productsResponse.json();
+                console.log('Products from database:', products);
+                
+                // Combine products with their seller info
+                allProducts = products.map(product => {
+                    const seller = sellersMap[product.seller_id] || null;
+                    return {
+                        ...product,
+                        seller_info: seller
+                    };
+                });
+                
+                console.log('Combined products with seller info:', allProducts);
+                
+                if (allProducts && allProducts.length > 0) {
                     // Display products in different sections
-                    displayProducts('allProducts', products);
+                    displayProducts('allProducts', allProducts);
                     
                     // Today's Deals - show 4 most recent
-                    displayProducts('todaysDeals', products.slice(0, 4));
+                    displayProducts('todaysDeals', allProducts.slice(0, 4));
                     
                     // Best Sellers - show next 4
-                    displayProducts('bestSellers', products.slice(4, 8));
+                    displayProducts('bestSellers', allProducts.slice(4, 8));
                     
                     // Recommended - show last 4
-                    displayProducts('recommended', products.slice(8, 12));
+                    displayProducts('recommended', allProducts.slice(8, 12));
                 } else {
                     // Show empty states
                     displayProducts('allProducts', []);
@@ -620,13 +588,7 @@
             }
             
             container.innerHTML = products.map(product => {
-                // Get seller info from the map using seller_id
-                const seller = sellersMap[product.seller_id] || {};
-                const businessName = seller.business_name || 
-                                    seller.businessName || 
-                                    seller.store_name || 
-                                    seller.name || 
-                                    'Unknown Seller';
+                const sellerName = product.seller_info?.business_name || 'Unknown Seller';
                 
                 return `
                 <div class="product-card">
@@ -638,10 +600,10 @@
                     <h3 style="margin: 10px 0; font-size: 16px;">${product.title}</h3>
                     <div style="font-size: 20px; font-weight: 600; color: #B12704;">$${parseFloat(product.price).toFixed(2)}</div>
                     <div style="margin: 5px 0; color: #666; font-size: 14px;">${product.category || 'Uncategorized'}</div>
-                    <div style="margin: 5px 0; color: #666; font-size: 12px;">Seller: ${businessName}</div>
+                    <div style="margin: 5px 0; color: #666; font-size: 12px;">Seller: ${sellerName}</div>
                     <div style="margin-top: 10px;">
                         <button 
-                            onclick="showSellerContact('${product.id}', '${product.seller_id}')" 
+                            onclick="showSellerContact('${product.id}')" 
                             style="width: 100%; padding: 8px; background: #FFD814; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;"
                         >
                             Contact Seller
@@ -652,17 +614,19 @@
         }
 
         // Show seller contact information
-        function showSellerContact(productId, sellerId) {
+        function showSellerContact(productId) {
             const product = allProducts.find(p => p.id == productId);
-            const seller = sellersMap[sellerId] || {};
             
             console.log('Showing contact for product:', product);
-            console.log('Seller data for this product:', seller);
+            console.log('Seller info:', product?.seller_info);
             
-            if (product) {
-                openContactModal(seller, product);
+            if (product && product.seller_info) {
+                openContactModal(product.seller_info, product);
+            } else if (product) {
+                // Product exists but no seller info
+                alert('Seller information not available for this product');
             } else {
-                alert('Seller information not available');
+                alert('Product not found');
             }
         }
 
@@ -691,8 +655,8 @@
 
         // Check login status and show/hide logout button
         document.addEventListener('DOMContentLoaded', function() {
-            // Load sellers first, then products
-            loadAllSellers();
+            // Load products with seller info
+            loadAllProducts();
             
             // Also keep your existing carousel functions if they exist
             if (typeof window.moveCarousel === 'function') {
