@@ -114,17 +114,27 @@
 
                 <div class="form-group" style="margin-bottom: 20px;">
                     <label>Phone Number *</label>
-                    <input type="tel" id="phone" placeholder="e.g., 0712345678" required style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
+                    <input type="tel" id="businessPhone" placeholder="e.g., 0712345678" required style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
                 </div>
 
                 <div class="form-group" style="margin-bottom: 20px;">
                     <label>Email Address *</label>
-                    <input type="email" id="email" placeholder="your@email.com" required style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
+                    <input type="email" id="businessEmail" placeholder="your@email.com" required style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label>Shop Location/Address *</label>
+                    <textarea id="businessAddress" rows="3" placeholder="Enter your full shop address" required style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label>Business Description</label>
+                    <textarea id="businessDescription" rows="3" placeholder="Tell us about your business" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;"></textarea>
                 </div>
 
                 <div class="form-group" style="margin-bottom: 20px;">
                     <label>What will you sell? *</label>
-                    <select id="category" required style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
+                    <select id="businessType" required style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
                         <option value="">Select a category</option>
                         <option value="Electronics">Electronics</option>
                         <option value="Books">Books</option>
@@ -235,7 +245,6 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    // Save the new session
                     localStorage.setItem('supabase_session', JSON.stringify(data));
                     localStorage.setItem('isLoggedIn', 'true');
                     return { success: true, session: data };
@@ -250,12 +259,10 @@
 
         // Check seller status immediately when page loads
         document.addEventListener('DOMContentLoaded', async function() {
-            // Check if user is logged in
             const sessionData = localStorage.getItem('supabase_session');
             const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
             
             if (!isLoggedIn || !sessionData) {
-                // Not logged in, show registration form
                 return;
             }
 
@@ -263,12 +270,10 @@
             const userId = session.user?.id;
             const accessToken = session.access_token;
             
-            // Get Supabase config
             const SUPABASE_URL = window.SUPABASE_URL;
             const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
 
             try {
-                // Check if user is already a seller
                 const response = await fetch(`${SUPABASE_URL}/rest/v1/sellers?user_id=eq.${userId}&select=*`, {
                     headers: {
                         'apikey': SUPABASE_ANON_KEY,
@@ -276,13 +281,11 @@
                     }
                 });
                 
-                // If token expired, try to refresh
                 if (response.status === 401) {
                     console.log('Token expired, attempting refresh...');
                     const refreshResult = await refreshAccessToken(session.refresh_token);
                     
                     if (refreshResult.success) {
-                        // Retry with new token
                         const newSession = refreshResult.session;
                         const retryResponse = await fetch(`${SUPABASE_URL}/rest/v1/sellers?user_id=eq.${userId}&select=*`, {
                             headers: {
@@ -302,7 +305,6 @@
                             }, 3000);
                         }
                     } else {
-                        // Refresh failed, require login
                         alert('Your session has expired. Please login again.');
                         localStorage.removeItem('supabase_session');
                         localStorage.removeItem('isLoggedIn');
@@ -314,11 +316,9 @@
                 const sellers = await response.json();
                 
                 if (sellers && sellers.length > 0) {
-                    // User is already registered as seller
                     document.getElementById('alreadyRegisteredMessage').style.display = 'block';
                     document.getElementById('sellerForm').style.display = 'none';
                     
-                    // Auto-redirect to dashboard after 3 seconds
                     setTimeout(() => {
                         window.location.href = 'seller-dashboard.html';
                     }, 3000);
@@ -331,14 +331,11 @@
         async function handleSellerRegistration(event) {
             event.preventDefault();
             
-            // Show loading spinner
             document.getElementById('loadingSpinner').style.display = 'block';
             
-            // Get Supabase config
             const SUPABASE_URL = window.SUPABASE_URL;
             const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
             
-            // Check if user is logged in
             const sessionData = localStorage.getItem('supabase_session');
             const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
             
@@ -355,7 +352,6 @@
             let refreshToken = session.refresh_token;
 
             try {
-                // First, try to check with current token
                 let checkResponse = await fetch(`${SUPABASE_URL}/rest/v1/sellers?user_id=eq.${userId}&select=id`, {
                     headers: {
                         'apikey': SUPABASE_ANON_KEY,
@@ -363,18 +359,15 @@
                     }
                 });
                 
-                // If token expired, refresh it
                 if (checkResponse.status === 401) {
                     console.log('Token expired during registration, refreshing...');
                     const refreshResult = await refreshAccessToken(refreshToken);
                     
                     if (refreshResult.success) {
-                        // Update session with new tokens
                         session = refreshResult.session;
                         accessToken = session.access_token;
                         refreshToken = session.refresh_token;
                         
-                        // Retry the check
                         checkResponse = await fetch(`${SUPABASE_URL}/rest/v1/sellers?user_id=eq.${userId}&select=id`, {
                             headers: {
                                 'apikey': SUPABASE_ANON_KEY,
@@ -390,27 +383,30 @@
                 
                 if (existing && existing.length > 0) {
                     document.getElementById('loadingSpinner').style.display = 'none';
-                    // Already registered, go straight to dashboard
                     window.location.href = 'seller-dashboard.html';
                     return;
                 }
 
-                // Get form values
+                // Get form values with correct column names
                 const businessName = document.getElementById('businessName').value;
-                const phone = document.getElementById('phone').value;
-                const email = document.getElementById('email').value;
-                const category = document.getElementById('category').value;
+                const businessPhone = document.getElementById('businessPhone').value;
+                const businessEmail = document.getElementById('businessEmail').value;
+                const businessAddress = document.getElementById('businessAddress').value;
+                const businessDescription = document.getElementById('businessDescription').value;
+                const businessType = document.getElementById('businessType').value;
 
+                // Use the correct column names from your database
                 const sellerData = {
                     user_id: userId,
                     business_name: businessName,
-                    phone: phone,
-                    email: email,
-                    category: category,
+                    business_phone: businessPhone,
+                    business_email: businessEmail,
+                    business_address: businessAddress,
+                    business_description: businessDescription,
+                    business_type: businessType,
                     created_at: new Date().toISOString()
                 };
 
-                // Submit registration with (possibly refreshed) token
                 const response = await fetch(`${SUPABASE_URL}/rest/v1/sellers`, {
                     method: 'POST',
                     headers: {
@@ -424,32 +420,27 @@
                 document.getElementById('loadingSpinner').style.display = 'none';
 
                 if (response.ok) {
-                    // Show success message
                     const messageDiv = document.getElementById('message');
                     messageDiv.style.display = 'block';
                     messageDiv.style.backgroundColor = '#d4edda';
                     messageDiv.style.color = '#155724';
                     messageDiv.innerHTML = '✅ Registration successful! Redirecting to your dashboard...';
                     
-                    // Store that user is now a seller
                     localStorage.setItem('isSeller', 'true');
                     
-                    // Redirect to dashboard after 1 second
                     setTimeout(() => {
                         window.location.href = 'seller-dashboard.html';
-                    }, 1000);
+                    }, 1500);
                 } else {
                     const error = await response.json();
                     console.error('Registration failed:', error);
                     
-                    // Check if it's a JWT error
                     if (response.status === 401 || (error.message && error.message.includes('JWT'))) {
                         alert('Your session has expired. Please login again.');
                         localStorage.removeItem('supabase_session');
                         localStorage.removeItem('isLoggedIn');
                         window.location.href = 'login.html?redirect=seller-register.html';
                     } else if (error.message && error.message.includes('duplicate')) {
-                        // They somehow registered in between
                         window.location.href = 'seller-dashboard.html';
                     } else {
                         alert('Failed to register: ' + (error.message || 'Please try again'));
@@ -470,7 +461,6 @@
             }
         }
 
-        // Make function global
         window.handleSellerRegistration = handleSellerRegistration;
     </script>
 </body>
