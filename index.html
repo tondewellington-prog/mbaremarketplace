@@ -9,7 +9,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Add this small style for product images */
         .product-card img {
             width: 100%;
             height: 200px;
@@ -21,7 +20,6 @@
         .product-card img:hover {
             transform: scale(1.02);
         }
-        /* Modal for image preview (optional) */
         .image-modal {
             display: none;
             position: fixed;
@@ -51,7 +49,6 @@
             font-weight: bold;
             cursor: pointer;
         }
-        /* Add this small style for the logout button */
         .logout-btn {
             background: none;
             border: 1px solid #fff;
@@ -67,7 +64,6 @@
         .logout-btn:hover {
             background: rgba(255,255,255,0.1);
         }
-        /* Modal for seller contact info */
         .contact-modal {
             display: none;
             position: fixed;
@@ -181,6 +177,16 @@
             margin-bottom: 10px;
             color: #232f3e;
         }
+        .no-image {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f0f0f0;
+            color: #999;
+            height: 200px;
+            width: 100%;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -227,7 +233,6 @@
                     <div class="account-menu">
                         <span class="account-label">Hello, Sign in</span>
                         <a href="login.html" class="account-link">Account & Lists</a>
-                        <!-- Logout Button Added Here -->
                         <button id="logoutBtn" class="logout-btn" onclick="logout()" style="display: none;">Logout</button>
                     </div>
                     <div class="returns">
@@ -307,48 +312,36 @@
 
         <!-- Product Categories -->
         <div class="container">
-            <!-- Today's Deals -->
             <section class="product-section">
                 <div class="section-header">
                     <h2>Today's Deals</h2>
                     <a href="#" class="see-all">See all deals</a>
                 </div>
-                <div class="product-grid" id="todaysDeals">
-                    <!-- Products will be populated by JavaScript with images -->
-                </div>
+                <div class="product-grid" id="todaysDeals"></div>
             </section>
 
-            <!-- Best Sellers -->
             <section class="product-section">
                 <div class="section-header">
                     <h2>Best Sellers in Electronics</h2>
                     <a href="#" class="see-all">See more</a>
                 </div>
-                <div class="product-grid" id="bestSellers">
-                    <!-- Products will be populated by JavaScript with images -->
-                </div>
+                <div class="product-grid" id="bestSellers"></div>
             </section>
 
-            <!-- Recommended for You -->
             <section class="product-section">
                 <div class="section-header">
                     <h2>Recommended for You</h2>
                     <a href="#" class="see-all">See more</a>
                 </div>
-                <div class="product-grid" id="recommended">
-                    <!-- Products will be populated by JavaScript with images -->
-                </div>
+                <div class="product-grid" id="recommended"></div>
             </section>
             
-            <!-- All Products Section (New - shows everything) -->
             <section class="product-section">
                 <div class="section-header">
                     <h2>All Products</h2>
                     <a href="#" class="see-all">Browse all</a>
                 </div>
-                <div class="product-grid" id="allProducts">
-                    <!-- All products will be loaded here with images -->
-                </div>
+                <div class="product-grid" id="allProducts"></div>
             </section>
         </div>
     </main>
@@ -423,161 +416,71 @@
     <script src="script.js"></script>
     <script src="auth-check.js"></script>
     <script>
-        // Store products
         let allProducts = [];
+        let sellersMap = {};
 
-        // Image modal functions
         function openImageModal(imageSrc) {
-            document.getElementById('modalImage').src = imageSrc;
-            document.getElementById('imageModal').style.display = 'block';
+            if (imageSrc && imageSrc !== 'null' && imageSrc !== '') {
+                document.getElementById('modalImage').src = imageSrc;
+                document.getElementById('imageModal').style.display = 'block';
+            } else {
+                alert('No image available');
+            }
         }
 
         function closeImageModal() {
             document.getElementById('imageModal').style.display = 'none';
         }
 
-        // Contact modal functions
-        function openContactModal(sellerInfo, productInfo) {
-            const modalContent = document.getElementById('sellerContactContent');
-            
-            // Format phone number for WhatsApp and call
-            const phone = sellerInfo.phone || 'Not provided';
-            const phoneDigits = phone.replace(/\D/g, '');
-            const whatsappLink = phoneDigits ? `https://wa.me/${phoneDigits}` : '#';
-            const callLink = phoneDigits ? `tel:${phoneDigits}` : '#';
-            
-            // Get business name
-            const businessName = sellerInfo.business_name || 'Unknown Seller';
-            
-            // Get location
-            const location = sellerInfo.address || 'Location not specified';
-            
-            modalContent.innerHTML = `
-                <div class="product-title">${productInfo.title}</div>
-                <div class="seller-info">
-                    <div class="info-row">
-                        <div class="info-icon">🏪</div>
-                        <div class="info-text">
-                            <div class="info-label">Seller</div>
-                            <div class="info-value">${businessName}</div>
-                        </div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-icon">📞</div>
-                        <div class="info-text">
-                            <div class="info-label">Phone Number</div>
-                            <div class="info-value">${phone}</div>
-                        </div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-icon">📍</div>
-                        <div class="info-text">
-                            <div class="info-label">Shop Location</div>
-                            <div class="info-value">${location}</div>
-                        </div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-icon">📦</div>
-                        <div class="info-text">
-                            <div class="info-label">Price</div>
-                            <div class="info-value">$${parseFloat(productInfo.price).toFixed(2)}</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="contact-actions">
-                    <a href="${callLink}" class="contact-btn call-btn" ${!phoneDigits ? 'onclick="alert(\'Phone number not available\'); return false;"' : ''}>
-                        📞 Call Seller
-                    </a>
-                    <a href="${whatsappLink}" class="contact-btn whatsapp-btn" target="_blank" ${!phoneDigits ? 'onclick="alert(\'Phone number not available\'); return false;"' : ''}>
-                        💬 WhatsApp
-                    </a>
-                </div>
-            `;
-            
-            document.getElementById('sellerContactModal').style.display = 'block';
-        }
-
         function closeContactModal() {
             document.getElementById('sellerContactModal').style.display = 'none';
         }
 
-        // Load all products with seller info using a join query
-        async function loadAllProducts() {
+        async function loadData() {
             try {
                 const SUPABASE_URL = window.SUPABASE_URL;
                 const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
                 
-                console.log('Fetching products with seller info...');
-                
-                // First, get all sellers
-                const sellersResponse = await fetch(`${SUPABASE_URL}/rest/v1/sellers?select=*`, {
+                // Load sellers
+                console.log('Loading sellers...');
+                const sellersRes = await fetch(`${SUPABASE_URL}/rest/v1/sellers?select=*`, {
                     headers: {
                         'apikey': SUPABASE_ANON_KEY,
                         'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
                     }
                 });
+                const sellers = await sellersRes.json();
+                console.log('Sellers found:', sellers);
                 
-                const sellers = await sellersResponse.json();
-                console.log('Sellers from database:', sellers);
+                sellers.forEach(seller => {
+                    sellersMap[seller.user_id] = seller;
+                });
                 
-                // Create a map of sellers by user_id
-                const sellersMap = {};
-                if (sellers && sellers.length > 0) {
-                    sellers.forEach(seller => {
-                        sellersMap[seller.user_id] = seller;
-                    });
-                    console.log('Sellers map created:', sellersMap);
-                } else {
-                    console.log('No sellers found in database');
-                }
-                
-                // Get all products
-                const productsResponse = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
+                // Load products
+                console.log('Loading products...');
+                const productsRes = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
                     headers: {
                         'apikey': SUPABASE_ANON_KEY,
                         'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
                     }
                 });
+                const products = await productsRes.json();
+                console.log('Products found:', products);
                 
-                const products = await productsResponse.json();
-                console.log('Products from database:', products);
+                allProducts = products || [];
                 
-                // Combine products with their seller info
-                allProducts = products.map(product => {
-                    const seller = sellersMap[product.seller_id] || null;
-                    return {
-                        ...product,
-                        seller_info: seller
-                    };
-                });
-                
-                console.log('Combined products with seller info:', allProducts);
-                
-                if (allProducts && allProducts.length > 0) {
-                    // Display products in different sections
+                // Display products
+                if (allProducts.length > 0) {
                     displayProducts('allProducts', allProducts);
-                    
-                    // Today's Deals - show 4 most recent
                     displayProducts('todaysDeals', allProducts.slice(0, 4));
-                    
-                    // Best Sellers - show next 4
                     displayProducts('bestSellers', allProducts.slice(4, 8));
-                    
-                    // Recommended - show last 4
                     displayProducts('recommended', allProducts.slice(8, 12));
-                } else {
-                    // Show empty states
-                    displayProducts('allProducts', []);
-                    displayProducts('todaysDeals', []);
-                    displayProducts('bestSellers', []);
-                    displayProducts('recommended', []);
                 }
             } catch (error) {
-                console.error('Error loading products:', error);
+                console.error('Error loading data:', error);
             }
         }
 
-        // Display products in a specific grid
         function displayProducts(gridId, products) {
             const container = document.getElementById(gridId);
             if (!container) return;
@@ -588,15 +491,16 @@
             }
             
             container.innerHTML = products.map(product => {
-                const sellerName = product.seller_info?.business_name || 'Unknown Seller';
+                const seller = sellersMap[product.seller_id];
+                const sellerName = seller ? seller.business_name : 'Unknown Seller';
+                const imageUrl = product.image_url && product.image_url !== 'null' ? product.image_url : null;
                 
                 return `
                 <div class="product-card">
-                    <img 
-                        src="${product.image_url || 'https://via.placeholder.com/300x300?text=No+Image'}" 
-                        alt="${product.title}"
-                        onclick="openImageModal('${product.image_url || 'https://via.placeholder.com/300x300?text=No+Image'}')"
-                    >
+                    ${imageUrl ? 
+                        `<img src="${imageUrl}" alt="${product.title}" onclick="openImageModal('${imageUrl}')">` : 
+                        `<div class="no-image" onclick="alert('No image available')">📷 No Image</div>`
+                    }
                     <h3 style="margin: 10px 0; font-size: 16px;">${product.title}</h3>
                     <div style="font-size: 20px; font-weight: 600; color: #B12704;">$${parseFloat(product.price).toFixed(2)}</div>
                     <div style="margin: 5px 0; color: #666; font-size: 14px;">${product.category || 'Uncategorized'}</div>
@@ -613,36 +517,76 @@
             `}).join('');
         }
 
-        // Show seller contact information
         function showSellerContact(productId) {
             const product = allProducts.find(p => p.id == productId);
             
-            console.log('Showing contact for product:', product);
-            console.log('Seller info:', product?.seller_info);
-            
-            if (product && product.seller_info) {
-                openContactModal(product.seller_info, product);
-            } else if (product) {
-                // Product exists but no seller info
-                alert('Seller information not available for this product');
-            } else {
+            if (!product) {
                 alert('Product not found');
+                return;
             }
+            
+            console.log('Product seller_id:', product.seller_id);
+            console.log('Available sellers:', sellersMap);
+            
+            const seller = sellersMap[product.seller_id];
+            
+            if (!seller) {
+                alert(`Seller information not available. Please ensure you have registered as a seller.`);
+                return;
+            }
+            
+            // Open contact modal with seller info
+            const modalContent = document.getElementById('sellerContactContent');
+            const phone = seller.business_phone || 'Not provided';
+            const phoneDigits = phone.replace(/\D/g, '');
+            const whatsappLink = phoneDigits ? `https://wa.me/${phoneDigits}` : '#';
+            const callLink = phoneDigits ? `tel:${phoneDigits}` : '#';
+            
+            modalContent.innerHTML = `
+                <div class="product-title">${product.title}</div>
+                <div class="seller-info">
+                    <div class="info-row">
+                        <div class="info-icon">🏪</div>
+                        <div class="info-text">
+                            <div class="info-label">Seller</div>
+                            <div class="info-value">${seller.business_name || 'Unknown Seller'}</div>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-icon">📞</div>
+                        <div class="info-text">
+                            <div class="info-label">Phone Number</div>
+                            <div class="info-value">${phone}</div>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-icon">📍</div>
+                        <div class="info-text">
+                            <div class="info-label">Shop Location</div>
+                            <div class="info-value">${seller.business_address || 'Location not specified'}</div>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-icon">📦</div>
+                        <div class="info-text">
+                            <div class="info-label">Price</div>
+                            <div class="info-value">$${parseFloat(product.price).toFixed(2)}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="contact-actions">
+                    <a href="${callLink}" class="contact-btn call-btn" ${!phoneDigits ? 'onclick="alert(\'Phone number not available\'); return false;"' : ''}>
+                        📞 Call Seller
+                    </a>
+                    <a href="${whatsappLink}" class="contact-btn whatsapp-btn" target="_blank" ${!phoneDigits ? 'onclick="alert(\'Phone number not available\'); return false;"' : ''}>
+                        💬 WhatsApp
+                    </a>
+                </div>
+            `;
+            
+            document.getElementById('sellerContactModal').style.display = 'block';
         }
 
-        // Add to basket function (kept for compatibility)
-        window.addToBasket = function(productId) {
-            console.log('Adding product to basket:', productId);
-            alert('Product added to basket!');
-            // Update basket count
-            const basketCount = document.getElementById('basketCount');
-            if (basketCount) {
-                let count = parseInt(basketCount.textContent) || 0;
-                basketCount.textContent = count + 1;
-            }
-        };
-
-        // Logout function
         window.logout = function() {
             if (window.api && window.api.logout) {
                 window.api.logout();
@@ -653,40 +597,15 @@
             }
         };
 
-        // Check login status and show/hide logout button
         document.addEventListener('DOMContentLoaded', function() {
-            // Load products with seller info
-            loadAllProducts();
+            loadData();
             
-            // Also keep your existing carousel functions if they exist
-            if (typeof window.moveCarousel === 'function') {
-                // Your existing carousel code is preserved
-            }
-            
-            // Check login status for logout button
             const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
             const logoutBtn = document.getElementById('logoutBtn');
-            
             if (isLoggedIn && logoutBtn) {
                 logoutBtn.style.display = 'inline-block';
-                
-                // Update the welcome text
-                const sessionData = localStorage.getItem('supabase_session');
-                if (sessionData) {
-                    try {
-                        const session = JSON.parse(sessionData);
-                        const userEmail = session.user?.email || 'User';
-                        const accountLabel = document.querySelector('.account-label');
-                        if (accountLabel) {
-                            accountLabel.textContent = `Hello, ${userEmail.split('@')[0]}`;
-                        }
-                    } catch (e) {
-                        console.error('Error parsing session:', e);
-                    }
-                }
             }
             
-            // Close modal when clicking outside
             window.onclick = function(event) {
                 const modal = document.getElementById('sellerContactModal');
                 if (event.target == modal) {
