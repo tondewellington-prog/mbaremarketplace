@@ -442,7 +442,6 @@
                 const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
                 
                 // Load sellers
-                console.log('Loading sellers...');
                 const sellersRes = await fetch(`${SUPABASE_URL}/rest/v1/sellers?select=*`, {
                     headers: {
                         'apikey': SUPABASE_ANON_KEY,
@@ -450,14 +449,12 @@
                     }
                 });
                 const sellers = await sellersRes.json();
-                console.log('Sellers found:', sellers);
                 
                 sellers.forEach(seller => {
                     sellersMap[seller.user_id] = seller;
                 });
                 
                 // Load products
-                console.log('Loading products...');
                 const productsRes = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
                     headers: {
                         'apikey': SUPABASE_ANON_KEY,
@@ -465,7 +462,6 @@
                     }
                 });
                 const products = await productsRes.json();
-                console.log('Products found:', products);
                 
                 allProducts = products || [];
                 
@@ -525,13 +521,10 @@
                 return;
             }
             
-            console.log('Product seller_id:', product.seller_id);
-            console.log('Available sellers:', sellersMap);
-            
             const seller = sellersMap[product.seller_id];
             
             if (!seller) {
-                alert(`Seller information not available. Please ensure you have registered as a seller.`);
+                alert('Seller information not available');
                 return;
             }
             
