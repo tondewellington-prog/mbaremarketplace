@@ -89,7 +89,7 @@ const api = {
                 throw new Error('Failed to fetch products');
             }
             
-            return data;
+            return data; // Return the array directly
         } catch (error) {
             console.error('Error fetching products:', error);
             return [];
