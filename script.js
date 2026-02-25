@@ -70,18 +70,40 @@ async function loadProductsFromAPI() {
             throw new Error('API not ready');
         }
         
-        const response = await api.getProducts({ limit: 50 });
-        if (response.success && response.products) {
+        const response = await api.getProducts();
+        console.log('API Response:', response);
+        
+        // Check if response is an array (direct products)
+        if (Array.isArray(response)) {
+            products = response.map(p => ({
+                id: p.id,
+                title: p.title,
+                price: parseFloat(p.price),
+                rating: 4.0, // Default rating since not in your DB
+                reviews: 0,    // Default reviews
+                image: p.image_url || 'https://via.placeholder.com/300x300?text=Product',
+                category: p.category || 'Uncategorized',
+                description: p.description || '',
+                features: p.features || [],
+                seller_id: p.seller_id,
+                image_url: p.image_url
+            }));
+            console.log('Products loaded:', products);
+        }
+        // Check if response has success and products properties
+        else if (response.success && response.products) {
             products = response.products.map(p => ({
                 id: p.id,
                 title: p.title,
                 price: parseFloat(p.price),
-                rating: parseFloat(p.rating) || 0,
+                rating: parseFloat(p.rating) || 4.0,
                 reviews: p.reviews || 0,
-                image: p.image,
-                category: p.category,
-                description: p.description,
-                features: p.features || []
+                image: p.image_url || p.image || 'https://via.placeholder.com/300x300?text=Product',
+                category: p.category || 'Uncategorized',
+                description: p.description || '',
+                features: p.features || [],
+                seller_id: p.seller_id,
+                image_url: p.image_url
             }));
         }
     } catch (error) {
