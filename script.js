@@ -5,6 +5,7 @@
 // Product Data - Will be loaded from API
 let products = [];
 let basket = [];
+let sellersMap = {};
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', async function() {
@@ -15,6 +16,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             // Wait a moment for API to load
             await new Promise(resolve => setTimeout(resolve, 500));
         }
+        
+        // Load sellers first
+        await loadSellersFromAPI();
         
         // Load products from API
         await loadProductsFromAPI();
@@ -27,6 +31,11 @@ document.addEventListener('DOMContentLoaded', async function() {
             loadProducts('todaysDeals', products.slice(0, 4));
             loadProducts('bestSellers', products.slice(4, 8));
             loadProducts('recommended', products.slice(8, 12));
+        }
+        
+        // Load all products section if it exists
+        if (document.getElementById('allProducts')) {
+            loadProducts('allProducts', products);
         }
         
         // Load product detail if on product page
@@ -61,78 +70,89 @@ document.addEventListener('DOMContentLoaded', async function() {
         loadFallbackProducts();
     }
 });
+
+// Load sellers from API
+async function loadSellersFromAPI() {
+    try {
+        const SUPABASE_URL = window.SUPABASE_URL;
+        const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
+        
+        console.log('Loading sellers...');
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/sellers?select=*`, {
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+            }
+        });
+        
+        const sellers = await response.json();
+        console.log('Sellers loaded:', sellers);
+        
+        // Create a map of sellers by user_id
+        if (Array.isArray(sellers)) {
+            sellers.forEach(seller => {
+                sellersMap[seller.user_id] = seller;
+            });
+            console.log('Sellers map created:', Object.keys(sellersMap).length, 'sellers');
+        }
+    } catch (error) {
+        console.error('Failed to load sellers:', error);
+    }
+}
+
 // Load products from API
 async function loadProductsFromAPI() {
     try {
-        // ADD THIS CHECK AT THE BEGINNING
-        if (!window.api || typeof window.api.getProducts !== 'function') {
-            console.log('API or getProducts not ready yet');
-            throw new Error('API not ready');
-        }
+        const SUPABASE_URL = window.SUPABASE_URL;
+        const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
         
-        const response = await api.getProducts();
-        console.log('API Response:', response);
+        console.log('Loading products...');
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+            }
+        });
         
-        // Check if response is an array (direct products)
-        if (Array.isArray(response)) {
-            products = response.map(p => ({
+        const data = await response.json();
+        console.log('Products loaded:', data);
+        
+        if (Array.isArray(data)) {
+            products = data.map(p => ({
                 id: p.id,
                 title: p.title,
                 price: parseFloat(p.price),
-                rating: 4.0, // Default rating since not in your DB
-                reviews: 0,    // Default reviews
+                rating: 4.0,
+                reviews: 0,
                 image: p.image_url || 'https://via.placeholder.com/300x300?text=Product',
                 category: p.category || 'Uncategorized',
                 description: p.description || '',
                 features: p.features || [],
                 seller_id: p.seller_id,
-                image_url: p.image_url
+                image_url: p.image_url,
+                seller: sellersMap[p.seller_id] || null
             }));
-            console.log('Products loaded:', products);
-        }
-        // Check if response has success and products properties
-        else if (response.success && response.products) {
-            products = response.products.map(p => ({
-                id: p.id,
-                title: p.title,
-                price: parseFloat(p.price),
-                rating: parseFloat(p.rating) || 4.0,
-                reviews: p.reviews || 0,
-                image: p.image_url || p.image || 'https://via.placeholder.com/300x300?text=Product',
-                category: p.category || 'Uncategorized',
-                description: p.description || '',
-                features: p.features || [],
-                seller_id: p.seller_id,
-                image_url: p.image_url
-            }));
+            console.log('Products mapped:', products.length);
         }
     } catch (error) {
         console.error('Failed to load products from API:', error);
-        // Will use fallback products
         throw error;
     }
 }
+
 // Load basket from API (if user is logged in)
 async function loadBasketFromAPI() {
     try {
-        if (api.token) {
-            const response = await api.getBasket();
-            if (response.success && response.basket) {
-                basket = response.basket.map(item => ({
-                    id: item.product,
-                    product: item.product,
-                    title: item.title,
-                    price: parseFloat(item.price),
-                    image: item.image,
-                    quantity: item.quantity
-                }));
-                updateBasketCount();
-            }
-        } else {
-            // Load from localStorage if not logged in
+        // Check if user is logged in
+        const sessionData = localStorage.getItem('supabase_session');
+        if (sessionData) {
+            // For now, use localStorage for basket
             basket = JSON.parse(localStorage.getItem('basket')) || [];
-            updateBasketCount();
+        } else {
+            // Load from localStorage
+            basket = JSON.parse(localStorage.getItem('basket')) || [];
         }
+        updateBasketCount();
     } catch (error) {
         console.error('Failed to load basket:', error);
         // Fallback to localStorage
@@ -173,6 +193,10 @@ function loadFallbackProducts() {
         loadProducts('bestSellers', products.slice(4, 8));
         loadProducts('recommended', products.slice(8, 12));
     }
+    
+    if (document.getElementById('allProducts')) {
+        loadProducts('allProducts', products);
+    }
 }
 
 // Load products into grid
@@ -190,15 +214,17 @@ function loadProducts(containerId, productList) {
 
 // Create product card element
 function createProductCard(product) {
-    const card = document.createElement('a');
-    card.href = `product-detail.html?id=${product.id}`;
+    const card = document.createElement('div');
     card.className = 'product-card';
     
     const stars = generateStars(product.rating);
+    const seller = product.seller || sellersMap[product.seller_id] || {};
+    const sellerName = seller.business_name || 'Unknown Seller';
+    const imageUrl = product.image_url || product.image || 'https://via.placeholder.com/300x300?text=Product';
     
     card.innerHTML = `
-        <img src="${product.image}" alt="${product.title}" class="product-image" onerror="this.src='https://via.placeholder.com/300x300?text=Product'">
-        <h3 class="product-title">${product.title}</h3>
+        <img src="${imageUrl}" alt="${product.title}" class="product-image" onclick="window.location.href='product-detail.html?id=${product.id}'" style="cursor: pointer;" onerror="this.src='https://via.placeholder.com/300x300?text=Product'">
+        <h3 class="product-title" onclick="window.location.href='product-detail.html?id=${product.id}'" style="cursor: pointer;">${product.title}</h3>
         <div class="product-rating">
             <span class="stars">${stars}</span>
             <span class="rating-count">(${product.reviews})</span>
@@ -206,14 +232,227 @@ function createProductCard(product) {
         <div class="product-price">
             <span class="currency">$</span>${product.price.toFixed(2)}
         </div>
-        <div class="product-prime">FREE delivery</div>
+        <div class="product-seller" style="font-size: 12px; color: #666; margin: 5px 0;">
+            Seller: ${sellerName}
+        </div>
         <div class="product-actions">
-            <button class="btn-add-cart" onclick="event.preventDefault(); addToBasket('${product.id}')">Add to Basket</button>
-            <button class="btn-buy-now" onclick="event.preventDefault(); buyNow('${product.id}')">Buy Now</button>
+            <button class="btn-add-cart" onclick="addToBasket('${product.id}')">Add to Basket</button>
+            <button class="btn-contact-seller" onclick="showSellerContact('${product.id}')" style="background: #25D366; color: white; border: none; padding: 8px; border-radius: 4px; margin-top: 5px; width: 100%; cursor: pointer;">Contact Seller</button>
         </div>
     `;
     
     return card;
+}
+
+// Show seller contact information
+function showSellerContact(productId) {
+    const product = products.find(p => p.id == productId);
+    
+    if (!product) {
+        alert('Product not found');
+        return;
+    }
+    
+    const seller = sellersMap[product.seller_id];
+    
+    if (!seller) {
+        alert('Seller information not available');
+        return;
+    }
+    
+    const phone = seller.business_phone || 'Not provided';
+    const phoneDigits = phone.replace(/\D/g, '');
+    const whatsappLink = phoneDigits ? `https://wa.me/${phoneDigits}?text=Hi, I'm interested in ${encodeURIComponent(product.title)}` : '#';
+    const callLink = phoneDigits ? `tel:${phoneDigits}` : '#';
+    
+    // Create modal if it doesn't exist
+    let modal = document.getElementById('sellerContactModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'sellerContactModal';
+        modal.className = 'contact-modal';
+        modal.innerHTML = `
+            <div class="contact-modal-content">
+                <span class="close-contact-modal" onclick="document.getElementById('sellerContactModal').style.display='none'">&times;</span>
+                <div id="sellerContactContent"></div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        // Add modal styles if not present
+        if (!document.querySelector('#contactModalStyles')) {
+            const style = document.createElement('style');
+            style.id = 'contactModalStyles';
+            style.textContent = `
+                .contact-modal {
+                    display: none;
+                    position: fixed;
+                    z-index: 2000;
+                    left: 0;
+                    top: 0;
+                    width: 100%;
+                    height: 100%;
+                    background-color: rgba(0,0,0,0.5);
+                }
+                .contact-modal-content {
+                    background-color: white;
+                    margin: 15% auto;
+                    padding: 30px;
+                    border-radius: 8px;
+                    width: 90%;
+                    max-width: 500px;
+                    position: relative;
+                    animation: slideDown 0.3s ease-out;
+                }
+                .close-contact-modal {
+                    position: absolute;
+                    top: 15px;
+                    right: 20px;
+                    font-size: 28px;
+                    font-weight: bold;
+                    color: #666;
+                    cursor: pointer;
+                }
+                .close-contact-modal:hover {
+                    color: #000;
+                }
+                .seller-info {
+                    margin-top: 20px;
+                }
+                .info-row {
+                    display: flex;
+                    align-items: center;
+                    margin-bottom: 15px;
+                    padding: 10px;
+                    background: #f5f5f5;
+                    border-radius: 4px;
+                }
+                .info-icon {
+                    width: 40px;
+                    height: 40px;
+                    background: #232f3e;
+                    color: white;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin-right: 15px;
+                }
+                .info-text {
+                    flex: 1;
+                }
+                .info-label {
+                    font-size: 12px;
+                    color: #666;
+                    margin-bottom: 3px;
+                }
+                .info-value {
+                    font-size: 16px;
+                    font-weight: 500;
+                    color: #232f3e;
+                }
+                .contact-actions {
+                    display: flex;
+                    gap: 10px;
+                    margin-top: 20px;
+                }
+                .contact-btn {
+                    flex: 1;
+                    padding: 12px;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    font-weight: 500;
+                    text-align: center;
+                    text-decoration: none;
+                }
+                .call-btn {
+                    background: #28a745;
+                    color: white;
+                }
+                .call-btn:hover {
+                    background: #218838;
+                }
+                .whatsapp-btn {
+                    background: #25D366;
+                    color: white;
+                }
+                .whatsapp-btn:hover {
+                    background: #128C7E;
+                }
+                .product-title {
+                    font-size: 18px;
+                    font-weight: 600;
+                    margin-bottom: 10px;
+                    color: #232f3e;
+                }
+                @keyframes slideDown {
+                    from {
+                        transform: translateY(-100px);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateY(0);
+                        opacity: 1;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    }
+    
+    const modalContent = document.getElementById('sellerContactContent');
+    modalContent.innerHTML = `
+        <div class="product-title">${product.title}</div>
+        <div class="seller-info">
+            <div class="info-row">
+                <div class="info-icon">🏪</div>
+                <div class="info-text">
+                    <div class="info-label">Seller</div>
+                    <div class="info-value">${seller.business_name || 'Unknown Seller'}</div>
+                </div>
+            </div>
+            <div class="info-row">
+                <div class="info-icon">📞</div>
+                <div class="info-text">
+                    <div class="info-label">Phone Number</div>
+                    <div class="info-value">${phone}</div>
+                </div>
+            </div>
+            <div class="info-row">
+                <div class="info-icon">📍</div>
+                <div class="info-text">
+                    <div class="info-label">Shop Location</div>
+                    <div class="info-value">${seller.business_address || 'Location not specified'}</div>
+                </div>
+            </div>
+            <div class="info-row">
+                <div class="info-icon">📦</div>
+                <div class="info-text">
+                    <div class="info-label">Price</div>
+                    <div class="info-value">$${product.price.toFixed(2)}</div>
+                </div>
+            </div>
+        </div>
+        <div class="contact-actions">
+            <a href="${callLink}" class="contact-btn call-btn" ${!phoneDigits ? 'onclick="alert(\'Phone number not available\'); return false;"' : ''}>
+                📞 Call Seller
+            </a>
+            <a href="${whatsappLink}" class="contact-btn whatsapp-btn" target="_blank" ${!phoneDigits ? 'onclick="alert(\'Phone number not available\'); return false;"' : ''}>
+                💬 WhatsApp
+            </a>
+        </div>
+    `;
+    
+    modal.style.display = 'block';
+    
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+    };
 }
 
 // Generate star rating HTML
@@ -238,72 +477,36 @@ function generateStars(rating) {
     return starsHTML;
 }
 
-// Add to Basket (with API integration)
+// Add to Basket
 async function addToBasket(productId, quantity = 1) {
     try {
-        if (api.token) {
-            // User is logged in - use API
-            await api.addToBasket(productId, quantity);
-            await loadBasketFromAPI();
-            showNotification('Item added to Basket!');
-        } else {
-            // Not logged in - use localStorage
-            const product = products.find(p => p.id === productId || p.id.toString() === productId);
-            if (!product) {
-                // Try to fetch from API
-                try {
-                    const response = await api.getProduct(productId);
-                    if (response.success) {
-                        const p = response.product;
-                        const existingItem = basket.find(item => (item.id === productId || item.product === productId));
-                        if (existingItem) {
-                            existingItem.quantity += quantity;
-                        } else {
-                            basket.push({
-                                id: p.id,
-                                product: p.id,
-                                title: p.title,
-                                price: parseFloat(p.price),
-                                image: p.image,
-                                quantity: quantity
-                            });
-                        }
-                    }
-                } catch (error) {
-                    showNotification('Product not found');
-                    return;
-                }
-            } else {
-                const existingItem = basket.find(item => (item.id === productId || item.id.toString() === productId));
-                if (existingItem) {
-                    existingItem.quantity += quantity;
-                } else {
-                    basket.push({
-                        ...product,
-                        product: product.id,
-                        seller_id: product.seller?.id || product.seller_id,
-                        seller: product.seller,
-                        quantity: quantity
-                    });
-                }
-            }
-            
-            localStorage.setItem('basket', JSON.stringify(basket));
-            updateBasketCount();
-            showNotification('Item added to Basket!');
+        const product = products.find(p => p.id == productId);
+        if (!product) {
+            showNotification('Product not found');
+            return;
         }
+        
+        const existingItem = basket.find(item => item.id == productId);
+        if (existingItem) {
+            existingItem.quantity += quantity;
+        } else {
+            basket.push({
+                id: product.id,
+                title: product.title,
+                price: product.price,
+                image: product.image,
+                quantity: quantity,
+                seller_id: product.seller_id
+            });
+        }
+        
+        localStorage.setItem('basket', JSON.stringify(basket));
+        updateBasketCount();
+        showNotification('Item added to Basket!');
     } catch (error) {
         console.error('Error adding to basket:', error);
         showNotification('Failed to add item to basket');
     }
-}
-
-// Buy now
-async function buyNow(productId) {
-    await addToBasket(productId, 1);
-    setTimeout(() => {
-        window.location.href = 'checkout.html';
-    }, 500);
 }
 
 // Update Basket count
@@ -378,22 +581,7 @@ async function loadProductDetail() {
         return;
     }
     
-    try {
-        // Try to load from API
-        const response = await api.getProduct(productId);
-        if (response.success) {
-            const product = response.product;
-            // Store product for later use
-            window.currentProduct = product;
-            displayProductDetail(product);
-            return;
-        }
-    } catch (error) {
-        console.error('Failed to load product from API:', error);
-    }
-    
-    // Fallback to local products
-    const product = products.find(p => p.id === productId || p.id.toString() === productId);
+    const product = products.find(p => p.id == productId);
     if (!product) {
         document.getElementById('productDetail').innerHTML = '<p>Product not found</p>';
         return;
@@ -403,21 +591,14 @@ async function loadProductDetail() {
 }
 
 function displayProductDetail(product) {
-    const stars = generateStars(product.rating || 0);
-    const seller = product.seller || {};
-    const whatsappNumber = product.seller_whatsapp || seller.whatsapp_number || '';
-    const shopLocation = product.seller_location || seller.shop_location || {};
-    const sellerRating = seller.seller_rating || 0;
-    const sellerTotalRatings = seller.total_ratings || 0;
-    
-    // Format location
-    const locationText = shopLocation.street || shopLocation.area || shopLocation.city 
-        ? `${shopLocation.street || ''} ${shopLocation.area || ''} ${shopLocation.city || ''}`.trim()
-        : 'Location not specified';
+    const stars = generateStars(product.rating || 4.0);
+    const seller = sellersMap[product.seller_id] || {};
+    const whatsappNumber = seller.business_phone || '';
+    const shopLocation = seller.business_address || 'Location not specified';
     
     document.getElementById('productDetail').innerHTML = `
         <div class="product-detail-image-container">
-            <img src="${product.image}" alt="${product.title}" class="product-detail-image" id="productMainImage" onerror="this.src='https://via.placeholder.com/500x500?text=Product'">
+            <img src="${product.image_url || product.image}" alt="${product.title}" class="product-detail-image" id="productMainImage" onerror="this.src='https://via.placeholder.com/500x500?text=Product'">
         </div>
         <div class="product-detail-info">
             <h1>${product.title}</h1>
@@ -426,19 +607,18 @@ function displayProductDetail(product) {
                 <span class="rating-count">${product.reviews || 0} ratings</span>
             </div>
             <div class="product-detail-price">
-                <span class="currency">$</span>${parseFloat(product.price).toFixed(2)}
+                <span class="currency">$</span>${product.price.toFixed(2)}
             </div>
             <p class="product-detail-description">${product.description || ''}</p>
             <ul class="product-detail-features">
                 ${(product.features || []).map(feature => `<li>${feature}</li>`).join('')}
             </ul>
             
-            ${seller.name || seller.shop_name ? `
+            ${seller.business_name ? `
             <div style="margin: 30px 0; padding: 20px; background: #f5f5f5; border-radius: 4px;">
                 <h3 style="margin-bottom: 15px; font-size: 18px;">Seller Information</h3>
-                <p style="margin-bottom: 10px;"><strong>Shop:</strong> ${seller.shop_name || seller.name}</p>
-                ${sellerRating > 0 ? `<p style="margin-bottom: 10px;"><strong>Seller Rating:</strong> ${generateStars(sellerRating)} (${sellerTotalRatings} reviews)</p>` : ''}
-                ${locationText !== 'Location not specified' ? `<p style="margin-bottom: 10px;"><strong>📍 Location:</strong> ${locationText}</p>` : ''}
+                <p style="margin-bottom: 10px;"><strong>Shop:</strong> ${seller.business_name}</p>
+                <p style="margin-bottom: 10px;"><strong>📍 Location:</strong> ${shopLocation}</p>
                 ${whatsappNumber ? `
                     <div style="margin-top: 15px;">
                         <a href="https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}?text=Hi, I'm interested in ${encodeURIComponent(product.title)}" 
@@ -482,6 +662,14 @@ function displayProductDetail(product) {
     }
 }
 
+// Buy now
+async function buyNow(productId) {
+    await addToBasket(productId, 1);
+    setTimeout(() => {
+        window.location.href = 'checkout.html';
+    }, 500);
+}
+
 // Load Basket page
 async function loadBasket() {
     const basketItemsContainer = document.getElementById('basketItems');
@@ -489,28 +677,8 @@ async function loadBasket() {
     
     if (!basketItemsContainer) return;
     
-    try {
-        // Load from API if logged in
-        if (api.token) {
-            const response = await api.getBasket();
-            if (response.success) {
-                basket = response.basket.map(item => ({
-                    id: item.product,
-                    product: item.product,
-                    title: item.title,
-                    price: parseFloat(item.price),
-                    image: item.image,
-                    quantity: item.quantity
-                }));
-            }
-        } else {
-            // Load from localStorage
-            basket = JSON.parse(localStorage.getItem('basket')) || [];
-        }
-    } catch (error) {
-        console.error('Failed to load basket:', error);
-        basket = JSON.parse(localStorage.getItem('basket')) || [];
-    }
+    // Load from localStorage
+    basket = JSON.parse(localStorage.getItem('basket')) || [];
     
     if (basket.length === 0) {
         basketItemsContainer.innerHTML = '<p style="text-align: center; padding: 40px;">Your Basket is empty.</p>';
@@ -528,15 +696,15 @@ async function loadBasket() {
         basketItem.innerHTML = `
             <img src="${item.image}" alt="${item.title}" class="basket-item-image" onerror="this.src='https://via.placeholder.com/150x150?text=Product'">
             <div class="basket-item-info">
-                <a href="product-detail.html?id=${item.id || item.product}" class="basket-item-title">${item.title}</a>
-                <div class="basket-item-price">$${parseFloat(item.price).toFixed(2)}</div>
+                <a href="product-detail.html?id=${item.id}" class="basket-item-title">${item.title}</a>
+                <div class="basket-item-price">$${item.price.toFixed(2)}</div>
                 <div class="basket-item-actions">
                     <div class="quantity-selector">
-                        <button class="quantity-btn" onclick="updateQuantity('${item.id || item.product}', -1)">-</button>
-                        <input type="number" class="quantity-input" value="${item.quantity}" min="1" onchange="updateQuantity('${item.id || item.product}', 0, this.value)">
-                        <button class="quantity-btn" onclick="updateQuantity('${item.id || item.product}', 1)">+</button>
+                        <button class="quantity-btn" onclick="updateQuantity('${item.id}', -1)">-</button>
+                        <input type="number" class="quantity-input" value="${item.quantity}" min="1" onchange="updateQuantity('${item.id}', 0, this.value)">
+                        <button class="quantity-btn" onclick="updateQuantity('${item.id}', 1)">+</button>
                     </div>
-                    <button class="remove-item" onclick="removeFromBasket('${item.id || item.product}')">Remove</button>
+                    <button class="remove-item" onclick="removeFromBasket('${item.id}')">Remove</button>
                 </div>
             </div>
         `;
@@ -548,55 +716,27 @@ async function loadBasket() {
 
 // Update quantity
 async function updateQuantity(productId, change, newValue) {
-    try {
-        const item = basket.find(i => (i.id === productId || i.id?.toString() === productId || i.product === productId));
-        if (!item) return;
-        
-        if (newValue !== undefined) {
-            item.quantity = parseInt(newValue) || 1;
-        } else {
-            item.quantity = Math.max(1, item.quantity + change);
-        }
-        
-        if (api.token) {
-            // Update via API
-            await api.updateBasketItem(productId, item.quantity);
-            await loadBasketFromAPI();
-        } else {
-            // Update localStorage
-            localStorage.setItem('basket', JSON.stringify(basket));
-        }
-        
-        loadBasket();
-        updateBasketCount();
-    } catch (error) {
-        console.error('Error updating quantity:', error);
-        showNotification('Failed to update quantity');
+    const item = basket.find(i => i.id == productId);
+    if (!item) return;
+    
+    if (newValue !== undefined) {
+        item.quantity = parseInt(newValue) || 1;
+    } else {
+        item.quantity = Math.max(1, item.quantity + change);
     }
+    
+    localStorage.setItem('basket', JSON.stringify(basket));
+    loadBasket();
+    updateBasketCount();
 }
 
 // Remove from Basket
 async function removeFromBasket(productId) {
-    try {
-        if (api.token) {
-            await api.removeFromBasket(productId);
-            await loadBasketFromAPI();
-        } else {
-            basket = basket.filter(item => 
-                item.id !== productId && 
-                item.id?.toString() !== productId && 
-                item.product !== productId
-            );
-            localStorage.setItem('basket', JSON.stringify(basket));
-        }
-        
-        loadBasket();
-        updateBasketCount();
-        showNotification('Item removed from Basket');
-    } catch (error) {
-        console.error('Error removing from basket:', error);
-        showNotification('Failed to remove item');
-    }
+    basket = basket.filter(item => item.id != productId);
+    localStorage.setItem('basket', JSON.stringify(basket));
+    loadBasket();
+    updateBasketCount();
+    showNotification('Item removed from Basket');
 }
 
 // Update Basket summary
@@ -604,7 +744,7 @@ function updateBasketSummary() {
     const basketSummary = document.getElementById('basketSummary');
     if (!basketSummary) return;
     
-    const subtotal = basket.reduce((sum, item) => sum + (parseFloat(item.price) * (item.quantity || 1)), 0);
+    const subtotal = basket.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
     const shipping = subtotal > 35 ? 0 : 5.99;
     const tax = subtotal * 0.08;
     const total = subtotal + shipping + tax;
@@ -639,131 +779,6 @@ function handleSearch() {
     if (query) {
         window.location.href = `search-results.html?q=${encodeURIComponent(query)}`;
     }
-}
-
-// Store current search results
-let currentSearchResults = [];
-
-// Load search results
-async function loadSearchResults() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const query = urlParams.get('q') || '';
-    
-    if (query) {
-        document.getElementById('searchQuery').textContent = `Results for "${query}"`;
-        
-        try {
-            // Search via API
-            const response = await api.getProducts({ search: query, limit: 50 });
-            if (response.success && response.products) {
-                currentSearchResults = response.products.map(p => ({
-                    id: p.id,
-                    title: p.title,
-                    price: parseFloat(p.price),
-                    rating: parseFloat(p.rating) || 0,
-                    reviews: p.reviews || 0,
-                    image: p.image,
-                    category: p.category,
-                    description: p.description,
-                    features: p.features || []
-                }));
-                displaySearchResults(currentSearchResults);
-                return;
-            }
-        } catch (error) {
-            console.error('Search error:', error);
-        }
-        
-        // Fallback to local search
-        currentSearchResults = products.filter(product =>
-            product.title.toLowerCase().includes(query.toLowerCase()) ||
-            product.category.toLowerCase().includes(query.toLowerCase())
-        );
-    } else {
-        currentSearchResults = [...products];
-    }
-    
-    displaySearchResults(currentSearchResults);
-}
-
-// Display search results
-function displaySearchResults(productList) {
-    const resultsContainer = document.getElementById('searchResults');
-    if (resultsContainer) {
-        if (productList.length === 0) {
-            resultsContainer.innerHTML = '<p style="text-align: center; padding: 40px;">No products found.</p>';
-        } else {
-            resultsContainer.innerHTML = '';
-            productList.forEach(product => {
-                const productCard = createProductCard(product);
-                resultsContainer.appendChild(productCard);
-            });
-        }
-    }
-}
-
-// Filter and sort products
-function filterProducts() {
-    const sortBy = document.getElementById('sortBy')?.value || 'relevance';
-    const priceFilter = document.getElementById('priceFilter')?.value || 'all';
-    
-    let filtered = currentSearchResults.length > 0 ? [...currentSearchResults] : [...products];
-    
-    // Price filter
-    if (priceFilter === 'under25') {
-        filtered = filtered.filter(p => p.price < 25);
-    } else if (priceFilter === '25to50') {
-        filtered = filtered.filter(p => p.price >= 25 && p.price < 50);
-    } else if (priceFilter === '50to100') {
-        filtered = filtered.filter(p => p.price >= 50 && p.price < 100);
-    } else if (priceFilter === 'over100') {
-        filtered = filtered.filter(p => p.price >= 100);
-    }
-    
-    // Sort
-    if (sortBy === 'priceLow') {
-        filtered.sort((a, b) => a.price - b.price);
-    } else if (sortBy === 'priceHigh') {
-        filtered.sort((a, b) => b.price - a.price);
-    } else if (sortBy === 'rating') {
-        filtered.sort((a, b) => b.rating - a.rating);
-    }
-    
-    return filtered;
-}
-
-// Initialize search results page
-if (window.location.pathname.includes('search-results.html')) {
-    document.addEventListener('DOMContentLoaded', async function() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const query = urlParams.get('q') || '';
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput && query) {
-            searchInput.value = query;
-        }
-        
-        await loadSearchResults();
-        
-        const sortBy = document.getElementById('sortBy');
-        const priceFilter = document.getElementById('priceFilter');
-        
-        if (sortBy) {
-            sortBy.addEventListener('change', function() {
-                applyFilters();
-            });
-        }
-        
-        if (priceFilter) {
-            priceFilter.addEventListener('change', function() {
-                applyFilters();
-            });
-        }
-    });
-}
-
-function applyFilters() {
-    const filtered = filterProducts();
-    displaySearchResults(filtered);
 }
 
 // Add CSS animation for notifications
