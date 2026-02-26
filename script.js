@@ -78,6 +78,8 @@ async function loadSellersFromAPI() {
         const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
         
         console.log('Loading sellers...');
+        console.log('Fetching from:', `${SUPABASE_URL}/rest/v1/sellers?select=*`);
+        
         const response = await fetch(`${SUPABASE_URL}/rest/v1/sellers?select=*`, {
             headers: {
                 'apikey': SUPABASE_ANON_KEY,
@@ -85,15 +87,38 @@ async function loadSellersFromAPI() {
             }
         });
         
+        if (!response.ok) {
+            console.error('Sellers response error:', response.status, response.statusText);
+            const errorText = await response.text();
+            console.error('Error details:', errorText);
+            return;
+        }
+        
         const sellers = await response.json();
         console.log('Sellers loaded:', sellers);
         
         // Create a map of sellers by user_id
-        if (Array.isArray(sellers)) {
+        if (Array.isArray(sellers) && sellers.length > 0) {
             sellers.forEach(seller => {
+                console.log('Processing seller:', seller);
                 sellersMap[seller.user_id] = seller;
             });
             console.log('Sellers map created:', Object.keys(sellersMap).length, 'sellers');
+            console.log('Seller IDs in map:', Object.keys(sellersMap));
+        } else if (Array.isArray(sellers) && sellers.length === 0) {
+            console.warn('No sellers found in database. Please check if sellers table has data.');
+            // Try a different query to see what's in the table
+            console.log('Attempting to check sellers table structure...');
+            const testResponse = await fetch(`${SUPABASE_URL}/rest/v1/sellers?select=user_id,business_name&limit=5`, {
+                headers: {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                }
+            });
+            const testData = await testResponse.json();
+            console.log('Test sellers query result:', testData);
+        } else {
+            console.error('Unexpected sellers response format:', sellers);
         }
     } catch (error) {
         console.error('Failed to load sellers:', error);
