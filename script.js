@@ -505,33 +505,136 @@ function generateStars(rating) {
 // Add to Basket
 async function addToBasket(productId, quantity = 1) {
     try {
+        // Check if user is logged in
+        const sessionData = localStorage.getItem('supabase_session');
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        
+        if (!isLoggedIn || !sessionData) {
+            // Redirect to login if not logged in
+            showNotification('Please login to add items to basket');
+            setTimeout(() => {
+                window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.pathname);
+            }, 1500);
+            return;
+        }
+
+        // Get user ID from session
+        const session = JSON.parse(sessionData);
+        const userId = session.user?.id;
+        
+        if (!userId) {
+            showNotification('User session error. Please login again.');
+            return;
+        }
+
+        // Find the product
         const product = products.find(p => p.id == productId);
         if (!product) {
             showNotification('Product not found');
             return;
         }
+
+        // Use user-specific basket key
+        const basketKey = `basket_${userId}`;
+        let userBasket = JSON.parse(localStorage.getItem(basketKey)) || [];
         
-        const existingItem = basket.find(item => item.id == productId);
+        const existingItem = userBasket.find(item => item.id == productId);
+        
         if (existingItem) {
             existingItem.quantity += quantity;
         } else {
-            basket.push({
+            userBasket.push({
                 id: product.id,
                 title: product.title,
                 price: product.price,
-                image: product.image,
+                image: product.image_url || product.image || 'https://via.placeholder.com/300x300?text=Product',
                 quantity: quantity,
                 seller_id: product.seller_id
             });
         }
         
-        localStorage.setItem('basket', JSON.stringify(basket));
-        updateBasketCount();
+        // Save to user-specific basket
+        localStorage.setItem(basketKey, JSON.stringify(userBasket));
+        
+        // Update the global basket count display
+        const totalItems = userBasket.reduce((sum, item) => sum + (item.quantity || 0), 0);
+        updateBasketCount(totalItems);
+        
         showNotification('Item added to Basket!');
+        console.log('Basket updated for user:', userId, 'Total items:', totalItems);
+        
     } catch (error) {
         console.error('Error adding to basket:', error);
         showNotification('Failed to add item to basket');
     }
+}
+
+// Update the loadBasketFromAPI function to use user-specific basket
+async function loadBasketFromAPI() {
+    try {
+        // Check if user is logged in
+        const sessionData = localStorage.getItem('supabase_session');
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        
+        if (isLoggedIn && sessionData) {
+            const session = JSON.parse(sessionData);
+            const userId = session.user?.id;
+            
+            if (userId) {
+                // Load user-specific basket
+                const basketKey = `basket_${userId}`;
+                basket = JSON.parse(localStorage.getItem(basketKey)) || [];
+                console.log('Loaded basket for user:', userId, 'Items:', basket.length);
+            } else {
+                basket = [];
+            }
+        } else {
+            // No user logged in, empty basket
+            basket = [];
+        }
+        
+        updateBasketCount();
+    } catch (error) {
+        console.error('Failed to load basket:', error);
+        basket = [];
+        updateBasketCount();
+    }
+}
+
+// Update the updateBasketCount function to get count from user-specific basket
+function updateBasketCount() {
+    const basketCount = document.getElementById('basketCount');
+    if (!basketCount) return;
+    
+    try {
+        // Check if user is logged in
+        const sessionData = localStorage.getItem('supabase_session');
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        
+        if (isLoggedIn && sessionData) {
+            const session = JSON.parse(sessionData);
+            const userId = session.user?.id;
+            
+            if (userId) {
+                const basketKey = `basket_${userId}`;
+                const userBasket = JSON.parse(localStorage.getItem(basketKey)) || [];
+                const totalItems = userBasket.reduce((sum, item) => sum + (item.quantity || 0), 0);
+                basketCount.textContent = totalItems;
+                basketCount.style.display = totalItems > 0 ? 'flex' : 'none';
+                return;
+            }
+        }
+        
+        // Default to 0 if not logged in
+        basketCount.textContent = '0';
+        basketCount.style.display = 'none';
+        
+    } catch (error) {
+        console.error('Error updating basket count:', error);
+        basketCount.textContent = '0';
+        basketCount.style.display = 'none';
+    }
+}
 }
 
 // Update Basket count
