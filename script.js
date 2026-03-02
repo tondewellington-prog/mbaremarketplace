@@ -948,6 +948,10 @@ styleElement.textContent = `
 `;
 document.head.appendChild(styleElement);
 
+// ============================================
+// ANALYTICS TRACKING - ADDED WITHOUT REMOVING ANYTHING
+// ============================================
+
 // Track user activity
 async function trackActivity(activityType, details = {}) {
     try {
@@ -963,13 +967,14 @@ async function trackActivity(activityType, details = {}) {
         
         const SUPABASE_URL = window.SUPABASE_URL;
         const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
+        const accessToken = session.access_token;
         
         await fetch(`${SUPABASE_URL}/rest/v1/user_activities`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'apikey': SUPABASE_ANON_KEY,
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                'Authorization': `Bearer ${accessToken}`
             },
             body: JSON.stringify({
                 user_id: userId,
@@ -979,7 +984,12 @@ async function trackActivity(activityType, details = {}) {
                 created_at: new Date().toISOString()
             })
         });
+        
+        console.log('Activity tracked:', activityType, details);
     } catch (error) {
         console.error('Error tracking activity:', error);
     }
 }
+
+// Make trackActivity available globally
+window.trackActivity = trackActivity;
