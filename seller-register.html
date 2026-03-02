@@ -420,7 +420,7 @@
                 document.getElementById('loadingSpinner').style.display = 'none';
 
                 if (response.ok) {
-                    // TRACK SELLER REGISTRATION
+                    // TRACK SELLER REGISTRATION - ADDED WITHOUT REMOVING ANYTHING
                     if (window.trackActivity) {
                         window.trackActivity('seller_register', { 
                             business_name: businessName,
@@ -474,5 +474,4 @@
         window.handleSellerRegistration = handleSellerRegistration;
     </script>
 </body>
-</html>>
-
+</html>
