@@ -420,6 +420,16 @@
                 document.getElementById('loadingSpinner').style.display = 'none';
 
                 if (response.ok) {
+                    // TRACK SELLER REGISTRATION
+                    if (window.trackActivity) {
+                        window.trackActivity('seller_register', { 
+                            business_name: businessName,
+                            business_type: businessType,
+                            email: businessEmail
+                        });
+                        console.log('Seller registration tracked');
+                    }
+
                     const messageDiv = document.getElementById('message');
                     messageDiv.style.display = 'block';
                     messageDiv.style.backgroundColor = '#d4edda';
@@ -464,4 +474,5 @@
         window.handleSellerRegistration = handleSellerRegistration;
     </script>
 </body>
-</html>
+</html>>
+
