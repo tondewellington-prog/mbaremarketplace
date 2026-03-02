@@ -947,3 +947,39 @@ styleElement.textContent = `
     }
 `;
 document.head.appendChild(styleElement);
+
+// Track user activity
+async function trackActivity(activityType, details = {}) {
+    try {
+        const sessionData = localStorage.getItem('supabase_session');
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        
+        if (!isLoggedIn || !sessionData) return;
+        
+        const session = JSON.parse(sessionData);
+        const userId = session.user?.id;
+        
+        if (!userId) return;
+        
+        const SUPABASE_URL = window.SUPABASE_URL;
+        const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
+        
+        await fetch(`${SUPABASE_URL}/rest/v1/user_activities`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+            },
+            body: JSON.stringify({
+                user_id: userId,
+                activity_type: activityType,
+                details: details,
+                page_url: window.location.pathname,
+                created_at: new Date().toISOString()
+            })
+        });
+    } catch (error) {
+        console.error('Error tracking activity:', error);
+    }
+}
