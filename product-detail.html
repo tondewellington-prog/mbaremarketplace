@@ -242,6 +242,8 @@
     <script src="api.js"></script>
     <script src="script.js"></script>
     <script>
+        let currentProduct = null;
+
         document.addEventListener('DOMContentLoaded', async function() {
             await loadProductDetail();
             updateHeaderForLoggedInUser();
@@ -273,6 +275,7 @@
                 
                 if (products && products.length > 0) {
                     const product = products[0];
+                    currentProduct = product;
                     
                     // Fetch seller info
                     let seller = {};
@@ -364,9 +367,7 @@
             const basketKey = `basket_${userId}`;
             let userBasket = JSON.parse(localStorage.getItem(basketKey)) || [];
             
-            const urlParams = new URLSearchParams(window.location.search);
-            const productId = urlParams.get('id');
-            
+            // FIXED: Use the productId parameter, not redeclare it
             const existingItem = userBasket.find(item => item.id == productId);
             
             if (existingItem) {
@@ -378,7 +379,7 @@
                     price: parseFloat(document.querySelector('.product-detail-price').textContent.replace('$', '')),
                     image: document.querySelector('.product-detail-image').src,
                     quantity: quantity,
-                    seller_id: product.seller_id
+                    seller_id: currentProduct?.seller_id || null
                 });
             }
             
