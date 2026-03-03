@@ -8,6 +8,233 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .search-results-container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .search-results-header {
+            margin-bottom: 30px;
+        }
+
+        .search-results-header h1 {
+            font-size: 24px;
+            color: #232f3e;
+            margin-bottom: 20px;
+        }
+
+        .search-filters {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-group label {
+            font-weight: 500;
+            color: #232f3e;
+            font-size: 14px;
+        }
+
+        .filter-group select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .filter-group select:focus {
+            outline: none;
+            border-color: #f90;
+        }
+
+        .results-info {
+            margin: 20px 0;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .search-results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            min-height: 400px;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+        }
+
+        .product-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .product-card h3 {
+            font-size: 16px;
+            font-weight: 500;
+            margin: 10px 0;
+            color: #232f3e;
+            line-height: 1.4;
+            height: 44px;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        .product-price {
+            font-size: 20px;
+            font-weight: 600;
+            color: #B12704;
+            margin: 5px 0;
+        }
+
+        .product-seller {
+            font-size: 12px;
+            color: #666;
+            margin: 5px 0;
+        }
+
+        .product-category {
+            font-size: 12px;
+            color: #f90;
+            background: #fff3e0;
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin: 5px 0;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            grid-column: 1 / -1;
+        }
+
+        .no-results h2 {
+            color: #232f3e;
+            margin-bottom: 15px;
+        }
+
+        .no-results p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .no-results .btn-shop {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #f90;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .no-results .btn-shop:hover {
+            background: #e68a00;
+        }
+
+        .loading-spinner {
+            text-align: center;
+            padding: 60px 20px;
+            grid-column: 1 / -1;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #f90;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .pagination button {
+            padding: 8px 15px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .pagination button:hover {
+            background: #f5f5f5;
+            border-color: #f90;
+        }
+
+        .pagination button.active {
+            background: #f90;
+            color: white;
+            border-color: #f90;
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 768px) {
+            .search-filters {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .filter-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .search-results-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- Header -->
@@ -18,12 +245,12 @@
                     <a href="index.html">Mbare Marketplace</a>
                 </div>
                 <div class="search-bar">
-                    <select class="search-category">
-                        <option>All</option>
-                        <option>Electronics</option>
-                        <option>Books</option>
-                        <option>Clothing</option>
-                        <option>Home & Kitchen</option>
+                    <select class="search-category" id="searchCategory">
+                        <option value="all">All</option>
+                        <option value="Electronics">Electronics</option>
+                        <option value="Books">Books</option>
+                        <option value="Clothing">Clothing</option>
+                        <option value="Home & Kitchen">Home & Kitchen</option>
                     </select>
                     <input type="text" id="searchInput" placeholder="Search Mbare Marketplace" class="search-input">
                     <button class="search-btn" onclick="handleSearch()">
@@ -35,10 +262,10 @@
                 </div>
                 <div class="header-right">
                     <div class="account-menu">
-    <span class="account-label">Hello, Sign in</span>
-    <a href="login.html" class="account-link">Account & Lists</a>
-    <button id="logoutBtn" onclick="logout()" style="display: none; background: none; border: none; color: #fff; cursor: pointer; margin-left: 10px;">Logout</button>
-</div>
+                        <span class="account-label" id="accountLabel">Hello, Sign in</span>
+                        <a href="login.html" class="account-link" id="accountLink">Account & Lists</a>
+                        <button id="logoutBtn" onclick="logout()" style="display: none; background: none; border: 1px solid #fff; color: #fff; cursor: pointer; margin-left: 10px; padding: 5px 15px; border-radius: 4px;">Logout</button>
+                    </div>
                     <div class="returns">
                         <span class="returns-label">Returns</span>
                         <span class="returns-link">& Orders</span>
@@ -71,7 +298,8 @@
                 <a href="#" class="nav-item">Customer Service</a>
                 <a href="#" class="nav-item">Registry</a>
                 <a href="#" class="nav-item">Gift Cards</a>
-                <a href="#" class="nav-item">Sell</a>
+                <a href="seller-register.html" class="nav-item">Sell</a>
+                <a href="analytics.html" class="nav-item">Analytics</a>
             </div>
         </nav>
     </header>
@@ -83,7 +311,7 @@
             <div class="search-filters">
                 <div class="filter-group">
                     <label>Sort by:</label>
-                    <select id="sortBy">
+                    <select id="sortBy" onchange="applyFilters()">
                         <option value="relevance">Relevance</option>
                         <option value="priceLow">Price: Low to High</option>
                         <option value="priceHigh">Price: High to Low</option>
@@ -92,7 +320,7 @@
                 </div>
                 <div class="filter-group">
                     <label>Price:</label>
-                    <select id="priceFilter">
+                    <select id="priceFilter" onchange="applyFilters()">
                         <option value="all">All Prices</option>
                         <option value="under25">Under $25</option>
                         <option value="25to50">$25 to $50</option>
@@ -102,9 +330,14 @@
                 </div>
             </div>
         </div>
+        <div class="results-info" id="resultsInfo">Loading results...</div>
         <div class="search-results-grid" id="searchResults">
-            <!-- Search results will be loaded by JavaScript -->
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p>Searching products...</p>
+            </div>
         </div>
+        <div class="pagination" id="pagination"></div>
     </div>
 
     <!-- Footer -->
@@ -175,6 +408,294 @@
 
     <script src="api.js"></script>
     <script src="script.js"></script>
+    <script>
+        // Global variables
+        let allProducts = [];
+        let filteredProducts = [];
+        let sellersMap = {};
+        let currentPage = 1;
+        const productsPerPage = 12;
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSellersAndProducts();
+            updateHeaderForLoggedInUser();
+            
+            // Get search query from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const query = urlParams.get('q') || '';
+            if (query) {
+                document.getElementById('searchInput').value = query;
+                document.getElementById('searchQuery').textContent = `Search Results for "${query}"`;
+            }
+        });
+
+        // Load sellers and products
+        async function loadSellersAndProducts() {
+            try {
+                const SUPABASE_URL = window.SUPABASE_URL;
+                const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
+                
+                // Load sellers first
+                const sellersRes = await fetch(`${SUPABASE_URL}/rest/v1/sellers?select=*`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+                const sellers = await sellersRes.json();
+                
+                // Create sellers map
+                if (Array.isArray(sellers)) {
+                    sellers.forEach(seller => {
+                        sellersMap[seller.user_id] = seller;
+                    });
+                }
+                
+                // Load products
+                const productsRes = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+                const products = await productsRes.json();
+                
+                // Map products with seller info
+                if (Array.isArray(products)) {
+                    allProducts = products.map(p => ({
+                        id: p.id,
+                        title: p.title,
+                        price: parseFloat(p.price),
+                        category: p.category || 'Uncategorized',
+                        description: p.description || '',
+                        image: p.image_url || 'https://via.placeholder.com/300x300?text=Product',
+                        image_url: p.image_url,
+                        seller_id: p.seller_id,
+                        seller: sellersMap[p.seller_id] || null,
+                        rating: 4.0,
+                        reviews: 0
+                    }));
+                }
+                
+                // Perform initial search
+                performSearch();
+                
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showError('Failed to load products. Please try again.');
+            }
+        }
+
+        // Perform search
+        function performSearch() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const query = urlParams.get('q') || '';
+            const category = urlParams.get('category') || 'all';
+            
+            // Filter by search query
+            filteredProducts = allProducts.filter(product => {
+                const matchesQuery = query === '' || 
+                    product.title.toLowerCase().includes(query.toLowerCase()) ||
+                    (product.description && product.description.toLowerCase().includes(query.toLowerCase()));
+                
+                const matchesCategory = category === 'all' || 
+                    product.category.toLowerCase() === category.toLowerCase();
+                
+                return matchesQuery && matchesCategory;
+            });
+            
+            // Apply price filter
+            applyPriceFilter();
+            
+            // Update results info
+            document.getElementById('resultsInfo').textContent = 
+                `Found ${filteredProducts.length} results`;
+            
+            // Display results
+            displayResults();
+        }
+
+        // Apply price filter
+        function applyPriceFilter() {
+            const priceFilter = document.getElementById('priceFilter').value;
+            
+            if (priceFilter !== 'all') {
+                filteredProducts = filteredProducts.filter(product => {
+                    const price = product.price;
+                    switch(priceFilter) {
+                        case 'under25': return price < 25;
+                        case '25to50': return price >= 25 && price < 50;
+                        case '50to100': return price >= 50 && price < 100;
+                        case 'over100': return price >= 100;
+                        default: return true;
+                    }
+                });
+            }
+        }
+
+        // Apply sorting
+        function applySorting() {
+            const sortBy = document.getElementById('sortBy').value;
+            
+            switch(sortBy) {
+                case 'priceLow':
+                    filteredProducts.sort((a, b) => a.price - b.price);
+                    break;
+                case 'priceHigh':
+                    filteredProducts.sort((a, b) => b.price - a.price);
+                    break;
+                case 'rating':
+                    filteredProducts.sort((a, b) => b.rating - a.rating);
+                    break;
+                default:
+                    // Keep original order (by created_at)
+                    break;
+            }
+        }
+
+        // Apply all filters
+        function applyFilters() {
+            // Reset to all products
+            performSearch();
+            
+            // Apply sorting
+            applySorting();
+            
+            // Reset to first page
+            currentPage = 1;
+            
+            // Display results
+            displayResults();
+        }
+
+        // Display results with pagination
+        function displayResults() {
+            const resultsContainer = document.getElementById('searchResults');
+            const paginationContainer = document.getElementById('pagination');
+            
+            if (filteredProducts.length === 0) {
+                resultsContainer.innerHTML = `
+                    <div class="no-results">
+                        <h2>No products found</h2>
+                        <p>Try adjusting your search or filter to find what you're looking for.</p>
+                        <a href="index.html" class="btn-shop">Browse All Products</a>
+                    </div>
+                `;
+                paginationContainer.innerHTML = '';
+                return;
+            }
+            
+            // Calculate pagination
+            const startIndex = (currentPage - 1) * productsPerPage;
+            const endIndex = startIndex + productsPerPage;
+            const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
+            const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
+            
+            // Display products
+            resultsContainer.innerHTML = paginatedProducts.map(product => {
+                const sellerName = product.seller?.business_name || 'Unknown Seller';
+                return `
+                    <div class="product-card" onclick="goToProductDetail(${product.id})">
+                        <img src="${product.image}" alt="${product.title}" onerror="this.src='https://via.placeholder.com/300x300?text=Product'">
+                        <h3>${product.title}</h3>
+                        <div class="product-price">$${product.price.toFixed(2)}</div>
+                        <div class="product-category">${product.category}</div>
+                        <div class="product-seller">Seller: ${sellerName}</div>
+                    </div>
+                `;
+            }).join('');
+            
+            // Create pagination
+            let paginationHtml = '';
+            if (totalPages > 1) {
+                paginationHtml += `<button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>❮ Prev</button>`;
+                
+                for (let i = 1; i <= totalPages; i++) {
+                    if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                        paginationHtml += `<button class="${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+                    } else if (i === currentPage - 3 || i === currentPage + 3) {
+                        paginationHtml += `<button disabled>...</button>`;
+                    }
+                }
+                
+                paginationHtml += `<button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>Next ❯</button>`;
+            }
+            
+            paginationContainer.innerHTML = paginationHtml;
+        }
+
+        // Change page
+        function changePage(page) {
+            currentPage = page;
+            displayResults();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Go to product detail
+        function goToProductDetail(productId) {
+            window.location.href = `product-detail.html?id=${productId}`;
+        }
+
+        // Handle search from header
+        window.handleSearch = function() {
+            const searchInput = document.getElementById('searchInput');
+            const searchCategory = document.getElementById('searchCategory');
+            const query = searchInput ? searchInput.value.trim() : '';
+            const category = searchCategory ? searchCategory.value : 'all';
+            
+            if (query) {
+                window.location.href = `search-results.html?q=${encodeURIComponent(query)}&category=${encodeURIComponent(category)}`;
+            } else {
+                window.location.href = 'search-results.html';
+            }
+        };
+
+        // Show error message
+        function showError(message) {
+            const resultsContainer = document.getElementById('searchResults');
+            resultsContainer.innerHTML = `
+                <div class="no-results">
+                    <h2>Error</h2>
+                    <p>${message}</p>
+                    <button onclick="location.reload()" class="btn-shop">Try Again</button>
+                </div>
+            `;
+        }
+
+        // Update header for logged in user
+        function updateHeaderForLoggedInUser() {
+            const sessionData = localStorage.getItem('supabase_session');
+            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+            const logoutBtn = document.getElementById('logoutBtn');
+            const accountLabel = document.getElementById('accountLabel');
+            const accountLink = document.getElementById('accountLink');
+
+            if (isLoggedIn && sessionData) {
+                try {
+                    const session = JSON.parse(sessionData);
+                    const userEmail = session.user?.email || 'User';
+                    const userName = userEmail.split('@')[0];
+                    
+                    if (accountLabel) accountLabel.textContent = `Hello, ${userName}`;
+                    if (accountLink) accountLink.textContent = 'Your Account';
+                    if (logoutBtn) logoutBtn.style.display = 'inline-block';
+                } catch (e) {
+                    console.error('Error parsing session:', e);
+                }
+            }
+        }
+
+        // Logout function
+        window.logout = function() {
+            if (window.api && window.api.logout) {
+                window.api.logout();
+            } else {
+                localStorage.removeItem('supabase_session');
+                localStorage.removeItem('isLoggedIn');
+                window.location.href = 'index.html';
+            }
+        };
+    </script>
 </body>
 </html>
-
