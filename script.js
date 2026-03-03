@@ -970,6 +970,3 @@ async function updateBasketQuantity(productId, change, newValue) {
     const sessionData = localStorage.getItem('supabase_session');
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
     
-    if (!isLoggedIn || !sessionData) {
-        window.location.href = 'login.html?redirect=Basket.html';
-       
