@@ -409,10 +409,9 @@
     <script src="api.js"></script>
     <script src="script.js"></script>
     <script>
-        // Global variables
+        // Global variables - REMOVED sellersMap (already in script.js)
         let allProducts = [];
         let filteredProducts = [];
-        let sellersMap = {};
         let currentPage = 1;
         const productsPerPage = 12;
 
@@ -430,27 +429,14 @@
             }
         });
 
-        // Load sellers and products
+        // Load sellers and products - using sellersMap from script.js
         async function loadSellersAndProducts() {
             try {
                 const SUPABASE_URL = window.SUPABASE_URL;
                 const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
                 
-                // Load sellers first
-                const sellersRes = await fetch(`${SUPABASE_URL}/rest/v1/sellers?select=*`, {
-                    headers: {
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                    }
-                });
-                const sellers = await sellersRes.json();
-                
-                // Create sellers map
-                if (Array.isArray(sellers)) {
-                    sellers.forEach(seller => {
-                        sellersMap[seller.user_id] = seller;
-                    });
-                }
+                // Wait for sellers to load from script.js
+                await new Promise(resolve => setTimeout(resolve, 1000));
                 
                 // Load products
                 const productsRes = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
@@ -461,7 +447,7 @@
                 });
                 const products = await productsRes.json();
                 
-                // Map products with seller info
+                // Map products with seller info from sellersMap (from script.js)
                 if (Array.isArray(products)) {
                     allProducts = products.map(p => ({
                         id: p.id,
@@ -472,7 +458,7 @@
                         image: p.image_url || 'https://via.placeholder.com/300x300?text=Product',
                         image_url: p.image_url,
                         seller_id: p.seller_id,
-                        seller: sellersMap[p.seller_id] || null,
+                        seller: window.sellersMap ? window.sellersMap[p.seller_id] : null,
                         rating: 4.0,
                         reviews: 0
                     }));
