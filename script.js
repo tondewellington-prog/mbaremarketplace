@@ -5,6 +5,7 @@
 // Product Data - Will be loaded from API
 let products = [];
 let sellersMap = {};
+let ratingsCache = {}; // Cache for ratings to avoid repeated fetches
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', async function() {
@@ -222,6 +223,82 @@ function loadFallbackProducts() {
     }
 }
 
+// ============================================
+// RATING FUNCTIONS
+// ============================================
+
+// Fetch ratings for a seller and calculate average
+async function getSellerRatings(sellerId) {
+    // Check cache first
+    if (ratingsCache[sellerId]) {
+        return ratingsCache[sellerId];
+    }
+    
+    try {
+        const SUPABASE_URL = window.SUPABASE_URL;
+        const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
+        
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/ratings?seller_id=eq.${sellerId}&select=rating`, {
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+            }
+        });
+        
+        const ratings = await response.json();
+        
+        let result;
+        if (ratings && ratings.length > 0) {
+            const sum = ratings.reduce((acc, curr) => acc + curr.rating, 0);
+            const average = sum / ratings.length;
+            result = {
+                average: average,
+                count: ratings.length,
+                stars: generateRatingStars(average),
+                display: `<span style="color: #f90;">${generateRatingStars(average)}</span> <span style="color: #666; margin-left: 5px;">(${ratings.length} ${ratings.length === 1 ? 'rating' : 'ratings'})</span>`
+            };
+        } else {
+            result = {
+                average: 0,
+                count: 0,
+                stars: '☆☆☆☆☆',
+                display: '<span style="color: #999;">No ratings yet</span>'
+            };
+        }
+        
+        // Cache the result
+        ratingsCache[sellerId] = result;
+        return result;
+    } catch (error) {
+        console.error('Error fetching ratings:', error);
+        return {
+            average: 0,
+            count: 0,
+            stars: '☆☆☆☆☆',
+            display: '<span style="color: #999;">No ratings yet</span>'
+        };
+    }
+}
+
+// Generate star rating HTML
+function generateRatingStars(rating) {
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    let stars = '';
+    
+    for (let i = 0; i < fullStars; i++) {
+        stars += '★';
+    }
+    if (hasHalfStar) {
+        stars += '½';
+    }
+    const emptyStars = 5 - Math.ceil(rating);
+    for (let i = 0; i < emptyStars; i++) {
+        stars += '☆';
+    }
+    return stars;
+}
+
 // Load products into grid
 function loadProducts(containerId, productList) {
     const container = document.getElementById(containerId);
@@ -229,10 +306,24 @@ function loadProducts(containerId, productList) {
     
     container.innerHTML = '';
     
+    // Create all product cards
     productList.forEach(product => {
         const productCard = createProductCard(product);
         container.appendChild(productCard);
     });
+    
+    // Fetch ratings for all products in this container
+    setTimeout(() => {
+        productList.forEach(async (product) => {
+            if (product.seller_id) {
+                const ratingInfo = await getSellerRatings(product.seller_id);
+                const ratingElement = document.getElementById(`rating-${product.id}`);
+                if (ratingElement) {
+                    ratingElement.innerHTML = ratingInfo.display;
+                }
+            }
+        });
+    }, 100);
 }
 
 // Create product card element
@@ -257,6 +348,9 @@ function createProductCard(product) {
         </div>
         <div class="product-seller" style="font-size: 12px; color: #666; margin: 5px 0;">
             Seller: ${sellerName}
+        </div>
+        <div class="seller-rating" id="rating-${product.id}" style="font-size: 12px; margin: 5px 0; min-height: 20px;">
+            <span style="color: #999;">Loading ratings...</span>
         </div>
         <div class="product-actions">
             <button class="btn-add-cart" onclick="addToBasket('${product.id}')">Add to Basket</button>
@@ -673,14 +767,22 @@ async function loadProductDetail() {
         return;
     }
     
-    displayProductDetail(product);
+    // Fetch ratings for this seller
+    let ratingInfo = null;
+    if (product.seller_id) {
+        ratingInfo = await getSellerRatings(product.seller_id);
+    }
+    
+    displayProductDetail(product, ratingInfo);
 }
 
-function displayProductDetail(product) {
+function displayProductDetail(product, ratingInfo) {
     const stars = generateStars(product.rating || 4.0);
     const seller = sellersMap[product.seller_id] || {};
     const whatsappNumber = seller.business_phone || '';
     const shopLocation = seller.business_address || 'Location not specified';
+    
+    const ratingDisplay = ratingInfo ? ratingInfo.display : '<span style="color: #999;">No ratings yet</span>';
     
     document.getElementById('productDetail').innerHTML = `
         <div class="product-detail-image-container">
@@ -705,6 +807,7 @@ function displayProductDetail(product) {
                 <h3 style="margin-bottom: 15px; font-size: 18px;">Seller Information</h3>
                 <p style="margin-bottom: 10px;"><strong>Shop:</strong> ${seller.business_name}</p>
                 <p style="margin-bottom: 10px;"><strong>📍 Location:</strong> ${shopLocation}</p>
+                <p style="margin-bottom: 10px;"><strong>⭐ Rating:</strong> ${ratingDisplay}</p>
                 ${whatsappNumber ? `
                     <div style="margin-top: 15px;">
                         <a href="https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}?text=Hi, I'm interested in ${encodeURIComponent(product.title)}" 
@@ -715,6 +818,14 @@ function displayProductDetail(product) {
                         </a>
                     </div>
                 ` : ''}
+                <!-- RATE SELLER BUTTON -->
+                <div style="margin-top: 15px;">
+                    <a href="rate-seller.html?sellerId=${product.seller_id}" 
+                       class="btn-rate-seller" 
+                       style="display: inline-block; text-decoration: none; background: #f90; color: white; padding: 12px 30px; border-radius: 4px; font-weight: 600;">
+                        ⭐ Rate This Seller
+                    </a>
+                </div>
             </div>
             ` : ''}
             
@@ -859,137 +970,4 @@ async function updateBasketQuantity(productId, change, newValue) {
     const sessionData = localStorage.getItem('supabase_session');
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
     
-    if (!isLoggedIn || !sessionData) {
-        window.location.href = 'login.html?redirect=Basket.html';
-        return;
-    }
-    
-    const session = JSON.parse(sessionData);
-    const userId = session.user?.id;
-    
-    if (!userId) return;
-    
-    const basketKey = `basket_${userId}`;
-    let userBasket = JSON.parse(localStorage.getItem(basketKey)) || [];
-    
-    const item = userBasket.find(i => i.id == productId);
-    if (!item) return;
-    
-    if (newValue !== undefined) {
-        item.quantity = parseInt(newValue) || 1;
-    } else {
-        item.quantity = Math.max(1, item.quantity + change);
-    }
-    
-    localStorage.setItem(basketKey, JSON.stringify(userBasket));
-    loadBasketPage();
-}
-
-// Remove from Basket
-async function removeFromBasket(productId) {
-    // Check if user is logged in
-    const sessionData = localStorage.getItem('supabase_session');
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    
-    if (!isLoggedIn || !sessionData) {
-        window.location.href = 'login.html?redirect=Basket.html';
-        return;
-    }
-    
-    const session = JSON.parse(sessionData);
-    const userId = session.user?.id;
-    
-    if (!userId) return;
-    
-    const basketKey = `basket_${userId}`;
-    let userBasket = JSON.parse(localStorage.getItem(basketKey)) || [];
-    
-    userBasket = userBasket.filter(item => item.id != productId);
-    localStorage.setItem(basketKey, JSON.stringify(userBasket));
-    
-    loadBasketPage();
-    showNotification('Item removed from Basket');
-}
-
-// Search functionality
-function handleSearch() {
-    const searchInput = document.getElementById('searchInput');
-    const query = searchInput ? searchInput.value.trim() : '';
-    
-    if (query) {
-        window.location.href = `search-results.html?q=${encodeURIComponent(query)}`;
-    }
-}
-
-// Add CSS animation for notifications
-const styleElement = document.createElement('style');
-styleElement.textContent = `
-    @keyframes slideIn {
-        from {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-    
-    @keyframes slideOut {
-        from {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        to {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-    }
-`;
-document.head.appendChild(styleElement);
-
-// ============================================
-// ANALYTICS TRACKING - ADDED WITHOUT REMOVING ANYTHING
-// ============================================
-
-// Track user activity
-async function trackActivity(activityType, details = {}) {
-    try {
-        const sessionData = localStorage.getItem('supabase_session');
-        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-        
-        if (!isLoggedIn || !sessionData) return;
-        
-        const session = JSON.parse(sessionData);
-        const userId = session.user?.id;
-        
-        if (!userId) return;
-        
-        const SUPABASE_URL = window.SUPABASE_URL;
-        const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
-        const accessToken = session.access_token;
-        
-        await fetch(`${SUPABASE_URL}/rest/v1/user_activities`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'apikey': SUPABASE_ANON_KEY,
-                'Authorization': `Bearer ${accessToken}`
-            },
-            body: JSON.stringify({
-                user_id: userId,
-                activity_type: activityType,
-                details: details,
-                page_url: window.location.pathname,
-                created_at: new Date().toISOString()
-            })
-        });
-        
-        console.log('Activity tracked:', activityType, details);
-    } catch (error) {
-        console.error('Error tracking activity:', error);
-    }
-}
-
-// Make trackActivity available globally
-window.trackActivity = trackActivity;
+   
