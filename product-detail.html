@@ -8,6 +8,116 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .product-detail-container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .product-detail {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .product-detail-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+        .product-detail-image {
+            width: 100%;
+            max-height: 500px;
+            object-fit: contain;
+        }
+        .product-detail-info h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .product-detail-price {
+            font-size: 28px;
+            color: #B12704;
+            margin: 20px 0;
+        }
+        .product-detail-description {
+            line-height: 1.6;
+            color: #666;
+            margin: 20px 0;
+        }
+        .seller-info {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .seller-info h3 {
+            margin-bottom: 15px;
+        }
+        .seller-info p {
+            margin: 10px 0;
+        }
+        .seller-rating-large {
+            margin: 10px 0;
+            padding: 10px 0;
+            border-top: 1px solid #ddd;
+            border-bottom: 1px solid #ddd;
+        }
+        .rating-stars-large {
+            color: #f90;
+            font-size: 24px;
+            margin-right: 10px;
+        }
+        .rating-text {
+            color: #666;
+            font-size: 14px;
+        }
+        .detail-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .btn-add-cart-large, .btn-buy-now-large {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+        }
+        .btn-add-cart-large {
+            background: #f90;
+            color: white;
+        }
+        .btn-buy-now-large {
+            background: #232f3e;
+            color: white;
+        }
+        .btn-rate-seller {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #f90;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @media (max-width: 768px) {
+            .product-detail-content {
+                grid-template-columns: 1fr;
+            }
+            .detail-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- Header -->
@@ -78,100 +188,14 @@
     </header>
 
     <!-- Product Detail -->
-    <div class="product-detail-container" style="max-width: 1200px; margin: 30px auto; padding: 0 20px;">
-        <div class="product-detail" id="productDetail" style="background: white; border-radius: 8px; padding: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-            <!-- Content will be loaded by JavaScript -->
+    <div class="product-detail-container">
+        <div class="product-detail" id="productDetail">
             <div style="text-align: center; padding: 40px;">
                 <div style="border: 4px solid #f3f3f3; border-top: 4px solid #f90; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto;"></div>
                 <p style="margin-top: 20px;">Loading product details...</p>
             </div>
         </div>
     </div>
-
-    <style>
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .product-detail-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-        }
-        .product-detail-image {
-            width: 100%;
-            max-height: 500px;
-            object-fit: contain;
-        }
-        .product-detail-info h1 {
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-        .product-detail-price {
-            font-size: 28px;
-            color: #B12704;
-            margin: 20px 0;
-        }
-        .product-detail-description {
-            line-height: 1.6;
-            color: #666;
-            margin: 20px 0;
-        }
-        .seller-info {
-            background: #f5f5f5;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-        .seller-info h3 {
-            margin-bottom: 15px;
-        }
-        .seller-info p {
-            margin: 10px 0;
-        }
-        .detail-actions {
-            display: flex;
-            gap: 15px;
-            margin-top: 20px;
-        }
-        .btn-add-cart-large, .btn-buy-now-large {
-            flex: 1;
-            padding: 15px;
-            border: none;
-            border-radius: 4px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            text-align: center;
-            text-decoration: none;
-        }
-        .btn-add-cart-large {
-            background: #f90;
-            color: white;
-        }
-        .btn-buy-now-large {
-            background: #232f3e;
-            color: white;
-        }
-        .btn-rate-seller {
-            display: inline-block;
-            margin-top: 15px;
-            padding: 10px 20px;
-            background: #f90;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-            font-weight: 600;
-        }
-        @media (max-width: 768px) {
-            .product-detail-content {
-                grid-template-columns: 1fr;
-            }
-            .detail-actions {
-                flex-direction: column;
-            }
-        }
-    </style>
 
     <!-- Footer -->
     <footer class="footer">
@@ -290,7 +314,36 @@
                         seller = sellers && sellers.length > 0 ? sellers[0] : {};
                     }
                     
-                    displayProductDetail(product, seller);
+                    // Fetch seller ratings
+                    let ratingInfo = { average: 0, count: 0, stars: '☆☆☆☆☆' };
+                    if (product.seller_id) {
+                        const ratingRes = await fetch(`${SUPABASE_URL}/rest/v1/ratings?seller_id=eq.${product.seller_id}&select=rating`, {
+                            headers: {
+                                'apikey': SUPABASE_ANON_KEY,
+                                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                            }
+                        });
+                        const ratings = await ratingRes.json();
+                        if (ratings && ratings.length > 0) {
+                            const sum = ratings.reduce((acc, curr) => acc + curr.rating, 0);
+                            const average = sum / ratings.length;
+                            const fullStars = Math.floor(average);
+                            const hasHalfStar = average % 1 >= 0.5;
+                            let stars = '';
+                            for (let i = 0; i < fullStars; i++) stars += '★';
+                            if (hasHalfStar) stars += '½';
+                            const emptyStars = 5 - Math.ceil(average);
+                            for (let i = 0; i < emptyStars; i++) stars += '☆';
+                            
+                            ratingInfo = {
+                                average: average,
+                                count: ratings.length,
+                                stars: stars
+                            };
+                        }
+                    }
+                    
+                    displayProductDetail(product, seller, ratingInfo);
                 } else {
                     document.getElementById('productDetail').innerHTML = '<p style="text-align: center; padding: 40px;">Product not found</p>';
                 }
@@ -300,7 +353,7 @@
             }
         }
 
-        function displayProductDetail(product, seller) {
+        function displayProductDetail(product, seller, ratingInfo) {
             const stars = '★★★★★';
             const whatsappNumber = seller?.business_phone || '';
             const shopLocation = seller?.business_address || 'Location not specified';
@@ -325,6 +378,16 @@
                             <p><strong>Shop:</strong> ${sellerName}</p>
                             <p><strong>Location:</strong> ${shopLocation}</p>
                             ${whatsappNumber ? `<p><strong>Phone:</strong> ${whatsappNumber}</p>` : ''}
+                            
+                            <!-- Seller Rating Display -->
+                            <div class="seller-rating-large">
+                                <strong>Seller Rating:</strong><br>
+                                ${ratingInfo.count > 0 ? 
+                                    `<span class="rating-stars-large">${ratingInfo.stars}</span>
+                                     <span class="rating-text">${ratingInfo.average.toFixed(1)} out of 5 (${ratingInfo.count} ${ratingInfo.count === 1 ? 'rating' : 'ratings'})</span>` : 
+                                    '<span class="rating-text">No ratings yet</span>'
+                                }
+                            </div>
                             
                             <!-- RATE SELLER BUTTON -->
                             <a href="rate-seller.html?sellerId=${product.seller_id}" class="btn-rate-seller">
@@ -367,7 +430,6 @@
             const basketKey = `basket_${userId}`;
             let userBasket = JSON.parse(localStorage.getItem(basketKey)) || [];
             
-            // FIXED: Use the productId parameter, not redeclare it
             const existingItem = userBasket.find(item => item.id == productId);
             
             if (existingItem) {
