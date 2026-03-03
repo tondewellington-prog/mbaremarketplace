@@ -9,32 +9,18 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        .rating-star {
-            font-size: 40px;
-            cursor: pointer;
-            color: #ddd;
-            transition: color 0.2s;
-            display: inline-block;
-        }
-        .rating-star:hover,
-        .rating-star.active {
-            color: #FF9900;
-        }
-        .rating-star.filled {
-            color: #FF9900;
-        }
-        .login-container {
+        .rate-container {
             max-width: 600px;
             margin: 50px auto;
             padding: 0 20px;
         }
-        .login-box {
+        .rate-box {
             background: white;
             padding: 40px;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        .login-box h1 {
+        .rate-box h1 {
             margin-bottom: 10px;
             color: #232f3e;
         }
@@ -45,22 +31,31 @@
             display: block;
             margin-bottom: 8px;
             font-weight: 500;
-            color: #232f3e;
         }
         .form-group textarea {
             width: 100%;
             padding: 12px;
             border: 1px solid #ddd;
             border-radius: 4px;
-            font-size: 14px;
             font-family: inherit;
             resize: vertical;
         }
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #f90;
+        .rating-stars {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
         }
-        .btn-login {
+        .rating-star {
+            font-size: 40px;
+            cursor: pointer;
+            color: #ddd;
+            transition: color 0.2s;
+        }
+        .rating-star:hover,
+        .rating-star.selected {
+            color: #f90;
+        }
+        .btn-submit {
             width: 100%;
             padding: 14px;
             background: #f90;
@@ -70,70 +65,35 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s;
         }
-        .btn-login:hover {
+        .btn-submit:hover {
             background: #e68a00;
         }
-        .btn-login:disabled {
+        .btn-submit:disabled {
             background: #ccc;
             cursor: not-allowed;
         }
-        #sellerInfo {
-            margin-bottom: 20px;
-            padding: 20px;
+        .seller-info {
             background: #f5f5f5;
+            padding: 20px;
             border-radius: 8px;
+            margin: 20px 0;
         }
-        #sellerInfo h3 {
-            margin-bottom: 10px;
-            color: #232f3e;
-            font-size: 18px;
-        }
-        #sellerInfo p {
-            color: #666;
-            margin-bottom: 5px;
-        }
-        .current-rating {
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px solid #ddd;
-        }
-        .rating-container {
-            display: flex;
-            gap: 5px;
-            margin-bottom: 10px;
-        }
-        .error-message {
-            background: #f8d7da;
-            color: #721c24;
+        .message {
             padding: 15px;
             border-radius: 4px;
             margin-bottom: 20px;
+            display: none;
         }
-        .success-message {
+        .message.success {
             background: #d4edda;
             color: #155724;
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 20px;
+            display: block;
         }
-        .loading-spinner {
-            text-align: center;
-            padding: 20px;
-        }
-        .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #f90;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
         }
     </style>
 </head>
@@ -153,18 +113,13 @@
                         <option value="Clothing">Clothing</option>
                         <option value="Home & Kitchen">Home & Kitchen</option>
                     </select>
-                    <input type="text" id="searchInput" placeholder="Search Mbare Marketplace" class="search-input">
-                    <button class="search-btn" onclick="handleSearch()">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <path d="m21 21-4.35-4.35"></path>
-                        </svg>
-                    </button>
+                    <input type="text" id="searchInput" placeholder="Search..." class="search-input">
+                    <button class="search-btn" onclick="handleSearch()">🔍</button>
                 </div>
                 <div class="header-right">
                     <div class="account-menu">
                         <span class="account-label" id="accountLabel">Hello, Sign in</span>
-                        <a href="login.html" class="account-link" id="accountLink">Account & Lists</a>
+                        <a href="login.html" class="account-link" id="accountLink">Account</a>
                         <button id="logoutBtn" onclick="logout()" style="display: none; background: none; border: 1px solid #fff; color: #fff; cursor: pointer; margin-left: 10px; padding: 5px 15px; border-radius: 4px;">Logout</button>
                     </div>
                     <div class="returns">
@@ -206,37 +161,36 @@
     </header>
 
     <!-- Rating Content -->
-    <div class="login-container">
-        <div class="login-box">
-            <h1>Rate Your Seller</h1>
-            <p style="margin-bottom: 20px; color: #666;">Help other buyers by rating your seller's service</p>
+    <div class="rate-container">
+        <div class="rate-box">
+            <h1>Rate This Seller</h1>
+            <p style="color: #666; margin-bottom: 20px;">Share your experience to help other buyers</p>
             
-            <div id="message" style="display: none; margin-bottom: 20px;"></div>
+            <div id="message" class="message"></div>
             
-            <div id="sellerInfo" style="margin-bottom: 20px; padding: 15px; background: #f5f5f5; border-radius: 4px;">
-                <div class="loading-spinner">
-                    <div class="spinner"></div>
-                    <p style="margin-top: 10px;">Loading seller information...</p>
-                </div>
+            <div id="sellerInfo" class="seller-info">
+                <p>Loading seller information...</p>
             </div>
             
-            <form id="ratingForm" onsubmit="handleSubmitRating(event)">
+            <form id="ratingForm">
                 <div class="form-group">
                     <label>Your Rating *</label>
-                    <div class="rating-container">
-                        <span class="rating-star" data-rating="1" onclick="setRating(1)">☆</span>
-                        <span class="rating-star" data-rating="2" onclick="setRating(2)">☆</span>
-                        <span class="rating-star" data-rating="3" onclick="setRating(3)">☆</span>
-                        <span class="rating-star" data-rating="4" onclick="setRating(4)">☆</span>
-                        <span class="rating-star" data-rating="5" onclick="setRating(5)">☆</span>
+                    <div class="rating-stars" id="ratingStars">
+                        <span class="rating-star" data-rating="1">☆</span>
+                        <span class="rating-star" data-rating="2">☆</span>
+                        <span class="rating-star" data-rating="3">☆</span>
+                        <span class="rating-star" data-rating="4">☆</span>
+                        <span class="rating-star" data-rating="5">☆</span>
                     </div>
-                    <input type="hidden" id="ratingValue" name="rating" required>
+                    <input type="hidden" id="ratingValue" value="0">
                 </div>
+                
                 <div class="form-group">
                     <label>Your Review (Optional)</label>
-                    <textarea id="reviewText" rows="4" placeholder="Share your experience with this seller..."></textarea>
+                    <textarea id="reviewText" rows="4" placeholder="What did you like or dislike about this seller?"></textarea>
                 </div>
-                <button type="submit" class="btn-login" id="submitBtn">Submit Rating</button>
+                
+                <button type="submit" class="btn-submit" id="submitBtn">Submit Rating</button>
             </form>
         </div>
     </div>
@@ -313,24 +267,25 @@
         let selectedRating = 0;
         let sellerId = '';
         let orderId = '';
-        
+        let sellerName = '';
+
         document.addEventListener('DOMContentLoaded', function() {
             const urlParams = new URLSearchParams(window.location.search);
             sellerId = urlParams.get('sellerId');
-            orderId = urlParams.get('orderId');
+            orderId = urlParams.get('orderId') || null;
             
             if (!sellerId) {
-                showMessage('Invalid seller ID. Please try again.', 'error');
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 2000);
+                showMessage('Invalid seller ID', 'error');
+                setTimeout(() => window.location.href = 'index.html', 2000);
                 return;
             }
             
             loadSellerInfo();
+            setupRatingStars();
             updateHeaderForLoggedInUser();
+            updateBasketCount();
         });
-        
+
         async function loadSellerInfo() {
             try {
                 const SUPABASE_URL = window.SUPABASE_URL;
@@ -347,29 +302,31 @@
                 
                 if (sellers && sellers.length > 0) {
                     const seller = sellers[0];
-                    const businessName = seller.business_name || 'Unknown Seller';
-                    
+                    sellerName = seller.business_name || 'Unknown Seller';
                     document.getElementById('sellerInfo').innerHTML = `
-                        <h3>${businessName}</h3>
-                        <p><strong>Business Type:</strong> ${seller.business_type || 'Not specified'}</p>
+                        <h3 style="margin-bottom: 10px;">${sellerName}</h3>
+                        <p><strong>Type:</strong> ${seller.business_type || 'Not specified'}</p>
                         <p><strong>Location:</strong> ${seller.business_address || 'Not specified'}</p>
-                        <div class="current-rating">
-                            <p><strong>Current Rating:</strong> ⭐ 4.0 (Coming soon)</p>
-                        </div>
                     `;
                 } else {
-                    document.getElementById('sellerInfo').innerHTML = `
-                        <p>Seller information not found.</p>
-                    `;
+                    document.getElementById('sellerInfo').innerHTML = '<p>Seller information not found</p>';
                 }
             } catch (error) {
-                console.error('Error loading seller info:', error);
-                document.getElementById('sellerInfo').innerHTML = `
-                    <p class="error">Error loading seller information.</p>
-                `;
+                console.error('Error loading seller:', error);
+                document.getElementById('sellerInfo').innerHTML = '<p>Error loading seller information</p>';
             }
         }
-        
+
+        function setupRatingStars() {
+            const stars = document.querySelectorAll('.rating-star');
+            stars.forEach(star => {
+                star.addEventListener('click', function() {
+                    const rating = parseInt(this.dataset.rating);
+                    setRating(rating);
+                });
+            });
+        }
+
         function setRating(rating) {
             selectedRating = rating;
             document.getElementById('ratingValue').value = rating;
@@ -378,18 +335,18 @@
             stars.forEach((star, index) => {
                 if (index < rating) {
                     star.textContent = '★';
-                    star.classList.add('filled');
+                    star.classList.add('selected');
                 } else {
                     star.textContent = '☆';
-                    star.classList.remove('filled');
+                    star.classList.remove('selected');
                 }
             });
         }
-        
-        async function handleSubmitRating(event) {
-            event.preventDefault();
+
+        document.getElementById('ratingForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
             
-            // Check if user is logged in
+            // Check login
             const sessionData = localStorage.getItem('supabase_session');
             const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
             
@@ -409,11 +366,9 @@
             const session = JSON.parse(sessionData);
             const userId = session.user?.id;
             const accessToken = session.access_token;
-            
             const reviewText = document.getElementById('reviewText').value;
-            const submitBtn = document.getElementById('submitBtn');
             
-            // Disable button
+            const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = true;
             submitBtn.textContent = 'Submitting...';
             
@@ -421,15 +376,17 @@
                 const SUPABASE_URL = window.SUPABASE_URL;
                 const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
                 
-                // Create ratings table if not exists (you'll need to create this table in Supabase)
+                // Match your exact table structure with order_id
                 const ratingData = {
                     seller_id: sellerId,
                     buyer_id: userId,
-                    order_id: orderId || null,
+                    order_id: orderId,
                     rating: selectedRating,
                     review: reviewText || null,
                     created_at: new Date().toISOString()
                 };
+                
+                console.log('Submitting rating:', ratingData);
                 
                 const response = await fetch(`${SUPABASE_URL}/rest/v1/ratings`, {
                     method: 'POST',
@@ -457,44 +414,38 @@
                     }, 2000);
                 } else {
                     const error = await response.json();
-                    console.error('Rating submission failed:', error);
-                    
-                    // If table doesn't exist, show error
-                    if (error.code === '42P01') {
-                        showMessage('Ratings table not set up. Please contact support.', 'error');
-                    } else {
-                        showMessage('Failed to submit rating. Please try again.', 'error');
-                    }
-                    
+                    console.error('Error response:', error);
+                    showMessage('Failed to submit rating. Please try again.', 'error');
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Submit Rating';
                 }
                 
             } catch (error) {
                 console.error('Error submitting rating:', error);
-                showMessage('Error submitting rating: ' + error.message, 'error');
+                showMessage('Error submitting rating', 'error');
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Submit Rating';
             }
-        }
-        
+        });
+
         function showMessage(text, type) {
-            const messageDiv = document.getElementById('message');
-            messageDiv.style.display = 'block';
-            messageDiv.className = type === 'error' ? 'error-message' : 'success-message';
-            messageDiv.innerHTML = text;
+            const msgDiv = document.getElementById('message');
+            msgDiv.textContent = text;
+            msgDiv.className = `message ${type}`;
             
-            setTimeout(() => {
-                messageDiv.style.display = 'none';
-            }, 5000);
+            // Auto hide after 5 seconds for success messages
+            if (type === 'success') {
+                setTimeout(() => {
+                    msgDiv.style.display = 'none';
+                }, 5000);
+            }
         }
-        
+
         function updateHeaderForLoggedInUser() {
             const sessionData = localStorage.getItem('supabase_session');
             const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
             const logoutBtn = document.getElementById('logoutBtn');
             const accountLabel = document.getElementById('accountLabel');
-            const accountLink = document.getElementById('accountLink');
 
             if (isLoggedIn && sessionData) {
                 try {
@@ -503,15 +454,36 @@
                     const userName = userEmail.split('@')[0];
                     
                     if (accountLabel) accountLabel.textContent = `Hello, ${userName}`;
-                    if (accountLink) accountLink.textContent = 'Your Account';
                     if (logoutBtn) logoutBtn.style.display = 'inline-block';
                 } catch (e) {
                     console.error('Error parsing session:', e);
                 }
             }
         }
-        
-        // Handle search from header
+
+        function updateBasketCount() {
+            const sessionData = localStorage.getItem('supabase_session');
+            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+            const basketCount = document.getElementById('basketCount');
+            
+            if (isLoggedIn && sessionData && basketCount) {
+                try {
+                    const session = JSON.parse(sessionData);
+                    const userId = session.user?.id;
+                    
+                    if (userId) {
+                        const basketKey = `basket_${userId}`;
+                        const userBasket = JSON.parse(localStorage.getItem(basketKey)) || [];
+                        const total = userBasket.reduce((sum, item) => sum + (item.quantity || 0), 0);
+                        basketCount.textContent = total;
+                        basketCount.style.display = total > 0 ? 'flex' : 'none';
+                    }
+                } catch (e) {
+                    console.error('Error updating basket count:', e);
+                }
+            }
+        }
+
         window.handleSearch = function() {
             const searchInput = document.getElementById('searchInput');
             const searchCategory = document.getElementById('searchCategory');
@@ -520,20 +492,13 @@
             
             if (query) {
                 window.location.href = `search-results.html?q=${encodeURIComponent(query)}&category=${encodeURIComponent(category)}`;
-            } else {
-                window.location.href = 'search-results.html';
             }
         };
-        
-        // Logout function
+
         window.logout = function() {
-            if (window.api && window.api.logout) {
-                window.api.logout();
-            } else {
-                localStorage.removeItem('supabase_session');
-                localStorage.removeItem('isLoggedIn');
-                window.location.href = 'index.html';
-            }
+            localStorage.removeItem('supabase_session');
+            localStorage.removeItem('isLoggedIn');
+            window.location.href = 'index.html';
         };
     </script>
 </body>
