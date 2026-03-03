@@ -95,6 +95,10 @@
             color: #721c24;
             display: block;
         }
+        .login-prompt {
+            text-align: center;
+            padding: 40px;
+        }
     </style>
 </head>
 <body>
@@ -161,39 +165,20 @@
     </header>
 
     <!-- Rating Content -->
-    <div class="rate-container">
-        <div class="rate-box">
-            <h1>Rate This Seller</h1>
-            <p style="color: #666; margin-bottom: 20px;">Share your experience to help other buyers</p>
-            
-            <div id="message" class="message"></div>
-            
-            <div id="sellerInfo" class="seller-info">
-                <p>Loading seller information...</p>
-            </div>
-            
-            <form id="ratingForm">
-                <div class="form-group">
-                    <label>Your Rating *</label>
-                    <div class="rating-stars" id="ratingStars">
-                        <span class="rating-star" data-rating="1">☆</span>
-                        <span class="rating-star" data-rating="2">☆</span>
-                        <span class="rating-star" data-rating="3">☆</span>
-                        <span class="rating-star" data-rating="4">☆</span>
-                        <span class="rating-star" data-rating="5">☆</span>
-                    </div>
-                    <input type="hidden" id="ratingValue" value="0">
-                </div>
-                
-                <div class="form-group">
-                    <label>Your Review (Optional)</label>
-                    <textarea id="reviewText" rows="4" placeholder="What did you like or dislike about this seller?"></textarea>
-                </div>
-                
-                <button type="submit" class="btn-submit" id="submitBtn">Submit Rating</button>
-            </form>
+    <div class="rate-container" id="rateContainer">
+        <!-- Content will be loaded/checked by JavaScript -->
+        <div style="text-align: center; padding: 40px;">
+            <div style="border: 4px solid #f3f3f3; border-top: 4px solid #f90; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+            <p style="margin-top: 20px;">Loading...</p>
         </div>
     </div>
+
+    <style>
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 
     <!-- Footer -->
     <footer class="footer">
@@ -269,22 +254,117 @@
         let orderId = '';
         let sellerName = '';
 
-        document.addEventListener('DOMContentLoaded', function() {
+        // Token refresh function
+        async function refreshAccessToken(refreshToken) {
+            const SUPABASE_URL = window.SUPABASE_URL;
+            const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
+            
+            try {
+                const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_ANON_KEY
+                    },
+                    body: JSON.stringify({
+                        refresh_token: refreshToken
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    localStorage.setItem('supabase_session', JSON.stringify(data));
+                    localStorage.setItem('isLoggedIn', 'true');
+                    return { success: true, session: data };
+                } else {
+                    return { success: false, error: data };
+                }
+            } catch (error) {
+                console.error('Token refresh error:', error);
+                return { success: false, error };
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async function() {
             const urlParams = new URLSearchParams(window.location.search);
             sellerId = urlParams.get('sellerId');
             orderId = urlParams.get('orderId') || null;
             
             if (!sellerId) {
-                showMessage('Invalid seller ID', 'error');
+                showError('Invalid seller ID');
                 setTimeout(() => window.location.href = 'index.html', 2000);
                 return;
             }
             
-            loadSellerInfo();
+            // Check login status first
+            await checkLoginAndLoad();
+        });
+
+        async function checkLoginAndLoad() {
+            const sessionData = localStorage.getItem('supabase_session');
+            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+            
+            if (!isLoggedIn || !sessionData) {
+                // Show login prompt
+                document.getElementById('rateContainer').innerHTML = `
+                    <div class="rate-box">
+                        <div class="login-prompt">
+                            <h2>Please Login</h2>
+                            <p>You need to be logged in to rate a seller.</p>
+                            <a href="login.html?redirect=${encodeURIComponent(window.location.href)}" class="btn-submit" style="display: inline-block; width: auto; padding: 12px 30px; text-decoration: none;">Login</a>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // Load the rating form
+            await loadRatingForm();
+        }
+
+        async function loadRatingForm() {
+            const container = document.getElementById('rateContainer');
+            
+            container.innerHTML = `
+                <div class="rate-box">
+                    <h1>Rate This Seller</h1>
+                    <p style="color: #666; margin-bottom: 20px;">Share your experience to help other buyers</p>
+                    
+                    <div id="message" class="message"></div>
+                    
+                    <div id="sellerInfo" class="seller-info">
+                        <p>Loading seller information...</p>
+                    </div>
+                    
+                    <form id="ratingForm">
+                        <div class="form-group">
+                            <label>Your Rating *</label>
+                            <div class="rating-stars" id="ratingStars">
+                                <span class="rating-star" data-rating="1">☆</span>
+                                <span class="rating-star" data-rating="2">☆</span>
+                                <span class="rating-star" data-rating="3">☆</span>
+                                <span class="rating-star" data-rating="4">☆</span>
+                                <span class="rating-star" data-rating="5">☆</span>
+                            </div>
+                            <input type="hidden" id="ratingValue" value="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Your Review (Optional)</label>
+                            <textarea id="reviewText" rows="4" placeholder="What did you like or dislike about this seller?"></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn-submit" id="submitBtn">Submit Rating</button>
+                    </form>
+                </div>
+            `;
+            
+            await loadSellerInfo();
             setupRatingStars();
             updateHeaderForLoggedInUser();
             updateBasketCount();
-        });
+        }
 
         async function loadSellerInfo() {
             try {
@@ -343,12 +423,17 @@
             });
         }
 
-        document.getElementById('ratingForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            // Check login
-            const sessionData = localStorage.getItem('supabase_session');
-            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        document.getElementById('rateContainer').addEventListener('submit', async function(e) {
+            if (e.target && e.target.id === 'ratingForm') {
+                e.preventDefault();
+                await handleSubmitRating(e);
+            }
+        });
+
+        async function handleSubmitRating(event) {
+            // Get fresh session data
+            let sessionData = localStorage.getItem('supabase_session');
+            let isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
             
             if (!isLoggedIn || !sessionData) {
                 showMessage('Please login to submit a rating', 'error');
@@ -363,12 +448,14 @@
                 return;
             }
             
-            const session = JSON.parse(sessionData);
-            const userId = session.user?.id;
-            const accessToken = session.access_token;
-            const reviewText = document.getElementById('reviewText').value;
+            let session = JSON.parse(sessionData);
+            let userId = session.user?.id;
+            let accessToken = session.access_token;
+            let refreshToken = session.refresh_token;
             
+            const reviewText = document.getElementById('reviewText').value;
             const submitBtn = document.getElementById('submitBtn');
+            
             submitBtn.disabled = true;
             submitBtn.textContent = 'Submitting...';
             
@@ -376,32 +463,59 @@
                 const SUPABASE_URL = window.SUPABASE_URL;
                 const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
                 
-                // Match your exact table structure with order_id
-                const ratingData = {
-                    seller_id: sellerId,
-                    buyer_id: userId,
-                    order_id: orderId,
-                    rating: selectedRating,
-                    review: reviewText || null,
-                    created_at: new Date().toISOString()
-                };
-                
-                console.log('Submitting rating:', ratingData);
-                
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/ratings`, {
+                // Try to submit with current token
+                let response = await fetch(`${SUPABASE_URL}/rest/v1/ratings`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'apikey': SUPABASE_ANON_KEY,
                         'Authorization': `Bearer ${accessToken}`
                     },
-                    body: JSON.stringify(ratingData)
+                    body: JSON.stringify({
+                        seller_id: sellerId,
+                        buyer_id: userId,
+                        order_id: orderId,
+                        rating: selectedRating,
+                        review: reviewText || null,
+                        created_at: new Date().toISOString()
+                    })
                 });
+                
+                // If token expired, refresh it
+                if (response.status === 401) {
+                    console.log('Token expired, refreshing...');
+                    const refreshResult = await refreshAccessToken(refreshToken);
+                    
+                    if (refreshResult.success) {
+                        // Update session with new token
+                        session = refreshResult.session;
+                        accessToken = session.access_token;
+                        
+                        // Retry the request
+                        response = await fetch(`${SUPABASE_URL}/rest/v1/ratings`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'apikey': SUPABASE_ANON_KEY,
+                                'Authorization': `Bearer ${accessToken}`
+                            },
+                            body: JSON.stringify({
+                                seller_id: sellerId,
+                                buyer_id: userId,
+                                order_id: orderId,
+                                rating: selectedRating,
+                                review: reviewText || null,
+                                created_at: new Date().toISOString()
+                            })
+                        });
+                    } else {
+                        throw new Error('Session expired. Please login again.');
+                    }
+                }
                 
                 if (response.ok) {
                     showMessage('Thank you for your rating!', 'success');
                     
-                    // Track rating activity
                     if (window.trackActivity) {
                         window.trackActivity('rating_submitted', {
                             seller_id: sellerId,
@@ -422,23 +536,36 @@
                 
             } catch (error) {
                 console.error('Error submitting rating:', error);
-                showMessage('Error submitting rating', 'error');
+                showMessage(error.message || 'Error submitting rating', 'error');
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Submit Rating';
             }
-        });
+        }
 
         function showMessage(text, type) {
             const msgDiv = document.getElementById('message');
-            msgDiv.textContent = text;
-            msgDiv.className = `message ${type}`;
-            
-            // Auto hide after 5 seconds for success messages
-            if (type === 'success') {
-                setTimeout(() => {
-                    msgDiv.style.display = 'none';
-                }, 5000);
+            if (msgDiv) {
+                msgDiv.textContent = text;
+                msgDiv.className = `message ${type}`;
+                
+                if (type === 'success') {
+                    setTimeout(() => {
+                        msgDiv.style.display = 'none';
+                    }, 5000);
+                }
             }
+        }
+
+        function showError(text) {
+            const container = document.getElementById('rateContainer');
+            container.innerHTML = `
+                <div class="rate-box">
+                    <div class="message error" style="display: block;">
+                        ${text}
+                    </div>
+                    <a href="index.html" class="btn-submit" style="display: inline-block; width: auto; padding: 12px 30px; text-decoration: none; margin-top: 20px;">Go Home</a>
+                </div>
+            `;
         }
 
         function updateHeaderForLoggedInUser() {
