@@ -8,6 +8,134 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .rating-star {
+            font-size: 40px;
+            cursor: pointer;
+            color: #ddd;
+            transition: color 0.2s;
+            display: inline-block;
+        }
+        .rating-star:hover,
+        .rating-star.active {
+            color: #FF9900;
+        }
+        .rating-star.filled {
+            color: #FF9900;
+        }
+        .login-container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 0 20px;
+        }
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .login-box h1 {
+            margin-bottom: 10px;
+            color: #232f3e;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #232f3e;
+        }
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+        }
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #f90;
+        }
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: #f90;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-login:hover {
+            background: #e68a00;
+        }
+        .btn-login:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        #sellerInfo {
+            margin-bottom: 20px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+        #sellerInfo h3 {
+            margin-bottom: 10px;
+            color: #232f3e;
+            font-size: 18px;
+        }
+        #sellerInfo p {
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .current-rating {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+        }
+        .rating-container {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .loading-spinner {
+            text-align: center;
+            padding: 20px;
+        }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #f90;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body>
     <!-- Header -->
@@ -18,12 +146,12 @@
                     <a href="index.html">Mbare Marketplace</a>
                 </div>
                 <div class="search-bar">
-                    <select class="search-category">
-                        <option>All</option>
-                        <option>Electronics</option>
-                        <option>Books</option>
-                        <option>Clothing</option>
-                        <option>Home & Kitchen</option>
+                    <select class="search-category" id="searchCategory">
+                        <option value="all">All</option>
+                        <option value="Electronics">Electronics</option>
+                        <option value="Books">Books</option>
+                        <option value="Clothing">Clothing</option>
+                        <option value="Home & Kitchen">Home & Kitchen</option>
                     </select>
                     <input type="text" id="searchInput" placeholder="Search Mbare Marketplace" class="search-input">
                     <button class="search-btn" onclick="handleSearch()">
@@ -35,10 +163,10 @@
                 </div>
                 <div class="header-right">
                     <div class="account-menu">
-    <span class="account-label">Hello, Sign in</span>
-    <a href="login.html" class="account-link">Account & Lists</a>
-    <button id="logoutBtn" onclick="logout()" style="display: none; background: none; border: none; color: #fff; cursor: pointer; margin-left: 10px;">Logout</button>
-</div>
+                        <span class="account-label" id="accountLabel">Hello, Sign in</span>
+                        <a href="login.html" class="account-link" id="accountLink">Account & Lists</a>
+                        <button id="logoutBtn" onclick="logout()" style="display: none; background: none; border: 1px solid #fff; color: #fff; cursor: pointer; margin-left: 10px; padding: 5px 15px; border-radius: 4px;">Logout</button>
+                    </div>
                     <div class="returns">
                         <span class="returns-label">Returns</span>
                         <span class="returns-link">& Orders</span>
@@ -71,38 +199,44 @@
                 <a href="#" class="nav-item">Customer Service</a>
                 <a href="#" class="nav-item">Registry</a>
                 <a href="#" class="nav-item">Gift Cards</a>
-                <a href="#" class="nav-item">Sell</a>
+                <a href="seller-register.html" class="nav-item">Sell</a>
+                <a href="analytics.html" class="nav-item">Analytics</a>
             </div>
         </nav>
     </header>
 
     <!-- Rating Content -->
-    <div class="login-container" style="max-width: 600px;">
+    <div class="login-container">
         <div class="login-box">
             <h1>Rate Your Seller</h1>
             <p style="margin-bottom: 20px; color: #666;">Help other buyers by rating your seller's service</p>
             
+            <div id="message" style="display: none; margin-bottom: 20px;"></div>
+            
             <div id="sellerInfo" style="margin-bottom: 20px; padding: 15px; background: #f5f5f5; border-radius: 4px;">
-                <!-- Seller info will be loaded here -->
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <p style="margin-top: 10px;">Loading seller information...</p>
+                </div>
             </div>
             
-            <form class="login-form" onsubmit="handleSubmitRating(event)">
+            <form id="ratingForm" onsubmit="handleSubmitRating(event)">
                 <div class="form-group">
-                    <label>Rating *</label>
-                    <div id="ratingStars" style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <label>Your Rating *</label>
+                    <div class="rating-container">
                         <span class="rating-star" data-rating="1" onclick="setRating(1)">☆</span>
                         <span class="rating-star" data-rating="2" onclick="setRating(2)">☆</span>
                         <span class="rating-star" data-rating="3" onclick="setRating(3)">☆</span>
                         <span class="rating-star" data-rating="4" onclick="setRating(4)">☆</span>
                         <span class="rating-star" data-rating="5" onclick="setRating(5)">☆</span>
                     </div>
-                    <input type="hidden" id="ratingValue" required>
+                    <input type="hidden" id="ratingValue" name="rating" required>
                 </div>
                 <div class="form-group">
                     <label>Your Review (Optional)</label>
                     <textarea id="reviewText" rows="4" placeholder="Share your experience with this seller..."></textarea>
                 </div>
-                <button type="submit" class="btn-login">Submit Rating</button>
+                <button type="submit" class="btn-login" id="submitBtn">Submit Rating</button>
             </form>
         </div>
     </div>
@@ -186,26 +320,53 @@
             orderId = urlParams.get('orderId');
             
             if (!sellerId) {
-                alert('Invalid seller ID');
-                window.location.href = 'index.html';
+                showMessage('Invalid seller ID. Please try again.', 'error');
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 2000);
                 return;
             }
             
             loadSellerInfo();
+            updateHeaderForLoggedInUser();
         });
         
         async function loadSellerInfo() {
             try {
-                const response = await api.getSeller(sellerId);
-                if (response.success) {
-                    const seller = response.seller;
+                const SUPABASE_URL = window.SUPABASE_URL;
+                const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
+                
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/sellers?user_id=eq.${sellerId}&select=*`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+                
+                const sellers = await response.json();
+                
+                if (sellers && sellers.length > 0) {
+                    const seller = sellers[0];
+                    const businessName = seller.business_name || 'Unknown Seller';
+                    
                     document.getElementById('sellerInfo').innerHTML = `
-                        <h3 style="margin-bottom: 10px;">${seller.shop_name || seller.name}</h3>
-                        ${seller.seller_rating > 0 ? `<p>Current Rating: ${seller.seller_rating.toFixed(1)} ⭐ (${seller.total_ratings} reviews)</p>` : '<p>No ratings yet</p>'}
+                        <h3>${businessName}</h3>
+                        <p><strong>Business Type:</strong> ${seller.business_type || 'Not specified'}</p>
+                        <p><strong>Location:</strong> ${seller.business_address || 'Not specified'}</p>
+                        <div class="current-rating">
+                            <p><strong>Current Rating:</strong> ⭐ 4.0 (Coming soon)</p>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('sellerInfo').innerHTML = `
+                        <p>Seller information not found.</p>
                     `;
                 }
             } catch (error) {
                 console.error('Error loading seller info:', error);
+                document.getElementById('sellerInfo').innerHTML = `
+                    <p class="error">Error loading seller information.</p>
+                `;
             }
         }
         
@@ -217,10 +378,10 @@
             stars.forEach((star, index) => {
                 if (index < rating) {
                     star.textContent = '★';
-                    star.style.color = '#FF9900';
+                    star.classList.add('filled');
                 } else {
                     star.textContent = '☆';
-                    star.style.color = '#999';
+                    star.classList.remove('filled');
                 }
             });
         }
@@ -228,52 +389,152 @@
         async function handleSubmitRating(event) {
             event.preventDefault();
             
-            if (!api.token) {
-                alert('Please login to submit a rating');
-                window.location.href = 'login.html';
+            // Check if user is logged in
+            const sessionData = localStorage.getItem('supabase_session');
+            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+            
+            if (!isLoggedIn || !sessionData) {
+                showMessage('Please login to submit a rating', 'error');
+                setTimeout(() => {
+                    window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.href);
+                }, 1500);
                 return;
             }
             
             if (selectedRating === 0) {
-                alert('Please select a rating');
+                showMessage('Please select a rating', 'error');
                 return;
             }
             
+            const session = JSON.parse(sessionData);
+            const userId = session.user?.id;
+            const accessToken = session.access_token;
+            
             const reviewText = document.getElementById('reviewText').value;
+            const submitBtn = document.getElementById('submitBtn');
+            
+            // Disable button
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
             
             try {
-                const response = await api.createReview({
-                    sellerId: sellerId,
-                    orderId: orderId || null,
+                const SUPABASE_URL = window.SUPABASE_URL;
+                const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
+                
+                // Create ratings table if not exists (you'll need to create this table in Supabase)
+                const ratingData = {
+                    seller_id: sellerId,
+                    buyer_id: userId,
+                    order_id: orderId || null,
                     rating: selectedRating,
-                    reviewText: reviewText
+                    review: reviewText || null,
+                    created_at: new Date().toISOString()
+                };
+                
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/ratings`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify(ratingData)
                 });
                 
-                if (response.success) {
-                    alert('Thank you for your rating!');
-                    window.location.href = 'index.html';
+                if (response.ok) {
+                    showMessage('Thank you for your rating!', 'success');
+                    
+                    // Track rating activity
+                    if (window.trackActivity) {
+                        window.trackActivity('rating_submitted', {
+                            seller_id: sellerId,
+                            rating: selectedRating
+                        });
+                    }
+                    
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 2000);
+                } else {
+                    const error = await response.json();
+                    console.error('Rating submission failed:', error);
+                    
+                    // If table doesn't exist, show error
+                    if (error.code === '42P01') {
+                        showMessage('Ratings table not set up. Please contact support.', 'error');
+                    } else {
+                        showMessage('Failed to submit rating. Please try again.', 'error');
+                    }
+                    
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit Rating';
                 }
+                
             } catch (error) {
-                alert('Failed to submit rating: ' + error.message);
+                console.error('Error submitting rating:', error);
+                showMessage('Error submitting rating: ' + error.message, 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Rating';
             }
         }
+        
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.style.display = 'block';
+            messageDiv.className = type === 'error' ? 'error-message' : 'success-message';
+            messageDiv.innerHTML = text;
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        function updateHeaderForLoggedInUser() {
+            const sessionData = localStorage.getItem('supabase_session');
+            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+            const logoutBtn = document.getElementById('logoutBtn');
+            const accountLabel = document.getElementById('accountLabel');
+            const accountLink = document.getElementById('accountLink');
+
+            if (isLoggedIn && sessionData) {
+                try {
+                    const session = JSON.parse(sessionData);
+                    const userEmail = session.user?.email || 'User';
+                    const userName = userEmail.split('@')[0];
+                    
+                    if (accountLabel) accountLabel.textContent = `Hello, ${userName}`;
+                    if (accountLink) accountLink.textContent = 'Your Account';
+                    if (logoutBtn) logoutBtn.style.display = 'inline-block';
+                } catch (e) {
+                    console.error('Error parsing session:', e);
+                }
+            }
+        }
+        
+        // Handle search from header
+        window.handleSearch = function() {
+            const searchInput = document.getElementById('searchInput');
+            const searchCategory = document.getElementById('searchCategory');
+            const query = searchInput ? searchInput.value.trim() : '';
+            const category = searchCategory ? searchCategory.value : 'all';
+            
+            if (query) {
+                window.location.href = `search-results.html?q=${encodeURIComponent(query)}&category=${encodeURIComponent(category)}`;
+            } else {
+                window.location.href = 'search-results.html';
+            }
+        };
+        
+        // Logout function
+        window.logout = function() {
+            if (window.api && window.api.logout) {
+                window.api.logout();
+            } else {
+                localStorage.removeItem('supabase_session');
+                localStorage.removeItem('isLoggedIn');
+                window.location.href = 'index.html';
+            }
+        };
     </script>
-    <style>
-        .rating-star {
-            font-size: 32px;
-            cursor: pointer;
-            color: #999;
-            transition: color 0.2s;
-        }
-        .rating-star:hover {
-            color: #FF9900;
-        }
-    </style>
 </body>
 </html>
-
-
-
-
-
-
