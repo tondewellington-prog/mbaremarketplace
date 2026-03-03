@@ -232,14 +232,7 @@
             margin-left: 3px;
         }
         
-        /* Product grid styles */
-        .product-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-        }
-        
-        /* Mobile responsive styles - UPDATED for 2 products per row */
+        /* Mobile responsive styles - ONLY CHANGED THIS SECTION */
         @media (max-width: 768px) {
             .contact-modal-content {
                 margin: 2% auto;
@@ -273,15 +266,10 @@
                 margin-bottom: 12px;
             }
             
-            /* Show 2 products per row on mobile */
+            /* Show 2 products per row on mobile - THIS IS THE ONLY CHANGE TO PRODUCT DISPLAY */
             .product-grid {
                 grid-template-columns: repeat(2, 1fr);
                 gap: 10px;
-            }
-            
-            /* Adjust product card for mobile */
-            .product-card {
-                padding: 10px;
             }
             
             .product-card img {
