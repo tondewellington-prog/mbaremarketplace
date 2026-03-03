@@ -970,3 +970,137 @@ async function updateBasketQuantity(productId, change, newValue) {
     const sessionData = localStorage.getItem('supabase_session');
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
     
+    if (!isLoggedIn || !sessionData) {
+        window.location.href = 'login.html?redirect=Basket.html';
+        return;
+    }
+    
+    const session = JSON.parse(sessionData);
+    const userId = session.user?.id;
+    
+    if (!userId) return;
+    
+    const basketKey = `basket_${userId}`;
+    let userBasket = JSON.parse(localStorage.getItem(basketKey)) || [];
+    
+    const item = userBasket.find(i => i.id == productId);
+    if (!item) return;
+    
+    if (newValue !== undefined) {
+        item.quantity = parseInt(newValue) || 1;
+    } else {
+        item.quantity = Math.max(1, item.quantity + change);
+    }
+    
+    localStorage.setItem(basketKey, JSON.stringify(userBasket));
+    loadBasketPage();
+}
+
+// Remove from Basket
+async function removeFromBasket(productId) {
+    // Check if user is logged in
+    const sessionData = localStorage.getItem('supabase_session');
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    
+    if (!isLoggedIn || !sessionData) {
+        window.location.href = 'login.html?redirect=Basket.html';
+        return;
+    }
+    
+    const session = JSON.parse(sessionData);
+    const userId = session.user?.id;
+    
+    if (!userId) return;
+    
+    const basketKey = `basket_${userId}`;
+    let userBasket = JSON.parse(localStorage.getItem(basketKey)) || [];
+    
+    userBasket = userBasket.filter(item => item.id != productId);
+    localStorage.setItem(basketKey, JSON.stringify(userBasket));
+    
+    loadBasketPage();
+    showNotification('Item removed from Basket');
+}
+
+// Search functionality
+function handleSearch() {
+    const searchInput = document.getElementById('searchInput');
+    const query = searchInput ? searchInput.value.trim() : '';
+    
+    if (query) {
+        window.location.href = `search-results.html?q=${encodeURIComponent(query)}`;
+    }
+}
+
+// Add CSS animation for notifications
+const styleElement = document.createElement('style');
+styleElement.textContent = `
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(styleElement);
+
+// ============================================
+// ANALYTICS TRACKING
+// ============================================
+
+// Track user activity
+async function trackActivity(activityType, details = {}) {
+    try {
+        const sessionData = localStorage.getItem('supabase_session');
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        
+        if (!isLoggedIn || !sessionData) return;
+        
+        const session = JSON.parse(sessionData);
+        const userId = session.user?.id;
+        
+        if (!userId) return;
+        
+        const SUPABASE_URL = window.SUPABASE_URL;
+        const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
+        const accessToken = session.access_token;
+        
+        await fetch(`${SUPABASE_URL}/rest/v1/user_activities`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${accessToken}`
+            },
+            body: JSON.stringify({
+                user_id: userId,
+                activity_type: activityType,
+                details: details,
+                page_url: window.location.pathname,
+                created_at: new Date().toISOString()
+            })
+        });
+        
+        console.log('Activity tracked:', activityType, details);
+    } catch (error) {
+        console.error('Error tracking activity:', error);
+    }
+}
+
+// Make trackActivity available globally
+window.trackActivity = trackActivity;
