@@ -296,6 +296,17 @@
             font-weight: 600;
         }
 
+        .debug-info {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 12px;
+            color: #333;
+            display: none;
+        }
+
         @media (max-width: 768px) {
             .charts-grid {
                 grid-template-columns: 1fr;
@@ -388,6 +399,9 @@
     <div class="analytics-container" id="analyticsContent">
         <!-- Content will be loaded by JavaScript -->
     </div>
+
+    <!-- Debug Info (hidden by default) -->
+    <div id="debugInfo" class="debug-info"></div>
 
     <!-- Footer -->
     <footer class="footer">
@@ -515,7 +529,7 @@
                 const SUPABASE_URL = window.SUPABASE_URL;
                 const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
                 
-                // Get unique users from sellers table (since we don't have direct auth access)
+                // Get unique users from sellers table
                 const sellersResponse = await fetch(`${SUPABASE_URL}/rest/v1/sellers?select=user_id`, {
                     headers: {
                         'apikey': SUPABASE_ANON_KEY,
@@ -550,14 +564,15 @@
             }
         }
 
-        // Function to get user signups by date (from sellers table created_at)
-        async function getUserSignupsByDate(days = 7) {
+        // Function to get data counts by date with fallback
+        async function getDataCounts(table, dateField = 'created_at', days = 7) {
             try {
                 const SUPABASE_URL = window.SUPABASE_URL;
                 const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
                 
                 const dates = [];
                 const counts = [];
+                let hasData = false;
                 
                 for (let i = days - 1; i >= 0; i--) {
                     const date = new Date();
@@ -565,12 +580,12 @@
                     const dateStr = date.toISOString().split('T')[0];
                     dates.push(dateStr.substring(5)); // MM-DD
                     
-                    // Get sellers created on this date
+                    // Get records created on this date
                     const nextDate = new Date(date);
                     nextDate.setDate(nextDate.getDate() + 1);
                     
                     const response = await fetch(
-                        `${SUPABASE_URL}/rest/v1/sellers?created_at=gte.${dateStr}&created_at=lt.${nextDate.toISOString().split('T')[0]}&select=user_id`,
+                        `${SUPABASE_URL}/rest/v1/${table}?${dateField}=gte.${dateStr}&${dateField}=lt.${nextDate.toISOString().split('T')[0]}&select=id`,
                         {
                             headers: {
                                 'apikey': SUPABASE_ANON_KEY,
@@ -580,32 +595,25 @@
                     );
                     
                     if (response.ok) {
-                        const sellers = await response.json();
-                        counts.push(sellers.length);
+                        const records = await response.json();
+                        counts.push(records.length);
+                        if (records.length > 0) hasData = true;
                     } else {
                         counts.push(0);
                     }
                 }
                 
-                return { dates, counts };
+                return { dates, counts, hasData };
             } catch (error) {
-                console.error('Error getting user signups by date:', error);
-                // Return empty data
-                const dates = [];
-                const counts = [];
-                for (let i = 6; i >= 0; i--) {
-                    const date = new Date();
-                    date.setDate(date.getDate() - i);
-                    dates.push(date.toISOString().split('T')[0].substring(5));
-                    counts.push(0);
-                }
-                return { dates, counts };
+                console.error(`Error getting data from ${table}:`, error);
+                return { dates: [], counts: [], hasData: false };
             }
         }
 
         // Load the analytics dashboard
         async function loadAnalyticsDashboard() {
             const content = document.getElementById('analyticsContent');
+            const debugDiv = document.getElementById('debugInfo');
             
             // Show loading spinner
             content.innerHTML = `
@@ -616,14 +624,53 @@
             `;
 
             try {
+                // Check if tables have data
+                const SUPABASE_URL = window.SUPABASE_URL;
+                const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
+                
+                // Test queries to see if tables exist and have data
+                const testSellers = await fetch(`${SUPABASE_URL}/rest/v1/sellers?select=id&limit=1`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+                const testProducts = await fetch(`${SUPABASE_URL}/rest/v1/products?select=id&limit=1`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+                const testActivities = await fetch(`${SUPABASE_URL}/rest/v1/user_activities?select=id&limit=1`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+                
+                const sellersExist = testSellers.ok && (await testSellers.json()).length > 0;
+                const productsExist = testProducts.ok && (await testProducts.json()).length > 0;
+                const activitiesExist = testActivities.ok && (await testActivities.json()).length > 0;
+                
+                // Show debug info
+                debugDiv.style.display = 'block';
+                debugDiv.innerHTML = `
+                    <strong>Database Status:</strong><br>
+                    Sellers table has data: ${sellersExist ? '✅' : '❌'}<br>
+                    Products table has data: ${productsExist ? '✅' : '❌'}<br>
+                    User Activities table has data: ${activitiesExist ? '✅' : '❌'}<br>
+                    <br>
+                    <strong>Note:</strong> If tables are empty, showing sample data for visualization.
+                `;
+                
                 // Fetch all analytics data
                 const stats = await loadStats();
                 
                 // Create the header and stats section
                 content.innerHTML = stats;
                 
-                // Load and append charts
-                await loadCharts();
+                // Load and append charts (with fallback to sample data)
+                await loadCharts(sellersExist || productsExist || activitiesExist);
                 
                 // Load and append recent activities
                 await loadRecentActivities();
@@ -763,90 +810,40 @@
         }
 
         // Load charts
-        async function loadCharts() {
+        async function loadCharts(hasRealData = false) {
             try {
-                // Get user signups (from sellers table)
-                const { dates, counts: userCounts } = await getUserSignupsByDate(7);
+                // Try to get real data first
+                const activityData = await getDataCounts('user_activities', 'created_at', 7);
+                const sellerData = await getDataCounts('sellers', 'created_at', 7);
+                const productData = await getDataCounts('products', 'created_at', 7);
                 
-                // Get seller registrations data (from sellers table)
-                const SUPABASE_URL = window.SUPABASE_URL;
-                const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
+                // Use real data if available, otherwise use sample data
+                const useSampleData = !hasRealData || (!activityData.hasData && !sellerData.hasData && !productData.hasData);
                 
-                const sellerCounts = [];
-                for (let i = 6; i >= 0; i--) {
-                    const date = new Date();
-                    date.setDate(date.getDate() - i);
-                    const dateStr = date.toISOString().split('T')[0];
-                    const nextDate = new Date(date);
-                    nextDate.setDate(nextDate.getDate() + 1);
-                    
-                    const response = await fetch(
-                        `${SUPABASE_URL}/rest/v1/sellers?created_at=gte.${dateStr}&created_at=lt.${nextDate.toISOString().split('T')[0]}&select=id`,
-                        {
-                            headers: {
-                                'apikey': SUPABASE_ANON_KEY,
-                                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                            }
-                        }
-                    );
-                    if (response.ok) {
-                        const sellers = await response.json();
-                        sellerCounts.push(sellers.length);
-                    } else {
-                        sellerCounts.push(0);
-                    }
-                }
+                let dates = [];
+                let activityCounts = [];
+                let sellerCounts = [];
+                let productCounts = [];
                 
-                // Get product addition data
-                const productCounts = [];
-                for (let i = 6; i >= 0; i--) {
-                    const date = new Date();
-                    date.setDate(date.getDate() - i);
-                    const dateStr = date.toISOString().split('T')[0];
-                    const nextDate = new Date(date);
-                    nextDate.setDate(nextDate.getDate() + 1);
-                    
-                    const response = await fetch(
-                        `${SUPABASE_URL}/rest/v1/products?created_at=gte.${dateStr}&created_at=lt.${nextDate.toISOString().split('T')[0]}&select=id`,
-                        {
-                            headers: {
-                                'apikey': SUPABASE_ANON_KEY,
-                                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                            }
-                        }
-                    );
-                    if (response.ok) {
-                        const products = await response.json();
-                        productCounts.push(products.length);
-                    } else {
-                        productCounts.push(0);
+                if (useSampleData) {
+                    // Generate sample data for visualization
+                    console.log('Using sample data for charts');
+                    const today = new Date();
+                    for (let i = 6; i >= 0; i--) {
+                        const date = new Date(today);
+                        date.setDate(date.getDate() - i);
+                        dates.push(date.toISOString().split('T')[0].substring(5));
+                        
+                        // Sample data patterns
+                        activityCounts.push(Math.floor(Math.random() * 15) + 5);
+                        sellerCounts.push(Math.floor(Math.random() * 5) + 1);
+                        productCounts.push(Math.floor(Math.random() * 10) + 3);
                     }
-                }
-
-                // Get user activity data (logins, page views, etc.)
-                const activityCounts = [];
-                for (let i = 6; i >= 0; i--) {
-                    const date = new Date();
-                    date.setDate(date.getDate() - i);
-                    const dateStr = date.toISOString().split('T')[0];
-                    const nextDate = new Date(date);
-                    nextDate.setDate(nextDate.getDate() + 1);
-                    
-                    const response = await fetch(
-                        `${SUPABASE_URL}/rest/v1/user_activities?created_at=gte.${dateStr}&created_at=lt.${nextDate.toISOString().split('T')[0]}&select=id`,
-                        {
-                            headers: {
-                                'apikey': SUPABASE_ANON_KEY,
-                                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                            }
-                        }
-                    );
-                    if (response.ok) {
-                        const activities = await response.json();
-                        activityCounts.push(activities.length);
-                    } else {
-                        activityCounts.push(0);
-                    }
+                } else {
+                    dates = activityData.dates;
+                    activityCounts = activityData.counts;
+                    sellerCounts = sellerData.counts;
+                    productCounts = productData.counts;
                 }
 
                 const chartsHtml = `
@@ -854,21 +851,21 @@
                         <div class="chart-container">
                             <div class="chart-title">
                                 User Activity
-                                <span>Last 7 days</span>
+                                <span>Last 7 days ${useSampleData ? '(Sample Data)' : ''}</span>
                             </div>
                             <canvas id="userChart"></canvas>
                         </div>
                         <div class="chart-container">
                             <div class="chart-title">
                                 New Sellers
-                                <span>Last 7 days</span>
+                                <span>Last 7 days ${useSampleData ? '(Sample Data)' : ''}</span>
                             </div>
                             <canvas id="sellerChart"></canvas>
                         </div>
                         <div class="chart-container full-width">
                             <div class="chart-title">
                                 New Products
-                                <span>Last 7 days</span>
+                                <span>Last 7 days ${useSampleData ? '(Sample Data)' : ''}</span>
                             </div>
                             <canvas id="productChart"></canvas>
                         </div>
@@ -879,7 +876,7 @@
                 const content = document.getElementById('analyticsContent');
                 content.innerHTML += chartsHtml;
 
-                // Create charts with real data
+                // Create charts with data
                 createUserChart(dates, activityCounts);
                 createSellerChart(dates, sellerCounts);
                 createProductChart(dates, productCounts);
@@ -1014,18 +1011,22 @@
                     }
                 );
                 
-                const activities = await response.json();
+                let activities = [];
+                if (response.ok) {
+                    activities = await response.json();
+                }
                 
                 // Format the activities for display
-                const formattedActivities = activities.map(activity => {
-                    const timeAgo = getTimeAgo(new Date(activity.created_at));
-                    return {
-                        time: timeAgo,
-                        user: activity.user_id ? activity.user_id.substring(0, 8) + '...' : 'Unknown',
-                        type: activity.activity_type || 'activity',
-                        details: typeof activity.details === 'object' ? JSON.stringify(activity.details) : (activity.details || activity.activity_type)
-                    };
-                });
+                const formattedActivities = activities.length > 0 ? 
+                    activities.map(activity => {
+                        const timeAgo = getTimeAgo(new Date(activity.created_at));
+                        return {
+                            time: timeAgo,
+                            user: activity.user_id ? activity.user_id.substring(0, 8) + '...' : 'Unknown',
+                            type: activity.activity_type || 'activity',
+                            details: typeof activity.details === 'object' ? JSON.stringify(activity.details) : (activity.details || activity.activity_type)
+                        };
+                    }) : [];
 
                 const activitiesHtml = `
                     <div class="recent-activities">
