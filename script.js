@@ -361,8 +361,23 @@ function createProductCard(product) {
     return card;
 }
 
-// Show seller contact information
+// Show seller contact information - UPDATED with login check
 function showSellerContact(productId) {
+    // First check if user is logged in
+    const sessionData = localStorage.getItem('supabase_session');
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    
+    if (!isLoggedIn || !sessionData) {
+        // User is not logged in - show login prompt
+        const confirmLogin = confirm('Please login to view seller contact information. Would you like to login now?');
+        if (confirmLogin) {
+            // Redirect to login page with return URL
+            const currentPage = encodeURIComponent(window.location.href);
+            window.location.href = `login.html?redirect=${currentPage}`;
+        }
+        return;
+    }
+    
     const product = products.find(p => p.id == productId);
     
     if (!product) {
