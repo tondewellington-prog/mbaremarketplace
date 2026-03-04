@@ -509,45 +509,27 @@
             loadAnalyticsDashboard();
         }
 
-        // Function to get actual user count from auth.users
+        // Function to get actual user count from user_activities
         async function getActualUserCount() {
             try {
                 const SUPABASE_URL = window.SUPABASE_URL;
                 const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
                 
-                const sessionData = localStorage.getItem('supabase_session');
-                const session = JSON.parse(sessionData);
-                const accessToken = session.access_token;
-                
-                // Try to get users from auth.admin API (requires service role key)
-                // This is a workaround - you'll need to create this function in Supabase
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_user_count`, {
-                    method: 'POST',
+                // Count unique users from user_activities (most reliable method without auth access)
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/user_activities?select=user_id`, {
                     headers: {
                         'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${accessToken}`,
-                        'Content-Type': 'application/json'
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
                     }
                 });
                 
                 if (response.ok) {
-                    const count = await response.json();
-                    return count;
-                } else {
-                    // Fallback: count from user_activities unique users
-                    const activitiesResponse = await fetch(`${SUPABASE_URL}/rest/v1/user_activities?select=user_id`, {
-                        headers: {
-                            'apikey': SUPABASE_ANON_KEY,
-                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                        }
-                    });
-                    const activities = await activitiesResponse.json();
+                    const activities = await response.json();
                     const uniqueUsers = [...new Set(activities.map(a => a.user_id))];
                     return uniqueUsers.length;
                 }
-            } catch (error) {
-                console.error('Error getting user count:', error);
-                // Final fallback: count from sellers + estimate
+                
+                // Fallback: count from sellers
                 const sellersResponse = await fetch(`${SUPABASE_URL}/rest/v1/sellers?select=id`, {
                     headers: {
                         'apikey': SUPABASE_ANON_KEY,
@@ -555,7 +537,11 @@
                     }
                 });
                 const sellers = await sellersResponse.json();
-                return sellers.length * 3; // Rough estimate: 3x sellers
+                return sellers.length;
+                
+            } catch (error) {
+                console.error('Error getting user count:', error);
+                return 0;
             }
         }
 
@@ -588,22 +574,26 @@
                         }
                     );
                     
-                    const activities = await response.json();
-                    const uniqueUsers = [...new Set(activities.map(a => a.user_id))];
-                    counts.push(uniqueUsers.length || Math.floor(Math.random() * 5) + 1); // Fallback to random if no data
+                    if (response.ok) {
+                        const activities = await response.json();
+                        const uniqueUsers = [...new Set(activities.map(a => a.user_id))];
+                        counts.push(uniqueUsers.length);
+                    } else {
+                        counts.push(0);
+                    }
                 }
                 
                 return { dates, counts };
             } catch (error) {
                 console.error('Error getting user signups:', error);
-                // Return placeholder data
+                // Return zeros instead of random data
                 const dates = [];
                 const counts = [];
                 for (let i = 6; i >= 0; i--) {
                     const date = new Date();
                     date.setDate(date.getDate() - i);
                     dates.push(date.toISOString().split('T')[0].substring(5));
-                    counts.push(Math.floor(Math.random() * 8) + 2);
+                    counts.push(0);
                 }
                 return { dates, counts };
             }
@@ -623,11 +613,17 @@
 
             try {
                 // Fetch all analytics data
-                await Promise.all([
-                    loadStats(),
-                    loadCharts(),
-                    loadRecentActivities()
-                ]);
+                const stats = await loadStats();
+                
+                // Create the header and stats section
+                content.innerHTML = stats;
+                
+                // Load and append charts
+                await loadCharts();
+                
+                // Load and append recent activities
+                await loadRecentActivities();
+                
             } catch (error) {
                 console.error('Error loading analytics:', error);
                 content.innerHTML = `
@@ -646,8 +642,16 @@
             const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
 
             try {
-                // Get actual user count
-                const totalUsers = await getActualUserCount();
+                // Get actual user count from user_activities
+                const activitiesResponse = await fetch(`${SUPABASE_URL}/rest/v1/user_activities?select=user_id`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+                const activities = await activitiesResponse.json();
+                const uniqueUsers = [...new Set(activities.map(a => a.user_id))];
+                const totalUsers = uniqueUsers.length;
 
                 // Get total sellers
                 const sellersResponse = await fetch(`${SUPABASE_URL}/rest/v1/sellers?select=id`, {
@@ -701,8 +705,8 @@
                 const uniqueLastWeek = [...new Set(lastWeek.map(a => a.user_id))];
                 const userGrowth = uniqueLastWeek.length;
 
-                // Update the stats section
-                const statsHtml = `
+                // Return the stats HTML
+                return `
                     <div class="analytics-header">
                         <h1>📊 Analytics Dashboard</h1>
                         <div class="date-range">
@@ -732,7 +736,7 @@
                             <div class="stat-label">Total Sellers</div>
                             <div class="stat-number">${totalSellers}</div>
                             <div class="stat-change">
-                                <span>${((totalSellers/totalUsers)*100).toFixed(1)}% of users</span>
+                                <span>${totalUsers > 0 ? ((totalSellers/totalUsers)*100).toFixed(1) : 0}% of users</span>
                             </div>
                         </div>
 
@@ -741,7 +745,7 @@
                             <div class="stat-label">Total Products</div>
                             <div class="stat-number">${totalProducts}</div>
                             <div class="stat-change">
-                                <span>Avg ${(totalProducts/totalSellers || 0).toFixed(1)} per seller</span>
+                                <span>Avg ${totalSellers > 0 ? (totalProducts/totalSellers).toFixed(1) : 0} per seller</span>
                             </div>
                         </div>
 
@@ -750,13 +754,11 @@
                             <div class="stat-label">Active Today</div>
                             <div class="stat-number">${activeToday}</div>
                             <div class="stat-change ${activeToday > 0 ? '' : 'negative'}">
-                                <span>${((activeToday/totalUsers)*100).toFixed(1)}% active rate</span>
+                                <span>${totalUsers > 0 ? ((activeToday/totalUsers)*100).toFixed(1) : 0}% active rate</span>
                             </div>
                         </div>
                     </div>
                 `;
-
-                document.getElementById('analyticsContent').innerHTML = statsHtml;
 
             } catch (error) {
                 console.error('Error loading stats:', error);
@@ -791,8 +793,12 @@
                             }
                         }
                     );
-                    const sellers = await response.json();
-                    sellerCounts.push(sellers.length || Math.floor(Math.random() * 3) + 1);
+                    if (response.ok) {
+                        const sellers = await response.json();
+                        sellerCounts.push(sellers.length);
+                    } else {
+                        sellerCounts.push(0);
+                    }
                 }
                 
                 // Get product addition data
@@ -813,8 +819,12 @@
                             }
                         }
                     );
-                    const products = await response.json();
-                    productCounts.push(products.length || Math.floor(Math.random() * 10) + 5);
+                    if (response.ok) {
+                        const products = await response.json();
+                        productCounts.push(products.length);
+                    } else {
+                        productCounts.push(0);
+                    }
                 }
 
                 const chartsHtml = `
@@ -857,7 +867,7 @@
             }
         }
 
-        // Create user activity chart (now showing new user registrations)
+        // Create user activity chart
         function createUserChart(labels, data) {
             const ctx = document.getElementById('userChart').getContext('2d');
             if (analyticsCharts.user) analyticsCharts.user.destroy();
@@ -991,9 +1001,9 @@
                     const timeAgo = getTimeAgo(new Date(activity.created_at));
                     return {
                         time: timeAgo,
-                        user: activity.user_id.substring(0, 8) + '...',
-                        type: activity.activity_type,
-                        details: JSON.stringify(activity.details) || activity.activity_type
+                        user: activity.user_id ? activity.user_id.substring(0, 8) + '...' : 'Unknown',
+                        type: activity.activity_type || 'unknown',
+                        details: typeof activity.details === 'object' ? JSON.stringify(activity.details) : (activity.details || activity.activity_type)
                     };
                 });
 
