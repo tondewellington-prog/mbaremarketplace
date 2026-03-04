@@ -8,7 +8,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="js/chart.min.js"></script>
+    <!-- Use a working CDN for Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -296,17 +297,6 @@
             font-weight: 600;
         }
 
-        .debug-info {
-            background: #f0f0f0;
-            padding: 15px;
-            border-radius: 4px;
-            margin: 20px 0;
-            font-family: monospace;
-            font-size: 12px;
-            color: #333;
-            display: none;
-        }
-
         @media (max-width: 768px) {
             .charts-grid {
                 grid-template-columns: 1fr;
@@ -399,9 +389,6 @@
     <div class="analytics-container" id="analyticsContent">
         <!-- Content will be loaded by JavaScript -->
     </div>
-
-    <!-- Debug Info (hidden by default) -->
-    <div id="debugInfo" class="debug-info"></div>
 
     <!-- Footer -->
     <footer class="footer">
@@ -564,56 +551,9 @@
             }
         }
 
-        // Function to get data counts by date with fallback
-        async function getDataCounts(table, dateField = 'created_at', days = 7) {
-            try {
-                const SUPABASE_URL = window.SUPABASE_URL;
-                const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
-                
-                const dates = [];
-                const counts = [];
-                let hasData = false;
-                
-                for (let i = days - 1; i >= 0; i--) {
-                    const date = new Date();
-                    date.setDate(date.getDate() - i);
-                    const dateStr = date.toISOString().split('T')[0];
-                    dates.push(dateStr.substring(5)); // MM-DD
-                    
-                    // Get records created on this date
-                    const nextDate = new Date(date);
-                    nextDate.setDate(nextDate.getDate() + 1);
-                    
-                    const response = await fetch(
-                        `${SUPABASE_URL}/rest/v1/${table}?${dateField}=gte.${dateStr}&${dateField}=lt.${nextDate.toISOString().split('T')[0]}&select=id`,
-                        {
-                            headers: {
-                                'apikey': SUPABASE_ANON_KEY,
-                                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                            }
-                        }
-                    );
-                    
-                    if (response.ok) {
-                        const records = await response.json();
-                        counts.push(records.length);
-                        if (records.length > 0) hasData = true;
-                    } else {
-                        counts.push(0);
-                    }
-                }
-                
-                return { dates, counts, hasData };
-            } catch (error) {
-                console.error(`Error getting data from ${table}:`, error);
-                return { dates: [], counts: [], hasData: false };
-            }
-        }
-
         // Load the analytics dashboard
         async function loadAnalyticsDashboard() {
             const content = document.getElementById('analyticsContent');
-            const debugDiv = document.getElementById('debugInfo');
             
             // Show loading spinner
             content.innerHTML = `
@@ -624,56 +564,15 @@
             `;
 
             try {
-                // Check if tables have data
-                const SUPABASE_URL = window.SUPABASE_URL;
-                const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
-                
-                // Test queries to see if tables exist and have data
-                const testSellers = await fetch(`${SUPABASE_URL}/rest/v1/sellers?select=id&limit=1`, {
-                    headers: {
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                    }
-                });
-                const testProducts = await fetch(`${SUPABASE_URL}/rest/v1/products?select=id&limit=1`, {
-                    headers: {
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                    }
-                });
-                const testActivities = await fetch(`${SUPABASE_URL}/rest/v1/user_activities?select=id&limit=1`, {
-                    headers: {
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                    }
-                });
-                
-                const sellersExist = testSellers.ok && (await testSellers.json()).length > 0;
-                const productsExist = testProducts.ok && (await testProducts.json()).length > 0;
-                const activitiesExist = testActivities.ok && (await testActivities.json()).length > 0;
-                
-                // Show debug info
-                debugDiv.style.display = 'block';
-                debugDiv.innerHTML = `
-                    <strong>Database Status:</strong><br>
-                    Sellers table has data: ${sellersExist ? '✅' : '❌'}<br>
-                    Products table has data: ${productsExist ? '✅' : '❌'}<br>
-                    User Activities table has data: ${activitiesExist ? '✅' : '❌'}<br>
-                    <br>
-                    <strong>Note:</strong> If tables are empty, showing sample data for visualization.
-                `;
-                
-                // Fetch all analytics data
-                const stats = await loadStats();
-                
-                // Create the header and stats section
-                content.innerHTML = stats;
-                
-                // Load and append charts (with fallback to sample data)
-                await loadCharts(sellersExist || productsExist || activitiesExist);
-                
-                // Load and append recent activities
-                await loadRecentActivities();
+                // Check if Chart.js loaded
+                if (typeof Chart === 'undefined') {
+                    console.error('Chart.js not loaded');
+                    // Load stats only without charts
+                    await loadStatsOnly();
+                } else {
+                    // Load full analytics with charts
+                    await loadFullAnalytics();
+                }
                 
             } catch (error) {
                 console.error('Error loading analytics:', error);
@@ -685,6 +584,31 @@
                     </div>
                 `;
             }
+        }
+
+        // Load full analytics with charts
+        async function loadFullAnalytics() {
+            const stats = await loadStats();
+            const content = document.getElementById('analyticsContent');
+            content.innerHTML = stats;
+            await loadCharts();
+            await loadRecentActivities();
+        }
+
+        // Load stats only (without charts)
+        async function loadStatsOnly() {
+            const stats = await loadStats();
+            const content = document.getElementById('analyticsContent');
+            
+            // Add a note about charts
+            content.innerHTML = stats + `
+                <div style="background: #fff3e0; padding: 15px; border-radius: 4px; margin: 20px 0; text-align: center;">
+                    <p>📊 Charts are currently unavailable because Chart.js couldn't load.</p>
+                    <p>Try refreshing the page or using a different browser.</p>
+                </div>
+            `;
+            
+            await loadRecentActivities();
         }
 
         // Load statistics cards
@@ -810,40 +734,64 @@
         }
 
         // Load charts
-        async function loadCharts(hasRealData = false) {
+        async function loadCharts() {
             try {
-                // Try to get real data first
-                const activityData = await getDataCounts('user_activities', 'created_at', 7);
-                const sellerData = await getDataCounts('sellers', 'created_at', 7);
-                const productData = await getDataCounts('products', 'created_at', 7);
+                const SUPABASE_URL = window.SUPABASE_URL;
+                const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
                 
-                // Use real data if available, otherwise use sample data
-                const useSampleData = !hasRealData || (!activityData.hasData && !sellerData.hasData && !productData.hasData);
+                // Generate last 7 days labels
+                const labels = [];
+                const activityData = [];
+                const sellerData = [];
+                const productData = [];
                 
-                let dates = [];
-                let activityCounts = [];
-                let sellerCounts = [];
-                let productCounts = [];
-                
-                if (useSampleData) {
-                    // Generate sample data for visualization
-                    console.log('Using sample data for charts');
-                    const today = new Date();
-                    for (let i = 6; i >= 0; i--) {
-                        const date = new Date(today);
-                        date.setDate(date.getDate() - i);
-                        dates.push(date.toISOString().split('T')[0].substring(5));
-                        
-                        // Sample data patterns
-                        activityCounts.push(Math.floor(Math.random() * 15) + 5);
-                        sellerCounts.push(Math.floor(Math.random() * 5) + 1);
-                        productCounts.push(Math.floor(Math.random() * 10) + 3);
-                    }
-                } else {
-                    dates = activityData.dates;
-                    activityCounts = activityData.counts;
-                    sellerCounts = sellerData.counts;
-                    productCounts = productData.counts;
+                for (let i = 6; i >= 0; i--) {
+                    const date = new Date();
+                    date.setDate(date.getDate() - i);
+                    const dateStr = date.toISOString().split('T')[0];
+                    labels.push(dateStr.substring(5)); // MM-DD
+                    
+                    const nextDate = new Date(date);
+                    nextDate.setDate(nextDate.getDate() + 1);
+                    
+                    // Get activities for this day
+                    const activityResponse = await fetch(
+                        `${SUPABASE_URL}/rest/v1/user_activities?created_at=gte.${dateStr}&created_at=lt.${nextDate.toISOString().split('T')[0]}&select=id`,
+                        {
+                            headers: {
+                                'apikey': SUPABASE_ANON_KEY,
+                                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                            }
+                        }
+                    );
+                    const activities = await activityResponse.json();
+                    activityData.push(activities.length);
+                    
+                    // Get sellers for this day
+                    const sellerResponse = await fetch(
+                        `${SUPABASE_URL}/rest/v1/sellers?created_at=gte.${dateStr}&created_at=lt.${nextDate.toISOString().split('T')[0]}&select=id`,
+                        {
+                            headers: {
+                                'apikey': SUPABASE_ANON_KEY,
+                                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                            }
+                        }
+                    );
+                    const sellers = await sellerResponse.json();
+                    sellerData.push(sellers.length);
+                    
+                    // Get products for this day
+                    const productResponse = await fetch(
+                        `${SUPABASE_URL}/rest/v1/products?created_at=gte.${dateStr}&created_at=lt.${nextDate.toISOString().split('T')[0]}&select=id`,
+                        {
+                            headers: {
+                                'apikey': SUPABASE_ANON_KEY,
+                                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                            }
+                        }
+                    );
+                    const products = await productResponse.json();
+                    productData.push(products.length);
                 }
 
                 const chartsHtml = `
@@ -851,21 +799,21 @@
                         <div class="chart-container">
                             <div class="chart-title">
                                 User Activity
-                                <span>Last 7 days ${useSampleData ? '(Sample Data)' : ''}</span>
+                                <span>Last 7 days</span>
                             </div>
                             <canvas id="userChart"></canvas>
                         </div>
                         <div class="chart-container">
                             <div class="chart-title">
                                 New Sellers
-                                <span>Last 7 days ${useSampleData ? '(Sample Data)' : ''}</span>
+                                <span>Last 7 days</span>
                             </div>
                             <canvas id="sellerChart"></canvas>
                         </div>
                         <div class="chart-container full-width">
                             <div class="chart-title">
                                 New Products
-                                <span>Last 7 days ${useSampleData ? '(Sample Data)' : ''}</span>
+                                <span>Last 7 days</span>
                             </div>
                             <canvas id="productChart"></canvas>
                         </div>
@@ -876,10 +824,10 @@
                 const content = document.getElementById('analyticsContent');
                 content.innerHTML += chartsHtml;
 
-                // Create charts with data
-                createUserChart(dates, activityCounts);
-                createSellerChart(dates, sellerCounts);
-                createProductChart(dates, productCounts);
+                // Create charts with real data
+                createUserChart(labels, activityData);
+                createSellerChart(labels, sellerData);
+                createProductChart(labels, productData);
 
             } catch (error) {
                 console.error('Error loading charts:', error);
@@ -1011,22 +959,18 @@
                     }
                 );
                 
-                let activities = [];
-                if (response.ok) {
-                    activities = await response.json();
-                }
+                const activities = await response.json();
                 
                 // Format the activities for display
-                const formattedActivities = activities.length > 0 ? 
-                    activities.map(activity => {
-                        const timeAgo = getTimeAgo(new Date(activity.created_at));
-                        return {
-                            time: timeAgo,
-                            user: activity.user_id ? activity.user_id.substring(0, 8) + '...' : 'Unknown',
-                            type: activity.activity_type || 'activity',
-                            details: typeof activity.details === 'object' ? JSON.stringify(activity.details) : (activity.details || activity.activity_type)
-                        };
-                    }) : [];
+                const formattedActivities = activities.map(activity => {
+                    const timeAgo = getTimeAgo(new Date(activity.created_at));
+                    return {
+                        time: timeAgo,
+                        user: activity.user_id ? activity.user_id.substring(0, 8) + '...' : 'Unknown',
+                        type: activity.activity_type || 'activity',
+                        details: typeof activity.details === 'object' ? JSON.stringify(activity.details) : (activity.details || activity.activity_type)
+                    };
+                });
 
                 const activitiesHtml = `
                     <div class="recent-activities">
