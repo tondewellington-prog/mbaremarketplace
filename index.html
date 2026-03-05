@@ -1,753 +1,1154 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mbare Marketplace - Online Shopping</title>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        .product-card img {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        .product-card img:hover {
-            transform: scale(1.02);
-        }
-        .image-modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.9);
-        }
-        .modal-image {
-            margin: auto;
-            display: block;
-            max-width: 90%;
-            max-height: 90%;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-        .close-modal {
-            position: absolute;
-            top: 15px;
-            right: 35px;
-            color: #f1f1f1;
-            font-size: 40px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .logout-btn {
-            background: none;
-            border: 1px solid #fff;
-            color: #fff;
-            padding: 5px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-left: 15px;
-            font-size: 14px;
-            text-decoration: none;
-            display: inline-block;
-        }
-        .logout-btn:hover {
-            background: rgba(255,255,255,0.1);
-        }
-        .contact-modal {
-            display: none;
-            position: fixed;
-            z-index: 2000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            overflow-y: auto;
-            padding: 20px 0;
-        }
-        .contact-modal-content {
-            background-color: white;
-            margin: 5% auto;
-            padding: 30px;
-            border-radius: 8px;
-            width: 90%;
-            max-width: 500px;
-            max-height: 80vh;
-            overflow-y: auto;
-            position: relative;
-            animation: slideDown 0.3s ease-out;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-        }
-        @keyframes slideDown {
-            from {
-                transform: translateY(-100px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-        .close-contact-modal {
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            font-size: 28px;
-            font-weight: bold;
-            color: #666;
-            cursor: pointer;
-            z-index: 10;
-        }
-        .close-contact-modal:hover {
-            color: #000;
-        }
-        .seller-info {
-            margin-top: 20px;
-            max-height: 50vh;
-            overflow-y: auto;
-            padding-right: 5px;
-        }
-        .seller-info::-webkit-scrollbar {
-            width: 6px;
-        }
-        .seller-info::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-        .seller-info::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 10px;
-        }
-        .seller-info::-webkit-scrollbar-thumb:hover {
-            background: #555;
-        }
-        .info-row {
-            display: flex;
-            align-items: center;
-            margin-bottom: 15px;
-            padding: 12px;
-            background: #f5f5f5;
-            border-radius: 4px;
-        }
-        .info-icon {
-            width: 40px;
-            height: 40px;
-            background: #232f3e;
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 15px;
-            flex-shrink: 0;
-        }
-        .info-text {
-            flex: 1;
-            min-width: 0;
-        }
-        .info-label {
-            font-size: 12px;
-            color: #666;
-            margin-bottom: 3px;
-        }
-        .info-value {
-            font-size: 16px;
-            font-weight: 500;
-            color: #232f3e;
-            word-wrap: break-word;
-        }
-        .contact-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 25px;
-            margin-bottom: 10px;
-            flex-wrap: wrap;
-        }
-        .contact-btn {
-            flex: 1;
-            min-width: 120px;
-            padding: 14px 12px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 15px;
-            font-weight: 600;
-            text-align: center;
-            text-decoration: none;
-            transition: opacity 0.2s;
-        }
-        .contact-btn:hover {
-            opacity: 0.9;
-        }
-        .call-btn {
-            background: #28a745;
-            color: white;
-        }
-        .whatsapp-btn {
-            background: #25D366;
-            color: white;
-        }
-        .product-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 15px;
-            color: #232f3e;
-            padding-right: 30px;
-        }
-        .no-image {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: #f0f0f0;
-            color: #999;
-            height: 200px;
-            width: 100%;
-            border-radius: 4px;
+// ============================================
+// Mbare Marketplace - Main JavaScript (Connected to Backend)
+// ============================================
+
+// Product Data - Will be loaded from API
+let products = [];
+let sellersMap = {};
+let ratingsCache = {}; // Cache for ratings to avoid repeated fetches
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        // ADD THIS CHECK FOR API
+        if (!window.api) {
+            console.log('Waiting for API to load...');
+            // Wait a moment for API to load
+            await new Promise(resolve => setTimeout(resolve, 500));
         }
         
-        /* Rating styles for seller ratings */
-        .seller-rating {
-            font-size: 12px;
-            margin: 5px 0;
-            min-height: 20px;
-        }
-        .rating-stars-small {
-            color: #f90;
-            font-size: 14px;
-        }
-        .rating-count {
-            color: #666;
-            font-size: 11px;
-            margin-left: 3px;
+        // Load sellers first
+        await loadSellersFromAPI();
+        
+        // Load products from API
+        await loadProductsFromAPI();
+        
+        // Load user basket if logged in
+        await loadUserBasket();
+        
+        // Load products on homepage
+        if (document.getElementById('todaysDeals')) {
+            loadProducts('todaysDeals', products.slice(0, 4));
+            loadProducts('bestSellers', products.slice(4, 8));
+            loadProducts('recommended', products.slice(8, 12));
         }
         
-        /* Login prompt overlay */
-        .login-prompt-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.7);
-            z-index: 9999;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        // Load all products section if it exists
+        if (document.getElementById('allProducts')) {
+            loadProducts('allProducts', products);
         }
         
-        .login-prompt-box {
-            background: white;
-            padding: 40px;
-            border-radius: 8px;
-            text-align: center;
-            max-width: 400px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        // Load product detail if on product page
+        if (document.getElementById('productDetail')) {
+            await loadProductDetail();
         }
         
-        .login-prompt-box h2 {
-            margin-bottom: 15px;
-            color: #232f3e;
+        // Load Basket if on Basket page
+        if (document.getElementById('basketItems')) {
+            await loadBasketPage();
         }
         
-        .login-prompt-box p {
-            margin-bottom: 25px;
-            color: #666;
+        // Auto-rotate carousel
+        if (document.getElementById('carouselSlides')) {
+            setInterval(() => {
+                moveCarousel(1);
+            }, 5000);
         }
         
-        .login-prompt-buttons {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
+        // Search functionality
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    handleSearch();
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Initialization error:', error);
+        // Fallback to local data if API fails
+        loadFallbackProducts();
+    }
+});
+
+// Load sellers from API
+async function loadSellersFromAPI() {
+    try {
+        const SUPABASE_URL = window.SUPABASE_URL;
+        const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
+        
+        console.log('Loading sellers...');
+        console.log('Fetching from:', `${SUPABASE_URL}/rest/v1/sellers?select=*`);
+        
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/sellers?select=*`, {
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+            }
+        });
+        
+        if (!response.ok) {
+            console.error('Sellers response error:', response.status, response.statusText);
+            const errorText = await response.text();
+            console.error('Error details:', errorText);
+            return;
         }
         
-        .login-prompt-btn {
-            padding: 12px 30px;
-            border: none;
-            border-radius: 4px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
+        const sellers = await response.json();
+        console.log('Sellers loaded:', sellers);
+        
+        // Create a map of sellers by user_id
+        if (Array.isArray(sellers) && sellers.length > 0) {
+            sellers.forEach(seller => {
+                console.log('Processing seller:', seller);
+                sellersMap[seller.user_id] = seller;
+            });
+            console.log('Sellers map created:', Object.keys(sellersMap).length, 'sellers');
+            console.log('Seller IDs in map:', Object.keys(sellersMap));
+        } else if (Array.isArray(sellers) && sellers.length === 0) {
+            console.warn('No sellers found in database.');
+        } else {
+            console.error('Unexpected sellers response format:', sellers);
+        }
+    } catch (error) {
+        console.error('Failed to load sellers:', error);
+    }
+}
+
+// Load products from API
+async function loadProductsFromAPI() {
+    try {
+        const SUPABASE_URL = window.SUPABASE_URL;
+        const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
+        
+        console.log('Loading products...');
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+            }
+        });
+        
+        const data = await response.json();
+        console.log('Products loaded:', data);
+        
+        if (Array.isArray(data)) {
+            products = data.map(p => ({
+                id: p.id,
+                title: p.title,
+                price: parseFloat(p.price),
+                rating: 4.0,
+                reviews: 0,
+                image: p.image_url || 'https://via.placeholder.com/300x300?text=Product',
+                category: p.category || 'Uncategorized',
+                description: p.description || '',
+                features: p.features || [],
+                seller_id: p.seller_id,
+                image_url: p.image_url,
+                seller: sellersMap[p.seller_id] || null
+            }));
+            console.log('Products mapped:', products.length);
+        }
+    } catch (error) {
+        console.error('Failed to load products from API:', error);
+        throw error;
+    }
+}
+
+// Load user basket
+async function loadUserBasket() {
+    try {
+        // Check if user is logged in
+        const sessionData = localStorage.getItem('supabase_session');
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        
+        if (isLoggedIn && sessionData) {
+            const session = JSON.parse(sessionData);
+            const userId = session.user?.id;
+            
+            if (userId) {
+                // Load user-specific basket
+                const basketKey = `basket_${userId}`;
+                const userBasket = JSON.parse(localStorage.getItem(basketKey)) || [];
+                updateBasketCount(userBasket.reduce((sum, item) => sum + (item.quantity || 0), 0));
+                console.log('Loaded basket for user:', userId, 'Items:', userBasket.length);
+            } else {
+                updateBasketCount(0);
+            }
+        } else {
+            // No user logged in, empty basket
+            updateBasketCount(0);
+        }
+    } catch (error) {
+        console.error('Failed to load basket:', error);
+        updateBasketCount(0);
+    }
+}
+
+// Fallback products if API fails
+function loadFallbackProducts() {
+    products = [
+        {
+            id: 1,
+            title: "Wireless Bluetooth Headphones with Noise Cancellation",
+            price: 79.99,
+            rating: 4.5,
+            reviews: 1234,
+            image: "https://via.placeholder.com/300x300?text=Headphones",
+            category: "Electronics",
+            description: "Premium wireless headphones with active noise cancellation, 30-hour battery life, and superior sound quality.",
+            features: ["Active Noise Cancellation", "30-hour battery", "Quick charge", "Comfortable design"]
+        },
+        {
+            id: 2,
+            title: "Smart Watch with Fitness Tracking",
+            price: 199.99,
+            rating: 4.7,
+            reviews: 2567,
+            image: "https://via.placeholder.com/300x300?text=Smart+Watch",
+            category: "Electronics",
+            description: "Advanced smartwatch with heart rate monitoring, GPS, and 7-day battery life.",
+            features: ["Heart rate monitor", "GPS tracking", "Water resistant", "7-day battery"]
+        }
+    ];
+    
+    if (document.getElementById('todaysDeals')) {
+        loadProducts('todaysDeals', products.slice(0, 4));
+        loadProducts('bestSellers', products.slice(4, 8));
+        loadProducts('recommended', products.slice(8, 12));
+    }
+    
+    if (document.getElementById('allProducts')) {
+        loadProducts('allProducts', products);
+    }
+}
+
+// ============================================
+// RATING FUNCTIONS
+// ============================================
+
+// Fetch ratings for a seller and calculate average
+async function getSellerRatings(sellerId) {
+    // Check cache first
+    if (ratingsCache[sellerId]) {
+        return ratingsCache[sellerId];
+    }
+    
+    try {
+        const SUPABASE_URL = window.SUPABASE_URL;
+        const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
+        
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/ratings?seller_id=eq.${sellerId}&select=rating`, {
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+            }
+        });
+        
+        const ratings = await response.json();
+        
+        let result;
+        if (ratings && ratings.length > 0) {
+            const sum = ratings.reduce((acc, curr) => acc + curr.rating, 0);
+            const average = sum / ratings.length;
+            result = {
+                average: average,
+                count: ratings.length,
+                stars: generateRatingStars(average),
+                display: `<span style="color: #f90;">${generateRatingStars(average)}</span> <span style="color: #666; margin-left: 5px;">(${ratings.length} ${ratings.length === 1 ? 'rating' : 'ratings'})</span>`
+            };
+        } else {
+            result = {
+                average: 0,
+                count: 0,
+                stars: '☆☆☆☆☆',
+                display: '<span style="color: #999;">No ratings yet</span>'
+            };
         }
         
-        .login-btn {
-            background: #f90;
-            color: white;
+        // Cache the result
+        ratingsCache[sellerId] = result;
+        return result;
+    } catch (error) {
+        console.error('Error fetching ratings:', error);
+        return {
+            average: 0,
+            count: 0,
+            stars: '☆☆☆☆☆',
+            display: '<span style="color: #999;">No ratings yet</span>'
+        };
+    }
+}
+
+// Generate star rating HTML
+function generateRatingStars(rating) {
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    let stars = '';
+    
+    for (let i = 0; i < fullStars; i++) {
+        stars += '★';
+    }
+    if (hasHalfStar) {
+        stars += '½';
+    }
+    const emptyStars = 5 - Math.ceil(rating);
+    for (let i = 0; i < emptyStars; i++) {
+        stars += '☆';
+    }
+    return stars;
+}
+
+// Load products into grid
+function loadProducts(containerId, productList) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    // Create all product cards
+    productList.forEach(product => {
+        const productCard = createProductCard(product);
+        container.appendChild(productCard);
+    });
+    
+    // Fetch ratings for all products in this container
+    setTimeout(() => {
+        productList.forEach(async (product) => {
+            if (product.seller_id) {
+                const ratingInfo = await getSellerRatings(product.seller_id);
+                const ratingElement = document.getElementById(`rating-${product.id}`);
+                if (ratingElement) {
+                    ratingElement.innerHTML = ratingInfo.display;
+                }
+            }
+        });
+    }, 100);
+}
+
+// Function to check login before navigating to product detail
+function checkLoginAndNavigate(productId) {
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    
+    if (!isLoggedIn) {
+        // Try to find the login prompt modal
+        let loginModal = document.getElementById('loginPromptModal');
+        
+        // If modal doesn't exist in index.html, create a simple confirm
+        if (!loginModal) {
+            const confirmLogin = confirm('Please login to view product details. Would you like to login now?');
+            if (confirmLogin) {
+                window.location.href = `login.html?redirect=product-detail.html?id=${productId}`;
+            }
+            return false;
         }
         
-        .cancel-btn {
-            background: #f0f0f0;
-            color: #666;
-        }
+        // Show the modal if it exists
+        loginModal.style.display = 'flex';
         
-        /* Mobile responsive styles */
-        @media (max-width: 768px) {
-            .search-bar {
-                width: 100%;
-                margin: 10px 0;
-                padding: 0 10px;
-            }
-            
-            .search-bar select {
-                width: 30%;
-                font-size: 14px;
-            }
-            
-            .search-bar input {
-                width: 60%;
-                font-size: 14px;
-            }
-            
-            .search-bar button {
-                width: 10%;
-                padding: 8px;
-            }
-            
-            .contact-modal-content {
-                margin: 2% auto;
-                width: 95%;
-                padding: 20px;
-                max-height: 90vh;
-            }
-            
-            .contact-actions {
-                flex-direction: column;
-                gap: 8px;
-            }
-            
-            .contact-btn {
-                width: 100%;
-                padding: 15px;
-            }
-            
-            .info-row {
-                padding: 12px 8px;
-            }
-            
-            .info-icon {
-                width: 35px;
-                height: 35px;
-                font-size: 16px;
-            }
-            
-            .product-title {
-                font-size: 16px;
-                margin-bottom: 12px;
-            }
-            
-            .product-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 10px;
-            }
-            
-            .product-card img {
-                height: 150px;
-            }
-            
-            .product-price {
-                font-size: 18px;
-            }
-            
-            .product-actions button {
-                font-size: 12px;
-                padding: 6px;
-            }
+        // Store the product ID for after login
+        window.pendingProductId = productId;
+        return false;
+    }
+    
+    window.location.href = `product-detail.html?id=${productId}`;
+    return true;
+}
+
+// Create product card element - UPDATED with login check
+function createProductCard(product) {
+    const card = document.createElement('div');
+    card.className = 'product-card';
+    
+    const stars = generateStars(product.rating);
+    const seller = product.seller || sellersMap[product.seller_id] || {};
+    const sellerName = seller.business_name || 'Unknown Seller';
+    const imageUrl = product.image_url || product.image || 'https://via.placeholder.com/300x300?text=Product';
+    
+    // Use the checkLoginAndNavigate function instead of direct navigation
+    card.innerHTML = `
+        <img src="${imageUrl}" alt="${product.title}" class="product-image" onclick="checkLoginAndNavigate(${product.id})" style="cursor: pointer;" onerror="this.src='https://via.placeholder.com/300x300?text=Product'">
+        <h3 class="product-title" onclick="checkLoginAndNavigate(${product.id})" style="cursor: pointer;">${product.title}</h3>
+        <div class="product-rating">
+            <span class="stars">${stars}</span>
+            <span class="rating-count">(${product.reviews})</span>
+        </div>
+        <div class="product-price">
+            <span class="currency">$</span>${product.price.toFixed(2)}
+        </div>
+        <div class="product-seller" style="font-size: 12px; color: #666; margin: 5px 0;">
+            Seller: ${sellerName}
+        </div>
+        <div class="seller-rating" id="rating-${product.id}" style="font-size: 12px; margin: 5px 0; min-height: 20px;">
+            <span style="color: #999;">Loading ratings...</span>
+        </div>
+        <div class="product-actions">
+            <button class="btn-add-cart" onclick="addToBasket('${product.id}')">Add to Basket</button>
+            <button class="btn-contact-seller" onclick="showSellerContact('${product.id}')" style="background: #25D366; color: white; border: none; padding: 8px; border-radius: 4px; margin-top: 5px; width: 100%; cursor: pointer;">Contact Seller</button>
+        </div>
+    `;
+    
+    return card;
+}
+
+// Show seller contact information - UPDATED with login check
+function showSellerContact(productId) {
+    // First check if user is logged in
+    const sessionData = localStorage.getItem('supabase_session');
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    
+    if (!isLoggedIn || !sessionData) {
+        // User is not logged in - show login prompt
+        const confirmLogin = confirm('Please login to view seller contact information. Would you like to login now?');
+        if (confirmLogin) {
+            // Redirect to login page with return URL
+            const currentPage = encodeURIComponent(window.location.href);
+            window.location.href = `login.html?redirect=${currentPage}`;
         }
+        return;
+    }
+    
+    const product = products.find(p => p.id == productId);
+    
+    if (!product) {
+        alert('Product not found');
+        return;
+    }
+    
+    const seller = sellersMap[product.seller_id];
+    
+    if (!seller) {
+        alert('Seller information not available');
+        return;
+    }
+    
+    const phone = seller.business_phone || 'Not provided';
+    const phoneDigits = phone.replace(/\D/g, '');
+    const whatsappLink = phoneDigits ? `https://wa.me/${phoneDigits}?text=Hi, I'm interested in ${encodeURIComponent(product.title)}` : '#';
+    const callLink = phoneDigits ? `tel:${phoneDigits}` : '#';
+    
+    // Create modal if it doesn't exist
+    let modal = document.getElementById('sellerContactModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'sellerContactModal';
+        modal.className = 'contact-modal';
+        modal.innerHTML = `
+            <div class="contact-modal-content">
+                <span class="close-contact-modal" onclick="document.getElementById('sellerContactModal').style.display='none'">&times;</span>
+                <div id="sellerContactContent"></div>
+            </div>
+        `;
+        document.body.appendChild(modal);
         
-        @media (max-width: 480px) {
-            .search-bar select {
-                width: 35%;
-                font-size: 12px;
-            }
-            
-            .search-bar input {
-                width: 55%;
-                font-size: 12px;
-            }
-            
-            .search-bar button {
-                width: 10%;
-                padding: 6px;
-            }
-            
-            .contact-modal-content {
-                padding: 15px;
-            }
-            
-            .info-value {
-                font-size: 14px;
-            }
-            
-            .contact-btn {
-                padding: 12px;
-                font-size: 14px;
-            }
-            
-            .product-card img {
-                height: 130px;
-            }
-            
-            .product-price {
-                font-size: 16px;
-            }
+        // Add modal styles if not present
+        if (!document.querySelector('#contactModalStyles')) {
+            const style = document.createElement('style');
+            style.id = 'contactModalStyles';
+            style.textContent = `
+                .contact-modal {
+                    display: none;
+                    position: fixed;
+                    z-index: 2000;
+                    left: 0;
+                    top: 0;
+                    width: 100%;
+                    height: 100%;
+                    background-color: rgba(0,0,0,0.5);
+                }
+                .contact-modal-content {
+                    background-color: white;
+                    margin: 15% auto;
+                    padding: 30px;
+                    border-radius: 8px;
+                    width: 90%;
+                    max-width: 500px;
+                    position: relative;
+                    animation: slideDown 0.3s ease-out;
+                }
+                .close-contact-modal {
+                    position: absolute;
+                    top: 15px;
+                    right: 20px;
+                    font-size: 28px;
+                    font-weight: bold;
+                    color: #666;
+                    cursor: pointer;
+                }
+                .close-contact-modal:hover {
+                    color: #000;
+                }
+                .seller-info {
+                    margin-top: 20px;
+                }
+                .info-row {
+                    display: flex;
+                    align-items: center;
+                    margin-bottom: 15px;
+                    padding: 10px;
+                    background: #f5f5f5;
+                    border-radius: 4px;
+                }
+                .info-icon {
+                    width: 40px;
+                    height: 40px;
+                    background: #232f3e;
+                    color: white;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin-right: 15px;
+                }
+                .info-text {
+                    flex: 1;
+                }
+                .info-label {
+                    font-size: 12px;
+                    color: #666;
+                    margin-bottom: 3px;
+                }
+                .info-value {
+                    font-size: 16px;
+                    font-weight: 500;
+                    color: #232f3e;
+                }
+                .contact-actions {
+                    display: flex;
+                    gap: 10px;
+                    margin-top: 20px;
+                }
+                .contact-btn {
+                    flex: 1;
+                    padding: 12px;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    font-weight: 500;
+                    text-align: center;
+                    text-decoration: none;
+                }
+                .call-btn {
+                    background: #28a745;
+                    color: white;
+                }
+                .call-btn:hover {
+                    background: #218838;
+                }
+                .whatsapp-btn {
+                    background: #25D366;
+                    color: white;
+                }
+                .whatsapp-btn:hover {
+                    background: #128C7E;
+                }
+                .product-title {
+                    font-size: 18px;
+                    font-weight: 600;
+                    margin-bottom: 10px;
+                    color: #232f3e;
+                }
+                @keyframes slideDown {
+                    from {
+                        transform: translateY(-100px);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateY(0);
+                        opacity: 1;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
         }
-    </style>
-</head>
-<body>
-    <!-- Login Prompt Modal (hidden by default) -->
-    <div id="loginPromptModal" class="login-prompt-overlay" style="display: none;">
-        <div class="login-prompt-box">
-            <h2>🔒 Login Required</h2>
-            <p>You need to be logged in to view product details.</p>
-            <div class="login-prompt-buttons">
-                <a href="login.html" class="login-prompt-btn login-btn">Login</a>
-                <button class="login-prompt-btn cancel-btn" onclick="hideLoginPrompt()">Cancel</button>
+    }
+    
+    const modalContent = document.getElementById('sellerContactContent');
+    modalContent.innerHTML = `
+        <div class="product-title">${product.title}</div>
+        <div class="seller-info">
+            <div class="info-row">
+                <div class="info-icon">🏪</div>
+                <div class="info-text">
+                    <div class="info-label">Seller</div>
+                    <div class="info-value">${seller.business_name || 'Unknown Seller'}</div>
+                </div>
+            </div>
+            <div class="info-row">
+                <div class="info-icon">📞</div>
+                <div class="info-text">
+                    <div class="info-label">Phone Number</div>
+                    <div class="info-value">${phone}</div>
+                </div>
+            </div>
+            <div class="info-row">
+                <div class="info-icon">📍</div>
+                <div class="info-text">
+                    <div class="info-label">Shop Location</div>
+                    <div class="info-value">${seller.business_address || 'Location not specified'}</div>
+                </div>
+            </div>
+            <div class="info-row">
+                <div class="info-icon">📦</div>
+                <div class="info-text">
+                    <div class="info-label">Price</div>
+                    <div class="info-value">$${product.price.toFixed(2)}</div>
+                </div>
             </div>
         </div>
-    </div>
-
-    <!-- Image Preview Modal -->
-    <div id="imageModal" class="image-modal" onclick="closeImageModal()">
-        <span class="close-modal" onclick="closeImageModal()">&times;</span>
-        <img class="modal-image" id="modalImage">
-    </div>
-
-    <!-- Seller Contact Modal -->
-    <div id="sellerContactModal" class="contact-modal">
-        <div class="contact-modal-content">
-            <span class="close-contact-modal" onclick="document.getElementById('sellerContactModal').style.display='none'">&times;</span>
-            <div id="sellerContactContent">
-                <!-- Content will be dynamically inserted here -->
-            </div>
+        <div class="contact-actions">
+            <a href="${callLink}" class="contact-btn call-btn" ${!phoneDigits ? 'onclick="alert(\'Phone number not available\'); return false;"' : ''}>
+                📞 Call Seller
+            </a>
+            <a href="${whatsappLink}" class="contact-btn whatsapp-btn" target="_blank" ${!phoneDigits ? 'onclick="alert(\'Phone number not available\'); return false;"' : ''}>
+                💬 WhatsApp
+            </a>
         </div>
-    </div>
+    `;
+    
+    modal.style.display = 'block';
+    
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+    };
+}
 
-    <!-- Header -->
-    <header class="header">
-        <div class="header-top">
-            <div class="container">
-                <div class="logo">
-                    <a href="index.html">Mbare Marketplace</a>
-                </div>
-                <div class="search-bar">
-                    <select class="search-category">
-                        <option>All</option>
-                        <option>Electronics</option>
-                        <option>Books</option>
-                        <option>Clothing</option>
-                        <option>Home & Kitchen</option>
-                    </select>
-                    <input type="text" id="searchInput" placeholder="Search On Mbare Marketplace" class="search-input">
-                    <button class="search-btn" onclick="handleSearch()">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <path d="m21 21-4.35-4.35"></path>
-                        </svg>
-                    </button>
-                </div>
-                <div class="header-right">
-                    <div class="account-menu">
-                        <span class="account-label">Hello, Sign in</span>
-                        <a href="login.html" class="account-link">Account & Lists</a>
-                        <button id="logoutBtn" class="logout-btn" onclick="logout()" style="display: none;">Logout</button>
+// Generate star rating HTML
+function generateStars(rating) {
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    let starsHTML = '';
+    
+    for (let i = 0; i < fullStars; i++) {
+        starsHTML += '★';
+    }
+    
+    if (hasHalfStar) {
+        starsHTML += '☆';
+    }
+    
+    const emptyStars = 5 - Math.ceil(rating);
+    for (let i = 0; i < emptyStars; i++) {
+        starsHTML += '☆';
+    }
+    
+    return starsHTML;
+}
+
+// Add to Basket
+async function addToBasket(productId, quantity = 1) {
+    try {
+        // Check if user is logged in
+        const sessionData = localStorage.getItem('supabase_session');
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        
+        if (!isLoggedIn || !sessionData) {
+            // Redirect to login if not logged in
+            showNotification('Please login to add items to basket');
+            setTimeout(() => {
+                window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.pathname);
+            }, 1500);
+            return;
+        }
+
+        // Get user ID from session
+        const session = JSON.parse(sessionData);
+        const userId = session.user?.id;
+        
+        if (!userId) {
+            showNotification('User session error. Please login again.');
+            return;
+        }
+
+        // Find the product
+        const product = products.find(p => p.id == productId);
+        if (!product) {
+            showNotification('Product not found');
+            return;
+        }
+
+        // Use user-specific basket key
+        const basketKey = `basket_${userId}`;
+        let userBasket = JSON.parse(localStorage.getItem(basketKey)) || [];
+        
+        const existingItem = userBasket.find(item => item.id == productId);
+        
+        if (existingItem) {
+            existingItem.quantity += quantity;
+        } else {
+            userBasket.push({
+                id: product.id,
+                title: product.title,
+                price: product.price,
+                image: product.image_url || product.image || 'https://via.placeholder.com/300x300?text=Product',
+                quantity: quantity,
+                seller_id: product.seller_id
+            });
+        }
+        
+        // Save to user-specific basket
+        localStorage.setItem(basketKey, JSON.stringify(userBasket));
+        
+        // Update basket count
+        const totalItems = userBasket.reduce((sum, item) => sum + (item.quantity || 0), 0);
+        updateBasketCount(totalItems);
+        
+        showNotification('Item added to Basket!');
+        console.log('Basket updated for user:', userId, 'Total items:', totalItems);
+        
+    } catch (error) {
+        console.error('Error adding to basket:', error);
+        showNotification('Failed to add item to basket');
+    }
+}
+
+// Update basket count
+function updateBasketCount(totalItems) {
+    const basketCount = document.getElementById('basketCount');
+    if (!basketCount) return;
+    
+    if (totalItems !== undefined) {
+        basketCount.textContent = totalItems;
+        basketCount.style.display = totalItems > 0 ? 'flex' : 'none';
+    } else {
+        // If no parameter passed, calculate from user's basket
+        try {
+            const sessionData = localStorage.getItem('supabase_session');
+            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+            
+            if (isLoggedIn && sessionData) {
+                const session = JSON.parse(sessionData);
+                const userId = session.user?.id;
+                
+                if (userId) {
+                    const basketKey = `basket_${userId}`;
+                    const userBasket = JSON.parse(localStorage.getItem(basketKey)) || [];
+                    const items = userBasket.reduce((sum, item) => sum + (item.quantity || 0), 0);
+                    basketCount.textContent = items;
+                    basketCount.style.display = items > 0 ? 'flex' : 'none';
+                    return;
+                }
+            }
+            
+            basketCount.textContent = '0';
+            basketCount.style.display = 'none';
+        } catch (error) {
+            console.error('Error updating basket count:', error);
+            basketCount.textContent = '0';
+            basketCount.style.display = 'none';
+        }
+    }
+}
+
+// Show notification
+function showNotification(message) {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background-color: #232F3E;
+        color: white;
+        padding: 15px 25px;
+        border-radius: 4px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+    `;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 2000);
+}
+
+// Carousel functionality
+let currentSlide = 0;
+const totalSlides = 3;
+
+function moveCarousel(direction) {
+    const slides = document.getElementById('carouselSlides');
+    const indicators = document.querySelectorAll('.indicator');
+    
+    currentSlide += direction;
+    
+    if (currentSlide < 0) {
+        currentSlide = totalSlides - 1;
+    } else if (currentSlide >= totalSlides) {
+        currentSlide = 0;
+    }
+    
+    slides.style.transform = `translateX(-${currentSlide * 100}%)`;
+    
+    indicators.forEach((indicator, index) => {
+        indicator.classList.toggle('active', index === currentSlide);
+    });
+}
+
+function goToSlide(index) {
+    currentSlide = index;
+    moveCarousel(0);
+}
+
+// Load product detail
+async function loadProductDetail() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('id');
+    
+    if (!productId) {
+        document.getElementById('productDetail').innerHTML = '<p>Product not found</p>';
+        return;
+    }
+    
+    const product = products.find(p => p.id == productId);
+    if (!product) {
+        document.getElementById('productDetail').innerHTML = '<p>Product not found</p>';
+        return;
+    }
+    
+    // Fetch ratings for this seller
+    let ratingInfo = null;
+    if (product.seller_id) {
+        ratingInfo = await getSellerRatings(product.seller_id);
+    }
+    
+    displayProductDetail(product, ratingInfo);
+}
+
+function displayProductDetail(product, ratingInfo) {
+    const stars = generateStars(product.rating || 4.0);
+    const seller = sellersMap[product.seller_id] || {};
+    const whatsappNumber = seller.business_phone || '';
+    const shopLocation = seller.business_address || 'Location not specified';
+    
+    const ratingDisplay = ratingInfo ? ratingInfo.display : '<span style="color: #999;">No ratings yet</span>';
+    
+    document.getElementById('productDetail').innerHTML = `
+        <div class="product-detail-image-container">
+            <img src="${product.image_url || product.image}" alt="${product.title}" class="product-detail-image" id="productMainImage" onerror="this.src='https://via.placeholder.com/500x500?text=Product'">
+        </div>
+        <div class="product-detail-info">
+            <h1>${product.title}</h1>
+            <div class="product-detail-rating">
+                <span class="stars">${stars}</span>
+                <span class="rating-count">${product.reviews || 0} ratings</span>
+            </div>
+            <div class="product-detail-price">
+                <span class="currency">$</span>${product.price.toFixed(2)}
+            </div>
+            <p class="product-detail-description">${product.description || ''}</p>
+            <ul class="product-detail-features">
+                ${(product.features || []).map(feature => `<li>${feature}</li>`).join('')}
+            </ul>
+            
+            ${seller.business_name ? `
+            <div style="margin: 30px 0; padding: 20px; background: #f5f5f5; border-radius: 4px;">
+                <h3 style="margin-bottom: 15px; font-size: 18px;">Seller Information</h3>
+                <p style="margin-bottom: 10px;"><strong>Shop:</strong> ${seller.business_name}</p>
+                <p style="margin-bottom: 10px;"><strong>📍 Location:</strong> ${shopLocation}</p>
+                <p style="margin-bottom: 10px;"><strong>⭐ Rating:</strong> ${ratingDisplay}</p>
+                ${whatsappNumber ? `
+                    <div style="margin-top: 15px;">
+                        <a href="https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}?text=Hi, I'm interested in ${encodeURIComponent(product.title)}" 
+                           target="_blank" 
+                           class="btn-buy-now-large" 
+                           style="display: inline-block; text-decoration: none; background: #25D366; color: white; padding: 12px 30px; border-radius: 4px; font-weight: 600;">
+                            💬 Contact Seller on WhatsApp
+                        </a>
                     </div>
-                    <div class="returns">
-                        <span class="returns-label">Returns</span>
-                        <span class="returns-link">& Orders</span>
-                    </div>
-                    <a href="Basket.html" class="basket">
-                        <div class="basket-icon">
-                            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-                                <line x1="3" y1="6" x2="21" y2="6"></line>
-                                <path d="M16 10a4 4 0 0 1-8 0"></path>
-                            </svg>
-                            <span class="basket-count" id="basketCount">0</span>
-                        </div>
-                        <span class="basket-text">Basket</span>
+                ` : ''}
+                <!-- RATE SELLER BUTTON -->
+                <div style="margin-top: 15px;">
+                    <a href="rate-seller.html?sellerId=${product.seller_id}" 
+                       class="btn-rate-seller" 
+                       style="display: inline-block; text-decoration: none; background: #f90; color: white; padding: 12px 30px; border-radius: 4px; font-weight: 600;">
+                        ⭐ Rate This Seller
                     </a>
                 </div>
             </div>
-        </div>
-        <nav class="nav-menu">
-            <div class="container">
-                <a href="#" class="nav-item all-menu">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <line x1="3" y1="12" x2="21" y2="12"></line>
-                        <line x1="3" y1="6" x2="21" y2="6"></line>
-                        <line x1="3" y1="18" x2="21" y2="18"></line>
-                    </svg>
-                    All
-                </a>
-                <a href="#" class="nav-item">Today's Deals</a>
-                <a href="#" class="nav-item">Customer Service</a>
-                <a href="#" class="nav-item">Registry</a>
-                <a href="#" class="nav-item">Gift Cards</a>
-                <a href="seller-register.html" class="nav-item">Sell</a>
-                <a href="analytics.html" class="nav-item">Analytics</a>
-            </div>
-        </nav>
-    </header>
-
-    <!-- Main Content -->
-    <main class="main-content">
-        <!-- Product Carousel -->
-        <section class="carousel-section">
-            <div class="carousel-container">
-                <button class="carousel-btn prev" onclick="moveCarousel(-1)">❮</button>
-                <div class="carousel-slides" id="carouselSlides">
-                    <div class="carousel-slide active">
-                        <div class="slide-content">
-                            <h2>Shop Electronics</h2>
-                            <p>Discover the latest gadgets and tech</p>
-                            <a href="#" class="slide-btn">Shop Now</a>
-                        </div>
-                    </div>
-                    <div class="carousel-slide">
-                        <div class="slide-content">
-                            <h2>Fashion Deals</h2>
-                            <p>Up to 50% off on clothing</p>
-                            <a href="#" class="slide-btn">Shop Now</a>
-                        </div>
-                    </div>
-                    <div class="carousel-slide">
-                        <div class="slide-content">
-                            <h2>Home & Kitchen</h2>
-                            <p>Transform your living space</p>
-                            <a href="#" class="slide-btn">Shop Now</a>
-                        </div>
-                    </div>
-                </div>
-                <button class="carousel-btn next" onclick="moveCarousel(1)">❯</button>
-            </div>
-            <div class="carousel-indicators">
-                <span class="indicator active" onclick="goToSlide(0)"></span>
-                <span class="indicator" onclick="goToSlide(1)"></span>
-                <span class="indicator" onclick="goToSlide(2)"></span>
-            </div>
-        </section>
-
-        <!-- Product Categories -->
-        <div class="container">
-            <section class="product-section">
-                <div class="section-header">
-                    <h2>Today's Deals</h2>
-                    <a href="#" class="see-all">See all deals</a>
-                </div>
-                <div class="product-grid" id="todaysDeals"></div>
-            </section>
-
-            <section class="product-section">
-                <div class="section-header">
-                    <h2>Best Sellers in Electronics</h2>
-                    <a href="#" class="see-all">See more</a>
-                </div>
-                <div class="product-grid" id="bestSellers"></div>
-            </section>
-
-            <section class="product-section">
-                <div class="section-header">
-                    <h2>Recommended for You</h2>
-                    <a href="#" class="see-all">See more</a>
-                </div>
-                <div class="product-grid" id="recommended"></div>
-            </section>
+            ` : ''}
             
-            <section class="product-section">
-                <div class="section-header">
-                    <h2>All Products</h2>
-                    <a href="#" class="see-all">Browse all</a>
-                </div>
-                <div class="product-grid" id="allProducts"></div>
-            </section>
-        </div>
-    </main>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-top">
-            <a href="#" class="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">Back to top</a>
-        </div>
-        <div class="footer-content">
-            <div class="container">
-                <div class="footer-columns">
-                    <div class="footer-column">
-                        <h3>Get to Know Us</h3>
-                        <ul>
-                            <li><a href="#">Careers</a></li>
-                            <li><a href="#">Blog</a></li>
-                            <li><a href="#">About Mbare Marketplace</a></li>
-                            <li><a href="#">Investor Relations</a></li>
-                            <li><a href="#">Mbare Devices</a></li>
-                        </ul>
-                    </div>
-                    <div class="footer-column">
-                        <h3>Make Money with Us</h3>
-                        <ul>
-                            <li><a href="#">Sell products on Mbare Marketplace</a></li>
-                            <li><a href="#">Sell on Mbare Business</a></li>
-                            <li><a href="#">Sell apps on Mbare Marketplace</a></li>
-                            <li><a href="#">Become an Affiliate</a></li>
-                            <li><a href="#">Advertise Your Products</a></li>
-                        </ul>
-                    </div>
-                    <div class="footer-column">
-                        <h3>Mbare Payment Products</h3>
-                        <ul>
-                            <li><a href="#">Mbare Business Card</a></li>
-                            <li><a href="#">Shop with Points</a></li>
-                            <li><a href="#">Reload Your Balance</a></li>
-                            <li><a href="#">Mbare Currency Converter</a></li>
-                        </ul>
-                    </div>
-                    <div class="footer-column">
-                        <h3>Need Help?</h3>
-                        <ul>
-                            <li><a href="#">COVID-19 and Mbare Marketplace</a></li>
-                            <li><a href="#">Your Account</a></li>
-                            <li><a href="#">Your Orders</a></li>
-                            <li><a href="#">Shipping Rates & Policies</a></li>
-                            <li><a href="#">Returns & Replacements</a></li>
-                            <li><a href="#">Help</a></li>
-                        </ul>
-                    </div>
-                </div>
+            <div class="detail-actions">
+                <button class="btn-add-cart-large" onclick="addToBasket('${product.id}')">Add to Basket</button>
+                ${whatsappNumber ? `
+                    <a href="https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}?text=Hi, I'm interested in ${encodeURIComponent(product.title)}" 
+                       target="_blank" 
+                       class="btn-buy-now-large" 
+                       style="display: inline-block; text-decoration: none; background: #25D366; color: white;">
+                        💬 Buy via WhatsApp
+                    </a>
+                ` : `
+                    <button class="btn-buy-now-large" onclick="buyNow('${product.id}')">Buy Now</button>
+                `}
             </div>
         </div>
-        <div class="footer-bottom">
-            <div class="container">
-                <div class="footer-logo">Mbare Marketplace</div>
-                <div class="footer-links">
-                    <a href="#">Conditions of Use</a>
-                    <a href="#">Privacy Notice</a>
-                    <a href="#">Interest-Based Ads</a>
-                </div>
-                <div class="footer-copyright">
-                    &copy; 2026, Mbaremarketplace.com, Inc. or its affiliates
-                </div>
-            </div>
-        </div>
-    </footer>
-
-    <script src="api.js"></script>
-    <script src="script.js"></script>
-    <script src="auth-check.js"></script>
-    <script>
-        // Function to show login prompt
-        function showLoginPrompt() {
-            document.getElementById('loginPromptModal').style.display = 'flex';
-        }
-        
-        // Function to hide login prompt
-        function hideLoginPrompt() {
-            document.getElementById('loginPromptModal').style.display = 'none';
-        }
-        
-        // Function to check login before navigation
-        function checkLoginAndNavigate(productId) {
-            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-            
-            if (!isLoggedIn) {
-                showLoginPrompt();
-                return false;
-            }
-            
-            window.location.href = `product-detail.html?id=${productId}`;
-            return true;
-        }
-
-        // Override the original window.location functions
-        const originalWindowLocation = window.location;
-        
-        // Intercept all clicks on the document
-        document.addEventListener('click', function(e) {
-            // Check if the clicked element or its parent is a product card or has product-related classes
-            const productCard = e.target.closest('.product-card');
-            const productImage = e.target.closest('.product-image');
-            const productTitle = e.target.closest('.product-title');
-            
-            if (productCard || productImage || productTitle) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                // Try to find the product ID
-                let productId = null;
-                
-                // Check if the element has an onclick attribute with the ID
-                const element = productCard || productImage || productTitle;
-                const onclick = element.getAttribute('onclick');
-                
-                if (onclick) {
-                    const match = onclick.match(/id=(\d+)/);
-                    if (match) productId = match[1];
-                }
-                
-                // If not found, look for any link in the card
-                if (!productId && productCard) {
-                    const link = productCard.querySelector('[onclick*="product-detail.html"]');
-                    if (link) {
-                        const match = link.getAttribute('onclick')?.match(/id=(\d+)/);
-                        if (match) productId = match[1];
-                    }
-                }
-                
-                if (productId) {
-                    checkLoginAndNavigate(productId);
-                }
-            }
+    `;
+    
+    // Image zoom effect
+    const productImage = document.getElementById('productMainImage');
+    if (productImage) {
+        productImage.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.1)';
+            this.style.transition = 'transform 0.3s';
         });
         
-        // Also intercept the original functions from script.js
-        window.goToProductDetail = function(productId) {
-            checkLoginAndNavigate(productId);
-        };
-
-        // Only the logout button functionality
-        window.logout = function() {
-            if (window.api && window.api.logout) {
-                window.api.logout();
-            } else {
-                localStorage.removeItem('supabase_session');
-                localStorage.removeItem('isLoggedIn');
-                window.location.href = 'index.html';
-            }
-        };
-
-        // Check login status and show/hide logout button
-        document.addEventListener('DOMContentLoaded', function() {
-            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-            const logoutBtn = document.getElementById('logoutBtn');
-            if (isLoggedIn && logoutBtn) {
-                logoutBtn.style.display = 'inline-block';
-                
-                // Update the welcome text
-                const sessionData = localStorage.getItem('supabase_session');
-                if (sessionData) {
-                    try {
-                        const session = JSON.parse(sessionData);
-                        const userEmail = session.user?.email || 'User';
-                        const accountLabel = document.querySelector('.account-label');
-                        if (accountLabel) {
-                            accountLabel.textContent = `Hello, ${userEmail.split('@')[0]}`;
-                        }
-                    } catch (e) {
-                        console.error('Error parsing session:', e);
-                    }
-                }
-            }
+        productImage.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1)';
         });
-    </script>
-</body>
-</html>
+    }
+}
+
+// Buy now
+async function buyNow(productId) {
+    await addToBasket(productId, 1);
+    setTimeout(() => {
+        window.location.href = 'checkout.html';
+    }, 500);
+}
+
+// Load Basket page
+async function loadBasketPage() {
+    const basketItemsContainer = document.getElementById('basketItems');
+    const basketSummary = document.getElementById('basketSummary');
+    
+    if (!basketItemsContainer) return;
+    
+    // Check if user is logged in
+    const sessionData = localStorage.getItem('supabase_session');
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    
+    if (!isLoggedIn || !sessionData) {
+        basketItemsContainer.innerHTML = '<p style="text-align: center; padding: 40px;">Please <a href="login.html?redirect=Basket.html">login</a> to view your basket.</p>';
+        if (basketSummary) {
+            basketSummary.innerHTML = '';
+        }
+        return;
+    }
+    
+    const session = JSON.parse(sessionData);
+    const userId = session.user?.id;
+    
+    if (!userId) {
+        basketItemsContainer.innerHTML = '<p style="text-align: center; padding: 40px;">User session error. Please <a href="login.html?redirect=Basket.html">login again</a>.</p>';
+        return;
+    }
+    
+    // Load user-specific basket
+    const basketKey = `basket_${userId}`;
+    const userBasket = JSON.parse(localStorage.getItem(basketKey)) || [];
+    
+    if (userBasket.length === 0) {
+        basketItemsContainer.innerHTML = '<p style="text-align: center; padding: 40px;">Your Basket is empty. <a href="index.html">Start Shopping</a></p>';
+        if (basketSummary) {
+            basketSummary.innerHTML = '';
+        }
+        updateBasketCount(0);
+        return;
+    }
+    
+    basketItemsContainer.innerHTML = '';
+    let subtotal = 0;
+    
+    for (const item of userBasket) {
+        const itemTotal = item.price * item.quantity;
+        subtotal += itemTotal;
+        
+        const basketItem = document.createElement('div');
+        basketItem.className = 'basket-item';
+        basketItem.innerHTML = `
+            <img src="${item.image}" alt="${item.title}" class="basket-item-image" onerror="this.src='https://via.placeholder.com/150x150?text=Product'">
+            <div class="basket-item-info">
+                <a href="product-detail.html?id=${item.id}" class="basket-item-title">${item.title}</a>
+                <div class="basket-item-price">$${item.price.toFixed(2)}</div>
+                <div class="basket-item-actions">
+                    <div class="quantity-selector">
+                        <button class="quantity-btn" onclick="updateBasketQuantity('${item.id}', -1)">-</button>
+                        <input type="number" class="quantity-input" value="${item.quantity}" min="1" onchange="updateBasketQuantity('${item.id}', 0, this.value)">
+                        <button class="quantity-btn" onclick="updateBasketQuantity('${item.id}', 1)">+</button>
+                    </div>
+                    <button class="remove-item" onclick="removeFromBasket('${item.id}')">Remove</button>
+                </div>
+            </div>
+            <div class="basket-item-price">$${itemTotal.toFixed(2)}</div>
+        `;
+        basketItemsContainer.appendChild(basketItem);
+    }
+    
+    // Calculate totals
+    const shipping = subtotal > 35 ? 0 : 5.99;
+    const tax = subtotal * 0.08;
+    const total = subtotal + shipping + tax;
+    
+    basketSummary.innerHTML = `
+        <h2>Order Summary</h2>
+        <div class="summary-row">
+            <span>Subtotal (${userBasket.reduce((sum, item) => sum + item.quantity, 0)} items):</span>
+            <span>$${subtotal.toFixed(2)}</span>
+        </div>
+        <div class="summary-row">
+            <span>Shipping:</span>
+            <span>${shipping === 0 ? 'FREE' : '$' + shipping.toFixed(2)}</span>
+        </div>
+        <div class="summary-row">
+            <span>Tax:</span>
+            <span>$${tax.toFixed(2)}</span>
+        </div>
+        <div class="summary-row summary-total">
+            <span>Total:</span>
+            <span>$${total.toFixed(2)}</span>
+        </div>
+        <button class="btn-checkout" onclick="window.location.href='checkout.html'">Proceed to Checkout</button>
+    `;
+    
+    updateBasketCount(userBasket.reduce((sum, item) => sum + item.quantity, 0));
+}
+
+// Update basket quantity
+async function updateBasketQuantity(productId, change, newValue) {
+    // Check if user is logged in
+    const sessionData = localStorage.getItem('supabase_session');
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    
+    if (!isLoggedIn || !sessionData) {
+        window.location.href = 'login.html?redirect=Basket.html';
+        return;
+    }
+    
+    const session = JSON.parse(sessionData);
+    const userId = session.user?.id;
+    
+    if (!userId) return;
+    
+    const basketKey = `basket_${userId}`;
+    let userBasket = JSON.parse(localStorage.getItem(basketKey)) || [];
+    
+    const item = userBasket.find(i => i.id == productId);
+    if (!item) return;
+    
+    if (newValue !== undefined) {
+        item.quantity = parseInt(newValue) || 1;
+    } else {
+        item.quantity = Math.max(1, item.quantity + change);
+    }
+    
+    localStorage.setItem(basketKey, JSON.stringify(userBasket));
+    loadBasketPage();
+}
+
+// Remove from Basket
+async function removeFromBasket(productId) {
+    // Check if user is logged in
+    const sessionData = localStorage.getItem('supabase_session');
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    
+    if (!isLoggedIn || !sessionData) {
+        window.location.href = 'login.html?redirect=Basket.html';
+        return;
+    }
+    
+    const session = JSON.parse(sessionData);
+    const userId = session.user?.id;
+    
+    if (!userId) return;
+    
+    const basketKey = `basket_${userId}`;
+    let userBasket = JSON.parse(localStorage.getItem(basketKey)) || [];
+    
+    userBasket = userBasket.filter(item => item.id != productId);
+    localStorage.setItem(basketKey, JSON.stringify(userBasket));
+    
+    loadBasketPage();
+    showNotification('Item removed from Basket');
+}
+
+// Search functionality
+function handleSearch() {
+    const searchInput = document.getElementById('searchInput');
+    const query = searchInput ? searchInput.value.trim() : '';
+    
+    if (query) {
+        window.location.href = `search-results.html?q=${encodeURIComponent(query)}`;
+    }
+}
+
+// Add CSS animation for notifications
+const styleElement = document.createElement('style');
+styleElement.textContent = `
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(styleElement);
+
+// ============================================
+// ANALYTICS TRACKING
+// ============================================
+
+// Track user activity
+async function trackActivity(activityType, details = {}) {
+    try {
+        const sessionData = localStorage.getItem('supabase_session');
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        
+        if (!isLoggedIn || !sessionData) return;
+        
+        const session = JSON.parse(sessionData);
+        const userId = session.user?.id;
+        
+        if (!userId) return;
+        
+        const SUPABASE_URL = window.SUPABASE_URL;
+        const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
+        const accessToken = session.access_token;
+        
+        await fetch(`${SUPABASE_URL}/rest/v1/user_activities`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${accessToken}`
+            },
+            body: JSON.stringify({
+                user_id: userId,
+                activity_type: activityType,
+                details: details,
+                page_url: window.location.pathname,
+                created_at: new Date().toISOString()
+            })
+        });
+        
+        console.log('Activity tracked:', activityType, details);
+    } catch (error) {
+        console.error('Error tracking activity:', error);
+    }
+}
+
+// Make trackActivity available globally
+window.trackActivity = trackActivity;
+
+// Make checkLoginAndNavigate available globally
+window.checkLoginAndNavigate = checkLoginAndNavigate;
