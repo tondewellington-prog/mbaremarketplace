@@ -655,8 +655,8 @@
             document.getElementById('loginPromptModal').style.display = 'none';
         }
         
-        // Override the product click function to check login
-        function handleProductClick(productId) {
+        // Function to check login before navigation
+        function checkLoginAndNavigate(productId) {
             const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
             
             if (!isLoggedIn) {
@@ -667,6 +667,52 @@
             window.location.href = `product-detail.html?id=${productId}`;
             return true;
         }
+
+        // Override the original window.location functions
+        const originalWindowLocation = window.location;
+        
+        // Intercept all clicks on the document
+        document.addEventListener('click', function(e) {
+            // Check if the clicked element or its parent is a product card or has product-related classes
+            const productCard = e.target.closest('.product-card');
+            const productImage = e.target.closest('.product-image');
+            const productTitle = e.target.closest('.product-title');
+            
+            if (productCard || productImage || productTitle) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Try to find the product ID
+                let productId = null;
+                
+                // Check if the element has an onclick attribute with the ID
+                const element = productCard || productImage || productTitle;
+                const onclick = element.getAttribute('onclick');
+                
+                if (onclick) {
+                    const match = onclick.match(/id=(\d+)/);
+                    if (match) productId = match[1];
+                }
+                
+                // If not found, look for any link in the card
+                if (!productId && productCard) {
+                    const link = productCard.querySelector('[onclick*="product-detail.html"]');
+                    if (link) {
+                        const match = link.getAttribute('onclick')?.match(/id=(\d+)/);
+                        if (match) productId = match[1];
+                    }
+                }
+                
+                if (productId) {
+                    checkLoginAndNavigate(productId);
+                }
+            }
+        });
+        
+        // Also intercept the original functions from script.js
+        window.goToProductDetail = function(productId) {
+            checkLoginAndNavigate(productId);
+        };
 
         // Only the logout button functionality
         window.logout = function() {
@@ -701,28 +747,6 @@
                     }
                 }
             }
-            
-            // Override all product image and title clicks
-            document.addEventListener('click', function(e) {
-                const productImage = e.target.closest('.product-image');
-                const productTitle = e.target.closest('.product-title');
-                
-                if (productImage || productTitle) {
-                    e.preventDefault();
-                    
-                    // Find the product ID from the parent card
-                    const productCard = e.target.closest('.product-card');
-                    if (productCard) {
-                        const link = productCard.querySelector('[onclick*="product-detail.html"]');
-                        if (link) {
-                            const match = link.getAttribute('onclick')?.match(/id=(\d+)/);
-                            if (match && match[1]) {
-                                handleProductClick(match[1]);
-                            }
-                        }
-                    }
-                }
-            });
         });
     </script>
 </body>
