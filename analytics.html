@@ -8,8 +8,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Chart.js from CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Try Google CDN instead -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -402,7 +402,13 @@
             const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
             
             if (!isLoggedIn || !sessionData) {
-                showNoAccess('Please login to view analytics.', 'login.html?redirect=analytics.html');
+                document.getElementById('analyticsContent').innerHTML = `
+                    <div class="no-access">
+                        <h2>🔒 Access Restricted</h2>
+                        <p>Please login to view analytics.</p>
+                        <a href="login.html?redirect=analytics.html" class="btn-home">Login</a>
+                    </div>
+                `;
                 return;
             }
 
@@ -411,25 +417,33 @@
             const adminEmails = ['tondewellington@gmail.com', 'admin@mbare.com'];
             
             if (!adminEmails.includes(userEmail)) {
-                showNoAccess('You don\'t have permission to view analytics.', 'index.html');
+                document.getElementById('analyticsContent').innerHTML = `
+                    <div class="no-access">
+                        <h2>⛔ Admin Access Only</h2>
+                        <p>You don't have permission.</p>
+                        <a href="index.html" class="btn-home">Go Home</a>
+                    </div>
+                `;
                 return;
             }
 
             loadAnalytics();
         }
 
-        function showNoAccess(message, link) {
-            document.getElementById('analyticsContent').innerHTML = `
-                <div class="no-access">
-                    <h2>🔒 Access Restricted</h2>
-                    <p>${message}</p>
-                    <a href="${link}" class="btn-home">Go</a>
-                </div>
-            `;
-        }
-
         async function loadAnalytics() {
             try {
+                // Check if Chart.js loaded
+                if (typeof Chart === 'undefined') {
+                    document.getElementById('analyticsContent').innerHTML = `
+                        <div class="no-access">
+                            <h2>📊 Chart.js Loading Failed</h2>
+                            <p>Please disable tracking prevention for this site or try a different browser.</p>
+                            <button onclick="loadAnalytics()" class="btn-home">Try Again</button>
+                        </div>
+                    `;
+                    return;
+                }
+
                 const stats = await getStats();
                 const chartData = await getChartData();
                 
@@ -498,33 +512,39 @@
                     </div>
                 `;
 
-                createChart('activityChart', 'bar', chartData.labels, chartData.activities, '#f90');
-                createChart('sellerChart', 'bar', chartData.labels, chartData.sellers, '#28a745');
-                createChart('productChart', 'line', chartData.labels, chartData.products, '#007bff');
+                // Small delay to ensure DOM is ready
+                setTimeout(() => {
+                    createChart('activityChart', chartData.labels, chartData.activities, '#f90');
+                    createChart('sellerChart', chartData.labels, chartData.sellers, '#28a745');
+                    createChart('productChart', chartData.labels, chartData.products, '#007bff');
+                }, 100);
 
             } catch (error) {
                 console.error('Error:', error);
             }
         }
 
-        function createChart(elementId, type, labels, data, color) {
-            const ctx = document.getElementById(elementId).getContext('2d');
+        function createChart(elementId, labels, data, color) {
+            const ctx = document.getElementById(elementId)?.getContext('2d');
+            if (!ctx) return;
+            
             if (charts[elementId]) charts[elementId].destroy();
             
             charts[elementId] = new Chart(ctx, {
-                type: type,
+                type: 'bar',
                 data: {
                     labels: labels,
                     datasets: [{
                         data: data,
                         backgroundColor: color,
-                        borderColor: color,
-                        tension: 0.4
+                        borderRadius: 4
                     }]
                 },
                 options: {
                     responsive: true,
-                    plugins: { legend: { display: false } }
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
                 }
             });
         }
@@ -633,7 +653,7 @@
                             <tr>
                                 <td>${timeAgo(new Date(a.created_at))}</td>
                                 <td>${a.user_id?.substring(0,8)}...</td>
-                                <td><span class="activity-type type-${a.activity_type}">${a.activity_type}</span></td>
+                                <td><span class="activity-type type-${a.activity_type}">${a.activity_type || 'activity'}</span></td>
                             </tr>
                         `).join('')}
                     </tbody>
