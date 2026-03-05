@@ -326,7 +326,36 @@ function loadProducts(containerId, productList) {
     }, 100);
 }
 
-// Create product card element
+// Function to check login before navigating to product detail
+function checkLoginAndNavigate(productId) {
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    
+    if (!isLoggedIn) {
+        // Try to find the login prompt modal
+        let loginModal = document.getElementById('loginPromptModal');
+        
+        // If modal doesn't exist in index.html, create a simple confirm
+        if (!loginModal) {
+            const confirmLogin = confirm('Please login to view product details. Would you like to login now?');
+            if (confirmLogin) {
+                window.location.href = `login.html?redirect=product-detail.html?id=${productId}`;
+            }
+            return false;
+        }
+        
+        // Show the modal if it exists
+        loginModal.style.display = 'flex';
+        
+        // Store the product ID for after login
+        window.pendingProductId = productId;
+        return false;
+    }
+    
+    window.location.href = `product-detail.html?id=${productId}`;
+    return true;
+}
+
+// Create product card element - UPDATED with login check
 function createProductCard(product) {
     const card = document.createElement('div');
     card.className = 'product-card';
@@ -336,9 +365,10 @@ function createProductCard(product) {
     const sellerName = seller.business_name || 'Unknown Seller';
     const imageUrl = product.image_url || product.image || 'https://via.placeholder.com/300x300?text=Product';
     
+    // Use the checkLoginAndNavigate function instead of direct navigation
     card.innerHTML = `
-        <img src="${imageUrl}" alt="${product.title}" class="product-image" onclick="window.location.href='product-detail.html?id=${product.id}'" style="cursor: pointer;" onerror="this.src='https://via.placeholder.com/300x300?text=Product'">
-        <h3 class="product-title" onclick="window.location.href='product-detail.html?id=${product.id}'" style="cursor: pointer;">${product.title}</h3>
+        <img src="${imageUrl}" alt="${product.title}" class="product-image" onclick="checkLoginAndNavigate(${product.id})" style="cursor: pointer;" onerror="this.src='https://via.placeholder.com/300x300?text=Product'">
+        <h3 class="product-title" onclick="checkLoginAndNavigate(${product.id})" style="cursor: pointer;">${product.title}</h3>
         <div class="product-rating">
             <span class="stars">${stars}</span>
             <span class="rating-count">(${product.reviews})</span>
@@ -1119,3 +1149,6 @@ async function trackActivity(activityType, details = {}) {
 
 // Make trackActivity available globally
 window.trackActivity = trackActivity;
+
+// Make checkLoginAndNavigate available globally
+window.checkLoginAndNavigate = checkLoginAndNavigate;
