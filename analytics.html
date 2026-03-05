@@ -461,7 +461,7 @@
                 
                 // Log chart data for debugging
                 console.log('Chart Data:', chartData);
-                console.log('Total Users from profiles:', stats.totalUsers);
+                console.log('Total Users from users table:', stats.totalUsers);
                 
                 document.getElementById('analyticsContent').innerHTML = `
                     <div class="analytics-header">
@@ -471,7 +471,7 @@
 
                     <div class="debug-info">
                         <strong>✅ Database Status:</strong><br>
-                        Total Users in profiles table: ${stats.totalUsers}<br>
+                        Total Users in users table: ${stats.totalUsers}<br>
                         Total Sellers: ${stats.totalSellers}<br>
                         Total Products: ${stats.totalProducts}
                     </div>
@@ -587,22 +587,22 @@
             });
         }
 
-        // FIXED: Always get total users from profiles table
+        // FIXED: Count from users table directly
         async function getTotalUsers() {
             const url = window.SUPABASE_URL;
             const key = window.SUPABASE_ANON_KEY;
             const headers = { 'apikey': key, 'Authorization': `Bearer ${key}` };
             
             try {
-                // Get ALL profiles - this should return all 5 users
-                const response = await fetch(`${url}/rest/v1/profiles?select=id`, { headers });
+                // Get ALL users from the users table
+                const response = await fetch(`${url}/rest/v1/users?select=id`, { headers });
                 
                 if (response.ok) {
-                    const profiles = await response.json();
-                    console.log('Profiles data:', profiles); // Debug log
-                    return profiles.length;
+                    const users = await response.json();
+                    console.log('Users data from users table:', users); // Debug log
+                    return users.length;
                 } else {
-                    console.error('Failed to fetch profiles:', response.status);
+                    console.error('Failed to fetch users:', response.status);
                     return 0;
                 }
             } catch (error) {
@@ -616,7 +616,7 @@
             const key = window.SUPABASE_ANON_KEY;
             const headers = { 'apikey': key, 'Authorization': `Bearer ${key}` };
 
-            // Get total users from profiles (this will now be 5)
+            // Get total users from users table (this will now be 5)
             const totalUsers = await getTotalUsers();
 
             // Get sellers
@@ -672,9 +672,9 @@
                 nextDay.setDate(nextDay.getDate() + 1);
                 const nextStr = nextDay.toISOString().split('T')[0];
 
-                // Get users created on this day from profiles table
+                // Get users created on this day from users table
                 const usersRes = await fetch(
-                    `${url}/rest/v1/profiles?created_at=gte.${dateStr}&created_at=lt.${nextStr}&select=id`,
+                    `${url}/rest/v1/users?created_at=gte.${dateStr}&created_at=lt.${nextStr}&select=id`,
                     { headers }
                 );
                 const usersData = await usersRes.json();
