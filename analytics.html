@@ -113,7 +113,7 @@
 
         .charts-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 20px;
             margin-bottom: 30px;
         }
@@ -123,10 +123,11 @@
             padding: 25px;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            grid-column: span 1;
         }
 
         .chart-container.full-width {
-            grid-column: span 2;
+            grid-column: span 3;
         }
 
         .chart-title {
@@ -137,7 +138,7 @@
         }
 
         canvas {
-            max-height: 300px;
+            max-height: 250px;
             width: 100% !important;
         }
 
@@ -239,6 +240,17 @@
             text-decoration: none;
             border-radius: 4px;
             font-weight: 600;
+        }
+
+        .debug-info {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 12px;
+            color: #333;
+            border-left: 4px solid #f90;
         }
     </style>
 </head>
@@ -447,11 +459,27 @@
                 const stats = await getStats();
                 const chartData = await getChartData();
                 
+                // Log chart data for debugging
+                console.log('Chart Data:', chartData);
+                
+                // Check if all chart data is zero
+                const hasData = chartData.activities.some(v => v > 0) || 
+                               chartData.sellers.some(v => v > 0) || 
+                               chartData.products.some(v => v > 0) ||
+                               chartData.users.some(v => v > 0);
+                
                 document.getElementById('analyticsContent').innerHTML = `
                     <div class="analytics-header">
                         <h1>📊 Analytics Dashboard</h1>
                         <button class="refresh-btn" onclick="loadAnalytics()">⟳ Refresh</button>
                     </div>
+
+                    ${!hasData ? `
+                        <div class="debug-info">
+                            <strong>📢 No activity data found for the last 7 days.</strong><br>
+                            Showing sample data for demonstration. Real data will appear once users interact with the site.
+                        </div>
+                    ` : ''}
 
                     <div class="stats-grid">
                         <div class="stat-card">
@@ -494,15 +522,19 @@
 
                     <div class="charts-grid">
                         <div class="chart-container">
-                            <div class="chart-title">User Activity</div>
+                            <div class="chart-title">New Users ${!hasData ? '(Sample)' : ''}</div>
+                            <canvas id="usersChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <div class="chart-title">User Activity ${!hasData ? '(Sample)' : ''}</div>
                             <canvas id="activityChart"></canvas>
                         </div>
                         <div class="chart-container">
-                            <div class="chart-title">New Sellers</div>
+                            <div class="chart-title">New Sellers ${!hasData ? '(Sample)' : ''}</div>
                             <canvas id="sellerChart"></canvas>
                         </div>
                         <div class="chart-container full-width">
-                            <div class="chart-title">New Products</div>
+                            <div class="chart-title">New Products ${!hasData ? '(Sample)' : ''}</div>
                             <canvas id="productChart"></canvas>
                         </div>
                     </div>
@@ -512,11 +544,18 @@
                     </div>
                 `;
 
+                // Use real data if available, otherwise use sample data
+                const usersData = hasData ? chartData.users : [3, 5, 2, 4, 6, 3, 5];
+                const activityData = hasData ? chartData.activities : [5, 7, 4, 6, 8, 5, 7];
+                const sellerData = hasData ? chartData.sellers : [2, 1, 3, 2, 4, 2, 3];
+                const productData = hasData ? chartData.products : [4, 6, 5, 7, 8, 6, 9];
+
                 // Small delay to ensure DOM is ready
                 setTimeout(() => {
-                    createChart('activityChart', chartData.labels, chartData.activities, '#f90');
-                    createChart('sellerChart', chartData.labels, chartData.sellers, '#28a745');
-                    createChart('productChart', chartData.labels, chartData.products, '#007bff');
+                    createChart('usersChart', chartData.labels, usersData, '#9b59b6'); // Purple for users
+                    createChart('activityChart', chartData.labels, activityData, '#f90');
+                    createChart('sellerChart', chartData.labels, sellerData, '#28a745');
+                    createChart('productChart', chartData.labels, productData, '#007bff');
                 }, 100);
 
             } catch (error) {
@@ -549,22 +588,20 @@
             });
         }
 
-        // OPTION 1 IMPLEMENTED: Get total users from profiles table
         async function getTotalUsers() {
             const url = window.SUPABASE_URL;
             const key = window.SUPABASE_ANON_KEY;
             const headers = { 'apikey': key, 'Authorization': `Bearer ${key}` };
             
             try {
-                // Try to get from profiles table first (Option 1)
+                // Try to get from profiles table first
                 const response = await fetch(`${url}/rest/v1/profiles?select=id`, { headers });
                 
                 if (response.ok) {
                     const profiles = await response.json();
                     return profiles.length;
                 } else {
-                    // Fallback to old method if profiles table doesn't exist
-                    console.log('Profiles table not found, falling back to user_activities');
+                    // Fallback to old method
                     const activities = await (await fetch(`${url}/rest/v1/user_activities?select=user_id`, { headers })).json();
                     const sellers = await (await fetch(`${url}/rest/v1/sellers?select=user_id`, { headers })).json();
                     
@@ -585,7 +622,6 @@
             const key = window.SUPABASE_ANON_KEY;
             const headers = { 'apikey': key, 'Authorization': `Bearer ${key}` };
 
-            // Get total users using the new method
             const totalUsers = await getTotalUsers();
 
             const sellers = await (await fetch(`${url}/rest/v1/sellers?select=id`, { headers })).json();
@@ -624,6 +660,7 @@
             const headers = { 'apikey': key, 'Authorization': `Bearer ${key}` };
             
             const labels = [];
+            const users = [];
             const activities = [];
             const sellers = [];
             const products = [];
@@ -638,23 +675,40 @@
                 nextDay.setDate(nextDay.getDate() + 1);
                 const nextStr = nextDay.toISOString().split('T')[0];
 
-                activities.push((await (await fetch(
+                // Get users created on this day from profiles table
+                const usersRes = await fetch(
+                    `${url}/rest/v1/profiles?created_at=gte.${dateStr}&created_at=lt.${nextStr}&select=id`,
+                    { headers }
+                );
+                const usersData = await usersRes.json();
+                users.push(usersData.length);
+
+                // Get activities for this day
+                const activityRes = await fetch(
                     `${url}/rest/v1/user_activities?created_at=gte.${dateStr}&created_at=lt.${nextStr}&select=id`,
                     { headers }
-                )).json()).length);
+                );
+                const activityData = await activityRes.json();
+                activities.push(activityData.length);
 
-                sellers.push((await (await fetch(
+                // Get sellers for this day
+                const sellerRes = await fetch(
                     `${url}/rest/v1/sellers?created_at=gte.${dateStr}&created_at=lt.${nextStr}&select=id`,
                     { headers }
-                )).json()).length);
+                );
+                const sellerData = await sellerRes.json();
+                sellers.push(sellerData.length);
 
-                products.push((await (await fetch(
+                // Get products for this day
+                const productRes = await fetch(
                     `${url}/rest/v1/products?created_at=gte.${dateStr}&created_at=lt.${nextStr}&select=id`,
                     { headers }
-                )).json()).length);
+                );
+                const productData = await productRes.json();
+                products.push(productData.length);
             }
 
-            return { labels, activities, sellers, products };
+            return { labels, users, activities, sellers, products };
         }
 
         async function getRecentActivitiesHTML() {
@@ -667,7 +721,15 @@
                 { headers }
             )).json();
 
-            if (!data.length) return '<p>No recent activities</p>';
+            if (!data.length) {
+                return `
+                    <div class="activities-header">
+                        <h2>Recent Activities</h2>
+                        <button class="refresh-btn" style="padding:5px 15px;font-size:12px" onclick="loadAnalytics()">↻</button>
+                    </div>
+                    <p style="text-align: center; padding: 20px; color: #666;">No recent activities found. Activity will appear here as users interact with the site.</p>
+                `;
+            }
 
             return `
                 <div class="activities-header">
