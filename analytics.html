@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Use a working CDN for Chart.js -->
+    <!-- Chart.js from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * {
@@ -44,19 +44,6 @@
             font-size: 28px;
         }
 
-        .date-range {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .date-range select {
-            padding: 8px 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-
         .refresh-btn {
             background: #f90;
             color: white;
@@ -83,12 +70,6 @@
             padding: 25px;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
         }
 
         .stat-icon {
@@ -153,15 +134,6 @@
             font-weight: 600;
             margin-bottom: 20px;
             color: #232f3e;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .chart-title span {
-            font-size: 14px;
-            color: #666;
-            font-weight: normal;
         }
 
         canvas {
@@ -208,10 +180,6 @@
             color: #333;
         }
 
-        .activities-table tr:hover {
-            background: #f9f9f9;
-        }
-
         .activity-type {
             display: inline-block;
             padding: 4px 8px;
@@ -235,11 +203,6 @@
             color: #f90;
         }
 
-        .type-view {
-            background: #f3e5f5;
-            color: #7b1fa2;
-        }
-
         .loading-spinner {
             text-align: center;
             padding: 50px;
@@ -260,31 +223,12 @@
             100% { transform: rotate(360deg); }
         }
 
-        .error-message {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 20px;
-            border-radius: 4px;
-            text-align: center;
-            margin: 20px 0;
-        }
-
         .no-access {
             text-align: center;
             padding: 60px 20px;
             background: white;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .no-access h2 {
-            color: #232f3e;
-            margin-bottom: 15px;
-        }
-
-        .no-access p {
-            color: #666;
-            margin-bottom: 20px;
         }
 
         .no-access .btn-home {
@@ -295,25 +239,6 @@
             text-decoration: none;
             border-radius: 4px;
             font-weight: 600;
-        }
-
-        @media (max-width: 768px) {
-            .charts-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .chart-container.full-width {
-                grid-column: span 1;
-            }
-            
-            .analytics-header {
-                flex-direction: column;
-                gap: 15px;
-            }
-            
-            .activities-table {
-                font-size: 12px;
-            }
         }
     </style>
 </head>
@@ -387,7 +312,10 @@
 
     <!-- Main Analytics Content -->
     <div class="analytics-container" id="analyticsContent">
-        <!-- Content will be loaded by JavaScript -->
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Loading analytics...</p>
+        </div>
     </div>
 
     <!-- Footer -->
@@ -462,631 +390,282 @@
         // Analytics Dashboard JavaScript
         // ============================================
 
-        let analyticsCharts = {};
+        let charts = {};
 
-        // Check access and load analytics on page load
         document.addEventListener('DOMContentLoaded', function() {
             checkAdminAccess();
-            updateHeaderForLoggedInUser();
+            updateHeader();
         });
 
-        // Check if user is logged in and has admin access
         function checkAdminAccess() {
             const sessionData = localStorage.getItem('supabase_session');
             const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
             
-            const content = document.getElementById('analyticsContent');
-            
             if (!isLoggedIn || !sessionData) {
-                content.innerHTML = `
-                    <div class="no-access">
-                        <h2>🔒 Access Restricted</h2>
-                        <p>Please login to view analytics dashboard.</p>
-                        <a href="login.html?redirect=analytics.html" class="btn-home">Login</a>
-                    </div>
-                `;
+                showNoAccess('Please login to view analytics.', 'login.html?redirect=analytics.html');
                 return;
             }
 
-            // Check if user is admin
             const session = JSON.parse(sessionData);
             const userEmail = session.user?.email || '';
-            
-            // Add your admin emails here
             const adminEmails = ['tondewellington@gmail.com', 'admin@mbare.com'];
             
             if (!adminEmails.includes(userEmail)) {
-                content.innerHTML = `
-                    <div class="no-access">
-                        <h2>⛔ Admin Access Only</h2>
-                        <p>You don't have permission to view analytics.</p>
-                        <a href="index.html" class="btn-home">Go to Home</a>
-                    </div>
-                `;
+                showNoAccess('You don\'t have permission to view analytics.', 'index.html');
                 return;
             }
 
-            // User is admin, load analytics
-            loadAnalyticsDashboard();
+            loadAnalytics();
         }
 
-        // Function to get user count
-        async function getUserCount() {
-            try {
-                const SUPABASE_URL = window.SUPABASE_URL;
-                const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
-                
-                // Get unique users from sellers table
-                const sellersResponse = await fetch(`${SUPABASE_URL}/rest/v1/sellers?select=user_id`, {
-                    headers: {
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                    }
-                });
-                const sellers = await sellersResponse.json();
-                const uniqueSellers = [...new Set(sellers.map(s => s.user_id))];
-                
-                // Also get from user_activities if available
-                const activitiesResponse = await fetch(`${SUPABASE_URL}/rest/v1/user_activities?select=user_id`, {
-                    headers: {
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                    }
-                });
-                
-                if (activitiesResponse.ok) {
-                    const activities = await activitiesResponse.json();
-                    const uniqueActivityUsers = [...new Set(activities.map(a => a.user_id))];
-                    
-                    // Combine both sets of user IDs
-                    const allUsers = [...new Set([...uniqueSellers, ...uniqueActivityUsers])];
-                    return allUsers.length;
-                }
-                
-                return uniqueSellers.length;
-                
-            } catch (error) {
-                console.error('Error getting user count:', error);
-                return 0;
-            }
-        }
-
-        // Load the analytics dashboard
-        async function loadAnalyticsDashboard() {
-            const content = document.getElementById('analyticsContent');
-            
-            // Show loading spinner
-            content.innerHTML = `
-                <div class="loading-spinner">
-                    <div class="spinner"></div>
-                    <p>Loading analytics data...</p>
+        function showNoAccess(message, link) {
+            document.getElementById('analyticsContent').innerHTML = `
+                <div class="no-access">
+                    <h2>🔒 Access Restricted</h2>
+                    <p>${message}</p>
+                    <a href="${link}" class="btn-home">Go</a>
                 </div>
             `;
+        }
 
+        async function loadAnalytics() {
             try {
-                // Check if Chart.js loaded
-                if (typeof Chart === 'undefined') {
-                    console.error('Chart.js not loaded');
-                    // Load stats only without charts
-                    await loadStatsOnly();
-                } else {
-                    // Load full analytics with charts
-                    await loadFullAnalytics();
-                }
+                const stats = await getStats();
+                const chartData = await getChartData();
                 
-            } catch (error) {
-                console.error('Error loading analytics:', error);
-                content.innerHTML = `
-                    <div class="error-message">
-                        <h3>Error Loading Analytics</h3>
-                        <p>${error.message}</p>
-                        <button onclick="loadAnalyticsDashboard()" class="refresh-btn" style="margin-top: 15px;">Try Again</button>
-                    </div>
-                `;
-            }
-        }
-
-        // Load full analytics with charts
-        async function loadFullAnalytics() {
-            const stats = await loadStats();
-            const content = document.getElementById('analyticsContent');
-            content.innerHTML = stats;
-            await loadCharts();
-            await loadRecentActivities();
-        }
-
-        // Load stats only (without charts)
-        async function loadStatsOnly() {
-            const stats = await loadStats();
-            const content = document.getElementById('analyticsContent');
-            
-            // Add a note about charts
-            content.innerHTML = stats + `
-                <div style="background: #fff3e0; padding: 15px; border-radius: 4px; margin: 20px 0; text-align: center;">
-                    <p>📊 Charts are currently unavailable because Chart.js couldn't load.</p>
-                    <p>Try refreshing the page or using a different browser.</p>
-                </div>
-            `;
-            
-            await loadRecentActivities();
-        }
-
-        // Load statistics cards
-        async function loadStats() {
-            const SUPABASE_URL = window.SUPABASE_URL;
-            const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
-
-            try {
-                // Get user count
-                const totalUsers = await getUserCount();
-
-                // Get total sellers
-                const sellersResponse = await fetch(`${SUPABASE_URL}/rest/v1/sellers?select=id`, {
-                    headers: {
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                    }
-                });
-                const sellers = await sellersResponse.json();
-                const totalSellers = sellers.length || 0;
-
-                // Get total products
-                const productsResponse = await fetch(`${SUPABASE_URL}/rest/v1/products?select=id`, {
-                    headers: {
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                    }
-                });
-                const products = await productsResponse.json();
-                const totalProducts = products.length || 0;
-
-                // Get today's active users (from user_activities)
-                const today = new Date().toISOString().split('T')[0];
-                const activeResponse = await fetch(
-                    `${SUPABASE_URL}/rest/v1/user_activities?created_at=gte.${today}&select=user_id`,
-                    {
-                        headers: {
-                            'apikey': SUPABASE_ANON_KEY,
-                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                        }
-                    }
-                );
-                const active = await activeResponse.json();
-                const uniqueActive = [...new Set(active.map(a => a.user_id))];
-                const activeToday = uniqueActive.length;
-
-                // Get last 7 days active users
-                const sevenDaysAgo = new Date();
-                sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-                
-                const lastWeekUsers = await fetch(
-                    `${SUPABASE_URL}/rest/v1/user_activities?created_at=gte.${sevenDaysAgo.toISOString()}&select=user_id`,
-                    {
-                        headers: {
-                            'apikey': SUPABASE_ANON_KEY,
-                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                        }
-                    }
-                );
-                const lastWeek = await lastWeekUsers.json();
-                const uniqueLastWeek = [...new Set(lastWeek.map(a => a.user_id))];
-                const userGrowth = uniqueLastWeek.length;
-
-                // Return the stats HTML
-                return `
+                document.getElementById('analyticsContent').innerHTML = `
                     <div class="analytics-header">
                         <h1>📊 Analytics Dashboard</h1>
-                        <div class="date-range">
-                            <select id="dateRange" onchange="changeDateRange(this.value)">
-                                <option value="7">Last 7 Days</option>
-                                <option value="30">Last 30 Days</option>
-                                <option value="90">Last 90 Days</option>
-                                <option value="365">Last Year</option>
-                            </select>
-                            <button class="refresh-btn" onclick="loadAnalyticsDashboard()">⟳ Refresh</button>
-                        </div>
+                        <button class="refresh-btn" onclick="loadAnalytics()">⟳ Refresh</button>
                     </div>
 
                     <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-icon">👥</div>
                             <div class="stat-label">Total Users</div>
-                            <div class="stat-number">${totalUsers}</div>
-                            <div class="stat-change">
-                                <span>${userGrowth > 0 ? '↑' : '↓'}</span>
-                                <span>${userGrowth} active last 7 days</span>
+                            <div class="stat-number">${stats.totalUsers}</div>
+                            <div class="stat-change ${stats.userGrowth > 0 ? '' : 'negative'}">
+                                <span>${stats.userGrowth > 0 ? '↑' : '↓'}</span>
+                                <span>${stats.userGrowth} active last 7 days</span>
                             </div>
                         </div>
 
                         <div class="stat-card">
                             <div class="stat-icon">🛒</div>
                             <div class="stat-label">Total Sellers</div>
-                            <div class="stat-number">${totalSellers}</div>
+                            <div class="stat-number">${stats.totalSellers}</div>
                             <div class="stat-change">
-                                <span>${totalUsers > 0 ? ((totalSellers/totalUsers)*100).toFixed(1) : 0}% of users</span>
+                                <span>${stats.sellerPercentage}% of users</span>
                             </div>
                         </div>
 
                         <div class="stat-card">
                             <div class="stat-icon">📦</div>
                             <div class="stat-label">Total Products</div>
-                            <div class="stat-number">${totalProducts}</div>
+                            <div class="stat-number">${stats.totalProducts}</div>
                             <div class="stat-change">
-                                <span>Avg ${totalSellers > 0 ? (totalProducts/totalSellers).toFixed(1) : 0} per seller</span>
+                                <span>Avg ${stats.avgPerSeller} per seller</span>
                             </div>
                         </div>
 
                         <div class="stat-card">
                             <div class="stat-icon">⚡</div>
                             <div class="stat-label">Active Today</div>
-                            <div class="stat-number">${activeToday}</div>
-                            <div class="stat-change ${activeToday > 0 ? '' : 'negative'}">
-                                <span>${totalUsers > 0 ? ((activeToday/totalUsers)*100).toFixed(1) : 0}% active rate</span>
+                            <div class="stat-number">${stats.activeToday}</div>
+                            <div class="stat-change ${stats.activeToday > 0 ? '' : 'negative'}">
+                                <span>${stats.activeRate}% active rate</span>
                             </div>
                         </div>
                     </div>
-                `;
 
-            } catch (error) {
-                console.error('Error loading stats:', error);
-                throw error;
-            }
-        }
-
-        // Load charts
-        async function loadCharts() {
-            try {
-                const SUPABASE_URL = window.SUPABASE_URL;
-                const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
-                
-                // Generate last 7 days labels
-                const labels = [];
-                const activityData = [];
-                const sellerData = [];
-                const productData = [];
-                
-                for (let i = 6; i >= 0; i--) {
-                    const date = new Date();
-                    date.setDate(date.getDate() - i);
-                    const dateStr = date.toISOString().split('T')[0];
-                    labels.push(dateStr.substring(5)); // MM-DD
-                    
-                    const nextDate = new Date(date);
-                    nextDate.setDate(nextDate.getDate() + 1);
-                    
-                    // Get activities for this day
-                    const activityResponse = await fetch(
-                        `${SUPABASE_URL}/rest/v1/user_activities?created_at=gte.${dateStr}&created_at=lt.${nextDate.toISOString().split('T')[0]}&select=id`,
-                        {
-                            headers: {
-                                'apikey': SUPABASE_ANON_KEY,
-                                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                            }
-                        }
-                    );
-                    const activities = await activityResponse.json();
-                    activityData.push(activities.length);
-                    
-                    // Get sellers for this day
-                    const sellerResponse = await fetch(
-                        `${SUPABASE_URL}/rest/v1/sellers?created_at=gte.${dateStr}&created_at=lt.${nextDate.toISOString().split('T')[0]}&select=id`,
-                        {
-                            headers: {
-                                'apikey': SUPABASE_ANON_KEY,
-                                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                            }
-                        }
-                    );
-                    const sellers = await sellerResponse.json();
-                    sellerData.push(sellers.length);
-                    
-                    // Get products for this day
-                    const productResponse = await fetch(
-                        `${SUPABASE_URL}/rest/v1/products?created_at=gte.${dateStr}&created_at=lt.${nextDate.toISOString().split('T')[0]}&select=id`,
-                        {
-                            headers: {
-                                'apikey': SUPABASE_ANON_KEY,
-                                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                            }
-                        }
-                    );
-                    const products = await productResponse.json();
-                    productData.push(products.length);
-                }
-
-                const chartsHtml = `
                     <div class="charts-grid">
                         <div class="chart-container">
-                            <div class="chart-title">
-                                User Activity
-                                <span>Last 7 days</span>
-                            </div>
-                            <canvas id="userChart"></canvas>
+                            <div class="chart-title">User Activity</div>
+                            <canvas id="activityChart"></canvas>
                         </div>
                         <div class="chart-container">
-                            <div class="chart-title">
-                                New Sellers
-                                <span>Last 7 days</span>
-                            </div>
+                            <div class="chart-title">New Sellers</div>
                             <canvas id="sellerChart"></canvas>
                         </div>
                         <div class="chart-container full-width">
-                            <div class="chart-title">
-                                New Products
-                                <span>Last 7 days</span>
-                            </div>
+                            <div class="chart-title">New Products</div>
                             <canvas id="productChart"></canvas>
                         </div>
                     </div>
-                `;
 
-                // Append charts to content
-                const content = document.getElementById('analyticsContent');
-                content.innerHTML += chartsHtml;
-
-                // Create charts with real data
-                createUserChart(labels, activityData);
-                createSellerChart(labels, sellerData);
-                createProductChart(labels, productData);
-
-            } catch (error) {
-                console.error('Error loading charts:', error);
-            }
-        }
-
-        // Create user activity chart
-        function createUserChart(labels, data) {
-            const ctx = document.getElementById('userChart').getContext('2d');
-            if (analyticsCharts.user) analyticsCharts.user.destroy();
-            
-            analyticsCharts.user = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Activities',
-                        data: data,
-                        backgroundColor: '#f90',
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: '#f0f0f0'
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Create seller registrations chart
-        function createSellerChart(labels, data) {
-            const ctx = document.getElementById('sellerChart').getContext('2d');
-            if (analyticsCharts.seller) analyticsCharts.seller.destroy();
-            
-            analyticsCharts.seller = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'New Sellers',
-                        data: data,
-                        backgroundColor: '#28a745',
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: '#f0f0f0'
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Create product additions chart
-        function createProductChart(labels, data) {
-            const ctx = document.getElementById('productChart').getContext('2d');
-            if (analyticsCharts.product) analyticsCharts.product.destroy();
-            
-            analyticsCharts.product = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'New Products',
-                        data: data,
-                        backgroundColor: '#007bff',
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: '#f0f0f0'
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Load recent activities
-        async function loadRecentActivities() {
-            const SUPABASE_URL = window.SUPABASE_URL;
-            const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
-
-            try {
-                // Get recent activities from user_activities table
-                const response = await fetch(
-                    `${SUPABASE_URL}/rest/v1/user_activities?order=created_at.desc&limit=10`,
-                    {
-                        headers: {
-                            'apikey': SUPABASE_ANON_KEY,
-                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                        }
-                    }
-                );
-                
-                const activities = await response.json();
-                
-                // Format the activities for display
-                const formattedActivities = activities.map(activity => {
-                    const timeAgo = getTimeAgo(new Date(activity.created_at));
-                    return {
-                        time: timeAgo,
-                        user: activity.user_id ? activity.user_id.substring(0, 8) + '...' : 'Unknown',
-                        type: activity.activity_type || 'activity',
-                        details: typeof activity.details === 'object' ? JSON.stringify(activity.details) : (activity.details || activity.activity_type)
-                    };
-                });
-
-                const activitiesHtml = `
-                    <div class="recent-activities">
-                        <div class="activities-header">
-                            <h2>Recent Activities</h2>
-                            <span class="refresh-btn" style="padding: 5px 15px; font-size: 12px;" onclick="loadRecentActivities()">↻ Refresh</span>
-                        </div>
-                        <table class="activities-table">
-                            <thead>
-                                <tr>
-                                    <th>Time</th>
-                                    <th>User</th>
-                                    <th>Activity</th>
-                                    <th>Details</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${formattedActivities.length > 0 ? 
-                                    formattedActivities.map(activity => `
-                                        <tr>
-                                            <td>${activity.time}</td>
-                                            <td>${activity.user}</td>
-                                            <td>
-                                                <span class="activity-type type-${activity.type}">
-                                                    ${activity.type.toUpperCase()}
-                                                </span>
-                                            </td>
-                                            <td>${activity.details}</td>
-                                        </tr>
-                                    `).join('') 
-                                    : `
-                                    <tr>
-                                        <td colspan="4" style="text-align: center; padding: 20px;">No recent activities</td>
-                                    </tr>
-                                `}
-                            </tbody>
-                        </table>
+                    <div class="recent-activities" id="recentActivities">
+                        ${await getRecentActivitiesHTML()}
                     </div>
                 `;
 
-                document.getElementById('analyticsContent').innerHTML += activitiesHtml;
+                createChart('activityChart', 'bar', chartData.labels, chartData.activities, '#f90');
+                createChart('sellerChart', 'bar', chartData.labels, chartData.sellers, '#28a745');
+                createChart('productChart', 'line', chartData.labels, chartData.products, '#007bff');
 
             } catch (error) {
-                console.error('Error loading activities:', error);
+                console.error('Error:', error);
             }
         }
 
-        // Helper function to format time ago
-        function getTimeAgo(date) {
-            const seconds = Math.floor((new Date() - date) / 1000);
+        function createChart(elementId, type, labels, data, color) {
+            const ctx = document.getElementById(elementId).getContext('2d');
+            if (charts[elementId]) charts[elementId].destroy();
             
-            let interval = seconds / 31536000;
-            if (interval > 1) return Math.floor(interval) + ' years ago';
-            
-            interval = seconds / 2592000;
-            if (interval > 1) return Math.floor(interval) + ' months ago';
-            
-            interval = seconds / 86400;
-            if (interval > 1) return Math.floor(interval) + ' days ago';
-            
-            interval = seconds / 3600;
-            if (interval > 1) return Math.floor(interval) + ' hours ago';
-            
-            interval = seconds / 60;
-            if (interval > 1) return Math.floor(interval) + ' minutes ago';
-            
-            return Math.floor(seconds) + ' seconds ago';
-        }
-
-        // Change date range
-        function changeDateRange(days) {
-            console.log(`Changing date range to last ${days} days`);
-            loadAnalyticsDashboard();
-        }
-
-        // Update header for logged in user
-        function updateHeaderForLoggedInUser() {
-            const sessionData = localStorage.getItem('supabase_session');
-            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-            const logoutBtn = document.getElementById('logoutBtn');
-            const accountLabel = document.getElementById('accountLabel');
-            const accountLink = document.getElementById('accountLink');
-
-            if (isLoggedIn && sessionData) {
-                try {
-                    const session = JSON.parse(sessionData);
-                    const userEmail = session.user?.email || 'User';
-                    const userName = userEmail.split('@')[0];
-                    
-                    if (accountLabel) accountLabel.textContent = `Hello, ${userName}`;
-                    if (accountLink) accountLink.textContent = 'Your Account';
-                    if (logoutBtn) logoutBtn.style.display = 'inline-block';
-                } catch (e) {
-                    console.error('Error parsing session:', e);
+            charts[elementId] = new Chart(ctx, {
+                type: type,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: color,
+                        borderColor: color,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } }
                 }
+            });
+        }
+
+        async function getStats() {
+            const url = window.SUPABASE_URL;
+            const key = window.SUPABASE_ANON_KEY;
+            const headers = { 'apikey': key, 'Authorization': `Bearer ${key}` };
+
+            const sellers = await (await fetch(`${url}/rest/v1/sellers?select=id,user_id`, { headers })).json();
+            const products = await (await fetch(`${url}/rest/v1/products?select=id`, { headers })).json();
+            const activities = await (await fetch(`${url}/rest/v1/user_activities?select=user_id,created_at`, { headers })).json();
+
+            const totalSellers = sellers.length;
+            const totalProducts = products.length;
+            
+            const uniqueUsers = [...new Set([
+                ...sellers.map(s => s.user_id).filter(Boolean),
+                ...activities.map(a => a.user_id).filter(Boolean)
+            ])];
+            const totalUsers = uniqueUsers.length;
+
+            const today = new Date().toISOString().split('T')[0];
+            const activeToday = [...new Set(activities.filter(a => 
+                a.created_at?.startsWith(today)
+            ).map(a => a.user_id))].length;
+
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            const userGrowth = [...new Set(activities.filter(a => 
+                new Date(a.created_at) > sevenDaysAgo
+            ).map(a => a.user_id))].length;
+
+            return {
+                totalUsers,
+                totalSellers,
+                totalProducts,
+                activeToday,
+                userGrowth,
+                sellerPercentage: totalUsers ? ((totalSellers/totalUsers)*100).toFixed(1) : 0,
+                avgPerSeller: totalSellers ? (totalProducts/totalSellers).toFixed(1) : 0,
+                activeRate: totalUsers ? ((activeToday/totalUsers)*100).toFixed(1) : 0
+            };
+        }
+
+        async function getChartData() {
+            const url = window.SUPABASE_URL;
+            const key = window.SUPABASE_ANON_KEY;
+            const headers = { 'apikey': key, 'Authorization': `Bearer ${key}` };
+            
+            const labels = [];
+            const activities = [];
+            const sellers = [];
+            const products = [];
+
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                const dateStr = date.toISOString().split('T')[0];
+                labels.push(dateStr.substring(5));
+                
+                const nextDay = new Date(date);
+                nextDay.setDate(nextDay.getDate() + 1);
+                const nextStr = nextDay.toISOString().split('T')[0];
+
+                activities.push((await (await fetch(
+                    `${url}/rest/v1/user_activities?created_at=gte.${dateStr}&created_at=lt.${nextStr}&select=id`,
+                    { headers }
+                )).json()).length);
+
+                sellers.push((await (await fetch(
+                    `${url}/rest/v1/sellers?created_at=gte.${dateStr}&created_at=lt.${nextStr}&select=id`,
+                    { headers }
+                )).json()).length);
+
+                products.push((await (await fetch(
+                    `${url}/rest/v1/products?created_at=gte.${dateStr}&created_at=lt.${nextStr}&select=id`,
+                    { headers }
+                )).json()).length);
+            }
+
+            return { labels, activities, sellers, products };
+        }
+
+        async function getRecentActivitiesHTML() {
+            const url = window.SUPABASE_URL;
+            const key = window.SUPABASE_ANON_KEY;
+            const headers = { 'apikey': key, 'Authorization': `Bearer ${key}` };
+
+            const data = await (await fetch(
+                `${url}/rest/v1/user_activities?order=created_at.desc&limit=10`,
+                { headers }
+            )).json();
+
+            if (!data.length) return '<p>No recent activities</p>';
+
+            return `
+                <div class="activities-header">
+                    <h2>Recent Activities</h2>
+                    <button class="refresh-btn" style="padding:5px 15px;font-size:12px" onclick="loadAnalytics()">↻</button>
+                </div>
+                <table class="activities-table">
+                    <thead><tr><th>Time</th><th>User</th><th>Activity</th></tr></thead>
+                    <tbody>
+                        ${data.map(a => `
+                            <tr>
+                                <td>${timeAgo(new Date(a.created_at))}</td>
+                                <td>${a.user_id?.substring(0,8)}...</td>
+                                <td><span class="activity-type type-${a.activity_type}">${a.activity_type}</span></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function timeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            if (seconds < 60) return seconds + 's';
+            if (seconds < 3600) return Math.floor(seconds/60) + 'm';
+            if (seconds < 86400) return Math.floor(seconds/3600) + 'h';
+            return Math.floor(seconds/86400) + 'd';
+        }
+
+        function updateHeader() {
+            const sessionData = localStorage.getItem('supabase_session');
+            if (sessionData) {
+                document.getElementById('logoutBtn').style.display = 'inline-block';
+                const email = JSON.parse(sessionData).user?.email || 'User';
+                document.querySelector('.account-label').textContent = `Hello, ${email.split('@')[0]}`;
             }
         }
 
-        // Logout function
         window.logout = function() {
-            if (window.api && window.api.logout) {
-                window.api.logout();
-            } else {
-                localStorage.removeItem('supabase_session');
-                localStorage.removeItem('isLoggedIn');
-                window.location.href = 'index.html';
-            }
+            localStorage.clear();
+            window.location.href = 'index.html';
         };
 
-        // Handle search
         window.handleSearch = function() {
-            const searchInput = document.getElementById('searchInput');
-            const query = searchInput ? searchInput.value.trim() : '';
-            if (query) {
-                window.location.href = `search-results.html?q=${encodeURIComponent(query)}`;
-            }
+            const query = document.getElementById('searchInput').value;
+            if (query) window.location.href = `search-results.html?q=${encodeURIComponent(query)}`;
         };
     </script>
 </body>
