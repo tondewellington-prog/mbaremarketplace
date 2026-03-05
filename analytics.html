@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Try Google CDN instead -->
+    <!-- Chart.js from Cloudflare CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
     <style>
         * {
@@ -549,23 +549,51 @@
             });
         }
 
+        // OPTION 1 IMPLEMENTED: Get total users from profiles table
+        async function getTotalUsers() {
+            const url = window.SUPABASE_URL;
+            const key = window.SUPABASE_ANON_KEY;
+            const headers = { 'apikey': key, 'Authorization': `Bearer ${key}` };
+            
+            try {
+                // Try to get from profiles table first (Option 1)
+                const response = await fetch(`${url}/rest/v1/profiles?select=id`, { headers });
+                
+                if (response.ok) {
+                    const profiles = await response.json();
+                    return profiles.length;
+                } else {
+                    // Fallback to old method if profiles table doesn't exist
+                    console.log('Profiles table not found, falling back to user_activities');
+                    const activities = await (await fetch(`${url}/rest/v1/user_activities?select=user_id`, { headers })).json();
+                    const sellers = await (await fetch(`${url}/rest/v1/sellers?select=user_id`, { headers })).json();
+                    
+                    const uniqueUsers = [...new Set([
+                        ...sellers.map(s => s.user_id).filter(Boolean),
+                        ...activities.map(a => a.user_id).filter(Boolean)
+                    ])];
+                    return uniqueUsers.length;
+                }
+            } catch (error) {
+                console.error('Error getting total users:', error);
+                return 0;
+            }
+        }
+
         async function getStats() {
             const url = window.SUPABASE_URL;
             const key = window.SUPABASE_ANON_KEY;
             const headers = { 'apikey': key, 'Authorization': `Bearer ${key}` };
 
-            const sellers = await (await fetch(`${url}/rest/v1/sellers?select=id,user_id`, { headers })).json();
+            // Get total users using the new method
+            const totalUsers = await getTotalUsers();
+
+            const sellers = await (await fetch(`${url}/rest/v1/sellers?select=id`, { headers })).json();
             const products = await (await fetch(`${url}/rest/v1/products?select=id`, { headers })).json();
             const activities = await (await fetch(`${url}/rest/v1/user_activities?select=user_id,created_at`, { headers })).json();
 
             const totalSellers = sellers.length;
             const totalProducts = products.length;
-            
-            const uniqueUsers = [...new Set([
-                ...sellers.map(s => s.user_id).filter(Boolean),
-                ...activities.map(a => a.user_id).filter(Boolean)
-            ])];
-            const totalUsers = uniqueUsers.length;
 
             const today = new Date().toISOString().split('T')[0];
             const activeToday = [...new Set(activities.filter(a => 
