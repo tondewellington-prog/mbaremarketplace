@@ -2,6 +2,10 @@
 // Mbare Marketplace - Main JavaScript (Connected to Backend)
 // ============================================
 
+// Add warning message at the very beginning
+console.log('%c🔒 WARNING: Unauthorized access to this console is prohibited by Mbare Marketplace CEO, Tonderai Wellington Nyamandi. This activity is illegal and will be prosecuted.', 
+    'background: #232f3e; color: #ff9900; font-size: 14px; font-weight: bold; padding: 10px; border-radius: 5px;');
+
 // Product Data - Will be loaded from API
 let products = [];
 let sellersMap = {};
@@ -12,7 +16,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     try {
         // ADD THIS CHECK FOR API
         if (!window.api) {
-            console.log('Waiting for API to load...');
             // Wait a moment for API to load
             await new Promise(resolve => setTimeout(resolve, 500));
         }
@@ -65,7 +68,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             });
         }
     } catch (error) {
-        console.error('Initialization error:', error);
+        // Silent error handling
         // Fallback to local data if API fails
         loadFallbackProducts();
     }
@@ -77,9 +80,6 @@ async function loadSellersFromAPI() {
         const SUPABASE_URL = window.SUPABASE_URL;
         const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
         
-        console.log('Loading sellers...');
-        console.log('Fetching from:', `${SUPABASE_URL}/rest/v1/sellers?select=*`);
-        
         const response = await fetch(`${SUPABASE_URL}/rest/v1/sellers?select=*`, {
             headers: {
                 'apikey': SUPABASE_ANON_KEY,
@@ -88,30 +88,19 @@ async function loadSellersFromAPI() {
         });
         
         if (!response.ok) {
-            console.error('Sellers response error:', response.status, response.statusText);
-            const errorText = await response.text();
-            console.error('Error details:', errorText);
             return;
         }
         
         const sellers = await response.json();
-        console.log('Sellers loaded:', sellers);
         
         // Create a map of sellers by user_id
         if (Array.isArray(sellers) && sellers.length > 0) {
             sellers.forEach(seller => {
-                console.log('Processing seller:', seller);
                 sellersMap[seller.user_id] = seller;
             });
-            console.log('Sellers map created:', Object.keys(sellersMap).length, 'sellers');
-            console.log('Seller IDs in map:', Object.keys(sellersMap));
-        } else if (Array.isArray(sellers) && sellers.length === 0) {
-            console.warn('No sellers found in database.');
-        } else {
-            console.error('Unexpected sellers response format:', sellers);
         }
     } catch (error) {
-        console.error('Failed to load sellers:', error);
+        // Silent error handling
     }
 }
 
@@ -121,7 +110,6 @@ async function loadProductsFromAPI() {
         const SUPABASE_URL = window.SUPABASE_URL;
         const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
         
-        console.log('Loading products...');
         const response = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
             headers: {
                 'apikey': SUPABASE_ANON_KEY,
@@ -130,7 +118,6 @@ async function loadProductsFromAPI() {
         });
         
         const data = await response.json();
-        console.log('Products loaded:', data);
         
         if (Array.isArray(data)) {
             products = data.map(p => ({
@@ -147,10 +134,8 @@ async function loadProductsFromAPI() {
                 image_url: p.image_url,
                 seller: sellersMap[p.seller_id] || null
             }));
-            console.log('Products mapped:', products.length);
         }
     } catch (error) {
-        console.error('Failed to load products from API:', error);
         throw error;
     }
 }
@@ -171,7 +156,6 @@ async function loadUserBasket() {
                 const basketKey = `basket_${userId}`;
                 const userBasket = JSON.parse(localStorage.getItem(basketKey)) || [];
                 updateBasketCount(userBasket.reduce((sum, item) => sum + (item.quantity || 0), 0));
-                console.log('Loaded basket for user:', userId, 'Items:', userBasket.length);
             } else {
                 updateBasketCount(0);
             }
@@ -180,7 +164,6 @@ async function loadUserBasket() {
             updateBasketCount(0);
         }
     } catch (error) {
-        console.error('Failed to load basket:', error);
         updateBasketCount(0);
     }
 }
@@ -270,7 +253,6 @@ async function getSellerRatings(sellerId) {
         ratingsCache[sellerId] = result;
         return result;
     } catch (error) {
-        console.error('Error fetching ratings:', error);
         return {
             average: 0,
             count: 0,
@@ -698,10 +680,8 @@ async function addToBasket(productId, quantity = 1) {
         updateBasketCount(totalItems);
         
         showNotification('Item added to Basket!');
-        console.log('Basket updated for user:', userId, 'Total items:', totalItems);
         
     } catch (error) {
-        console.error('Error adding to basket:', error);
         showNotification('Failed to add item to basket');
     }
 }
@@ -737,7 +717,6 @@ function updateBasketCount(totalItems) {
             basketCount.textContent = '0';
             basketCount.style.display = 'none';
         } catch (error) {
-            console.error('Error updating basket count:', error);
             basketCount.textContent = '0';
             basketCount.style.display = 'none';
         }
@@ -1141,9 +1120,9 @@ async function trackActivity(activityType, details = {}) {
             })
         });
         
-        console.log('Activity tracked:', activityType, details);
+        // Silent tracking - no console logs
     } catch (error) {
-        console.error('Error tracking activity:', error);
+        // Silent error handling
     }
 }
 
@@ -1158,10 +1137,10 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/mbaremarketplace/sw.js')
       .then(registration => {
-        console.log('ServiceWorker registered successfully');
+        // Silent success
       })
       .catch(err => {
-        console.log('ServiceWorker registration failed: ', err);
+        // Silent error
       });
   });
 }
