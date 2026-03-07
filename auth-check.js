@@ -20,8 +20,6 @@ function checkLoginStatus() {
     const accountLink = document.querySelector('.account-link');
     const logoutBtn = document.getElementById('logoutBtn');
     
-    console.log('Checking login status:', { isLoggedIn, hasSession: !!sessionData });
-    
     if (isLoggedIn && sessionData && accountLabel && accountLink) {
         try {
             const session = JSON.parse(sessionData);
@@ -31,16 +29,13 @@ function checkLoginStatus() {
             // Update UI for logged in user
             accountLabel.textContent = 'Hello,';
             accountLink.textContent = userName;
-            accountLink.href = '#'; // Change this to your account page if you have one
+            accountLink.href = '#';
             
             // Show logout button
             if (logoutBtn) {
                 logoutBtn.style.display = 'inline-block';
             }
-            
-            console.log('User is logged in:', userEmail);
         } catch (e) {
-            console.error('Error parsing session:', e);
             // If error, clear storage and show logged out state
             localStorage.removeItem('isLoggedIn');
             localStorage.removeItem('supabase_session');
@@ -48,7 +43,6 @@ function checkLoginStatus() {
         }
     } else if (accountLabel && accountLink) {
         setLoggedOutState(accountLabel, accountLink, logoutBtn);
-        console.log('User is not logged in');
     }
 }
 
@@ -65,7 +59,6 @@ function setLoggedOutState(accountLabel, accountLink, logoutBtn) {
 
 // Logout function
 window.logout = function() {
-    console.log('Logging out...');
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('supabase_session');
     window.location.href = 'index.html';
