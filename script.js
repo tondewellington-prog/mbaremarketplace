@@ -1152,3 +1152,16 @@ window.trackActivity = trackActivity;
 
 // Make checkLoginAndNavigate available globally
 window.checkLoginAndNavigate = checkLoginAndNavigate;
+
+// Register service worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/mbaremarketplace/sw.js')
+      .then(registration => {
+        console.log('ServiceWorker registered successfully');
+      })
+      .catch(err => {
+        console.log('ServiceWorker registration failed: ', err);
+      });
+  });
+}
