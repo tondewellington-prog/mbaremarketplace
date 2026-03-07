@@ -303,7 +303,7 @@
             color: #666;
         }
         
-        /* iOS Install Prompt Modal */
+        /* iOS Install Prompt Modal - Updated to dark blue */
         .ios-prompt-modal {
             position: fixed;
             bottom: 20px;
@@ -509,6 +509,27 @@
                 font-size: 16px;
             }
         }
+
+        /* Login status indicator - fixed to match website colors */
+        .login-status-indicator {
+            background-color: #f0f0f0;
+            color: #232f3e;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+            border: 1px solid #ddd;
+        }
+        
+        .account-menu.logged-in .account-label {
+            color: #232f3e;
+        }
+        
+        .account-menu.logged-in .account-link {
+            color: #232f3e;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -564,7 +585,7 @@
                     </button>
                 </div>
                 <div class="header-right">
-                    <div class="account-menu">
+                    <div class="account-menu" id="accountMenu">
                         <span class="account-label">Hello, Sign in</span>
                         <a href="login.html" class="account-link">Account & Lists</a>
                         <button id="logoutBtn" class="logout-btn" onclick="logout()" style="display: none;">Logout</button>
@@ -779,11 +800,27 @@
         <button class="ios-got-it-btn" style="background: #232f3e;" onmouseover="this.style.background='#1a2533'" onmouseout="this.style.background='#232f3e'">Got it</button>
     </div>
 
+    <script>
+        // Console warning message
+        (function() {
+            const styles = [
+                'background: #232f3e',
+                'color: white',
+                'font-size: 16px',
+                'font-weight: bold',
+                'padding: 10px 20px',
+                'border-radius: 5px',
+                'line-height: 1.5'
+            ].join(';');
+            
+            console.log('%c⚠️ WARNING: Unauthorized Access Prohibited ⚠️\n\nThe Mbare Marketplace CEO, Tonderai Wellington Nyamandi has prohibited unauthorised access to this console. This is illegal and will be prosecuted.', styles);
+        })();
+    </script>
     <script src="api.js"></script>
     <script src="script.js"></script>
     <script src="auth-check.js"></script>
     <script>
-        // PWA Install Button with iOS Support - UPDATED
+        // PWA Install Button with iOS Support
         let deferredPrompt;
         const installButton = document.getElementById('installButton');
         const iosPrompt = document.getElementById('iosPromptModal');
@@ -813,7 +850,6 @@
                 // Android flow
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
-                console.log(`Install response: ${outcome}`);
                 deferredPrompt = null;
                 installButton.style.display = 'none';
             } else if (isIOS) {
@@ -931,8 +967,11 @@
         document.addEventListener('DOMContentLoaded', function() {
             const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
             const logoutBtn = document.getElementById('logoutBtn');
+            const accountMenu = document.getElementById('accountMenu');
+            
             if (isLoggedIn && logoutBtn) {
                 logoutBtn.style.display = 'inline-block';
+                accountMenu.classList.add('logged-in');
                 
                 // Update the welcome text
                 const sessionData = localStorage.getItem('supabase_session');
@@ -941,11 +980,17 @@
                         const session = JSON.parse(sessionData);
                         const userEmail = session.user?.email || 'User';
                         const accountLabel = document.querySelector('.account-label');
+                        const accountLink = document.querySelector('.account-link');
                         if (accountLabel) {
                             accountLabel.textContent = `Hello, ${userEmail.split('@')[0]}`;
+                            accountLabel.style.color = '#232f3e';
+                        }
+                        if (accountLink) {
+                            accountLink.textContent = 'Your Account';
+                            accountLink.style.color = '#232f3e';
                         }
                     } catch (e) {
-                        console.error('Error parsing session:', e);
+                        // Silently handle error
                     }
                 }
             }
