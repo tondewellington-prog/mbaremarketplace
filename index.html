@@ -303,6 +303,101 @@
             color: #666;
         }
         
+        /* iOS Install Prompt Modal - ADDED */
+        .ios-prompt-modal {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            z-index: 10000;
+            display: none;
+            animation: slideUp 0.3s ease;
+            border: 1px solid #ddd;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .ios-prompt-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .ios-prompt-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+        }
+        
+        .ios-prompt-title {
+            font-weight: 600;
+            font-size: 18px;
+            color: #232f3e;
+        }
+        
+        .ios-prompt-steps {
+            margin: 15px 0;
+        }
+        
+        .ios-step {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 10px 0;
+            padding: 8px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+        
+        .ios-step-number {
+            width: 24px;
+            height: 24px;
+            background: #f90;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .ios-prompt-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 20px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .ios-prompt-close:hover {
+            color: #666;
+        }
+        
+        .ios-got-it-btn {
+            width: 100%;
+            padding: 12px;
+            background: #f90;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        .ios-got-it-btn:hover {
+            background: #e68a00;
+        }
+        
         /* Mobile responsive styles */
         @media (max-width: 768px) {
             .search-bar {
@@ -657,34 +752,99 @@
         <span>📱 Install App</span>
     </div>
 
+    <!-- iOS Install Prompt Modal - ADDED -->
+    <div id="iosPromptModal" class="ios-prompt-modal">
+        <div class="ios-prompt-close" onclick="closeIOSPrompt()">✕</div>
+        <div class="ios-prompt-header">
+            <img src="https://tondewellington-prog.github.io/mbaremarketplace/icons/icon-152.png" class="ios-prompt-icon" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'50\' height=\'50\' viewBox=\'0 0 50 50\'%3E%3Crect width=\'50\' height=\'50\' fill=\'%23f90\'/%3E%3Ctext x=\'10\' y=\'35\' fill=\'white\' font-size=\'25\'%3E🛒%3C/text%3E%3C/svg%3E'">
+            <div>
+                <div class="ios-prompt-title">Mbare Marketplace</div>
+                <div style="color: #666; font-size: 14px;">Install on your iPhone</div>
+            </div>
+        </div>
+        <div class="ios-prompt-steps">
+            <div class="ios-step">
+                <div class="ios-step-number">1</div>
+                <div>Tap the Share button <span style="font-size: 20px;">📤</span></div>
+            </div>
+            <div class="ios-step">
+                <div class="ios-step-number">2</div>
+                <div>Scroll down & tap <strong>"Add to Home Screen"</strong></div>
+            </div>
+            <div class="ios-step">
+                <div class="ios-step-number">3</div>
+                <div>Tap <strong>"Add"</strong> in the top right</div>
+            </div>
+        </div>
+        <button class="ios-got-it-btn" onclick="closeIOSPrompt()">Got it</button>
+    </div>
+
     <script src="api.js"></script>
     <script src="script.js"></script>
     <script src="auth-check.js"></script>
     <script>
-        // PWA Install Button
+        // PWA Install Button with iOS Support - UPDATED
         let deferredPrompt;
         const installButton = document.getElementById('installButton');
+        const iosPrompt = document.getElementById('iosPromptModal');
 
+        // Detect if device is iOS
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+        // For Android/Chrome - wait for install prompt
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
+            // Show button on Android
             installButton.style.display = 'flex';
         });
 
-        installButton.addEventListener('click', async () => {
-            if (!deferredPrompt) {
-                alert('To install, look for "Add to Home Screen" in your browser menu');
-                return;
+        // For iOS - check if not already installed
+        if (isIOS) {
+            // Check if already in standalone mode (installed)
+            if (!window.navigator.standalone) {
+                installButton.style.display = 'flex';
             }
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            console.log(`Install response: ${outcome}`);
-            deferredPrompt = null;
+        }
+
+        // Handle button click
+        installButton.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                // Android flow
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`Install response: ${outcome}`);
+                deferredPrompt = null;
+                installButton.style.display = 'none';
+            } else if (isIOS) {
+                // iOS flow - show the nice modal
+                iosPrompt.style.display = 'block';
+            } else {
+                // Fallback for other browsers
+                alert('To install, look for "Add to Home Screen" in your browser menu');
+            }
+        });
+
+        // Close iOS prompt
+        window.closeIOSPrompt = function() {
+            iosPrompt.style.display = 'none';
+        };
+
+        // Hide button if app is already installed
+        window.addEventListener('appinstalled', () => {
             installButton.style.display = 'none';
         });
 
-        window.addEventListener('appinstalled', () => {
+        // Also hide button if already in standalone mode (iOS)
+        if (window.navigator.standalone) {
             installButton.style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        window.addEventListener('click', function(e) {
+            if (e.target === iosPrompt) {
+                closeIOSPrompt();
+            }
         });
 
         // Function to show login prompt
