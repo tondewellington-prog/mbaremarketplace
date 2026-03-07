@@ -30,40 +30,25 @@ const urlsToCache = [
 
 // Install event - cache all static assets
 self.addEventListener('install', event => {
-  console.log('Service Worker: Installing...');
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Service Worker: Caching files');
-        return cache.addAll(urlsToCache);
-      })
-      .then(() => {
-        console.log('Service Worker: Installation complete');
-        return self.skipWaiting();
-      })
-      .catch(error => {
-        console.error('Service Worker: Installation failed:', error);
-      })
+      .then(cache => cache.addAll(urlsToCache))
+      .then(() => self.skipWaiting())
   );
 });
 
 // Activate event - clean up old caches
 self.addEventListener('activate', event => {
-  console.log('Service Worker: Activating...');
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cache => {
           if (cache !== CACHE_NAME) {
-            console.log('Service Worker: Clearing old cache:', cache);
             return caches.delete(cache);
           }
         })
       );
-    }).then(() => {
-      console.log('Service Worker: Activation complete');
-      return self.clients.claim();
-    })
+    }).then(() => self.clients.claim())
   );
 });
 
@@ -83,40 +68,26 @@ self.addEventListener('fetch', event => {
     caches.match(event.request)
       .then(response => {
         if (response) {
-          // Return cached response
           return response;
         }
 
-        // Clone the request because it can only be used once
         const fetchRequest = event.request.clone();
 
-        // Try network
         return fetch(fetchRequest)
           .then(response => {
-            // Check if valid response
             if (!response || response.status !== 200 || response.type !== 'basic') {
               return response;
             }
 
-            // Clone the response because it can only be used once
             const responseToCache = response.clone();
 
-            // Cache the fetched response
             caches.open(CACHE_NAME)
-              .then(cache => {
-                cache.put(event.request, responseToCache);
-              })
-              .catch(error => {
-                console.error('Service Worker: Failed to cache response:', error);
-              });
+              .then(cache => cache.put(event.request, responseToCache));
 
             return response;
           })
-          .catch(error => {
-            console.log('Service Worker: Network request failed:', error);
-            
-            // Return a fallback for HTML pages if offline
-            if (event.request.headers.get('accept').includes('text/html')) {
+          .catch(() => {
+            if (event.request.headers.get('accept')?.includes('text/html')) {
               return caches.match('/mbaremarketplace/index.html');
             }
             
@@ -129,7 +100,7 @@ self.addEventListener('fetch', event => {
   );
 });
 
-// Handle push notifications (if you add them later)
+// Handle push notifications
 self.addEventListener('push', event => {
   const title = 'Mbare Marketplace';
   const options = {
