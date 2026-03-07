@@ -652,10 +652,41 @@
         </div>
     </footer>
 
+    <!-- Install App Button -->
+    <div id="installButton" style="display: none; position: fixed; bottom: 20px; right: 20px; background: #f90; color: white; padding: 12px 24px; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 9999; align-items: center; gap: 8px; font-weight: 600; border: none; font-size: 16px;">
+        <span>📱 Install App</span>
+    </div>
+
     <script src="api.js"></script>
     <script src="script.js"></script>
     <script src="auth-check.js"></script>
     <script>
+        // PWA Install Button
+        let deferredPrompt;
+        const installButton = document.getElementById('installButton');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installButton.style.display = 'flex';
+        });
+
+        installButton.addEventListener('click', async () => {
+            if (!deferredPrompt) {
+                alert('To install, look for "Add to Home Screen" in your browser menu');
+                return;
+            }
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`Install response: ${outcome}`);
+            deferredPrompt = null;
+            installButton.style.display = 'none';
+        });
+
+        window.addEventListener('appinstalled', () => {
+            installButton.style.display = 'none';
+        });
+
         // Function to show login prompt
         function showLoginPrompt() {
             document.getElementById('loginPromptModal').style.display = 'flex';
