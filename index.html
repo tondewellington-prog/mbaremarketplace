@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <link rel="manifest" href="https://tondewellington-prog.github.io/mbaremarketplace/manifest.json">
-<meta name="theme-color" content="#f90">
+<meta name="theme-color" content="#232f3e">
 
 <!-- iOS specific icons -->
 <link rel="apple-touch-icon" href="https://tondewellington-prog.github.io/mbaremarketplace/icons/icon-152.png">
@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
 <!-- Windows tiles -->
-<meta name="msapplication-TileColor" content="#f90">
+<meta name="msapplication-TileColor" content="#232f3e">
 <meta name="msapplication-TileImage" content="https://tondewellington-prog.github.io/mbaremarketplace/icons/icon-144.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -303,7 +303,7 @@
             color: #666;
         }
         
-        /* iOS Install Prompt Modal - ADDED */
+        /* iOS Install Prompt Modal */
         .ios-prompt-modal {
             position: fixed;
             bottom: 20px;
@@ -360,7 +360,7 @@
         .ios-step-number {
             width: 24px;
             height: 24px;
-            background: #f90;
+            background: #232f3e;
             color: white;
             border-radius: 50%;
             display: flex;
@@ -385,7 +385,7 @@
         .ios-got-it-btn {
             width: 100%;
             padding: 12px;
-            background: #f90;
+            background: #232f3e;
             color: white;
             border: none;
             border-radius: 8px;
@@ -395,7 +395,7 @@
         }
         
         .ios-got-it-btn:hover {
-            background: #e68a00;
+            background: #1a2533;
         }
         
         /* Mobile responsive styles */
@@ -747,36 +747,36 @@
         </div>
     </footer>
 
-    <!-- Install App Button -->
-    <div id="installButton" style="display: none; position: fixed; bottom: 20px; right: 20px; background: #f90; color: white; padding: 12px 24px; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 9999; align-items: center; gap: 8px; font-weight: 600; border: none; font-size: 16px;">
+    <!-- Install App Button - Updated to dark blue -->
+    <div id="installButton" style="display: none; position: fixed; bottom: 20px; right: 20px; background: #232f3e; color: white; padding: 12px 24px; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 9999; align-items: center; gap: 8px; font-weight: 600; border: none; font-size: 16px;">
         <span>📱 Install App</span>
     </div>
 
-    <!-- iOS Install Prompt Modal - ADDED -->
-    <div id="iosPromptModal" class="ios-prompt-modal">
+    <!-- iOS Install Prompt Modal - Updated to dark blue -->
+    <div id="iosPromptModal" class="ios-prompt-modal" style="border-top: 5px solid #232f3e;">
         <div class="ios-prompt-close" onclick="closeIOSPrompt()">✕</div>
         <div class="ios-prompt-header">
-            <img src="https://tondewellington-prog.github.io/mbaremarketplace/icons/icon-152.png" class="ios-prompt-icon" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'50\' height=\'50\' viewBox=\'0 0 50 50\'%3E%3Crect width=\'50\' height=\'50\' fill=\'%23f90\'/%3E%3Ctext x=\'10\' y=\'35\' fill=\'white\' font-size=\'25\'%3E🛒%3C/text%3E%3C/svg%3E'">
+            <img src="https://tondewellington-prog.github.io/mbaremarketplace/icons/icon-152.png" class="ios-prompt-icon" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'50\' height=\'50\' viewBox=\'0 0 50 50\'%3E%3Crect width=\'50\' height=\'50\' fill=\'%23232f3e\'/%3E%3Ctext x=\'10\' y=\'35\' fill=\'white\' font-size=\'25\'%3E🛒%3C/text%3E%3C/svg%3E'">
             <div>
                 <div class="ios-prompt-title">Mbare Marketplace</div>
                 <div style="color: #666; font-size: 14px;">Install on your iPhone</div>
             </div>
         </div>
         <div class="ios-prompt-steps">
-            <div class="ios-step">
-                <div class="ios-step-number">1</div>
+            <div class="ios-step" style="border-left: 4px solid #232f3e;">
+                <div class="ios-step-number" style="background: #232f3e;">1</div>
                 <div>Tap the Share button <span style="font-size: 20px;">📤</span></div>
             </div>
-            <div class="ios-step">
-                <div class="ios-step-number">2</div>
+            <div class="ios-step" style="border-left: 4px solid #232f3e;">
+                <div class="ios-step-number" style="background: #232f3e;">2</div>
                 <div>Scroll down & tap <strong>"Add to Home Screen"</strong></div>
             </div>
-            <div class="ios-step">
-                <div class="ios-step-number">3</div>
+            <div class="ios-step" style="border-left: 4px solid #232f3e;">
+                <div class="ios-step-number" style="background: #232f3e;">3</div>
                 <div>Tap <strong>"Add"</strong> in the top right</div>
             </div>
         </div>
-        <button class="ios-got-it-btn" onclick="closeIOSPrompt()">Got it</button>
+        <button class="ios-got-it-btn" style="background: #232f3e;" onmouseover="this.style.background='#1a2533'" onmouseout="this.style.background='#232f3e'">Got it</button>
     </div>
 
     <script src="api.js"></script>
