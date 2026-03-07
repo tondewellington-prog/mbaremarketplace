@@ -801,24 +801,95 @@
     </div>
 
     <script>
-        // Console warning message
+        // Console warning message - corrected grammar
         (function() {
+            // Override console methods to block all logs
+            const originalConsole = {
+                log: console.log,
+                info: console.info,
+                warn: console.warn,
+                error: console.error,
+                debug: console.debug
+            };
+            
+            // Block all console methods
+            console.log = console.info = console.warn = console.error = console.debug = function() {};
+            
+            // Show warning message only once with proper styling
             const styles = [
                 'background: #232f3e',
-                'color: white',
+                'color: #ff9900',
                 'font-size: 16px',
                 'font-weight: bold',
-                'padding: 10px 20px',
+                'padding: 12px 20px',
                 'border-radius: 5px',
-                'line-height: 1.5'
+                'border-left: 5px solid #ff9900',
+                'line-height: 1.6',
+                'font-family: "Inter", sans-serif'
             ].join(';');
             
-            console.log('%c⚠️ WARNING: Unauthorized Access Prohibited ⚠️\n\nThe Mbare Marketplace CEO, Tonderai Wellington Nyamandi has prohibited unauthorised access to this console. This is illegal and will be prosecuted.', styles);
+            const message = '%c🔒 SECURITY NOTICE\n\nThe Mbare Marketplace CEO, Tonderai Wellington Nyamandi, has prohibited unauthorized access to this console. This activity is illegal and will be prosecuted.';
+            
+            // Use original console.log once to show warning
+            originalConsole.log(message, styles);
         })();
     </script>
     <script src="api.js"></script>
     <script src="script.js"></script>
     <script src="auth-check.js"></script>
+    <script>
+        // Override console in other scripts as well
+        (function() {
+            const originalConsole = window.console;
+            const noop = function() {};
+            
+            // Create a new console object with all methods as noop
+            window.console = {
+                log: noop,
+                info: noop,
+                warn: noop,
+                error: noop,
+                debug: noop,
+                trace: noop,
+                dir: noop,
+                dirxml: noop,
+                group: noop,
+                groupCollapsed: noop,
+                groupEnd: noop,
+                time: noop,
+                timeEnd: noop,
+                timeLog: noop,
+                count: noop,
+                assert: noop,
+                clear: noop,
+                table: noop
+            };
+            
+            // Restore the warning message function
+            window.showConsoleWarning = function() {
+                const styles = [
+                    'background: #232f3e',
+                    'color: #ff9900',
+                    'font-size: 16px',
+                    'font-weight: bold',
+                    'padding: 12px 20px',
+                    'border-radius: 5px',
+                    'border-left: 5px solid #ff9900',
+                    'line-height: 1.6',
+                    'font-family: "Inter", sans-serif'
+                ].join(';');
+                
+                const message = '%c🔒 SECURITY NOTICE\n\nThe Mbare Marketplace CEO, Tonderai Wellington Nyamandi, has prohibited unauthorized access to this console. This activity is illegal and will be prosecuted.';
+                
+                originalConsole.log(message, styles);
+            };
+            
+            // Show warning once
+            setTimeout(() => {
+                window.showConsoleWarning();
+            }, 100);
+        })();
+    </script>
     <script>
         // PWA Install Button with iOS Support
         let deferredPrompt;
