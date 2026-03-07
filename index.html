@@ -303,7 +303,7 @@
             color: #666;
         }
         
-        /* iOS Install Prompt Modal */
+        /* iOS Install Prompt Modal - ADDED */
         .ios-prompt-modal {
             position: fixed;
             bottom: 20px;
@@ -747,14 +747,12 @@
         </div>
     </footer>
 
-      <!-- Install App Button -->
-    <!-- INSTALL BUTTON - DEFINITELY VISIBLE -->
-    <div id="installButton" style="position: fixed !important; bottom: 30px !important; right: 30px !important; background: #ff0000 !important; color: white !important; padding: 20px 40px !important; border-radius: 60px !important; z-index: 999999 !important; font-size: 24px !important; font-weight: bold !important; border: 5px solid yellow !important; box-shadow: 0 10px 30px black !important; display: flex !important; align-items: center !important; gap: 15px !important;">
-        <span style="font-size: 32px;">📱</span>
-        <span>CLICK TO INSTALL APP</span>
+    <!-- Install App Button -->
+    <div id="installButton" style="display: none; position: fixed; bottom: 20px; right: 20px; background: #f90; color: white; padding: 12px 24px; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 9999; align-items: center; gap: 8px; font-weight: 600; border: none; font-size: 16px;">
+        <span>📱 Install App</span>
     </div>
 
-    <!-- iOS Install Prompt Modal -->
+    <!-- iOS Install Prompt Modal - ADDED -->
     <div id="iosPromptModal" class="ios-prompt-modal">
         <div class="ios-prompt-close" onclick="closeIOSPrompt()">✕</div>
         <div class="ios-prompt-header">
@@ -785,54 +783,34 @@
     <script src="script.js"></script>
     <script src="auth-check.js"></script>
     <script>
-        // PWA Install Button with iOS Support
+        // PWA Install Button with iOS Support - UPDATED
         let deferredPrompt;
         const installButton = document.getElementById('installButton');
         const iosPrompt = document.getElementById('iosPromptModal');
 
         // Detect if device is iOS
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-        
-        // Log device info for debugging
-        console.log('Device is iOS:', isIOS);
-        console.log('Standalone mode:', window.navigator.standalone);
 
         // For Android/Chrome - wait for install prompt
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            console.log('beforeinstallprompt fired');
             // Show button on Android
             installButton.style.display = 'flex';
         });
 
-        // For iOS - ALWAYS show button if not in standalone mode
+        // For iOS - check if not already installed
         if (isIOS) {
-            console.log('iOS detected, checking standalone mode');
             // Check if already in standalone mode (installed)
             if (!window.navigator.standalone) {
-                console.log('Not installed, showing button');
                 installButton.style.display = 'flex';
-            } else {
-                console.log('Already installed, hiding button');
-                installButton.style.display = 'none';
             }
-        } else {
-            // For non-iOS devices, show button after a delay if not already shown
-            setTimeout(() => {
-                if (installButton.style.display !== 'flex' && !deferredPrompt) {
-                    console.log('No install prompt detected, showing fallback button');
-                    installButton.style.display = 'flex';
-                }
-            }, 3000);
         }
 
         // Handle button click
         installButton.addEventListener('click', async () => {
-            console.log('Install button clicked');
             if (deferredPrompt) {
                 // Android flow
-                console.log('Showing Android install prompt');
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
                 console.log(`Install response: ${outcome}`);
@@ -840,30 +818,25 @@
                 installButton.style.display = 'none';
             } else if (isIOS) {
                 // iOS flow - show the nice modal
-                console.log('Showing iOS instructions modal');
                 iosPrompt.style.display = 'block';
             } else {
                 // Fallback for other browsers
-                console.log('Showing generic instructions');
                 alert('To install, look for "Add to Home Screen" in your browser menu');
             }
         });
 
         // Close iOS prompt
         window.closeIOSPrompt = function() {
-            console.log('Closing iOS prompt');
             iosPrompt.style.display = 'none';
         };
 
         // Hide button if app is already installed
         window.addEventListener('appinstalled', () => {
-            console.log('App installed event');
             installButton.style.display = 'none';
         });
 
         // Also hide button if already in standalone mode (iOS)
         if (window.navigator.standalone) {
-            console.log('In standalone mode, hiding button');
             installButton.style.display = 'none';
         }
 
