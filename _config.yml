@@ -1,0 +1,10 @@
+# GitHub Pages cache control
+include:
+  - .nojekyll
+
+# Add cache control headers
+webrick:
+  headers:
+    Cache-Control: "no-cache, no-store, must-revalidate"
+    Pragma: "no-cache"
+    Expires: "0"
