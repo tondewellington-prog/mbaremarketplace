@@ -809,10 +809,10 @@
     <script src="script.js"></script>
     <script src="auth-check.js"></script>
     
-    <!-- APP DOWNLOAD TRACKING - WITH CONSOLE LOGS ENABLED FOR TESTING -->
+    <!-- APP DOWNLOAD TRACKING - FIXED VERSION -->
     <script>
         // ============================================
-        // APP DOWNLOAD TRACKING - WITH CONSOLE LOGS
+        // APP DOWNLOAD TRACKING - FIXED VERSION
         // ============================================
         
         // Make sure we have the correct Supabase URL
@@ -820,7 +820,6 @@
         window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
         
         console.log('📱 App Download Tracking Initialized');
-        console.log('Supabase URL:', window.SUPABASE_URL);
         
         // Make trackInstallClick globally available
         window.trackInstallClick = function(source = 'install_button') {
@@ -829,7 +828,7 @@
         };
 
         async function recordAppDownload(downloadType, details = {}) {
-            console.log('📊 Recording download:', downloadType, details);
+            console.log('📊 Recording download:', downloadType);
             
             try {
                 const SUPABASE_URL = window.SUPABASE_URL;
@@ -845,8 +844,6 @@
                 const platform = navigator.platform;
                 const language = navigator.language;
                 const screenSize = `${window.screen.width}x${window.screen.height}`;
-                
-                console.log('Device Info:', { userAgent, platform, language, screenSize });
                 
                 // Determine device type
                 let deviceType = 'desktop';
@@ -872,8 +869,6 @@
                 else if (userAgent.indexOf('Edge') !== -1) browser = 'edge';
                 else if (userAgent.indexOf('Opera') !== -1) browser = 'opera';
                 
-                console.log('Detected:', { deviceType, os, browser });
-                
                 // Get user ID if logged in
                 let userId = null;
                 const sessionData = localStorage.getItem('supabase_session');
@@ -881,10 +876,7 @@
                     try {
                         const session = JSON.parse(sessionData);
                         userId = session.user?.id;
-                        console.log('User ID:', userId);
-                    } catch (e) {
-                        console.error('Error parsing session:', e);
-                    }
+                    } catch (e) {}
                 }
                 
                 // Create download record
@@ -902,14 +894,10 @@
                     timestamp: new Date().toISOString()
                 };
                 
-                console.log('Sending to Supabase:', downloadData);
-                
-                // Use the correct URL format
-                const url = `${SUPABASE_URL}/rest/v1/app_downloads`;
-                console.log('Fetch URL:', url);
+                console.log('Sending to Supabase...');
                 
                 // Send to Supabase with both apikey and Authorization headers
-                const response = await fetch(url, {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/app_downloads`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -922,8 +910,18 @@
                 console.log('Response status:', response.status);
                 
                 if (response.ok) {
-                    const result = await response.json();
-                    console.log('✅ Download tracked successfully:', result);
+                    // Only try to parse JSON if there's content
+                    const text = await response.text();
+                    if (text) {
+                        try {
+                            const result = JSON.parse(text);
+                            console.log('✅ Download tracked successfully');
+                        } catch (e) {
+                            console.log('✅ Download tracked (no response body)');
+                        }
+                    } else {
+                        console.log('✅ Download tracked successfully');
+                    }
                 } else {
                     const errorText = await response.text();
                     console.error('❌ Failed to track download:', response.status, errorText);
@@ -937,24 +935,10 @@
                         timestamp: new Date().toISOString()
                     });
                     localStorage.setItem('pending_downloads', JSON.stringify(pendingDownloads));
-                    console.log('Stored in pending_downloads:', pendingDownloads.length);
                 }
                 
             } catch (error) {
-                console.error('❌ Error in recordAppDownload:', error);
-                
-                // Store failed attempts locally
-                try {
-                    const pendingDownloads = JSON.parse(localStorage.getItem('pending_downloads') || '[]');
-                    pendingDownloads.push({
-                        data: { download_type: downloadType, ...details },
-                        error: error.message,
-                        timestamp: new Date().toISOString()
-                    });
-                    localStorage.setItem('pending_downloads', JSON.stringify(pendingDownloads));
-                } catch (e) {
-                    console.error('Error storing pending download:', e);
-                }
+                console.error('❌ Error in recordAppDownload:', error.message);
             }
         }
 
@@ -988,7 +972,7 @@
                         remaining.push(item);
                     }
                 } catch (e) {
-                    console.error('Retry failed:', e);
+                    console.error('Retry failed:', e.message);
                     remaining.push(item);
                 }
             }
@@ -1050,7 +1034,7 @@
             }
         });
 
-        console.log('📊 App download tracking ready - click the Install button to test');
+        console.log('📊 App download tracking ready');
     </script>
     
     <script>
