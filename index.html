@@ -771,8 +771,8 @@
         </div>
     </footer>
 
-    <!-- Install App Button - Updated to dark blue -->
-    <div id="installButton" style="display: none; position: fixed; bottom: 20px; right: 20px; background: #232f3e; color: white; padding: 12px 24px; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 9999; align-items: center; gap: 8px; font-weight: 600; border: none; font-size: 16px;">
+    <!-- Install App Button - Updated to dark blue with tracking -->
+    <div id="installButton" onclick="window.trackInstallClick && window.trackInstallClick()" style="display: none; position: fixed; bottom: 20px; right: 20px; background: #232f3e; color: white; padding: 12px 24px; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 9999; align-items: center; gap: 8px; font-weight: 600; border: none; font-size: 16px;">
         <span>📱 Install App</span>
     </div>
 
@@ -840,6 +840,175 @@
     <script src="api.js"></script>
     <script src="script.js"></script>
     <script src="auth-check.js"></script>
+    
+    <!-- APP DOWNLOAD TRACKING - ADDED HERE -->
+    <script>
+        // ============================================
+        // APP DOWNLOAD TRACKING
+        // ============================================
+        
+        // Make trackInstallClick globally available
+        window.trackInstallClick = function(source = 'install_button') {
+            console.log('📱 Install click tracked from:', source);
+            recordAppDownload('install_click', { source: source });
+        };
+
+        async function recordAppDownload(downloadType, details = {}) {
+            try {
+                const SUPABASE_URL = window.SUPABASE_URL;
+                const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
+                
+                if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+                    console.error('Supabase config not found');
+                    return;
+                }
+                
+                // Get device information
+                const userAgent = navigator.userAgent;
+                const platform = navigator.platform;
+                const language = navigator.language;
+                const screenSize = `${window.screen.width}x${window.screen.height}`;
+                
+                // Determine device type
+                let deviceType = 'desktop';
+                if (/mobile|android|iphone|ipad|ipod/i.test(userAgent)) {
+                    deviceType = 'mobile';
+                } else if (/tablet|ipad/i.test(userAgent)) {
+                    deviceType = 'tablet';
+                }
+                
+                // Determine OS
+                let os = 'unknown';
+                if (userAgent.indexOf('Win') !== -1) os = 'windows';
+                else if (userAgent.indexOf('Mac') !== -1) os = 'macos';
+                else if (userAgent.indexOf('Linux') !== -1) os = 'linux';
+                else if (userAgent.indexOf('Android') !== -1) os = 'android';
+                else if (userAgent.indexOf('like Mac') !== -1) os = 'ios';
+                
+                // Get browser
+                let browser = 'unknown';
+                if (userAgent.indexOf('Firefox') !== -1) browser = 'firefox';
+                else if (userAgent.indexOf('Chrome') !== -1) browser = 'chrome';
+                else if (userAgent.indexOf('Safari') !== -1) browser = 'safari';
+                else if (userAgent.indexOf('Edge') !== -1) browser = 'edge';
+                else if (userAgent.indexOf('Opera') !== -1) browser = 'opera';
+                
+                // Get user ID if logged in
+                let userId = null;
+                const sessionData = localStorage.getItem('supabase_session');
+                if (sessionData) {
+                    try {
+                        const session = JSON.parse(sessionData);
+                        userId = session.user?.id;
+                    } catch (e) {}
+                }
+                
+                // Create download record
+                const downloadData = {
+                    download_type: downloadType,
+                    device_type: deviceType,
+                    os: os,
+                    browser: browser,
+                    platform: platform,
+                    screen_size: screenSize,
+                    language: language,
+                    user_agent: userAgent.substring(0, 255),
+                    user_id: userId,
+                    referrer: document.referrer || 'direct',
+                    timestamp: new Date().toISOString()
+                };
+                
+                console.log('Sending download data to Supabase:', downloadData);
+                
+                // Send to Supabase
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/app_downloads`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify(downloadData)
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('✅ Download tracked successfully in Supabase:', result);
+                    
+                    // Also track in user_activities if logged in
+                    if (userId && window.trackActivity) {
+                        window.trackActivity('app_download', { 
+                            type: downloadType,
+                            device: deviceType,
+                            os: os 
+                        });
+                    }
+                } else {
+                    const error = await response.text();
+                    console.error('❌ Failed to track download:', error);
+                }
+                
+            } catch (error) {
+                console.error('Error recording download:', error);
+            }
+        }
+
+        // Track when app is successfully installed
+        window.addEventListener('appinstalled', () => {
+            console.log('✅ App was successfully installed');
+            recordAppDownload('pwa_install');
+            
+            // Also track that we've recorded this installation
+            localStorage.setItem('app_install_tracked', 'true');
+            localStorage.setItem('app_install_date', new Date().toISOString());
+        });
+
+        // Track when page is viewed in standalone mode (already installed)
+        if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+            console.log('📱 App is running in standalone mode');
+            // Check if we've already tracked this installation
+            if (!localStorage.getItem('app_install_tracked')) {
+                recordAppDownload('pwa_install');
+                localStorage.setItem('app_install_tracked', 'true');
+                localStorage.setItem('app_install_date', new Date().toISOString());
+            }
+        }
+
+        // Track beforeinstallprompt event (shown to user)
+        let promptCount = 0;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            promptCount++;
+            if (promptCount === 1) {
+                console.log('📲 Install prompt shown to user');
+                recordAppDownload('install_prompt_shown');
+            }
+        });
+
+        // For iOS - detect if they might add to home screen
+        if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) {
+            if (!window.navigator.standalone) {
+                // Show a prompt after 10 seconds (for analytics)
+                setTimeout(() => {
+                    console.log('🍎 iOS user - add to home screen prompt shown');
+                    recordAppDownload('ios_add_to_homescreen_prompt');
+                }, 10000);
+            }
+        }
+
+        // Track all clicks on install-related elements
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('#installButton') || 
+                e.target.closest('.install-btn') || 
+                (e.target.closest('button') && e.target.textContent.includes('Install'))) {
+                console.log('📱 Install button clicked via event listener');
+                recordAppDownload('install_click', { method: 'click_event' });
+            }
+        });
+
+        console.log('📊 App download tracking initialized');
+    </script>
+    
     <script>
         // Override console in other scripts as well
         (function() {
@@ -918,20 +1087,37 @@
             }
         }
 
-        // Handle button click
+        // Handle button click - with tracking
         installButton.addEventListener('click', async () => {
+            // Track the click
+            if (window.trackInstallClick) {
+                window.trackInstallClick('install_button');
+            }
+            
             if (deferredPrompt) {
                 // Android flow
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
+                
+                // Track the outcome
+                if (outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                    recordAppDownload('install_accepted');
+                } else {
+                    console.log('User dismissed the install prompt');
+                    recordAppDownload('install_dismissed');
+                }
+                
                 deferredPrompt = null;
                 installButton.style.display = 'none';
             } else if (isIOS) {
                 // iOS flow - show the nice modal
                 iosPrompt.style.display = 'block';
+                recordAppDownload('ios_install_modal_shown');
             } else {
                 // Fallback for other browsers
                 alert('To install, look for "Add to Home Screen" in your browser menu');
+                recordAppDownload('install_fallback_shown');
             }
         });
 
@@ -943,6 +1129,7 @@
         // Hide button if app is already installed
         window.addEventListener('appinstalled', () => {
             installButton.style.display = 'none';
+            recordAppDownload('pwa_install_complete');
         });
 
         // Also hide button if already in standalone mode (iOS)
