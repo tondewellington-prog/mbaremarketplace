@@ -841,15 +841,14 @@
     <script src="script.js"></script>
     <script src="auth-check.js"></script>
     
-    <!-- APP DOWNLOAD TRACKING - ADDED HERE -->
+    <!-- APP DOWNLOAD TRACKING - SILENT VERSION (NO CONSOLE LOGS) -->
     <script>
         // ============================================
-        // APP DOWNLOAD TRACKING
+        // APP DOWNLOAD TRACKING - SILENT VERSION
         // ============================================
         
         // Make trackInstallClick globally available
         window.trackInstallClick = function(source = 'install_button') {
-            console.log('📱 Install click tracked from:', source);
             recordAppDownload('install_click', { source: source });
         };
 
@@ -858,10 +857,7 @@
                 const SUPABASE_URL = window.SUPABASE_URL;
                 const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
                 
-                if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-                    console.error('Supabase config not found');
-                    return;
-                }
+                if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return;
                 
                 // Get device information
                 const userAgent = navigator.userAgent;
@@ -918,10 +914,8 @@
                     timestamp: new Date().toISOString()
                 };
                 
-                console.log('Sending download data to Supabase:', downloadData);
-                
-                // Send to Supabase
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/app_downloads`, {
+                // Send to Supabase silently
+                await fetch(`${SUPABASE_URL}/rest/v1/app_downloads`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -931,42 +925,20 @@
                     body: JSON.stringify(downloadData)
                 });
                 
-                if (response.ok) {
-                    const result = await response.json();
-                    console.log('✅ Download tracked successfully in Supabase:', result);
-                    
-                    // Also track in user_activities if logged in
-                    if (userId && window.trackActivity) {
-                        window.trackActivity('app_download', { 
-                            type: downloadType,
-                            device: deviceType,
-                            os: os 
-                        });
-                    }
-                } else {
-                    const error = await response.text();
-                    console.error('❌ Failed to track download:', error);
-                }
-                
             } catch (error) {
-                console.error('Error recording download:', error);
+                // Silently fail - no console logs
             }
         }
 
         // Track when app is successfully installed
         window.addEventListener('appinstalled', () => {
-            console.log('✅ App was successfully installed');
             recordAppDownload('pwa_install');
-            
-            // Also track that we've recorded this installation
             localStorage.setItem('app_install_tracked', 'true');
             localStorage.setItem('app_install_date', new Date().toISOString());
         });
 
         // Track when page is viewed in standalone mode (already installed)
         if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
-            console.log('📱 App is running in standalone mode');
-            // Check if we've already tracked this installation
             if (!localStorage.getItem('app_install_tracked')) {
                 recordAppDownload('pwa_install');
                 localStorage.setItem('app_install_tracked', 'true');
@@ -974,23 +946,20 @@
             }
         }
 
-        // Track beforeinstallprompt event (shown to user)
+        // Track beforeinstallprompt event
         let promptCount = 0;
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             promptCount++;
             if (promptCount === 1) {
-                console.log('📲 Install prompt shown to user');
                 recordAppDownload('install_prompt_shown');
             }
         });
 
-        // For iOS - detect if they might add to home screen
+        // For iOS
         if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) {
             if (!window.navigator.standalone) {
-                // Show a prompt after 10 seconds (for analytics)
                 setTimeout(() => {
-                    console.log('🍎 iOS user - add to home screen prompt shown');
                     recordAppDownload('ios_add_to_homescreen_prompt');
                 }, 10000);
             }
@@ -1001,64 +970,59 @@
             if (e.target.closest('#installButton') || 
                 e.target.closest('.install-btn') || 
                 (e.target.closest('button') && e.target.textContent.includes('Install'))) {
-                console.log('📱 Install button clicked via event listener');
                 recordAppDownload('install_click', { method: 'click_event' });
             }
         });
-
-        console.log('📊 App download tracking initialized');
     </script>
     
     <script>
-        // Override console in other scripts as well
+        // Override console in other scripts as well - but keep tracking working
         (function() {
             const originalConsole = window.console;
-            const noop = function() {};
             
-            // Create a new console object with all methods as noop
+            // Store original console methods for warning message
+            const originalLog = originalConsole.log;
+            
+            // Create a new console object with all methods as noop except we'll keep the warning
             window.console = {
-                log: noop,
-                info: noop,
-                warn: noop,
-                error: noop,
-                debug: noop,
-                trace: noop,
-                dir: noop,
-                dirxml: noop,
-                group: noop,
-                groupCollapsed: noop,
-                groupEnd: noop,
-                time: noop,
-                timeEnd: noop,
-                timeLog: noop,
-                count: noop,
-                assert: noop,
-                clear: noop,
-                table: noop
+                log: function() {},
+                info: function() {},
+                warn: function() {},
+                error: function() {},
+                debug: function() {},
+                trace: function() {},
+                dir: function() {},
+                dirxml: function() {},
+                group: function() {},
+                groupCollapsed: function() {},
+                groupEnd: function() {},
+                time: function() {},
+                timeEnd: function() {},
+                timeLog: function() {},
+                count: function() {},
+                assert: function() {},
+                clear: function() {},
+                table: function() {}
             };
             
-            // Restore the warning message function
-            window.showConsoleWarning = function() {
-                const styles = [
-                    'background: #232f3e',
-                    'color: #ff9900',
-                    'font-size: 16px',
-                    'font-weight: bold',
-                    'padding: 12px 20px',
-                    'border-radius: 5px',
-                    'border-left: 5px solid #ff9900',
-                    'line-height: 1.6',
-                    'font-family: "Inter", sans-serif'
-                ].join(';');
-                
-                const message = '%c🔒 SECURITY NOTICE\n\nThe Mbare Marketplace CEO, Tonderai Wellington Nyamandi, has prohibited unauthorized access to this console. This activity is illegal and will be prosecuted.';
-                
-                originalConsole.log(message, styles);
-            };
+            // Show warning message once
+            const styles = [
+                'background: #232f3e',
+                'color: #ff9900',
+                'font-size: 16px',
+                'font-weight: bold',
+                'padding: 12px 20px',
+                'border-radius: 5px',
+                'border-left: 5px solid #ff9900',
+                'line-height: 1.6',
+                'font-family: "Inter", sans-serif'
+            ].join(';');
             
-            // Show warning once
+            const message = '%c🔒 SECURITY NOTICE\n\nThe Mbare Marketplace CEO, Tonderai Wellington Nyamandi, has prohibited unauthorized access to this console. This activity is illegal and will be prosecuted.';
+            
+            // Use original console.log once to show warning
             setTimeout(() => {
-                window.showConsoleWarning();
+                originalLog(message, styles);
             }, 100);
         })();
     </script>
@@ -1099,12 +1063,10 @@
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
                 
-                // Track the outcome
+                // Track the outcome silently
                 if (outcome === 'accepted') {
-                    console.log('User accepted the install prompt');
                     recordAppDownload('install_accepted');
                 } else {
-                    console.log('User dismissed the install prompt');
                     recordAppDownload('install_dismissed');
                 }
                 
