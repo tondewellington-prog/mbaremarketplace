@@ -18,6 +18,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mbare Marketplace - Online Shopping</title>
+    <!-- Favicon fix -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛒</text></svg>">
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -772,7 +774,7 @@
     </footer>
 
     <!-- Install App Button - Updated to dark blue with tracking -->
-    <div id="installButton" onclick="window.trackInstallClick && window.trackInstallClick()" style="display: none; position: fixed; bottom: 20px; right: 20px; background: #232f3e; color: white; padding: 12px 24px; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 9999; align-items: center; gap: 8px; font-weight: 600; border: none; font-size: 16px;">
+    <div id="installButton" onclick="window.trackInstallClick &amp;&amp; window.trackInstallClick('install_button')" style="display: none; position: fixed; bottom: 20px; right: 20px; background: #232f3e; color: white; padding: 12px 24px; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 9999; align-items: center; gap: 8px; font-weight: 600; border: none; font-size: 16px;">
         <span>📱 Install App</span>
     </div>
 
@@ -803,67 +805,48 @@
         <button class="ios-got-it-btn" style="background: #232f3e;" onmouseover="this.style.background='#1a2533'" onmouseout="this.style.background='#232f3e'">Got it</button>
     </div>
 
-    <script>
-        // Console warning message - corrected grammar
-        (function() {
-            // Override console methods to block all logs
-            const originalConsole = {
-                log: console.log,
-                info: console.info,
-                warn: console.warn,
-                error: console.error,
-                debug: console.debug
-            };
-            
-            // Block all console methods
-            console.log = console.info = console.warn = console.error = console.debug = function() {};
-            
-            // Show warning message only once with proper styling
-            const styles = [
-                'background: #232f3e',
-                'color: #ff9900',
-                'font-size: 16px',
-                'font-weight: bold',
-                'padding: 12px 20px',
-                'border-radius: 5px',
-                'border-left: 5px solid #ff9900',
-                'line-height: 1.6',
-                'font-family: "Inter", sans-serif'
-            ].join(';');
-            
-            const message = '%c🔒 SECURITY NOTICE\n\nThe Mbare Marketplace CEO, Tonderai Wellington Nyamandi, has prohibited unauthorized access to this console. This activity is illegal and will be prosecuted.';
-            
-            // Use original console.log once to show warning
-            originalConsole.log(message, styles);
-        })();
-    </script>
     <script src="api.js"></script>
     <script src="script.js"></script>
     <script src="auth-check.js"></script>
     
-    <!-- APP DOWNLOAD TRACKING - SILENT VERSION (NO CONSOLE LOGS) -->
+    <!-- APP DOWNLOAD TRACKING - WITH CONSOLE LOGS ENABLED FOR TESTING -->
     <script>
         // ============================================
-        // APP DOWNLOAD TRACKING - SILENT VERSION
+        // APP DOWNLOAD TRACKING - WITH CONSOLE LOGS
         // ============================================
+        
+        // Make sure we have the correct Supabase URL
+        window.SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
+        window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
+        
+        console.log('📱 App Download Tracking Initialized');
+        console.log('Supabase URL:', window.SUPABASE_URL);
         
         // Make trackInstallClick globally available
         window.trackInstallClick = function(source = 'install_button') {
+            console.log('📱 Install click tracked from:', source);
             recordAppDownload('install_click', { source: source });
         };
 
         async function recordAppDownload(downloadType, details = {}) {
+            console.log('📊 Recording download:', downloadType, details);
+            
             try {
                 const SUPABASE_URL = window.SUPABASE_URL;
                 const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
                 
-                if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return;
+                if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+                    console.error('❌ Supabase config not found');
+                    return;
+                }
                 
                 // Get device information
                 const userAgent = navigator.userAgent;
                 const platform = navigator.platform;
                 const language = navigator.language;
                 const screenSize = `${window.screen.width}x${window.screen.height}`;
+                
+                console.log('Device Info:', { userAgent, platform, language, screenSize });
                 
                 // Determine device type
                 let deviceType = 'desktop';
@@ -889,6 +872,8 @@
                 else if (userAgent.indexOf('Edge') !== -1) browser = 'edge';
                 else if (userAgent.indexOf('Opera') !== -1) browser = 'opera';
                 
+                console.log('Detected:', { deviceType, os, browser });
+                
                 // Get user ID if logged in
                 let userId = null;
                 const sessionData = localStorage.getItem('supabase_session');
@@ -896,7 +881,10 @@
                     try {
                         const session = JSON.parse(sessionData);
                         userId = session.user?.id;
-                    } catch (e) {}
+                        console.log('User ID:', userId);
+                    } catch (e) {
+                        console.error('Error parsing session:', e);
+                    }
                 }
                 
                 // Create download record
@@ -914,24 +902,107 @@
                     timestamp: new Date().toISOString()
                 };
                 
-                // Send to Supabase silently
-                await fetch(`${SUPABASE_URL}/rest/v1/app_downloads`, {
+                console.log('Sending to Supabase:', downloadData);
+                
+                // Use the correct URL format
+                const url = `${SUPABASE_URL}/rest/v1/app_downloads`;
+                console.log('Fetch URL:', url);
+                
+                // Send to Supabase with both apikey and Authorization headers
+                const response = await fetch(url, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'apikey': SUPABASE_ANON_KEY,
-                        'Prefer': 'return=representation'
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
                     },
                     body: JSON.stringify(downloadData)
                 });
                 
+                console.log('Response status:', response.status);
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('✅ Download tracked successfully:', result);
+                } else {
+                    const errorText = await response.text();
+                    console.error('❌ Failed to track download:', response.status, errorText);
+                    
+                    // Store failed attempts locally
+                    const pendingDownloads = JSON.parse(localStorage.getItem('pending_downloads') || '[]');
+                    pendingDownloads.push({
+                        data: downloadData,
+                        status: response.status,
+                        error: errorText,
+                        timestamp: new Date().toISOString()
+                    });
+                    localStorage.setItem('pending_downloads', JSON.stringify(pendingDownloads));
+                    console.log('Stored in pending_downloads:', pendingDownloads.length);
+                }
+                
             } catch (error) {
-                // Silently fail - no console logs
+                console.error('❌ Error in recordAppDownload:', error);
+                
+                // Store failed attempts locally
+                try {
+                    const pendingDownloads = JSON.parse(localStorage.getItem('pending_downloads') || '[]');
+                    pendingDownloads.push({
+                        data: { download_type: downloadType, ...details },
+                        error: error.message,
+                        timestamp: new Date().toISOString()
+                    });
+                    localStorage.setItem('pending_downloads', JSON.stringify(pendingDownloads));
+                } catch (e) {
+                    console.error('Error storing pending download:', e);
+                }
             }
         }
 
+        // Retry failed downloads
+        async function retryFailedDownloads() {
+            const pendingDownloads = JSON.parse(localStorage.getItem('pending_downloads') || '[]');
+            if (pendingDownloads.length === 0) return;
+            
+            console.log('Retrying', pendingDownloads.length, 'failed downloads...');
+            
+            const SUPABASE_URL = window.SUPABASE_URL;
+            const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
+            
+            const remaining = [];
+            
+            for (const item of pendingDownloads) {
+                try {
+                    const response = await fetch(`${SUPABASE_URL}/rest/v1/app_downloads`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                        },
+                        body: JSON.stringify(item.data)
+                    });
+                    
+                    if (response.ok) {
+                        console.log('✅ Retry successful for:', item.data.download_type);
+                    } else {
+                        remaining.push(item);
+                    }
+                } catch (e) {
+                    console.error('Retry failed:', e);
+                    remaining.push(item);
+                }
+            }
+            
+            localStorage.setItem('pending_downloads', JSON.stringify(remaining));
+            console.log('Remaining pending:', remaining.length);
+        }
+
+        // Retry every 30 seconds
+        setInterval(retryFailedDownloads, 30000);
+
         // Track when app is successfully installed
         window.addEventListener('appinstalled', () => {
+            console.log('✅ App was successfully installed');
             recordAppDownload('pwa_install');
             localStorage.setItem('app_install_tracked', 'true');
             localStorage.setItem('app_install_date', new Date().toISOString());
@@ -939,6 +1010,7 @@
 
         // Track when page is viewed in standalone mode (already installed)
         if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+            console.log('📱 App is running in standalone mode');
             if (!localStorage.getItem('app_install_tracked')) {
                 recordAppDownload('pwa_install');
                 localStorage.setItem('app_install_tracked', 'true');
@@ -951,6 +1023,7 @@
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             promptCount++;
+            console.log('📲 Install prompt shown, count:', promptCount);
             if (promptCount === 1) {
                 recordAppDownload('install_prompt_shown');
             }
@@ -958,8 +1031,10 @@
 
         // For iOS
         if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) {
+            console.log('🍎 iOS device detected');
             if (!window.navigator.standalone) {
                 setTimeout(() => {
+                    console.log('🍎 iOS add to home screen prompt');
                     recordAppDownload('ios_add_to_homescreen_prompt');
                 }, 10000);
             }
@@ -970,64 +1045,16 @@
             if (e.target.closest('#installButton') || 
                 e.target.closest('.install-btn') || 
                 (e.target.closest('button') && e.target.textContent.includes('Install'))) {
+                console.log('📱 Install button clicked via event listener');
                 recordAppDownload('install_click', { method: 'click_event' });
             }
         });
+
+        console.log('📊 App download tracking ready - click the Install button to test');
     </script>
     
     <script>
-        // Override console in other scripts as well - but keep tracking working
-        (function() {
-            const originalConsole = window.console;
-            
-            // Store original console methods for warning message
-            const originalLog = originalConsole.log;
-            
-            // Create a new console object with all methods as noop except we'll keep the warning
-            window.console = {
-                log: function() {},
-                info: function() {},
-                warn: function() {},
-                error: function() {},
-                debug: function() {},
-                trace: function() {},
-                dir: function() {},
-                dirxml: function() {},
-                group: function() {},
-                groupCollapsed: function() {},
-                groupEnd: function() {},
-                time: function() {},
-                timeEnd: function() {},
-                timeLog: function() {},
-                count: function() {},
-                assert: function() {},
-                clear: function() {},
-                table: function() {}
-            };
-            
-            // Show warning message once
-            const styles = [
-                'background: #232f3e',
-                'color: #ff9900',
-                'font-size: 16px',
-                'font-weight: bold',
-                'padding: 12px 20px',
-                'border-radius: 5px',
-                'border-left: 5px solid #ff9900',
-                'line-height: 1.6',
-                'font-family: "Inter", sans-serif'
-            ].join(';');
-            
-            const message = '%c🔒 SECURITY NOTICE\n\nThe Mbare Marketplace CEO, Tonderai Wellington Nyamandi, has prohibited unauthorized access to this console. This activity is illegal and will be prosecuted.';
-            
-            // Use original console.log once to show warning
-            setTimeout(() => {
-                originalLog(message, styles);
-            }, 100);
-        })();
-    </script>
-    <script>
-        // PWA Install Button with iOS Support
+        // PWA Install Button with iOS Support and tracking
         let deferredPrompt;
         const installButton = document.getElementById('installButton');
         const iosPrompt = document.getElementById('iosPromptModal');
@@ -1041,6 +1068,7 @@
             deferredPrompt = e;
             // Show button on Android
             installButton.style.display = 'flex';
+            console.log('📲 Install prompt available - showing button');
         });
 
         // For iOS - check if not already installed
@@ -1048,11 +1076,14 @@
             // Check if already in standalone mode (installed)
             if (!window.navigator.standalone) {
                 installButton.style.display = 'flex';
+                console.log('🍎 iOS device - showing install button');
             }
         }
 
-        // Handle button click - with tracking
+        // Handle button click with tracking
         installButton.addEventListener('click', async () => {
+            console.log('📱 Install button clicked');
+            
             // Track the click
             if (window.trackInstallClick) {
                 window.trackInstallClick('install_button');
@@ -1060,10 +1091,12 @@
             
             if (deferredPrompt) {
                 // Android flow
+                console.log('Showing Android install prompt');
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
+                console.log('Install prompt outcome:', outcome);
                 
-                // Track the outcome silently
+                // Track the outcome
                 if (outcome === 'accepted') {
                     recordAppDownload('install_accepted');
                 } else {
@@ -1074,10 +1107,12 @@
                 installButton.style.display = 'none';
             } else if (isIOS) {
                 // iOS flow - show the nice modal
+                console.log('Showing iOS install modal');
                 iosPrompt.style.display = 'block';
                 recordAppDownload('ios_install_modal_shown');
             } else {
                 // Fallback for other browsers
+                console.log('Showing fallback message');
                 alert('To install, look for "Add to Home Screen" in your browser menu');
                 recordAppDownload('install_fallback_shown');
             }
@@ -1086,10 +1121,12 @@
         // Close iOS prompt
         window.closeIOSPrompt = function() {
             iosPrompt.style.display = 'none';
+            console.log('iOS prompt closed');
         };
 
         // Hide button if app is already installed
         window.addEventListener('appinstalled', () => {
+            console.log('✅ App installed event fired');
             installButton.style.display = 'none';
             recordAppDownload('pwa_install_complete');
         });
@@ -1097,6 +1134,7 @@
         // Also hide button if already in standalone mode (iOS)
         if (window.navigator.standalone) {
             installButton.style.display = 'none';
+            console.log('App already installed (standalone mode)');
         }
 
         // Close modal when clicking outside
@@ -1213,7 +1251,7 @@
                             accountLink.style.color = '#232f3e';
                         }
                     } catch (e) {
-                        // Silently handle error
+                        console.error('Error updating header:', e);
                     }
                 }
             }
