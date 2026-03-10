@@ -342,6 +342,11 @@
             color: #7b1fa2;
         }
 
+        .type-test_download {
+            background: #ffecb3;
+            color: #856404;
+        }
+
         .loading-spinner {
             text-align: center;
             padding: 50px;
@@ -583,8 +588,12 @@
         // Analytics Dashboard JavaScript
         // ============================================
 
+        // Set correct Supabase URL
+        window.SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
+        window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
+
         // Version control for cache busting
-        const DASHBOARD_VERSION = '2.1.0';
+        const DASHBOARD_VERSION = '2.2.0';
         
         // Check version on load
         (function() {
@@ -989,6 +998,11 @@
             try {
                 // Get all downloads
                 const response = await fetch(`${url}/rest/v1/app_downloads?select=*`, { headers });
+                if (!response.ok) {
+                    console.error('Failed to fetch downloads:', response.status);
+                    return getDefaultDownloadStats();
+                }
+                
                 const downloads = await response.json();
                 
                 // Get yesterday's date
@@ -1068,24 +1082,28 @@
                 };
             } catch (error) {
                 console.error('Error getting app download stats:', error);
-                return {
-                    totalDownloads: 0,
-                    downloadsToday: 0,
-                    downloadsYesterday: 0,
-                    pwaInstallsYesterday: 0,
-                    installClicks: 0,
-                    pwaInstalls: 0,
-                    addToHomeScreen: 0,
-                    activeInstallations: 0,
-                    conversionRate: 0,
-                    byDevice: { mobile: 0, desktop: 0, tablet: 0, other: 0 },
-                    byOS: { android: 0, ios: 0, windows: 0, macos: 0, linux: 0, other: 0 },
-                    percentages: { mobile: 0, desktop: 0, tablet: 0, other: 0 },
-                    dailyDownloads: [0, 0, 0, 0, 0, 0, 0],
-                    topDevice: 'Unknown',
-                    topOS: 'Unknown'
-                };
+                return getDefaultDownloadStats();
             }
+        }
+
+        function getDefaultDownloadStats() {
+            return {
+                totalDownloads: 0,
+                downloadsToday: 0,
+                downloadsYesterday: 0,
+                pwaInstallsYesterday: 0,
+                installClicks: 0,
+                pwaInstalls: 0,
+                addToHomeScreen: 0,
+                activeInstallations: 0,
+                conversionRate: 0,
+                byDevice: { mobile: 0, desktop: 0, tablet: 0, other: 0 },
+                byOS: { android: 0, ios: 0, windows: 0, macos: 0, linux: 0, other: 0 },
+                percentages: { mobile: 0, desktop: 0, tablet: 0, other: 0 },
+                dailyDownloads: [0, 0, 0, 0, 0, 0, 0],
+                topDevice: 'Unknown',
+                topOS: 'Unknown'
+            };
         }
 
         // Get total users from users table
