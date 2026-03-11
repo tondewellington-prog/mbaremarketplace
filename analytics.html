@@ -585,22 +585,15 @@
     <script src="api.js"></script>
     <script>
         // ============================================
-        // Analytics Dashboard JavaScript - WITH CORRECT SERVICE ROLE KEY
+        // Analytics Dashboard JavaScript
         // ============================================
 
-        // Set correct Supabase URL and keys
+        // Set correct Supabase URL
         window.SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
         window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
-        
-        // Service role key (bypasses RLS)
-        window.SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZubmNlcmR4Zmh3bHJkb3Bzd3B4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NzEwMTgwOSwiZXhwIjoyMDgyNjc3ODA5fQ.gS45zReH5gtMeTY74tjb6ECfdjENglLejU4kTFNnIh0';
-
-        console.log('📊 Analytics Dashboard Initialized');
-        console.log('Supabase URL:', window.SUPABASE_URL);
-        console.log('✅ Using Service Role Key (bypasses RLS)');
 
         // Version control for cache busting
-        const DASHBOARD_VERSION = '2.5.0';
+        const DASHBOARD_VERSION = '2.2.0';
         
         // Check version on load
         (function() {
@@ -668,11 +661,6 @@
                 const stats = await getStats();
                 const chartData = await getChartData();
                 const downloadStats = await getAppDownloadStats();
-                
-                // Debug logs to verify data
-                console.log('📊 Download Stats Received:', downloadStats);
-                console.log('Total Downloads:', downloadStats.totalDownloads);
-                console.log('By Device:', downloadStats.byDevice);
                 
                 document.getElementById('analyticsContent').innerHTML = `
                     <div class="analytics-header">
@@ -899,12 +887,11 @@
                 }, 100);
 
             } catch (error) {
-                console.error('❌ Error loading analytics:', error);
+                console.error('Error loading analytics:', error);
                 document.getElementById('analyticsContent').innerHTML = `
                     <div class="no-access">
                         <h2>❌ Error Loading Data</h2>
                         <p>${error.message}</p>
-                        <p>Check console for details</p>
                         <button onclick="loadAnalytics()" class="btn-home">Try Again</button>
                     </div>
                 `;
@@ -1002,34 +989,21 @@
             });
         }
 
-        // Get app download statistics - USING SERVICE ROLE KEY
+        // Get app download statistics
         async function getAppDownloadStats() {
             const url = window.SUPABASE_URL;
-            const key = window.SUPABASE_SERVICE_KEY;
-            const headers = { 
-                'apikey': key, 
-                'Authorization': `Bearer ${key}`,
-                'Content-Type': 'application/json'
-            };
+            const key = window.SUPABASE_ANON_KEY;
+            const headers = { 'apikey': key, 'Authorization': `Bearer ${key}` };
 
             try {
-                console.log('📥 Fetching app downloads with SERVICE ROLE key...');
-                
+                // Get all downloads
                 const response = await fetch(`${url}/rest/v1/app_downloads?select=*`, { headers });
-                
                 if (!response.ok) {
-                    console.error('❌ Failed to fetch downloads:', response.status, response.statusText);
-                    const errorText = await response.text();
-                    console.error('Error details:', errorText);
+                    console.error('Failed to fetch downloads:', response.status);
                     return getDefaultDownloadStats();
                 }
                 
                 const downloads = await response.json();
-                console.log('✅ Downloads fetched:', downloads.length, 'records');
-                
-                if (downloads.length > 0) {
-                    console.log('Sample download record:', downloads[0]);
-                }
                 
                 // Get yesterday's date
                 const yesterday = new Date();
@@ -1089,7 +1063,7 @@
                 const topDevice = Object.entries(byDevice).reduce((a, b) => a[1] > b[1] ? a : b)[0];
                 const topOS = Object.entries(byOS).reduce((a, b) => a[1] > b[1] ? a : b)[0];
 
-                const result = {
+                return {
                     totalDownloads: total,
                     downloadsToday: todayDownloads,
                     downloadsYesterday: yesterdayDownloads,
@@ -1106,12 +1080,8 @@
                     topDevice: topDevice || 'Unknown',
                     topOS: topOS || 'Unknown'
                 };
-                
-                console.log('📊 Processed download stats:', result);
-                return result;
-                
             } catch (error) {
-                console.error('❌ Error getting app download stats:', error);
+                console.error('Error getting app download stats:', error);
                 return getDefaultDownloadStats();
             }
         }
@@ -1136,10 +1106,10 @@
             };
         }
 
-        // Get total users from users table - USING SERVICE ROLE KEY
+        // Get total users from users table
         async function getTotalUsers() {
             const url = window.SUPABASE_URL;
-            const key = window.SUPABASE_SERVICE_KEY;
+            const key = window.SUPABASE_ANON_KEY;
             const headers = { 'apikey': key, 'Authorization': `Bearer ${key}` };
             
             try {
@@ -1149,78 +1119,55 @@
                     const users = await response.json();
                     return users.length;
                 } else {
-                    console.error('Failed to fetch users:', response.status);
                     return 0;
                 }
             } catch (error) {
-                console.error('Error fetching users:', error);
                 return 0;
             }
         }
 
         async function getStats() {
             const url = window.SUPABASE_URL;
-            const key = window.SUPABASE_SERVICE_KEY;
+            const key = window.SUPABASE_ANON_KEY;
             const headers = { 'apikey': key, 'Authorization': `Bearer ${key}` };
 
-            try {
-                // Get total users from users table
-                const totalUsers = await getTotalUsers();
+            // Get total users from users table
+            const totalUsers = await getTotalUsers();
 
-                // Get sellers
-                const sellersRes = await fetch(`${url}/rest/v1/sellers?select=id`, { headers });
-                const sellers = sellersRes.ok ? await sellersRes.json() : [];
-                
-                // Get products
-                const productsRes = await fetch(`${url}/rest/v1/products?select=id`, { headers });
-                const products = productsRes.ok ? await productsRes.json() : [];
-                
-                // Get activities
-                const activitiesRes = await fetch(`${url}/rest/v1/user_activities?select=user_id,created_at`, { headers });
-                const activities = activitiesRes.ok ? await activitiesRes.json() : [];
+            // Get sellers
+            const sellers = await (await fetch(`${url}/rest/v1/sellers?select=id`, { headers })).json();
+            const products = await (await fetch(`${url}/rest/v1/products?select=id`, { headers })).json();
+            const activities = await (await fetch(`${url}/rest/v1/user_activities?select=user_id,created_at`, { headers })).json();
 
-                const totalSellers = sellers.length;
-                const totalProducts = products.length;
+            const totalSellers = sellers.length;
+            const totalProducts = products.length;
 
-                const today = new Date().toISOString().split('T')[0];
-                const activeToday = [...new Set(activities.filter(a => 
-                    a.created_at?.startsWith(today)
-                ).map(a => a.user_id))].length;
+            const today = new Date().toISOString().split('T')[0];
+            const activeToday = [...new Set(activities.filter(a => 
+                a.created_at?.startsWith(today)
+            ).map(a => a.user_id))].length;
 
-                const sevenDaysAgo = new Date();
-                sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-                const userGrowth = [...new Set(activities.filter(a => 
-                    new Date(a.created_at) > sevenDaysAgo
-                ).map(a => a.user_id))].length;
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            const userGrowth = [...new Set(activities.filter(a => 
+                new Date(a.created_at) > sevenDaysAgo
+            ).map(a => a.user_id))].length;
 
-                return {
-                    totalUsers,
-                    totalSellers,
-                    totalProducts,
-                    activeToday,
-                    userGrowth,
-                    sellerPercentage: totalUsers ? ((totalSellers/totalUsers)*100).toFixed(1) : 0,
-                    avgPerSeller: totalSellers ? (totalProducts/totalSellers).toFixed(1) : 0,
-                    activeRate: totalUsers ? ((activeToday/totalUsers)*100).toFixed(1) : 0
-                };
-            } catch (error) {
-                console.error('Error in getStats:', error);
-                return {
-                    totalUsers: 0,
-                    totalSellers: 0,
-                    totalProducts: 0,
-                    activeToday: 0,
-                    userGrowth: 0,
-                    sellerPercentage: 0,
-                    avgPerSeller: 0,
-                    activeRate: 0
-                };
-            }
+            return {
+                totalUsers,
+                totalSellers,
+                totalProducts,
+                activeToday,
+                userGrowth,
+                sellerPercentage: totalUsers ? ((totalSellers/totalUsers)*100).toFixed(1) : 0,
+                avgPerSeller: totalSellers ? (totalProducts/totalSellers).toFixed(1) : 0,
+                activeRate: totalUsers ? ((activeToday/totalUsers)*100).toFixed(1) : 0
+            };
         }
 
         async function getChartData() {
             const url = window.SUPABASE_URL;
-            const key = window.SUPABASE_SERVICE_KEY;
+            const key = window.SUPABASE_ANON_KEY;
             const headers = { 'apikey': key, 'Authorization': `Bearer ${key}` };
             
             const labels = [];
@@ -1245,7 +1192,7 @@
                     `${url}/rest/v1/users?created_at=gte.${dateStr}&created_at=lt.${nextStr}&select=id`,
                     { headers }
                 );
-                const usersData = usersRes.ok ? await usersRes.json() : [];
+                const usersData = await usersRes.json();
                 users.push(usersData.length);
 
                 // Get activities for this day
@@ -1253,7 +1200,7 @@
                     `${url}/rest/v1/user_activities?created_at=gte.${dateStr}&created_at=lt.${nextStr}&select=id`,
                     { headers }
                 );
-                const activityData = activityRes.ok ? await activityRes.json() : [];
+                const activityData = await activityRes.json();
                 activities.push(activityData.length);
 
                 // Get sellers for this day
@@ -1261,7 +1208,7 @@
                     `${url}/rest/v1/sellers?created_at=gte.${dateStr}&created_at=lt.${nextStr}&select=id`,
                     { headers }
                 );
-                const sellerData = sellerRes.ok ? await sellerRes.json() : [];
+                const sellerData = await sellerRes.json();
                 sellers.push(sellerData.length);
 
                 // Get products for this day
@@ -1269,7 +1216,7 @@
                     `${url}/rest/v1/products?created_at=gte.${dateStr}&created_at=lt.${nextStr}&select=id`,
                     { headers }
                 );
-                const productData = productRes.ok ? await productRes.json() : [];
+                const productData = await productRes.json();
                 products.push(productData.length);
             }
 
@@ -1278,18 +1225,15 @@
 
         async function getRecentActivitiesHTML() {
             const url = window.SUPABASE_URL;
-            const key = window.SUPABASE_SERVICE_KEY;
+            const key = window.SUPABASE_ANON_KEY;
             const headers = { 'apikey': key, 'Authorization': `Bearer ${key}` };
 
             try {
                 // Get user activities and app downloads combined
-                const [activitiesRes, downloadsRes] = await Promise.all([
-                    fetch(`${url}/rest/v1/user_activities?order=created_at.desc&limit=5`, { headers }),
-                    fetch(`${url}/rest/v1/app_downloads?order=timestamp.desc&limit=5`, { headers })
+                const [activities, downloads] = await Promise.all([
+                    fetch(`${url}/rest/v1/user_activities?order=created_at.desc&limit=5`, { headers }).then(r => r.json()),
+                    fetch(`${url}/rest/v1/app_downloads?order=timestamp.desc&limit=5`, { headers }).then(r => r.json())
                 ]);
-
-                const activities = activitiesRes.ok ? await activitiesRes.json() : [];
-                const downloads = downloadsRes.ok ? await downloadsRes.json() : [];
 
                 // Combine and sort by date
                 const allActivities = [
@@ -1347,7 +1291,6 @@
                     </table>
                 `;
             } catch (error) {
-                console.error('Error loading activities:', error);
                 return `<p>Error loading activities</p>`;
             }
         }
