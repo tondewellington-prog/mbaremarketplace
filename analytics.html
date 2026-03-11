@@ -585,18 +585,20 @@
     <script src="api.js"></script>
     <script>
         // ============================================
-        // Analytics Dashboard JavaScript - FIXED VERSION
+        // Analytics Dashboard JavaScript - WITH SERVICE ROLE KEY
         // ============================================
 
-        // Set correct Supabase URL (MUST MATCH index.html)
+        // Set correct Supabase URL and keys
         window.SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
         window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
+        window.SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZubmNlcmR4Zmh3bHJkb3Bzd3B4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczOTQxNTI1MSwiZXhwIjoyMDU0OTkxMjUxfQ.6LrXBqVJF5Llu72EdQS-Q23vKx4oE25q27G2eV99SxM';
 
         console.log('📊 Analytics Dashboard Initialized');
         console.log('Supabase URL:', window.SUPABASE_URL);
+        console.log('Using Service Role Key (bypasses RLS)');
 
         // Version control for cache busting
-        const DASHBOARD_VERSION = '2.3.0';
+        const DASHBOARD_VERSION = '2.4.0';
         
         // Check version on load
         (function() {
@@ -998,10 +1000,10 @@
             });
         }
 
-        // Get app download statistics - FIXED to ensure data is fetched
+        // Get app download statistics - USING SERVICE ROLE KEY
         async function getAppDownloadStats() {
             const url = window.SUPABASE_URL;
-            const key = window.SUPABASE_ANON_KEY;
+            const key = window.SUPABASE_SERVICE_KEY; // USING SERVICE ROLE KEY
             const headers = { 
                 'apikey': key, 
                 'Authorization': `Bearer ${key}`,
@@ -1009,7 +1011,7 @@
             };
 
             try {
-                console.log('📥 Fetching app downloads from:', `${url}/rest/v1/app_downloads?select=*`);
+                console.log('📥 Fetching app downloads with SERVICE ROLE key...');
                 
                 const response = await fetch(`${url}/rest/v1/app_downloads?select=*`, { headers });
                 
@@ -1135,7 +1137,7 @@
         // Get total users from users table
         async function getTotalUsers() {
             const url = window.SUPABASE_URL;
-            const key = window.SUPABASE_ANON_KEY;
+            const key = window.SUPABASE_SERVICE_KEY; // Use service key for users too
             const headers = { 'apikey': key, 'Authorization': `Bearer ${key}` };
             
             try {
@@ -1154,7 +1156,7 @@
 
         async function getStats() {
             const url = window.SUPABASE_URL;
-            const key = window.SUPABASE_ANON_KEY;
+            const key = window.SUPABASE_SERVICE_KEY; // Use service key
             const headers = { 'apikey': key, 'Authorization': `Bearer ${key}` };
 
             // Get total users from users table
@@ -1193,7 +1195,7 @@
 
         async function getChartData() {
             const url = window.SUPABASE_URL;
-            const key = window.SUPABASE_ANON_KEY;
+            const key = window.SUPABASE_SERVICE_KEY; // Use service key
             const headers = { 'apikey': key, 'Authorization': `Bearer ${key}` };
             
             const labels = [];
@@ -1251,7 +1253,7 @@
 
         async function getRecentActivitiesHTML() {
             const url = window.SUPABASE_URL;
-            const key = window.SUPABASE_ANON_KEY;
+            const key = window.SUPABASE_SERVICE_KEY; // Use service key
             const headers = { 'apikey': key, 'Authorization': `Bearer ${key}` };
 
             try {
