@@ -585,15 +585,18 @@
     <script src="api.js"></script>
     <script>
         // ============================================
-        // Analytics Dashboard JavaScript
+        // Analytics Dashboard JavaScript - FIXED VERSION
         // ============================================
 
-        // Set correct Supabase URL
+        // Set correct Supabase URL (MUST MATCH index.html)
         window.SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
         window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
 
+        console.log('📊 Analytics Dashboard Initialized');
+        console.log('Supabase URL:', window.SUPABASE_URL);
+
         // Version control for cache busting
-        const DASHBOARD_VERSION = '2.2.0';
+        const DASHBOARD_VERSION = '2.3.0';
         
         // Check version on load
         (function() {
@@ -661,6 +664,11 @@
                 const stats = await getStats();
                 const chartData = await getChartData();
                 const downloadStats = await getAppDownloadStats();
+                
+                // Debug logs to verify data
+                console.log('📊 Download Stats Received:', downloadStats);
+                console.log('Total Downloads:', downloadStats.totalDownloads);
+                console.log('By Device:', downloadStats.byDevice);
                 
                 document.getElementById('analyticsContent').innerHTML = `
                     <div class="analytics-header">
@@ -887,11 +895,12 @@
                 }, 100);
 
             } catch (error) {
-                console.error('Error loading analytics:', error);
+                console.error('❌ Error loading analytics:', error);
                 document.getElementById('analyticsContent').innerHTML = `
                     <div class="no-access">
                         <h2>❌ Error Loading Data</h2>
                         <p>${error.message}</p>
+                        <p>Check console for details</p>
                         <button onclick="loadAnalytics()" class="btn-home">Try Again</button>
                     </div>
                 `;
@@ -989,21 +998,34 @@
             });
         }
 
-        // Get app download statistics
+        // Get app download statistics - FIXED to ensure data is fetched
         async function getAppDownloadStats() {
             const url = window.SUPABASE_URL;
             const key = window.SUPABASE_ANON_KEY;
-            const headers = { 'apikey': key, 'Authorization': `Bearer ${key}` };
+            const headers = { 
+                'apikey': key, 
+                'Authorization': `Bearer ${key}`,
+                'Content-Type': 'application/json'
+            };
 
             try {
-                // Get all downloads
+                console.log('📥 Fetching app downloads from:', `${url}/rest/v1/app_downloads?select=*`);
+                
                 const response = await fetch(`${url}/rest/v1/app_downloads?select=*`, { headers });
+                
                 if (!response.ok) {
-                    console.error('Failed to fetch downloads:', response.status);
+                    console.error('❌ Failed to fetch downloads:', response.status, response.statusText);
+                    const errorText = await response.text();
+                    console.error('Error details:', errorText);
                     return getDefaultDownloadStats();
                 }
                 
                 const downloads = await response.json();
+                console.log('✅ Downloads fetched:', downloads.length, 'records');
+                
+                if (downloads.length > 0) {
+                    console.log('Sample download record:', downloads[0]);
+                }
                 
                 // Get yesterday's date
                 const yesterday = new Date();
@@ -1063,7 +1085,7 @@
                 const topDevice = Object.entries(byDevice).reduce((a, b) => a[1] > b[1] ? a : b)[0];
                 const topOS = Object.entries(byOS).reduce((a, b) => a[1] > b[1] ? a : b)[0];
 
-                return {
+                const result = {
                     totalDownloads: total,
                     downloadsToday: todayDownloads,
                     downloadsYesterday: yesterdayDownloads,
@@ -1080,8 +1102,12 @@
                     topDevice: topDevice || 'Unknown',
                     topOS: topOS || 'Unknown'
                 };
+                
+                console.log('📊 Processed download stats:', result);
+                return result;
+                
             } catch (error) {
-                console.error('Error getting app download stats:', error);
+                console.error('❌ Error getting app download stats:', error);
                 return getDefaultDownloadStats();
             }
         }
@@ -1291,6 +1317,7 @@
                     </table>
                 `;
             } catch (error) {
+                console.error('Error loading activities:', error);
                 return `<p>Error loading activities</p>`;
             }
         }
