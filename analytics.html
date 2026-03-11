@@ -585,25 +585,19 @@
     <script src="api.js"></script>
     <script>
         // ============================================
-        // Analytics Dashboard JavaScript - FIXED VERSION
+        // Analytics Dashboard JavaScript - WITH CORRECT SERVICE ROLE KEY
         // ============================================
 
         // Set correct Supabase URL and keys
         window.SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
         window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
         
-        // IMPORTANT: Replace this with your actual service role key from Supabase
-        // Go to Project Settings → API → service_role secret
-        window.SUPABASE_SERVICE_KEY = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZubmNlcmR4Zmh3bHJkb3Bzd3B4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NzEwMTgwOSwiZXhwIjoyMDgyNjc3ODA5fQ.gS45zReH5gtMeTY74tjb6ECfdjENglLejU4kTFNnIh0;
+        // Service role key (bypasses RLS)
+        window.SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZubmNlcmR4Zmh3bHJkb3Bzd3B4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NzEwMTgwOSwiZXhwIjoyMDgyNjc3ODA5fQ.gS45zReH5gtMeTY74tjb6ECfdjENglLejU4kTFNnIh0';
 
         console.log('📊 Analytics Dashboard Initialized');
         console.log('Supabase URL:', window.SUPABASE_URL);
-        
-        if (window.SUPABASE_SERVICE_KEY === eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZubmNlcmR4Zmh3bHJkb3Bzd3B4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NzEwMTgwOSwiZXhwIjoyMDgyNjc3ODA5fQ.gS45zReH5gtMeTY74tjb6ECfdjENglLejU4kTFNnIh0) {
-            console.error('❌ Please replace the service role key with your actual key from Supabase!');
-        } else {
-            console.log('✅ Using Service Role Key (bypasses RLS)');
-        }
+        console.log('✅ Using Service Role Key (bypasses RLS)');
 
         // Version control for cache busting
         const DASHBOARD_VERSION = '2.5.0';
@@ -665,19 +659,6 @@
                         <div class="no-access">
                             <h2>📊 Chart.js Loading Failed</h2>
                             <p>Please disable tracking prevention for this site or try a different browser.</p>
-                            <button onclick="loadAnalytics()" class="btn-home">Try Again</button>
-                        </div>
-                    `;
-                    return;
-                }
-
-                // Check if service key is set
-                if (window.SUPABASE_SERVICE_KEY === eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZubmNlcmR4Zmh3bHJkb3Bzd3B4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NzEwMTgwOSwiZXhwIjoyMDgyNjc3ODA5fQ.gS45zReH5gtMeTY74tjb6ECfdjENglLejU4kTFNnIh0) {
-                    document.getElementById('analyticsContent').innerHTML = `
-                        <div class="no-access">
-                            <h2>🔑 Service Key Required</h2>
-                            <p>Please replace the service role key in the code with your actual key from Supabase.</p>
-                            <p>Go to: Project Settings → API → service_role secret</p>
                             <button onclick="loadAnalytics()" class="btn-home">Try Again</button>
                         </div>
                     `;
