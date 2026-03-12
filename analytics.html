@@ -600,7 +600,7 @@
     <script src="api.js"></script>
     <script>
         // ============================================
-        // Analytics Dashboard JavaScript - OPTIMIZED FOR SPEED
+        // Analytics Dashboard JavaScript - FIXED iOS DETECTION
         // ============================================
 
         // Set correct Supabase URL and keys
@@ -613,7 +613,7 @@
         console.log('📊 Analytics Dashboard Initialized');
 
         // Version control
-        const DASHBOARD_VERSION = '2.4.0';
+        const DASHBOARD_VERSION = '2.5.0';
         
         // Check version on load
         (function() {
@@ -721,7 +721,7 @@
                 stats.avgPerSeller = stats.totalSellers ? (stats.totalProducts/stats.totalSellers).toFixed(1) : 0;
                 stats.activeRate = stats.totalUsers ? ((stats.activeToday/stats.totalUsers)*100).toFixed(1) : 0;
 
-                // Process download stats
+                // Process download stats with FIXED iOS detection
                 const downloadStats = processDownloadStats(downloads);
 
                 // Process chart data
@@ -746,19 +746,36 @@
             const today = new Date().toISOString().split('T')[0];
             const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
             
+            // FIX: Reclassify macOS devices that are actually iOS
+            const fixedDownloads = downloads.map(d => {
+                // Create a copy of the download
+                const fixed = {...d};
+                
+                // If it's a pwa_install with os = 'macos', check if it might be iOS
+                if (fixed.download_type === 'pwa_install' && fixed.os === 'macos') {
+                    // Check if the user agent suggests it's actually iOS
+                    const ua = fixed.user_agent?.toLowerCase() || '';
+                    if (ua.includes('iphone') || ua.includes('ipad') || ua.includes('ipod') || 
+                        (ua.includes('mac') && ua.includes('mobile'))) {
+                        fixed.os = 'ios';
+                    }
+                }
+                return fixed;
+            });
+
             // Count by type
             const installClicks = downloads.filter(d => d.download_type === 'install_click').length;
-            const pwaInstalls = downloads.filter(d => d.download_type === 'pwa_install').length;
+            const pwaInstalls = fixedDownloads.filter(d => d.download_type === 'pwa_install').length;
             const addToHomeScreen = downloads.filter(d => d.download_type === 'add_to_home_screen').length;
             const installPrompts = downloads.filter(d => d.download_type === 'install_prompt_shown').length;
 
             // Today's installs
-            const todayInstalls = downloads.filter(d => 
+            const todayInstalls = fixedDownloads.filter(d => 
                 d.download_type === 'pwa_install' && d.timestamp?.startsWith(today)
             ).length;
 
             // Yesterday's installs
-            const yesterdayInstalls = downloads.filter(d => 
+            const yesterdayInstalls = fixedDownloads.filter(d => 
                 d.download_type === 'pwa_install' && d.timestamp?.startsWith(yesterday)
             ).length;
 
@@ -766,27 +783,30 @@
             const dailyDownloads = [];
             for (let i = 6; i >= 0; i--) {
                 const date = new Date(Date.now() - i * 86400000).toISOString().split('T')[0];
-                dailyDownloads.push(downloads.filter(d => 
+                dailyDownloads.push(fixedDownloads.filter(d => 
                     d.download_type === 'pwa_install' && d.timestamp?.startsWith(date)
                 ).length);
             }
 
             // Device breakdown for installs only
             const byDevice = {
-                mobile: downloads.filter(d => d.download_type === 'pwa_install' && d.device_type === 'mobile').length,
-                desktop: downloads.filter(d => d.download_type === 'pwa_install' && d.device_type === 'desktop').length,
-                tablet: downloads.filter(d => d.download_type === 'pwa_install' && d.device_type === 'tablet').length,
-                other: downloads.filter(d => d.download_type === 'pwa_install' && (!d.device_type || d.device_type === 'unknown')).length
+                mobile: fixedDownloads.filter(d => d.download_type === 'pwa_install' && d.device_type === 'mobile').length,
+                desktop: fixedDownloads.filter(d => d.download_type === 'pwa_install' && d.device_type === 'desktop').length,
+                tablet: fixedDownloads.filter(d => d.download_type === 'pwa_install' && d.device_type === 'tablet').length,
+                other: fixedDownloads.filter(d => d.download_type === 'pwa_install' && (!d.device_type || d.device_type === 'unknown')).length
             };
 
-            // OS breakdown for installs only
+            // OS breakdown for installs only (with fixed iOS detection)
             const byOS = {
-                android: downloads.filter(d => d.download_type === 'pwa_install' && d.os === 'android').length,
-                ios: downloads.filter(d => d.download_type === 'pwa_install' && d.os === 'ios').length,
-                windows: downloads.filter(d => d.download_type === 'pwa_install' && d.os === 'windows').length,
-                macos: downloads.filter(d => d.download_type === 'pwa_install' && d.os === 'macos').length,
-                linux: downloads.filter(d => d.download_type === 'pwa_install' && d.os === 'linux').length,
-                other: downloads.filter(d => d.download_type === 'pwa_install' && (!d.os || d.os === 'unknown')).length
+                android: fixedDownloads.filter(d => d.download_type === 'pwa_install' && d.os === 'android').length,
+                ios: fixedDownloads.filter(d => d.download_type === 'pwa_install' && d.os === 'ios').length,
+                windows: fixedDownloads.filter(d => d.download_type === 'pwa_install' && d.os === 'windows').length,
+                macos: fixedDownloads.filter(d => d.download_type === 'pwa_install' && d.os === 'macos' && 
+                    !fixedDownloads.some(orig => orig.id === d.id && orig.os === 'macos' && 
+                        (orig.user_agent?.toLowerCase().includes('iphone') || 
+                         orig.user_agent?.toLowerCase().includes('ipad')))).length,
+                linux: fixedDownloads.filter(d => d.download_type === 'pwa_install' && d.os === 'linux').length,
+                other: fixedDownloads.filter(d => d.download_type === 'pwa_install' && (!d.os || d.os === 'unknown')).length
             };
 
             // Percentages
@@ -959,7 +979,7 @@
                     </div>
                 </div>
 
-                <!-- OS Breakdown -->
+                <!-- OS Breakdown (FIXED) -->
                 <h3 style="margin: 20px 0 10px; color: #232f3e;">🖥️ Downloads by OS</h3>
                 <div class="os-breakdown-grid">
                     <div class="os-item"><div class="os-icon">🤖</div><div class="os-name">Android</div><div class="os-count">${downloadStats.byOS.android}</div></div>
