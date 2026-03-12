@@ -819,11 +819,11 @@
         window.SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
         window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
         
-        console.log('📱 App Download Tracking Initialized');
+    
         
         // Make trackInstallClick globally available
         window.trackInstallClick = function(source = 'install_button') {
-            console.log('📱 Install click tracked from:', source);
+    
             recordAppDownload('install_click', { source: source });
         };
 
