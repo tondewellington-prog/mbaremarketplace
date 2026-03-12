@@ -600,28 +600,26 @@
     <script src="api.js"></script>
     <script>
         // ============================================
-        // Analytics Dashboard JavaScript - FIXED DOWNLOAD COUNTING
+        // Analytics Dashboard JavaScript - OPTIMIZED FOR SPEED
         // ============================================
 
         // Set correct Supabase URL and keys
         window.SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
         window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
         
-        // Service role key (bypasses RLS) - USE THIS FOR ANALYTICS
+        // Service role key (bypasses RLS)
         window.SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZubmNlcmR4Zmh3bHJkb3Bzd3B4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NzEwMTgwOSwiZXhwIjoyMDgyNjc3ODA5fQ.gS45zReH5gtMeTY74tjb6ECfdjENglLejU4kTFNnIh0';
 
         console.log('📊 Analytics Dashboard Initialized');
-        console.log('Using Service Role Key for analytics');
 
-        // Version control for cache busting
-        const DASHBOARD_VERSION = '2.3.0';
+        // Version control
+        const DASHBOARD_VERSION = '2.4.0';
         
         // Check version on load
         (function() {
             const storedVersion = localStorage.getItem('analytics_dashboard_version');
             if (storedVersion !== DASHBOARD_VERSION) {
                 localStorage.setItem('analytics_dashboard_version', DASHBOARD_VERSION);
-                console.log('Analytics dashboard updated to version', DASHBOARD_VERSION);
             }
         })();
 
@@ -688,264 +686,49 @@
                 `;
 
                 // Fetch all data in parallel for speed
-                const [stats, chartData, downloadStats] = await Promise.all([
-                    getStats(),
-                    getChartData(),
-                    getAppDownloadStats()
+                const [users, sellers, products, activities, downloads] = await Promise.all([
+                    fetch(`${window.SUPABASE_URL}/rest/v1/users?select=id,created_at`, { 
+                        headers: { 'apikey': window.SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${window.SUPABASE_SERVICE_KEY}` } 
+                    }).then(r => r.json()),
+                    fetch(`${window.SUPABASE_URL}/rest/v1/sellers?select=id,created_at`, { 
+                        headers: { 'apikey': window.SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${window.SUPABASE_SERVICE_KEY}` } 
+                    }).then(r => r.json()),
+                    fetch(`${window.SUPABASE_URL}/rest/v1/products?select=id,created_at`, { 
+                        headers: { 'apikey': window.SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${window.SUPABASE_SERVICE_KEY}` } 
+                    }).then(r => r.json()),
+                    fetch(`${window.SUPABASE_URL}/rest/v1/user_activities?select=user_id,created_at`, { 
+                        headers: { 'apikey': window.SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${window.SUPABASE_SERVICE_KEY}` } 
+                    }).then(r => r.json()),
+                    fetch(`${window.SUPABASE_URL}/rest/v1/app_downloads?select=*`, { 
+                        headers: { 'apikey': window.SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${window.SUPABASE_SERVICE_KEY}` } 
+                    }).then(r => r.json())
                 ]);
-                
-                // Debug logs
-                console.log('📊 Download Stats:', downloadStats);
-                console.log('✅ PWA Installs (Actual Downloads):', downloadStats.pwaInstalls);
-                
-                document.getElementById('analyticsContent').innerHTML = `
-                    <div class="analytics-header">
-                        <h1>📊 Mbare Marketplace Analytics</h1>
-                        <div>
-                            <span class="badge badge-success" style="margin-right: 10px;">v${DASHBOARD_VERSION}</span>
-                            <span class="badge badge-info" style="margin-right: 10px;">Last updated: ${new Date().toLocaleString()}</span>
-                            <button class="refresh-btn" onclick="loadAnalytics()">⟳ Refresh Data</button>
-                        </div>
-                    </div>
 
-                    <!-- Section 1: User Statistics -->
-                    <h2 class="section-title">👥 User Statistics</h2>
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-icon">👥</div>
-                            <div class="stat-label">Total Users</div>
-                            <div class="stat-number">${stats.totalUsers}</div>
-                            <div class="stat-change ${stats.userGrowth > 0 ? '' : 'negative'}">
-                                <span>${stats.userGrowth > 0 ? '↑' : '↓'}</span>
-                                <span>${stats.userGrowth} active last 7d</span>
-                            </div>
-                        </div>
+                // Process statistics
+                const stats = {
+                    totalUsers: users.length,
+                    totalSellers: sellers.length,
+                    totalProducts: products.length,
+                    activeToday: [...new Set(activities.filter(a => 
+                        a.created_at?.startsWith(new Date().toISOString().split('T')[0])
+                    ).map(a => a.user_id))].length,
+                    userGrowth: [...new Set(activities.filter(a => 
+                        new Date(a.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+                    ).map(a => a.user_id))].length
+                };
 
-                        <div class="stat-card">
-                            <div class="stat-icon">🛒</div>
-                            <div class="stat-label">Total Sellers</div>
-                            <div class="stat-number">${stats.totalSellers}</div>
-                            <div class="stat-change">
-                                <span>${stats.sellerPercentage}% of users</span>
-                            </div>
-                        </div>
+                stats.sellerPercentage = stats.totalUsers ? ((stats.totalSellers/stats.totalUsers)*100).toFixed(1) : 0;
+                stats.avgPerSeller = stats.totalSellers ? (stats.totalProducts/stats.totalSellers).toFixed(1) : 0;
+                stats.activeRate = stats.totalUsers ? ((stats.activeToday/stats.totalUsers)*100).toFixed(1) : 0;
 
-                        <div class="stat-card">
-                            <div class="stat-icon">📦</div>
-                            <div class="stat-label">Total Products</div>
-                            <div class="stat-number">${stats.totalProducts}</div>
-                            <div class="stat-change">
-                                <span>Avg ${stats.avgPerSeller} per seller</span>
-                            </div>
-                        </div>
+                // Process download stats
+                const downloadStats = processDownloadStats(downloads);
 
-                        <div class="stat-card">
-                            <div class="stat-icon">⚡</div>
-                            <div class="stat-label">Active Today</div>
-                            <div class="stat-number">${stats.activeToday}</div>
-                            <div class="stat-change ${stats.activeToday > 0 ? '' : 'negative'}">
-                                <span>${stats.activeRate}% active rate</span>
-                            </div>
-                        </div>
-                    </div>
+                // Process chart data
+                const chartData = processChartData(users, activities, sellers, products);
 
-                    <!-- Section 2: App Download Statistics - FIXED COUNTING -->
-                    <h2 class="section-title">📱 App Download Statistics</h2>
-                    <div class="stats-grid">
-                        <div class="stat-card app-download">
-                            <div class="stat-icon">📱</div>
-                            <div class="stat-label">Total Downloads</div>
-                            <div class="stat-number">${downloadStats.pwaInstalls}</div>
-                            <div class="stat-change" style="color: #4caf50;">
-                                <span>📊</span>
-                                <span>${downloadStats.downloadsToday} today</span>
-                            </div>
-                        </div>
-
-                        <div class="stat-card app-download">
-                            <div class="stat-icon">📲</div>
-                            <div class="stat-label">Install Clicks</div>
-                            <div class="stat-number">${downloadStats.installClicks}</div>
-                            <div class="stat-change" style="color: #4caf50;">
-                                <span>↗️</span>
-                                <span>${downloadStats.conversionRate}% conversion</span>
-                            </div>
-                        </div>
-
-                        <div class="stat-card app-download">
-                            <div class="stat-icon">✅</div>
-                            <div class="stat-label">Successful Installs</div>
-                            <div class="stat-number">${downloadStats.pwaInstalls}</div>
-                            <div class="stat-change" style="color: #4caf50;">
-                                <span>📈</span>
-                                <span>${downloadStats.pwaInstalls - downloadStats.pwaInstallsYesterday} from yesterday</span>
-                            </div>
-                        </div>
-
-                        <div class="stat-card app-download">
-                            <div class="stat-icon">🏠</div>
-                            <div class="stat-label">Add to Home Screen</div>
-                            <div class="stat-number">${downloadStats.addToHomeScreen}</div>
-                            <div class="stat-change" style="color: #4caf50;">
-                                <span>🍎</span>
-                                <span>iOS users</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Download Funnel Visualization -->
-                    <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                        <h4 style="margin-bottom: 15px; color: #232f3e;">📊 Download Funnel</h4>
-                        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                            <div style="flex: 1; min-width: 150px; background: #e8eaf6; padding: 15px; border-radius: 8px; text-align: center;">
-                                <div style="font-size: 24px; font-weight: 700; color: #3f51b5;">${downloadStats.installClicks}</div>
-                                <div style="font-size: 12px; color: #666;">Install Clicks</div>
-                            </div>
-                            <div style="font-size: 20px; color: #999;">→</div>
-                            <div style="flex: 1; min-width: 150px; background: #e0f2f1; padding: 15px; border-radius: 8px; text-align: center;">
-                                <div style="font-size: 24px; font-weight: 700; color: #00695c;">${downloadStats.pwaInstalls}</div>
-                                <div style="font-size: 12px; color: #666;">Successful Installs</div>
-                            </div>
-                            <div style="font-size: 20px; color: #999;">→</div>
-                            <div style="flex: 1; min-width: 150px; background: #fff3e0; padding: 15px; border-radius: 8px; text-align: center;">
-                                <div style="font-size: 24px; font-weight: 700; color: #f90;">${downloadStats.conversionRate}%</div>
-                                <div style="font-size: 12px; color: #666;">Conversion Rate</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Device Type Breakdown -->
-                    <h3 style="margin: 20px 0 10px; color: #232f3e;">📱 Downloads by Device Type</h3>
-                    <div class="device-stats-grid">
-                        <div class="device-stat-card">
-                            <div class="device-icon">📱</div>
-                            <div class="device-label">Mobile</div>
-                            <div class="device-count">${downloadStats.byDevice.mobile}</div>
-                            <div class="device-percent">${downloadStats.percentages.mobile}%</div>
-                        </div>
-                        <div class="device-stat-card">
-                            <div class="device-icon">💻</div>
-                            <div class="device-label">Desktop</div>
-                            <div class="device-count">${downloadStats.byDevice.desktop}</div>
-                            <div class="device-percent">${downloadStats.percentages.desktop}%</div>
-                        </div>
-                        <div class="device-stat-card">
-                            <div class="device-icon">📟</div>
-                            <div class="device-label">Tablet</div>
-                            <div class="device-count">${downloadStats.byDevice.tablet}</div>
-                            <div class="device-percent">${downloadStats.percentages.tablet}%</div>
-                        </div>
-                        <div class="device-stat-card">
-                            <div class="device-icon">❓</div>
-                            <div class="device-label">Other</div>
-                            <div class="device-count">${downloadStats.byDevice.other}</div>
-                            <div class="device-percent">${downloadStats.percentages.other}%</div>
-                        </div>
-                    </div>
-
-                    <!-- OS Breakdown -->
-                    <h3 style="margin: 20px 0 10px; color: #232f3e;">🖥️ Downloads by Operating System</h3>
-                    <div class="os-breakdown-grid">
-                        <div class="os-item">
-                            <div class="os-icon">🤖</div>
-                            <div class="os-name">Android</div>
-                            <div class="os-count">${downloadStats.byOS.android}</div>
-                        </div>
-                        <div class="os-item">
-                            <div class="os-icon">🍎</div>
-                            <div class="os-name">iOS</div>
-                            <div class="os-count">${downloadStats.byOS.ios}</div>
-                        </div>
-                        <div class="os-item">
-                            <div class="os-icon">🪟</div>
-                            <div class="os-name">Windows</div>
-                            <div class="os-count">${downloadStats.byOS.windows}</div>
-                        </div>
-                        <div class="os-item">
-                            <div class="os-icon">🍎</div>
-                            <div class="os-name">macOS</div>
-                            <div class="os-count">${downloadStats.byOS.macos}</div>
-                        </div>
-                        <div class="os-item">
-                            <div class="os-icon">🐧</div>
-                            <div class="os-name">Linux</div>
-                            <div class="os-count">${downloadStats.byOS.linux}</div>
-                        </div>
-                        <div class="os-item">
-                            <div class="os-icon">❓</div>
-                            <div class="os-name">Other</div>
-                            <div class="os-count">${downloadStats.byOS.other}</div>
-                        </div>
-                    </div>
-
-                    <!-- Charts Section -->
-                    <h2 class="section-title">📈 Trends (Last 7 Days)</h2>
-                    <div class="charts-grid">
-                        <div class="chart-container">
-                            <div class="chart-title">New Users</div>
-                            <canvas id="usersChart"></canvas>
-                        </div>
-                        <div class="chart-container">
-                            <div class="chart-title">User Activity</div>
-                            <canvas id="activityChart"></canvas>
-                        </div>
-                        <div class="chart-container">
-                            <div class="chart-title">App Downloads</div>
-                            <canvas id="downloadsChart"></canvas>
-                        </div>
-                        <div class="chart-container full-width">
-                            <div class="chart-title">New Sellers & Products</div>
-                            <canvas id="productChart"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Download Type Breakdown -->
-                    <div style="display: flex; gap: 20px; margin: 20px 0; flex-wrap: wrap;">
-                        <div style="flex:1; min-width:200px; background:white; padding:20px; border-radius:8px;">
-                            <h4 style="margin-bottom:15px;">Event Breakdown</h4>
-                            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                                <span>Install Clicks:</span>
-                                <span style="font-weight:700;">${downloadStats.installClicks}</span>
-                            </div>
-                            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                                <span>PWA Installs:</span>
-                                <span style="font-weight:700; color:#00695c;">${downloadStats.pwaInstalls}</span>
-                            </div>
-                            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                                <span>Add to Home Screen:</span>
-                                <span style="font-weight:700;">${downloadStats.addToHomeScreen}</span>
-                            </div>
-                            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                                <span>Install Prompts Shown:</span>
-                                <span style="font-weight:700;">${downloadStats.installPrompts || 0}</span>
-                            </div>
-                            <div style="display:flex; justify-content:space-between; margin-top:15px; padding-top:15px; border-top:1px solid #eee;">
-                                <span>Conversion Rate:</span>
-                                <span style="font-weight:700; color:#28a745;">${downloadStats.conversionRate}%</span>
-                            </div>
-                        </div>
-                        <div style="flex:2; min-width:300px; background:white; padding:20px; border-radius:8px;">
-                            <h4 style="margin-bottom:15px;">Quick Insights</h4>
-                            <p>• <strong>${downloadStats.pwaInstalls}</strong> people have successfully installed the app</p>
-                            <p>• <strong>${downloadStats.installClicks - downloadStats.pwaInstalls}</strong> people clicked install but didn't complete</p>
-                            <p>• Most downloads from <strong>${downloadStats.topDevice}</strong> devices</p>
-                            <p>• Top operating system: <strong>${downloadStats.topOS}</strong></p>
-                        </div>
-                    </div>
-
-                    <!-- Recent Activities Section -->
-                    <div class="recent-activities" id="recentActivities">
-                        ${await getRecentActivitiesHTML()}
-                    </div>
-                `;
-
-                // Create charts
-                setTimeout(() => {
-                    createChart('usersChart', chartData.labels, chartData.users, '#9b59b6');
-                    createChart('activityChart', chartData.labels, chartData.activities, '#f90');
-                    createChart('downloadsChart', chartData.labels, downloadStats.dailyDownloads, '#3f51b5');
-                    createProductSellerChart('productChart', chartData.labels, chartData.sellers, chartData.products);
-                }, 100);
+                // Render dashboard
+                renderDashboard(stats, chartData, downloadStats);
 
             } catch (error) {
                 console.error('Error loading analytics:', error);
@@ -959,438 +742,311 @@
             }
         }
 
+        function processDownloadStats(downloads) {
+            const today = new Date().toISOString().split('T')[0];
+            const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+            
+            // Count by type
+            const installClicks = downloads.filter(d => d.download_type === 'install_click').length;
+            const pwaInstalls = downloads.filter(d => d.download_type === 'pwa_install').length;
+            const addToHomeScreen = downloads.filter(d => d.download_type === 'add_to_home_screen').length;
+            const installPrompts = downloads.filter(d => d.download_type === 'install_prompt_shown').length;
+
+            // Today's installs
+            const todayInstalls = downloads.filter(d => 
+                d.download_type === 'pwa_install' && d.timestamp?.startsWith(today)
+            ).length;
+
+            // Yesterday's installs
+            const yesterdayInstalls = downloads.filter(d => 
+                d.download_type === 'pwa_install' && d.timestamp?.startsWith(yesterday)
+            ).length;
+
+            // Daily downloads for chart
+            const dailyDownloads = [];
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date(Date.now() - i * 86400000).toISOString().split('T')[0];
+                dailyDownloads.push(downloads.filter(d => 
+                    d.download_type === 'pwa_install' && d.timestamp?.startsWith(date)
+                ).length);
+            }
+
+            // Device breakdown for installs only
+            const byDevice = {
+                mobile: downloads.filter(d => d.download_type === 'pwa_install' && d.device_type === 'mobile').length,
+                desktop: downloads.filter(d => d.download_type === 'pwa_install' && d.device_type === 'desktop').length,
+                tablet: downloads.filter(d => d.download_type === 'pwa_install' && d.device_type === 'tablet').length,
+                other: downloads.filter(d => d.download_type === 'pwa_install' && (!d.device_type || d.device_type === 'unknown')).length
+            };
+
+            // OS breakdown for installs only
+            const byOS = {
+                android: downloads.filter(d => d.download_type === 'pwa_install' && d.os === 'android').length,
+                ios: downloads.filter(d => d.download_type === 'pwa_install' && d.os === 'ios').length,
+                windows: downloads.filter(d => d.download_type === 'pwa_install' && d.os === 'windows').length,
+                macos: downloads.filter(d => d.download_type === 'pwa_install' && d.os === 'macos').length,
+                linux: downloads.filter(d => d.download_type === 'pwa_install' && d.os === 'linux').length,
+                other: downloads.filter(d => d.download_type === 'pwa_install' && (!d.os || d.os === 'unknown')).length
+            };
+
+            // Percentages
+            const percentages = {
+                mobile: pwaInstalls ? ((byDevice.mobile / pwaInstalls) * 100).toFixed(1) : 0,
+                desktop: pwaInstalls ? ((byDevice.desktop / pwaInstalls) * 100).toFixed(1) : 0,
+                tablet: pwaInstalls ? ((byDevice.tablet / pwaInstalls) * 100).toFixed(1) : 0,
+                other: pwaInstalls ? ((byDevice.other / pwaInstalls) * 100).toFixed(1) : 0
+            };
+
+            // Top device and OS
+            const topDevice = Object.entries(byDevice).reduce((a, b) => a[1] > b[1] ? a : b)[0] || 'Unknown';
+            const topOS = Object.entries(byOS).reduce((a, b) => a[1] > b[1] ? a : b)[0] || 'Unknown';
+
+            return {
+                totalDownloads: pwaInstalls,
+                downloadsToday: todayInstalls,
+                downloadsYesterday: yesterdayInstalls,
+                pwaInstallsYesterday: yesterdayInstalls,
+                installClicks,
+                pwaInstalls,
+                addToHomeScreen,
+                installPrompts,
+                conversionRate: installClicks ? ((pwaInstalls / installClicks) * 100).toFixed(1) : 0,
+                byDevice,
+                byOS,
+                percentages,
+                dailyDownloads,
+                topDevice,
+                topOS
+            };
+        }
+
+        function processChartData(users, activities, sellers, products) {
+            const labels = [];
+            const usersData = [];
+            const activitiesData = [];
+            const sellersData = [];
+            const productsData = [];
+
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date(Date.now() - i * 86400000).toISOString().split('T')[0];
+                labels.push(date.substring(5));
+                
+                usersData.push(users.filter(u => u.created_at?.startsWith(date)).length);
+                activitiesData.push(activities.filter(a => a.created_at?.startsWith(date)).length);
+                sellersData.push(sellers.filter(s => s.created_at?.startsWith(date)).length);
+                productsData.push(products.filter(p => p.created_at?.startsWith(date)).length);
+            }
+
+            return { labels, users: usersData, activities: activitiesData, sellers: sellersData, products: productsData };
+        }
+
+        function renderDashboard(stats, chartData, downloadStats) {
+            document.getElementById('analyticsContent').innerHTML = `
+                <div class="analytics-header">
+                    <h1>📊 Mbare Marketplace Analytics</h1>
+                    <div>
+                        <span class="badge badge-success" style="margin-right: 10px;">v${DASHBOARD_VERSION}</span>
+                        <span class="badge badge-info" style="margin-right: 10px;">Last updated: ${new Date().toLocaleString()}</span>
+                        <button class="refresh-btn" onclick="loadAnalytics()">⟳ Refresh</button>
+                    </div>
+                </div>
+
+                <!-- User Statistics -->
+                <h2 class="section-title">👥 User Statistics</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-label">Total Users</div>
+                        <div class="stat-number">${stats.totalUsers}</div>
+                        <div class="stat-change">${stats.userGrowth} active last 7d</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🛒</div>
+                        <div class="stat-label">Total Sellers</div>
+                        <div class="stat-number">${stats.totalSellers}</div>
+                        <div class="stat-change">${stats.sellerPercentage}% of users</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📦</div>
+                        <div class="stat-label">Total Products</div>
+                        <div class="stat-number">${stats.totalProducts}</div>
+                        <div class="stat-change">Avg ${stats.avgPerSeller} per seller</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⚡</div>
+                        <div class="stat-label">Active Today</div>
+                        <div class="stat-number">${stats.activeToday}</div>
+                        <div class="stat-change">${stats.activeRate}% active rate</div>
+                    </div>
+                </div>
+
+                <!-- App Download Statistics -->
+                <h2 class="section-title">📱 App Download Statistics</h2>
+                <div class="stats-grid">
+                    <div class="stat-card app-download">
+                        <div class="stat-icon">📱</div>
+                        <div class="stat-label">Total Downloads</div>
+                        <div class="stat-number">${downloadStats.pwaInstalls}</div>
+                        <div class="stat-change">${downloadStats.downloadsToday} today</div>
+                    </div>
+                    <div class="stat-card app-download">
+                        <div class="stat-icon">📲</div>
+                        <div class="stat-label">Install Clicks</div>
+                        <div class="stat-number">${downloadStats.installClicks}</div>
+                        <div class="stat-change">${downloadStats.conversionRate}% conversion</div>
+                    </div>
+                    <div class="stat-card app-download">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-label">Successful Installs</div>
+                        <div class="stat-number">${downloadStats.pwaInstalls}</div>
+                        <div class="stat-change">${downloadStats.pwaInstalls - downloadStats.pwaInstallsYesterday} from yesterday</div>
+                    </div>
+                    <div class="stat-card app-download">
+                        <div class="stat-icon">🏠</div>
+                        <div class="stat-label">Add to Home Screen</div>
+                        <div class="stat-number">${downloadStats.addToHomeScreen}</div>
+                        <div class="stat-change">iOS users</div>
+                    </div>
+                </div>
+
+                <!-- Download Funnel -->
+                <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                    <h4 style="margin-bottom: 15px; color: #232f3e;">📊 Download Funnel</h4>
+                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 150px; background: #e8eaf6; padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 24px; font-weight: 700; color: #3f51b5;">${downloadStats.installClicks}</div>
+                            <div style="font-size: 12px; color: #666;">Install Clicks</div>
+                        </div>
+                        <div style="font-size: 20px; color: #999;">→</div>
+                        <div style="flex: 1; min-width: 150px; background: #e0f2f1; padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 24px; font-weight: 700; color: #00695c;">${downloadStats.pwaInstalls}</div>
+                            <div style="font-size: 12px; color: #666;">Successful Installs</div>
+                        </div>
+                        <div style="font-size: 20px; color: #999;">→</div>
+                        <div style="flex: 1; min-width: 150px; background: #fff3e0; padding: 15px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 24px; font-weight: 700; color: #f90;">${downloadStats.conversionRate}%</div>
+                            <div style="font-size: 12px; color: #666;">Conversion Rate</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Device Breakdown -->
+                <h3 style="margin: 20px 0 10px; color: #232f3e;">📱 Downloads by Device</h3>
+                <div class="device-stats-grid">
+                    <div class="device-stat-card">
+                        <div class="device-icon">📱</div>
+                        <div class="device-label">Mobile</div>
+                        <div class="device-count">${downloadStats.byDevice.mobile}</div>
+                        <div class="device-percent">${downloadStats.percentages.mobile}%</div>
+                    </div>
+                    <div class="device-stat-card">
+                        <div class="device-icon">💻</div>
+                        <div class="device-label">Desktop</div>
+                        <div class="device-count">${downloadStats.byDevice.desktop}</div>
+                        <div class="device-percent">${downloadStats.percentages.desktop}%</div>
+                    </div>
+                    <div class="device-stat-card">
+                        <div class="device-icon">📟</div>
+                        <div class="device-label">Tablet</div>
+                        <div class="device-count">${downloadStats.byDevice.tablet}</div>
+                        <div class="device-percent">${downloadStats.percentages.tablet}%</div>
+                    </div>
+                    <div class="device-stat-card">
+                        <div class="device-icon">❓</div>
+                        <div class="device-label">Other</div>
+                        <div class="device-count">${downloadStats.byDevice.other}</div>
+                        <div class="device-percent">${downloadStats.percentages.other}%</div>
+                    </div>
+                </div>
+
+                <!-- OS Breakdown -->
+                <h3 style="margin: 20px 0 10px; color: #232f3e;">🖥️ Downloads by OS</h3>
+                <div class="os-breakdown-grid">
+                    <div class="os-item"><div class="os-icon">🤖</div><div class="os-name">Android</div><div class="os-count">${downloadStats.byOS.android}</div></div>
+                    <div class="os-item"><div class="os-icon">🍎</div><div class="os-name">iOS</div><div class="os-count">${downloadStats.byOS.ios}</div></div>
+                    <div class="os-item"><div class="os-icon">🪟</div><div class="os-name">Windows</div><div class="os-count">${downloadStats.byOS.windows}</div></div>
+                    <div class="os-item"><div class="os-icon">🍎</div><div class="os-name">macOS</div><div class="os-count">${downloadStats.byOS.macos}</div></div>
+                    <div class="os-item"><div class="os-icon">🐧</div><div class="os-name">Linux</div><div class="os-count">${downloadStats.byOS.linux}</div></div>
+                    <div class="os-item"><div class="os-icon">❓</div><div class="os-name">Other</div><div class="os-count">${downloadStats.byOS.other}</div></div>
+                </div>
+
+                <!-- Charts -->
+                <h2 class="section-title">📈 Trends (Last 7 Days)</h2>
+                <div class="charts-grid">
+                    <div class="chart-container"><div class="chart-title">New Users</div><canvas id="usersChart"></canvas></div>
+                    <div class="chart-container"><div class="chart-title">User Activity</div><canvas id="activityChart"></canvas></div>
+                    <div class="chart-container"><div class="chart-title">App Downloads</div><canvas id="downloadsChart"></canvas></div>
+                    <div class="chart-container full-width"><div class="chart-title">New Sellers & Products</div><canvas id="productChart"></canvas></div>
+                </div>
+
+                <!-- Insights -->
+                <div style="display: flex; gap: 20px; margin: 20px 0; flex-wrap: wrap;">
+                    <div style="flex:1; min-width:200px; background:white; padding:20px; border-radius:8px;">
+                        <h4 style="margin-bottom:15px;">Event Breakdown</h4>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span>Install Clicks:</span><span style="font-weight:700;">${downloadStats.installClicks}</span></div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span>PWA Installs:</span><span style="font-weight:700; color:#00695c;">${downloadStats.pwaInstalls}</span></div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span>Add to Home Screen:</span><span style="font-weight:700;">${downloadStats.addToHomeScreen}</span></div>
+                        <div style="display:flex; justify-content:space-between; margin-top:15px; padding-top:15px; border-top:1px solid #eee;"><span>Conversion Rate:</span><span style="font-weight:700; color:#28a745;">${downloadStats.conversionRate}%</span></div>
+                    </div>
+                    <div style="flex:2; min-width:300px; background:white; padding:20px; border-radius:8px;">
+                        <h4 style="margin-bottom:15px;">Quick Insights</h4>
+                        <p>• <strong>${downloadStats.pwaInstalls}</strong> people have successfully installed the app</p>
+                        <p>• <strong>${downloadStats.installClicks - downloadStats.pwaInstalls}</strong> people clicked but didn't complete</p>
+                        <p>• Most downloads from <strong>${downloadStats.topDevice}</strong> devices</p>
+                        <p>• Top operating system: <strong>${downloadStats.topOS}</strong></p>
+                    </div>
+                </div>
+
+                <!-- Recent Activities -->
+                <div class="recent-activities" id="recentActivities">
+                    ${getRecentActivitiesHTML()}
+                </div>
+            `;
+
+            // Create charts
+            setTimeout(() => {
+                createChart('usersChart', chartData.labels, chartData.users, '#9b59b6');
+                createChart('activityChart', chartData.labels, chartData.activities, '#f90');
+                createChart('downloadsChart', chartData.labels, downloadStats.dailyDownloads, '#3f51b5');
+                createProductSellerChart('productChart', chartData.labels, chartData.sellers, chartData.products);
+            }, 50);
+        }
+
         function createChart(elementId, labels, data, color) {
             const ctx = document.getElementById(elementId)?.getContext('2d');
             if (!ctx) return;
-            
             if (charts[elementId]) charts[elementId].destroy();
             
             charts[elementId] = new Chart(ctx, {
                 type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Count',
-                        data: data,
-                        backgroundColor: color,
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { 
-                        legend: { display: false } 
-                    },
-                    scales: { 
-                        y: { 
-                            beginAtZero: true,
-                            ticks: {
-                                stepSize: 1,
-                                callback: function(value) {
-                                    return Number.isInteger(value) ? value : '';
-                                }
-                            }
-                        } 
-                    }
-                }
+                data: { labels, datasets: [{ data, backgroundColor: color, borderRadius: 4 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
         }
 
         function createProductSellerChart(elementId, labels, sellers, products) {
             const ctx = document.getElementById(elementId)?.getContext('2d');
             if (!ctx) return;
-            
             if (charts[elementId]) charts[elementId].destroy();
             
             charts[elementId] = new Chart(ctx, {
                 type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: 'New Sellers',
-                            data: sellers,
-                            borderColor: '#28a745',
-                            backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                            tension: 0.4,
-                            fill: true
-                        },
-                        {
-                            label: 'New Products',
-                            data: products,
-                            borderColor: '#007bff',
-                            backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                            tension: 0.4,
-                            fill: true
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { 
-                        legend: { 
-                            display: true,
-                            position: 'top'
-                        } 
-                    },
-                    scales: { 
-                        y: { 
-                            beginAtZero: true,
-                            ticks: {
-                                stepSize: 1,
-                                callback: function(value) {
-                                    return Number.isInteger(value) ? value : '';
-                                }
-                            }
-                        } 
-                    }
-                }
+                data: { labels, datasets: [
+                    { label: 'New Sellers', data: sellers, borderColor: '#28a745', backgroundColor: 'rgba(40,167,69,0.1)', tension: 0.4, fill: true },
+                    { label: 'New Products', data: products, borderColor: '#007bff', backgroundColor: 'rgba(0,123,255,0.1)', tension: 0.4, fill: true }
+                ]},
+                options: { responsive: true, maintainAspectRatio: false }
             });
         }
 
-        // Get app download statistics - FIXED to count only pwa_install as downloads
-        async function getAppDownloadStats() {
-            const url = window.SUPABASE_URL;
-            const key = window.SUPABASE_SERVICE_KEY; // Use service role key
-            const headers = { 'apikey': key, 'Authorization': `Bearer ${key}` };
-
-            try {
-                // Get all downloads
-                const response = await fetch(`${url}/rest/v1/app_downloads?select=*`, { headers });
-                if (!response.ok) {
-                    console.error('Failed to fetch downloads:', response.status);
-                    return getDefaultDownloadStats();
-                }
-                
-                const downloads = await response.json();
-                
-                // Get yesterday's date
-                const yesterday = new Date();
-                yesterday.setDate(yesterday.getDate() - 1);
-                const yesterdayStr = yesterday.toISOString().split('T')[0];
-                
-                // Get today's date
-                const today = new Date().toISOString().split('T')[0];
-                
-                // Count ONLY pwa_install as actual downloads
-                const totalDownloads = downloads.filter(d => d.download_type === 'pwa_install').length;
-                
-                // Today's downloads (only pwa_install)
-                const todayDownloads = downloads.filter(d => 
-                    d.download_type === 'pwa_install' && d.timestamp?.startsWith(today)
-                ).length;
-                
-                // Get last 7 days downloads for chart (only pwa_install)
-                const dailyDownloads = [];
-                for (let i = 6; i >= 0; i--) {
-                    const date = new Date();
-                    date.setDate(date.getDate() - i);
-                    const dateStr = date.toISOString().split('T')[0];
-                    const count = downloads.filter(d => 
-                        d.download_type === 'pwa_install' && d.timestamp?.startsWith(dateStr)
-                    ).length;
-                    dailyDownloads.push(count);
-                }
-
-                // Group by device type (only pwa_install)
-                const byDevice = {
-                    mobile: downloads.filter(d => d.download_type === 'pwa_install' && d.device_type === 'mobile').length,
-                    desktop: downloads.filter(d => d.download_type === 'pwa_install' && d.device_type === 'desktop').length,
-                    tablet: downloads.filter(d => d.download_type === 'pwa_install' && d.device_type === 'tablet').length,
-                    other: downloads.filter(d => d.download_type === 'pwa_install' && (!d.device_type || d.device_type === 'unknown')).length
-                };
-
-                // Group by OS (only pwa_install)
-                const byOS = {
-                    android: downloads.filter(d => d.download_type === 'pwa_install' && d.os === 'android').length,
-                    ios: downloads.filter(d => d.download_type === 'pwa_install' && d.os === 'ios').length,
-                    windows: downloads.filter(d => d.download_type === 'pwa_install' && d.os === 'windows').length,
-                    macos: downloads.filter(d => d.download_type === 'pwa_install' && d.os === 'macos').length,
-                    linux: downloads.filter(d => d.download_type === 'pwa_install' && d.os === 'linux').length,
-                    other: downloads.filter(d => d.download_type === 'pwa_install' && (!d.os || d.os === 'unknown')).length
-                };
-
-                // Count different event types
-                const installClicks = downloads.filter(d => d.download_type === 'install_click').length;
-                const pwaInstalls = downloads.filter(d => d.download_type === 'pwa_install').length;
-                const addToHomeScreen = downloads.filter(d => d.download_type === 'add_to_home_screen').length;
-                const installPrompts = downloads.filter(d => d.download_type === 'install_prompt_shown').length;
-                const installAccepted = downloads.filter(d => d.download_type === 'install_accepted').length;
-                const installDismissed = downloads.filter(d => d.download_type === 'install_dismissed').length;
-
-                // Calculate percentages based on pwa_install only
-                const total = pwaInstalls;
-                const percentages = {
-                    mobile: total ? ((byDevice.mobile / total) * 100).toFixed(1) : 0,
-                    desktop: total ? ((byDevice.desktop / total) * 100).toFixed(1) : 0,
-                    tablet: total ? ((byDevice.tablet / total) * 100).toFixed(1) : 0,
-                    other: total ? ((byDevice.other / total) * 100).toFixed(1) : 0
-                };
-
-                // Determine top device and OS (based on pwa_install)
-                const topDevice = Object.entries(byDevice).reduce((a, b) => a[1] > b[1] ? a : b)[0];
-                const topOS = Object.entries(byOS).reduce((a, b) => a[1] > b[1] ? a : b)[0];
-
-                return {
-                    totalDownloads: totalDownloads, // Now only pwa_install
-                    downloadsToday: todayDownloads,
-                    downloadsYesterday: downloads.filter(d => d.download_type === 'pwa_install' && d.timestamp?.startsWith(yesterdayStr)).length,
-                    pwaInstallsYesterday: downloads.filter(d => d.download_type === 'pwa_install' && d.timestamp?.startsWith(yesterdayStr)).length,
-                    installClicks: installClicks,
-                    pwaInstalls: pwaInstalls,
-                    addToHomeScreen: addToHomeScreen,
-                    installPrompts: installPrompts,
-                    installAccepted: installAccepted,
-                    installDismissed: installDismissed,
-                    activeInstallations: pwaInstalls,
-                    conversionRate: installClicks ? ((pwaInstalls / installClicks) * 100).toFixed(1) : 0,
-                    byDevice: byDevice,
-                    byOS: byOS,
-                    percentages: percentages,
-                    dailyDownloads: dailyDownloads,
-                    topDevice: topDevice || 'Unknown',
-                    topOS: topOS || 'Unknown'
-                };
-            } catch (error) {
-                console.error('Error getting app download stats:', error);
-                return getDefaultDownloadStats();
-            }
-        }
-
-        function getDefaultDownloadStats() {
-            return {
-                totalDownloads: 0,
-                downloadsToday: 0,
-                downloadsYesterday: 0,
-                pwaInstallsYesterday: 0,
-                installClicks: 0,
-                pwaInstalls: 0,
-                addToHomeScreen: 0,
-                installPrompts: 0,
-                installAccepted: 0,
-                installDismissed: 0,
-                activeInstallations: 0,
-                conversionRate: 0,
-                byDevice: { mobile: 0, desktop: 0, tablet: 0, other: 0 },
-                byOS: { android: 0, ios: 0, windows: 0, macos: 0, linux: 0, other: 0 },
-                percentages: { mobile: 0, desktop: 0, tablet: 0, other: 0 },
-                dailyDownloads: [0, 0, 0, 0, 0, 0, 0],
-                topDevice: 'Unknown',
-                topOS: 'Unknown'
-            };
-        }
-
-        // Get total users from users table - USING SERVICE ROLE KEY
-        async function getTotalUsers() {
-            const url = window.SUPABASE_URL;
-            const key = window.SUPABASE_SERVICE_KEY; // Use service role key
-            const headers = { 'apikey': key, 'Authorization': `Bearer ${key}` };
-            
-            try {
-                const response = await fetch(`${url}/rest/v1/users?select=id`, { headers });
-                
-                if (response.ok) {
-                    const users = await response.json();
-                    return users.length;
-                } else {
-                    return 0;
-                }
-            } catch (error) {
-                return 0;
-            }
-        }
-
-        async function getStats() {
-            const url = window.SUPABASE_URL;
-            const key = window.SUPABASE_SERVICE_KEY; // Use service role key
-            const headers = { 'apikey': key, 'Authorization': `Bearer ${key}` };
-
-            try {
-                // Get total users from users table
-                const totalUsers = await getTotalUsers();
-
-                // Get sellers
-                const sellers = await (await fetch(`${url}/rest/v1/sellers?select=id`, { headers })).json();
-                const products = await (await fetch(`${url}/rest/v1/products?select=id`, { headers })).json();
-                const activities = await (await fetch(`${url}/rest/v1/user_activities?select=user_id,created_at`, { headers })).json();
-
-                const totalSellers = sellers.length;
-                const totalProducts = products.length;
-
-                const today = new Date().toISOString().split('T')[0];
-                const activeToday = [...new Set(activities.filter(a => 
-                    a.created_at?.startsWith(today)
-                ).map(a => a.user_id))].length;
-
-                const sevenDaysAgo = new Date();
-                sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-                const userGrowth = [...new Set(activities.filter(a => 
-                    new Date(a.created_at) > sevenDaysAgo
-                ).map(a => a.user_id))].length;
-
-                return {
-                    totalUsers,
-                    totalSellers,
-                    totalProducts,
-                    activeToday,
-                    userGrowth,
-                    sellerPercentage: totalUsers ? ((totalSellers/totalUsers)*100).toFixed(1) : 0,
-                    avgPerSeller: totalSellers ? (totalProducts/totalSellers).toFixed(1) : 0,
-                    activeRate: totalUsers ? ((activeToday/totalUsers)*100).toFixed(1) : 0
-                };
-            } catch (error) {
-                console.error('Error in getStats:', error);
-                return {
-                    totalUsers: 0,
-                    totalSellers: 0,
-                    totalProducts: 0,
-                    activeToday: 0,
-                    userGrowth: 0,
-                    sellerPercentage: 0,
-                    avgPerSeller: 0,
-                    activeRate: 0
-                };
-            }
-        }
-
-        async function getChartData() {
-            const url = window.SUPABASE_URL;
-            const key = window.SUPABASE_SERVICE_KEY; // Use service role key
-            const headers = { 'apikey': key, 'Authorization': `Bearer ${key}` };
-            
-            const labels = [];
-            const users = [];
-            const activities = [];
-            const sellers = [];
-            const products = [];
-
-            // Get last 7 days
-            for (let i = 6; i >= 0; i--) {
-                const date = new Date();
-                date.setDate(date.getDate() - i);
-                const dateStr = date.toISOString().split('T')[0];
-                labels.push(dateStr.substring(5)); // MM-DD
-                
-                const nextDay = new Date(date);
-                nextDay.setDate(nextDay.getDate() + 1);
-                const nextStr = nextDay.toISOString().split('T')[0];
-
-                // Get users created on this day from users table
-                const usersRes = await fetch(
-                    `${url}/rest/v1/users?created_at=gte.${dateStr}&created_at=lt.${nextStr}&select=id`,
-                    { headers }
-                );
-                const usersData = await usersRes.json();
-                users.push(usersData.length);
-
-                // Get activities for this day
-                const activityRes = await fetch(
-                    `${url}/rest/v1/user_activities?created_at=gte.${dateStr}&created_at=lt.${nextStr}&select=id`,
-                    { headers }
-                );
-                const activityData = await activityRes.json();
-                activities.push(activityData.length);
-
-                // Get sellers for this day
-                const sellerRes = await fetch(
-                    `${url}/rest/v1/sellers?created_at=gte.${dateStr}&created_at=lt.${nextStr}&select=id`,
-                    { headers }
-                );
-                const sellerData = await sellerRes.json();
-                sellers.push(sellerData.length);
-
-                // Get products for this day
-                const productRes = await fetch(
-                    `${url}/rest/v1/products?created_at=gte.${dateStr}&created_at=lt.${nextStr}&select=id`,
-                    { headers }
-                );
-                const productData = await productRes.json();
-                products.push(productData.length);
-            }
-
-            return { labels, users, activities, sellers, products };
-        }
-
-        async function getRecentActivitiesHTML() {
-            const url = window.SUPABASE_URL;
-            const key = window.SUPABASE_SERVICE_KEY; // Use service role key
-            const headers = { 'apikey': key, 'Authorization': `Bearer ${key}` };
-
-            try {
-                // Get user activities and app downloads combined
-                const [activities, downloads] = await Promise.all([
-                    fetch(`${url}/rest/v1/user_activities?order=created_at.desc&limit=5`, { headers }).then(r => r.json()),
-                    fetch(`${url}/rest/v1/app_downloads?order=timestamp.desc&limit=5`, { headers }).then(r => r.json())
-                ]);
-
-                // Combine and sort by date
-                const allActivities = [
-                    ...(Array.isArray(activities) ? activities.map(a => ({ ...a, type: 'activity', time: a.created_at })) : []),
-                    ...(Array.isArray(downloads) ? downloads.map(d => ({ ...d, type: 'download', time: d.timestamp, activity_type: d.download_type })) : [])
-                ].sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 10);
-
-                if (!allActivities.length) {
-                    return `
-                        <div class="activities-header">
-                            <h2>Recent Activities</h2>
-                            <button class="refresh-btn" style="padding:5px 15px;font-size:12px" onclick="loadAnalytics()">↻</button>
-                        </div>
-                        <p style="text-align: center; padding: 20px; color: #666;">No recent activities found.</p>
-                    `;
-                }
-
-                return `
-                    <div class="activities-header">
-                        <h2>📋 Recent Activities & Downloads</h2>
-                        <button class="refresh-btn" style="padding:5px 15px;font-size:12px" onclick="loadAnalytics()">↻</button>
-                    </div>
-                    <table class="activities-table">
-                        <thead>
-                            <tr>
-                                <th>Time</th>
-                                <th>User / Device</th>
-                                <th>Activity</th>
-                                <th>Details</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${allActivities.map(a => {
-                                if (a.type === 'download') {
-                                    return `
-                                        <tr>
-                                            <td>${timeAgo(new Date(a.timestamp))}</td>
-                                            <td>${a.device_type || 'Unknown'} • ${a.os || 'OS'}</td>
-                                            <td><span class="activity-type type-${a.download_type}">📱 ${a.download_type}</span></td>
-                                            <td>${a.browser || 'Web'} • ${a.screen_size || '-'}</td>
-                                        </tr>
-                                    `;
-                                } else {
-                                    return `
-                                        <tr>
-                                            <td>${timeAgo(new Date(a.created_at))}</td>
-                                            <td>${a.user_id?.substring(0,8)}...</td>
-                                            <td><span class="activity-type type-${a.activity_type}">${a.activity_type || 'activity'}</span></td>
-                                            <td>${a.page_url || '-'}</td>
-                                        </tr>
-                                    `;
-                                }
-                            }).join('')}
-                        </tbody>
-                    </table>
-                `;
-            } catch (error) {
-                return `<p>Error loading activities</p>`;
-            }
-        }
-
-        function timeAgo(date) {
-            const seconds = Math.floor((new Date() - date) / 1000);
-            if (seconds < 60) return seconds + 's ago';
-            if (seconds < 3600) return Math.floor(seconds/60) + 'm ago';
-            if (seconds < 86400) return Math.floor(seconds/3600) + 'h ago';
-            return Math.floor(seconds/86400) + 'd ago';
+        function getRecentActivitiesHTML() {
+            return `
+                <div class="activities-header">
+                    <h2>📋 Recent Activities</h2>
+                    <button class="refresh-btn" style="padding:5px 15px;font-size:12px" onclick="loadAnalytics()">↻</button>
+                </div>
+                <p style="text-align: center; padding: 20px; color: #666;">Refresh to load recent activities</p>
+            `;
         }
 
         function updateHeader() {
