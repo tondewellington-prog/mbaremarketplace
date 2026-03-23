@@ -308,7 +308,7 @@
             color: #666;
         }
         
-        /* iOS Install Prompt Modal - Updated to dark blue */
+        /* iOS Install Prompt Modal */
         .ios-prompt-modal {
             position: fixed;
             bottom: 20px;
@@ -403,9 +403,8 @@
             background: #1a2533;
         }
         
-        /* Install Button Styles */
+        /* Install Button Styles - FIXED for all devices */
         #installButton {
-            display: none;
             position: fixed;
             bottom: 20px;
             right: 20px;
@@ -416,6 +415,7 @@
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             z-index: 9999;
+            display: flex;
             align-items: center;
             gap: 8px;
             font-weight: 600;
@@ -427,6 +427,13 @@
         #installButton:hover {
             background: #1a2533;
             transform: scale(1.02);
+        }
+        
+        /* Hide install button on desktop */
+        @media (min-width: 1024px) {
+            #installButton {
+                display: none !important;
+            }
         }
         
         /* Mobile responsive styles */
@@ -548,7 +555,6 @@
             }
         }
 
-        /* Login status indicator - fixed to match website colors */
         .login-status-indicator {
             background-color: #f0f0f0;
             color: #232f3e;
@@ -842,10 +848,10 @@
     <script src="script.js"></script>
     <script src="auth-check.js"></script>
     
-    <!-- FIXED APP INSTALL SCRIPT -->
+    <!-- FIXED APP INSTALL SCRIPT - WORKS ON ALL DEVICES -->
     <script>
         // ============================================
-        // APP INSTALL BUTTON - FIXED VERSION
+        // APP INSTALL BUTTON - FIXED FOR ANDROID/WINDOWS
         // ============================================
         
         // Supabase configuration
@@ -856,8 +862,10 @@
         const installButton = document.getElementById('installButton');
         const iosPrompt = document.getElementById('iosPromptModal');
         
-        // Detect if device is iOS
+        // Detect device type
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         
         // Track install clicks
         window.trackInstallClick = function(source = 'install_button') {
@@ -948,23 +956,22 @@
             }
         }
         
-        // Show install button immediately for testing - but only on mobile
+        // SHOW BUTTON ON ALL MOBILE DEVICES - FIXED
         function showInstallButton() {
             // Check if app is already installed
             if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
                 console.log('App already installed - hiding button');
-                installButton.style.display = 'none';
+                if (installButton) installButton.style.display = 'none';
                 return;
             }
             
-            // Show button on mobile devices
-            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            // ALWAYS show button on mobile devices (Android, iOS, Windows Mobile)
             if (isMobile) {
-                console.log('Showing install button for mobile device');
-                installButton.style.display = 'flex';
+                console.log('Showing install button for mobile device - Type:', isIOS ? 'iOS' : (isAndroid ? 'Android' : 'Other Mobile'));
+                if (installButton) installButton.style.display = 'flex';
             } else {
                 console.log('Not a mobile device - hiding install button');
-                installButton.style.display = 'none';
+                if (installButton) installButton.style.display = 'none';
             }
         }
         
@@ -973,20 +980,20 @@
             e.preventDefault();
             deferredPrompt = e;
             console.log('📲 Install prompt available - showing button');
-            installButton.style.display = 'flex';
+            if (installButton) installButton.style.display = 'flex';
         });
         
         // Handle button click
         if (installButton) {
             installButton.addEventListener('click', async () => {
-                console.log('📱 Install button clicked');
+                console.log('📱 Install button clicked on device:', isIOS ? 'iOS' : (isAndroid ? 'Android' : 'Other'));
                 
                 if (window.trackInstallClick) {
                     window.trackInstallClick('install_button');
                 }
                 
                 if (deferredPrompt) {
-                    // Android flow
+                    // Android/Chrome flow
                     console.log('Showing Android install prompt');
                     deferredPrompt.prompt();
                     const { outcome } = await deferredPrompt.userChoice;
@@ -1007,12 +1014,16 @@
                         iosPrompt.style.display = 'block';
                         recordAppDownload('ios_install_modal_shown');
                     } else {
-                        // Fallback alert if modal not found
                         alert('To install this app on your iPhone:\n1. Tap the Share button\n2. Scroll down and tap "Add to Home Screen"\n3. Tap "Add"');
                     }
+                } else if (isAndroid) {
+                    // Android without beforeinstallprompt - show guide
+                    console.log('Android without prompt - showing guide');
+                    alert('To install this app on your Android:\n1. Tap the menu (three dots)\n2. Tap "Install app" or "Add to Home screen"');
+                    recordAppDownload('android_install_guide_shown');
                 } else {
-                    // Fallback for other browsers
-                    alert('To install this app, look for "Add to Home Screen" or "Install App" in your browser menu');
+                    // Windows or other mobile
+                    alert('To install this app, look for "Install app" or "Add to Home screen" in your browser menu');
                     recordAppDownload('install_fallback_shown');
                 }
             });
@@ -1029,13 +1040,13 @@
         // Hide button if app is installed
         window.addEventListener('appinstalled', () => {
             console.log('✅ App installed event fired');
-            installButton.style.display = 'none';
+            if (installButton) installButton.style.display = 'none';
             recordAppDownload('pwa_install_complete');
         });
         
         // Also hide button if already in standalone mode
         if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
-            installButton.style.display = 'none';
+            if (installButton) installButton.style.display = 'none';
             console.log('App already installed (standalone mode)');
         }
         
@@ -1046,15 +1057,19 @@
             }
         });
         
-        // Show button after page loads
+        // Show button after page loads - FORCE SHOW ON MOBILE
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM loaded - checking install button');
-            setTimeout(showInstallButton, 1000);
-            
-            // Check if already in standalone mode
-            if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
-                installButton.style.display = 'none';
-            }
+            console.log('Device detection - isMobile:', isMobile, 'isIOS:', isIOS, 'isAndroid:', isAndroid);
+            // Force show button on mobile after 1 second
+            setTimeout(function() {
+                if (isMobile && !window.matchMedia('(display-mode: standalone)').matches && !window.navigator.standalone) {
+                    console.log('FORCE showing install button on mobile');
+                    if (installButton) installButton.style.display = 'flex';
+                } else {
+                    showInstallButton();
+                }
+            }, 1000);
         });
         
         // Function to show login prompt
