@@ -878,9 +878,8 @@
             }
         });
     </script>
-    
     <script>
-        // FIXED: PWA Install Button - Android system prompt
+        // FIXED: PWA Install Button - Remembers installation
         let deferredPrompt;
         const installButton = document.getElementById('installButton');
         const iosPrompt = document.getElementById('iosPromptModal');
@@ -888,22 +887,33 @@
         const isMobile = /iPhone|iPad|iPod|Android|Mobile|webOS|BlackBerry|Windows Phone/i.test(navigator.userAgent);
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
         const isAndroid = /Android/i.test(navigator.userAgent);
-        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-
-        if (isStandalone) {
+        
+        // Check if app is already installed (via display mode)
+        let isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                           window.navigator.standalone === true;
+        
+        // Also check if user previously installed (saved in localStorage)
+        const wasInstalled = localStorage.getItem('pwa_installed') === 'true';
+        
+        // If user installed before, hide the button
+        if (isStandalone || wasInstalled) {
             installButton.style.display = 'none';
+            console.log('App already installed - button hidden');
         }
 
         // Listen for the beforeinstallprompt event
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            installButton.style.display = 'flex';
+            // Only show button if not already installed
+            if (!isStandalone && !wasInstalled) {
+                installButton.style.display = 'flex';
+            }
             console.log('✅ Install prompt captured - button ready');
         });
 
         // Show button on mobile if not installed
-        if (isMobile && !isStandalone) {
+        if (isMobile && !isStandalone && !wasInstalled) {
             installButton.style.display = 'flex';
         }
 
@@ -912,13 +922,15 @@
             console.log('Install button clicked - device:', isAndroid ? 'Android' : (isIOS ? 'iOS' : 'Other'));
             
             if (deferredPrompt) {
-                // Show the system install prompt (Android/Chrome)
+                // Show the system install prompt (Android/Windows/Chrome)
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
                 console.log('Install outcome:', outcome);
                 
                 if (outcome === 'accepted') {
                     recordAppDownload('install_accepted');
+                    // Save that user installed the app
+                    localStorage.setItem('pwa_installed', 'true');
                     installButton.style.display = 'none';
                 } else {
                     recordAppDownload('install_dismissed');
@@ -933,19 +945,32 @@
                 alert('To install the app:\n\n1. Tap the three dots ⋮ in the top right\n2. Tap "Install app"\n3. Tap "Install"');
                 recordAppDownload('android_manual_install');
             } else {
-                alert('To install, look for "Add to Home Screen" or "Install App" in your browser menu');
+                // Windows/Desktop fallback
+                alert('To install the app:\n\n1. Click the install icon in the address bar\n2. Click "Install"\n\nOr look for "Install app" in the browser menu');
                 recordAppDownload('install_fallback');
+            }
+        });
+
+        // Listen for appinstalled event (works on Chrome)
+        window.addEventListener('appinstalled', () => {
+            console.log('✅ App installed event fired');
+            localStorage.setItem('pwa_installed', 'true');
+            installButton.style.display = 'none';
+            recordAppDownload('pwa_install_complete');
+        });
+
+        // Also listen for display mode change (if user switches to standalone)
+        window.matchMedia('(display-mode: standalone)').addEventListener('change', (e) => {
+            if (e.matches) {
+                console.log('App switched to standalone mode');
+                localStorage.setItem('pwa_installed', 'true');
+                installButton.style.display = 'none';
             }
         });
 
         window.closeIOSPrompt = function() {
             iosPrompt.style.display = 'none';
         };
-
-        window.addEventListener('appinstalled', () => {
-            installButton.style.display = 'none';
-            recordAppDownload('pwa_install_complete');
-        });
 
         window.addEventListener('click', function(e) {
             if (e.target === iosPrompt) {
@@ -1028,6 +1053,6 @@
                 }
             }
         });
-    </script>
+    </script>    
 </body>
 </html>
