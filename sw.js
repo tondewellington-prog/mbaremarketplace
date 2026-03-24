@@ -1,31 +1,31 @@
 // Service Worker for Mbare Marketplace
-const CACHE_NAME = 'mbare-cache-v2'; // Incremented version to force update
+const CACHE_NAME = 'mbare-cache-v3'; // Incremented version to force update
 const urlsToCache = [
-  '/mbaremarketplace/',
-  '/mbaremarketplace/index.html',
-  '/mbaremarketplace/login.html',
-  '/mbaremarketplace/register.html',
-  '/mbaremarketplace/product-detail.html',
-  '/mbaremarketplace/Basket.html',
-  '/mbaremarketplace/checkout.html',
-  '/mbaremarketplace/seller-register.html',
-  '/mbaremarketplace/seller-dashboard.html',
-  '/mbaremarketplace/rate-seller.html',
-  '/mbaremarketplace/search-results.html',
-  '/mbaremarketplace/analytics.html',
-  '/mbaremarketplace/styles.css',
-  '/mbaremarketplace/script.js',
-  '/mbaremarketplace/api.js',
-  '/mbaremarketplace/auth-check.js',
-  '/mbaremarketplace/manifest.json',
-  '/mbaremarketplace/icons/icon-72.png',
-  '/mbaremarketplace/icons/icon-96.png',
-  '/mbaremarketplace/icons/icon-128.png',
-  '/mbaremarketplace/icons/icon-144.png',
-  '/mbaremarketplace/icons/icon-152.png',
-  '/mbaremarketplace/icons/icon-192.png',
-  '/mbaremarketplace/icons/icon-384.png',
-  '/mbaremarketplace/icons/icon-512.png'
+  '/',
+  '/index.html',
+  '/login.html',
+  '/register.html',
+  '/product-detail.html',
+  '/Basket.html',
+  '/checkout.html',
+  '/seller-register.html',
+  '/seller-dashboard.html',
+  '/rate-seller.html',
+  '/search-results.html',
+  '/analytics.html',
+  '/styles.css',
+  '/script.js',
+  '/api.js',
+  '/auth-check.js',
+  '/manifest.json',
+  '/icons/icon-72.png',
+  '/icons/icon-96.png',
+  '/icons/icon-128.png',
+  '/icons/icon-144.png',
+  '/icons/icon-152.png',
+  '/icons/icon-192.png',
+  '/icons/icon-384.png',
+  '/icons/icon-512.png'
 ];
 
 // Install event - cache all static assets with error handling
@@ -132,7 +132,7 @@ self.addEventListener('fetch', event => {
             
             // Return offline page for HTML requests
             if (event.request.headers.get('accept')?.includes('text/html')) {
-              return caches.match('/mbaremarketplace/index.html').catch(() => {
+              return caches.match('/index.html').catch(() => {
                 return new Response('You are offline. Please check your connection.', {
                   status: 503,
                   headers: { 'Content-Type': 'text/plain' }
@@ -157,8 +157,8 @@ self.addEventListener('push', event => {
   const title = 'Mbare Marketplace';
   const options = {
     body: event.data.text(),
-    icon: '/mbaremarketplace/icons/icon-192.png',
-    badge: '/mbaremarketplace/icons/icon-72.png'
+    icon: '/icons/icon-192.png',
+    badge: '/icons/icon-72.png'
   };
 
   event.waitUntil(self.registration.showNotification(title, options));
@@ -168,7 +168,7 @@ self.addEventListener('push', event => {
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   event.waitUntil(
-    clients.openWindow('/mbaremarketplace/')
+    clients.openWindow('/')
   );
 });
 
