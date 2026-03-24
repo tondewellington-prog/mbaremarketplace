@@ -776,12 +776,12 @@
         </div>
     </footer>
 
-    <!-- FIXED: Install App Button - removed inline display:none, added proper styling -->
+    <!-- Install App Button -->
     <div id="installButton" style="position: fixed; bottom: 20px; right: 20px; background: #232f3e; color: white; padding: 12px 24px; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 9999; display: flex; align-items: center; gap: 8px; font-weight: 600; border: none; font-size: 16px;">
         <span>📱 Install App</span>
     </div>
 
-    <!-- iOS Install Prompt Modal - Updated to dark blue -->
+    <!-- iOS Install Prompt Modal -->
     <div id="iosPromptModal" class="ios-prompt-modal" style="border-top: 5px solid #232f3e;">
         <div class="ios-prompt-close" onclick="closeIOSPrompt()">✕</div>
         <div class="ios-prompt-header">
@@ -812,402 +812,184 @@
     <script src="script.js"></script>
     <script src="auth-check.js"></script>
     
-    <!-- APP DOWNLOAD TRACKING - FIXED VERSION -->
+    <!-- APP DOWNLOAD TRACKING -->
     <script>
-        // ============================================
-        // APP DOWNLOAD TRACKING - FIXED VERSION
-        // ============================================
-        
-        // Make sure we have the correct Supabase URL
         window.SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
         window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
         
-    
+        window.trackInstallClick = function(source) { recordAppDownload('install_click', { source: source }); };
         
-        // Make trackInstallClick globally available
-        window.trackInstallClick = function(source = 'install_button') {
-    
-            recordAppDownload('install_click', { source: source });
-        };
-
-        async function recordAppDownload(downloadType, details = {}) {
-            console.log('📊 Recording download:', downloadType);
-            
+        async function recordAppDownload(downloadType, details) {
             try {
                 const SUPABASE_URL = window.SUPABASE_URL;
                 const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
-                
-                if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-                    console.error('❌ Supabase config not found');
-                    return;
-                }
-                
-                // Get device information
+                if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return;
                 const userAgent = navigator.userAgent;
-                const platform = navigator.platform;
-                const language = navigator.language;
-                const screenSize = `${window.screen.width}x${window.screen.height}`;
-                
-                // Determine device type
-                let deviceType = 'desktop';
-                if (/mobile|android|iphone|ipad|ipod/i.test(userAgent)) {
-                    deviceType = 'mobile';
-                } else if (/tablet|ipad/i.test(userAgent)) {
-                    deviceType = 'tablet';
-                }
-                
-                // Determine OS
+                let deviceType = /mobile|android|iphone|ipad|ipod/i.test(userAgent) ? 'mobile' : 'desktop';
                 let os = 'unknown';
                 if (userAgent.indexOf('Win') !== -1) os = 'windows';
                 else if (userAgent.indexOf('Mac') !== -1) os = 'macos';
-                else if (userAgent.indexOf('Linux') !== -1) os = 'linux';
                 else if (userAgent.indexOf('Android') !== -1) os = 'android';
                 else if (userAgent.indexOf('like Mac') !== -1) os = 'ios';
-                
-                // Get browser
-                let browser = 'unknown';
-                if (userAgent.indexOf('Firefox') !== -1) browser = 'firefox';
-                else if (userAgent.indexOf('Chrome') !== -1) browser = 'chrome';
-                else if (userAgent.indexOf('Safari') !== -1) browser = 'safari';
-                else if (userAgent.indexOf('Edge') !== -1) browser = 'edge';
-                else if (userAgent.indexOf('Opera') !== -1) browser = 'opera';
-                
-                // Get user ID if logged in
                 let userId = null;
                 const sessionData = localStorage.getItem('supabase_session');
                 if (sessionData) {
-                    try {
-                        const session = JSON.parse(sessionData);
-                        userId = session.user?.id;
-                    } catch (e) {}
+                    try { userId = JSON.parse(sessionData).user?.id; } catch(e) {}
                 }
-                
-                // Create download record
                 const downloadData = {
                     download_type: downloadType,
                     device_type: deviceType,
                     os: os,
-                    browser: browser,
-                    platform: platform,
-                    screen_size: screenSize,
-                    language: language,
                     user_agent: userAgent.substring(0, 255),
                     user_id: userId,
-                    referrer: document.referrer || 'direct',
                     timestamp: new Date().toISOString()
                 };
-                
-                console.log('Sending to Supabase...');
-                
-                // Send to Supabase with both apikey and Authorization headers
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/app_downloads`, {
+                await fetch(`${SUPABASE_URL}/rest/v1/app_downloads`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                    },
+                    headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
                     body: JSON.stringify(downloadData)
                 });
-                
-                console.log('Response status:', response.status);
-                
-                if (response.ok) {
-                    // Only try to parse JSON if there's content
-                    const text = await response.text();
-                    if (text) {
-                        try {
-                            const result = JSON.parse(text);
-                            console.log('✅ Download tracked successfully');
-                        } catch (e) {
-                            console.log('✅ Download tracked (no response body)');
-                        }
-                    } else {
-                        console.log('✅ Download tracked successfully');
-                    }
-                } else {
-                    const errorText = await response.text();
-                    console.error('❌ Failed to track download:', response.status, errorText);
-                    
-                    // Store failed attempts locally
-                    const pendingDownloads = JSON.parse(localStorage.getItem('pending_downloads') || '[]');
-                    pendingDownloads.push({
-                        data: downloadData,
-                        status: response.status,
-                        error: errorText,
-                        timestamp: new Date().toISOString()
-                    });
-                    localStorage.setItem('pending_downloads', JSON.stringify(pendingDownloads));
-                }
-                
-            } catch (error) {
-                console.error('❌ Error in recordAppDownload:', error.message);
-            }
+            } catch(e) { console.error('Track error:', e); }
         }
 
-        // Retry failed downloads
-        async function retryFailedDownloads() {
-            const pendingDownloads = JSON.parse(localStorage.getItem('pending_downloads') || '[]');
-            if (pendingDownloads.length === 0) return;
-            
-            console.log('Retrying', pendingDownloads.length, 'failed downloads...');
-            
-            const SUPABASE_URL = window.SUPABASE_URL;
-            const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
-            
-            const remaining = [];
-            
-            for (const item of pendingDownloads) {
-                try {
-                    const response = await fetch(`${SUPABASE_URL}/rest/v1/app_downloads`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'apikey': SUPABASE_ANON_KEY,
-                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                        },
-                        body: JSON.stringify(item.data)
-                    });
-                    
-                    if (response.ok) {
-                        console.log('✅ Retry successful for:', item.data.download_type);
-                    } else {
-                        remaining.push(item);
-                    }
-                } catch (e) {
-                    console.error('Retry failed:', e.message);
-                    remaining.push(item);
-                }
-            }
-            
-            localStorage.setItem('pending_downloads', JSON.stringify(remaining));
-            console.log('Remaining pending:', remaining.length);
-        }
-
-        // Retry every 30 seconds
-        setInterval(retryFailedDownloads, 30000);
-
-        // Track when app is successfully installed
-        window.addEventListener('appinstalled', () => {
-            console.log('✅ App was successfully installed');
-            recordAppDownload('pwa_install');
-            localStorage.setItem('app_install_tracked', 'true');
-            localStorage.setItem('app_install_date', new Date().toISOString());
-        });
-
-        // Track when page is viewed in standalone mode (already installed)
+        window.addEventListener('appinstalled', () => { recordAppDownload('pwa_install'); });
+        
         if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
-            console.log('📱 App is running in standalone mode');
             if (!localStorage.getItem('app_install_tracked')) {
                 recordAppDownload('pwa_install');
                 localStorage.setItem('app_install_tracked', 'true');
-                localStorage.setItem('app_install_date', new Date().toISOString());
             }
         }
-
-        // Track beforeinstallprompt event
+        
         let promptCount = 0;
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             promptCount++;
-            console.log('📲 Install prompt shown, count:', promptCount);
-            if (promptCount === 1) {
-                recordAppDownload('install_prompt_shown');
-            }
+            if (promptCount === 1) recordAppDownload('install_prompt_shown');
         });
-
-        // For iOS
-        if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) {
-            console.log('🍎 iOS device detected');
-            if (!window.navigator.standalone) {
-                setTimeout(() => {
-                    console.log('🍎 iOS add to home screen prompt');
-                    recordAppDownload('ios_add_to_homescreen_prompt');
-                }, 10000);
-            }
+        
+        if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream && !window.navigator.standalone) {
+            setTimeout(() => { recordAppDownload('ios_add_to_homescreen_prompt'); }, 10000);
         }
-
-        // Track all clicks on install-related elements
+        
         document.addEventListener('click', function(e) {
-            if (e.target.closest('#installButton') || 
-                e.target.closest('.install-btn') || 
-                (e.target.closest('button') && e.target.textContent.includes('Install'))) {
-                console.log('📱 Install button clicked via event listener');
+            if (e.target.closest('#installButton')) {
                 recordAppDownload('install_click', { method: 'click_event' });
             }
         });
-
-        console.log('📊 App download tracking ready');
     </script>
     
     <script>
-        // FIXED: PWA Install Button - Now shows on all mobile devices
+        // FIXED: PWA Install Button - Android system prompt
         let deferredPrompt;
         const installButton = document.getElementById('installButton');
         const iosPrompt = document.getElementById('iosPromptModal');
 
-        // Detect if device is mobile (any mobile device)
         const isMobile = /iPhone|iPad|iPod|Android|Mobile|webOS|BlackBerry|Windows Phone/i.test(navigator.userAgent);
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
-        console.log('Device detection - isMobile:', isMobile, 'isIOS:', isIOS);
-
-        // FIXED: Force show button on ALL mobile devices immediately
-        if (isMobile) {
-            // Check if app is not already installed
-            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-            if (!isStandalone) {
-                installButton.style.display = 'flex';
-                console.log('✅ Install button shown on mobile device');
-            } else {
-                installButton.style.display = 'none';
-                console.log('App already installed - button hidden');
-            }
+        if (isStandalone) {
+            installButton.style.display = 'none';
         }
 
-        // For Android/Chrome - listen for install prompt
+        // Listen for the beforeinstallprompt event
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            // Ensure button is visible
             installButton.style.display = 'flex';
-            console.log('📲 Install prompt available - button ready');
+            console.log('✅ Install prompt captured - button ready');
         });
+
+        // Show button on mobile if not installed
+        if (isMobile && !isStandalone) {
+            installButton.style.display = 'flex';
+        }
 
         // Handle button click
         installButton.addEventListener('click', async () => {
-            console.log('📱 Install button clicked');
-            
-            // Track the click
-            if (window.trackInstallClick) {
-                window.trackInstallClick('install_button');
-            }
+            console.log('Install button clicked - device:', isAndroid ? 'Android' : (isIOS ? 'iOS' : 'Other'));
             
             if (deferredPrompt) {
-                // Android flow
-                console.log('Showing Android install prompt');
+                // Show the system install prompt (Android/Chrome)
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
-                console.log('Install prompt outcome:', outcome);
+                console.log('Install outcome:', outcome);
                 
-                // Track the outcome
                 if (outcome === 'accepted') {
                     recordAppDownload('install_accepted');
+                    installButton.style.display = 'none';
                 } else {
                     recordAppDownload('install_dismissed');
                 }
-                
                 deferredPrompt = null;
-                installButton.style.display = 'none';
             } else if (isIOS) {
-                // iOS flow - show the nice modal
-                console.log('Showing iOS install modal');
+                // iOS - show modal instructions
                 iosPrompt.style.display = 'block';
                 recordAppDownload('ios_install_modal_shown');
+            } else if (isAndroid) {
+                // Android fallback - show manual instructions
+                alert('To install the app:\n\n1. Tap the three dots ⋮ in the top right\n2. Tap "Install app"\n3. Tap "Install"');
+                recordAppDownload('android_manual_install');
             } else {
-                // Fallback for other browsers
-                console.log('Showing fallback message');
                 alert('To install, look for "Add to Home Screen" or "Install App" in your browser menu');
-                recordAppDownload('install_fallback_shown');
+                recordAppDownload('install_fallback');
             }
         });
 
-        // Close iOS prompt
         window.closeIOSPrompt = function() {
             iosPrompt.style.display = 'none';
-            console.log('iOS prompt closed');
         };
 
-        // Hide button if app is already installed
         window.addEventListener('appinstalled', () => {
-            console.log('✅ App installed event fired');
             installButton.style.display = 'none';
             recordAppDownload('pwa_install_complete');
         });
 
-        // Also hide button if already in standalone mode
-        if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
-            installButton.style.display = 'none';
-            console.log('App already installed (standalone mode)');
-        }
-
-        // Close modal when clicking outside
         window.addEventListener('click', function(e) {
             if (e.target === iosPrompt) {
                 closeIOSPrompt();
             }
         });
 
-        // Function to show login prompt
+        // Login functions
         function showLoginPrompt() {
             document.getElementById('loginPromptModal').style.display = 'flex';
         }
         
-        // Function to hide login prompt
         function hideLoginPrompt() {
             document.getElementById('loginPromptModal').style.display = 'none';
         }
         
-        // Function to check login before navigation
         function checkLoginAndNavigate(productId) {
             const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-            
             if (!isLoggedIn) {
                 showLoginPrompt();
                 return false;
             }
-            
             window.location.href = `product-detail.html?id=${productId}`;
             return true;
         }
 
-        // Override the original window.location functions
-        const originalWindowLocation = window.location;
-        
-        // Intercept all clicks on the document
         document.addEventListener('click', function(e) {
-            // Check if the clicked element or its parent is a product card or has product-related classes
             const productCard = e.target.closest('.product-card');
-            const productImage = e.target.closest('.product-image');
-            const productTitle = e.target.closest('.product-title');
-            
-            if (productCard || productImage || productTitle) {
+            if (productCard) {
                 e.preventDefault();
-                e.stopPropagation();
-                
-                // Try to find the product ID
                 let productId = null;
-                
-                // Check if the element has an onclick attribute with the ID
-                const element = productCard || productImage || productTitle;
-                const onclick = element.getAttribute('onclick');
-                
+                const onclick = productCard.getAttribute('onclick');
                 if (onclick) {
                     const match = onclick.match(/id=(\d+)/);
                     if (match) productId = match[1];
                 }
-                
-                // If not found, look for any link in the card
-                if (!productId && productCard) {
-                    const link = productCard.querySelector('[onclick*="product-detail.html"]');
-                    if (link) {
-                        const match = link.getAttribute('onclick')?.match(/id=(\d+)/);
-                        if (match) productId = match[1];
-                    }
-                }
-                
-                if (productId) {
-                    checkLoginAndNavigate(productId);
-                }
+                if (productId) checkLoginAndNavigate(productId);
             }
         });
         
-        // Also intercept the original functions from script.js
         window.goToProductDetail = function(productId) {
             checkLoginAndNavigate(productId);
         };
 
-        // Only the logout button functionality
         window.logout = function() {
             if (window.api && window.api.logout) {
                 window.api.logout();
@@ -1218,7 +1000,6 @@
             }
         };
 
-        // Check login status and show/hide logout button
         document.addEventListener('DOMContentLoaded', function() {
             const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
             const logoutBtn = document.getElementById('logoutBtn');
@@ -1228,7 +1009,6 @@
                 logoutBtn.style.display = 'inline-block';
                 accountMenu.classList.add('logged-in');
                 
-                // Update the welcome text
                 const sessionData = localStorage.getItem('supabase_session');
                 if (sessionData) {
                     try {
@@ -1244,9 +1024,7 @@
                             accountLink.textContent = 'Your Account';
                             accountLink.style.color = '#232f3e';
                         }
-                    } catch (e) {
-                        console.error('Error updating header:', e);
-                    }
+                    } catch (e) {}
                 }
             }
         });
