@@ -29,27 +29,10 @@ function getHeaders(includeAuth = false) {
     return headers;
 }
 
-// Helper function to check and create user profile
-async function ensureUserProfile(userId, email, userMetadata = {}) {
+// Helper function to create user profile (used for both new and recreated users)
+async function createUserProfile(userId, email, userMetadata = {}) {
     try {
-        console.log('🔍 Checking profile for user:', userId);
-        
-        // Check if profile exists
-        const checkResponse = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=*`, {
-            method: 'GET',
-            headers: getHeaders(true)
-        });
-        
-        const existingProfiles = await checkResponse.json();
-        
-        // If profile exists, return it
-        if (existingProfiles && existingProfiles.length > 0) {
-            console.log('✅ Profile found for user:', userId);
-            return { success: true, profile: existingProfiles[0], exists: true };
-        }
-        
-        // Profile doesn't exist - create it
-        console.log('⚠️ No profile found, creating new profile for user:', userId);
+        console.log('📝 Creating profile for user:', userId);
         
         const name = userMetadata.full_name || userMetadata.name || email.split('@')[0];
         const phone = userMetadata.phone || null;
@@ -72,7 +55,8 @@ async function ensureUserProfile(userId, email, userMetadata = {}) {
                 address: address,
                 role: 'user',
                 is_active: true,
-                created_at: new Date().toISOString()
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
             })
         });
         
@@ -84,11 +68,61 @@ async function ensureUserProfile(userId, email, userMetadata = {}) {
         
         const newProfile = await createResponse.json();
         console.log('✅ Profile created successfully:', newProfile);
-        return { success: true, profile: newProfile, exists: false };
+        return { success: true, profile: newProfile };
+        
+    } catch (error) {
+        console.error('❌ Error creating profile:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+// Helper function to check and recreate user profile if missing
+async function ensureUserProfile(userId, email, userMetadata = {}) {
+    try {
+        console.log('🔍 Checking profile for user:', userId, 'Email:', email);
+        
+        // Check if profile exists
+        const checkResponse = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=*`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': SUPABASE_ANON_KEY
+            }
+        });
+        
+        if (!checkResponse.ok) {
+            console.error('❌ Failed to check profile:', await checkResponse.text());
+            // Even if check fails, try to recreate
+            console.log('🔄 Attempting to recreate profile anyway...');
+            return await createUserProfile(userId, email, userMetadata);
+        }
+        
+        const existingProfiles = await checkResponse.json();
+        
+        // If profile exists, return it
+        if (existingProfiles && existingProfiles.length > 0) {
+            console.log('✅ Profile found for user:', userId);
+            return { success: true, profile: existingProfiles[0], exists: true };
+        }
+        
+        // Profile doesn't exist - RECREATE IT
+        console.log('⚠️⚠️⚠️ PROFILE MISSING for user:', userId);
+        console.log('🔄 RECREATING profile automatically...');
+        
+        const createResult = await createUserProfile(userId, email, userMetadata);
+        
+        if (createResult.success) {
+            console.log('✅ Profile successfully RECREATED for user:', userId);
+        } else {
+            console.error('❌ Failed to recreate profile:', createResult.error);
+        }
+        
+        return { ...createResult, exists: false, recreated: true };
         
     } catch (error) {
         console.error('❌ Error in ensureUserProfile:', error);
-        return { success: false, error: error.message };
+        // Last resort: try to create profile directly
+        return await createUserProfile(userId, email, userMetadata);
     }
 }
 
@@ -112,7 +146,10 @@ const api = {
             const data = await response.json();
             
             if (!response.ok) {
-                throw new Error(data.error_description || data.msg || 'Login failed');
+                if (data.error_description && data.error_description.includes('Email not confirmed')) {
+                    throw new Error('Please confirm your email address before logging in. Check your inbox for the confirmation link.');
+                }
+                throw new Error(data.error_description || data.msg || 'Invalid login credentials');
             }
             
             if (data.access_token) {
@@ -122,7 +159,8 @@ const api = {
                 // Get user metadata from the response
                 const userMetadata = data.user?.user_metadata || {};
                 
-                // Ensure user has a profile in users table (auto-recreate if deleted)
+                // CRITICAL: Ensure user has a profile in users table
+                // This will auto-recreate if the profile was deleted
                 const profileResult = await ensureUserProfile(
                     data.user.id, 
                     email, 
@@ -131,9 +169,17 @@ const api = {
                 
                 if (profileResult.success && profileResult.profile) {
                     localStorage.setItem('user_profile', JSON.stringify(profileResult.profile));
-                    if (!profileResult.exists) {
-                        console.log('🔄 User profile was recreated automatically');
+                    
+                    if (profileResult.recreated) {
+                        console.log('🔄🔄🔄 USER PROFILE WAS RECREATED AUTOMATICALLY!');
+                    } else if (!profileResult.exists) {
+                        console.log('✅ New user profile created');
+                    } else {
+                        console.log('✅ Existing user profile loaded');
                     }
+                } else {
+                    console.error('❌ Failed to get/create user profile');
+                    // Don't block login even if profile creation fails
                 }
             }
             
@@ -172,42 +218,46 @@ const api = {
             const data = await response.json();
             
             if (!response.ok) {
+                if (data.msg && data.msg.includes('already registered')) {
+                    throw new Error('This email is already registered. Please login instead.');
+                }
                 throw new Error(data.msg || data.error_description || 'Registration failed');
             }
             
             if (data.user) {
                 console.log('✅ Auth user created:', data.user.id);
                 
-                // Create profile in users table
-                const createProfileResponse = await fetch(`${SUPABASE_URL}/rest/v1/users`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Prefer': 'return=representation'
-                    },
-                    body: JSON.stringify({
-                        id: data.user.id,
-                        email: userData.email,
-                        name: userData.name,
-                        phone: userData.phone || null,
-                        shop_name: userData.shop_name || null,
-                        address: userData.address || null,
-                        role: userData.role || 'user',
-                        is_active: true,
-                        created_at: new Date().toISOString()
-                    })
-                });
+                // Check if email confirmation is required
+                if (data.user.confirmed_at === null) {
+                    console.log('📧 Email confirmation required. Confirmation email sent.');
+                    return { 
+                        success: true, 
+                        user: data.user, 
+                        requiresConfirmation: true,
+                        message: 'Please check your email to confirm your account before logging in.'
+                    };
+                }
                 
-                if (!createProfileResponse.ok) {
-                    const errorText = await createProfileResponse.text();
-                    console.error('❌ Failed to create profile:', errorText);
-                    // Note: Auth user was created but profile creation failed
-                    // User can still login - profile will be auto-created on login
+                // Create profile in users table immediately
+                const userMetadata = {
+                    full_name: userData.name,
+                    name: userData.name,
+                    phone: userData.phone,
+                    shop_name: userData.shop_name,
+                    address: userData.address
+                };
+                
+                const profileResult = await createUserProfile(
+                    data.user.id,
+                    userData.email,
+                    userMetadata
+                );
+                
+                if (profileResult.success) {
+                    console.log('✅ User profile created successfully');
+                    localStorage.setItem('user_profile', JSON.stringify(profileResult.profile));
                 } else {
-                    const profile = await createProfileResponse.json();
-                    console.log('✅ User profile created in users table');
-                    localStorage.setItem('user_profile', JSON.stringify(profile));
+                    console.error('❌ Failed to create profile:', profileResult.error);
                 }
             }
             
@@ -276,12 +326,19 @@ const api = {
 
     async updateUserProfile(userId, updates) {
         try {
+            const session = localStorage.getItem('supabase_session');
+            let accessToken = '';
+            if (session) {
+                const parsed = JSON.parse(session);
+                accessToken = parsed.access_token || '';
+            }
+            
             const response = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                     'apikey': SUPABASE_ANON_KEY,
-                    'Authorization': `Bearer ${localStorage.getItem('supabase_session') ? JSON.parse(localStorage.getItem('supabase_session')).access_token : ''}`,
+                    'Authorization': `Bearer ${accessToken}`,
                     'Prefer': 'return=representation'
                 },
                 body: JSON.stringify({
@@ -334,4 +391,4 @@ const api = {
 // Make api available globally
 window.api = api;
 
-console.log('✅ API.js loaded with profile management');
+console.log('✅ API.js loaded with AUTO-RECREATION on login');
