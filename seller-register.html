@@ -8,6 +8,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body>
     <!-- Header -->
@@ -80,13 +86,6 @@
         <div style="border: 4px solid #f3f3f3; border-top: 4px solid #f90; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto;"></div>
         <p style="margin-top: 20px;">Processing...</p>
     </div>
-    
-    <style>
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
 
     <!-- Seller Registration Form -->
     <div id="registrationForm" class="container" style="max-width: 600px; margin: 50px auto; padding: 0 15px;">
@@ -112,9 +111,44 @@
                     <input type="text" id="businessName" placeholder="e.g., John's Electronics" required style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
                 </div>
 
+                <!-- Phone Number with Country Code - UPDATED -->
                 <div class="form-group" style="margin-bottom: 20px;">
                     <label>Phone Number *</label>
-                    <input type="tel" id="businessPhone" placeholder="e.g., 0712345678" required style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
+                    <div style="display: flex; gap: 10px;">
+                        <select id="sellerCountryCode" style="width: 120px; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="263">🇿🇼 Zimbabwe (+263)</option>
+                            <option value="27">🇿🇦 South Africa (+27)</option>
+                            <option value="44">🇬🇧 United Kingdom (+44)</option>
+                            <option value="1">🇺🇸 United States (+1)</option>
+                            <option value="61">🇦🇺 Australia (+61)</option>
+                            <option value="91">🇮🇳 India (+91)</option>
+                            <option value="86">🇨🇳 China (+86)</option>
+                            <option value="81">🇯🇵 Japan (+81)</option>
+                            <option value="49">🇩🇪 Germany (+49)</option>
+                            <option value="33">🇫🇷 France (+33)</option>
+                            <option value="34">🇪🇸 Spain (+34)</option>
+                            <option value="39">🇮🇹 Italy (+39)</option>
+                            <option value="55">🇧🇷 Brazil (+55)</option>
+                            <option value="52">🇲🇽 Mexico (+52)</option>
+                            <option value="82">🇰🇷 South Korea (+82)</option>
+                            <option value="65">🇸🇬 Singapore (+65)</option>
+                            <option value="60">🇲🇾 Malaysia (+60)</option>
+                            <option value="66">🇹🇭 Thailand (+66)</option>
+                            <option value="84">🇻🇳 Vietnam (+84)</option>
+                            <option value="63">🇵🇭 Philippines (+63)</option>
+                            <option value="62">🇮🇩 Indonesia (+62)</option>
+                            <option value="971">🇦🇪 UAE (+971)</option>
+                            <option value="966">🇸🇦 Saudi Arabia (+966)</option>
+                            <option value="20">🇪🇬 Egypt (+20)</option>
+                            <option value="234">🇳🇬 Nigeria (+234)</option>
+                            <option value="254">🇰🇪 Kenya (+254)</option>
+                            <option value="255">🇹🇿 Tanzania (+255)</option>
+                            <option value="256">🇺🇬 Uganda (+256)</option>
+                            <option value="260">🇿🇲 Zambia (+260)</option>
+                        </select>
+                        <input type="tel" id="businessPhone" placeholder="Phone number (e.g., 712345678)" required style="flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <small style="color: #666; font-size: 12px;">Enter phone number without country code (e.g., 712345678)</small>
                 </div>
 
                 <div class="form-group" style="margin-bottom: 20px;">
@@ -225,6 +259,28 @@
     <script src="script.js"></script>
     <script src="auth-check.js"></script>
     <script>
+        // Helper function to format phone number
+        function formatSellerPhone() {
+            const countryCode = document.getElementById('sellerCountryCode').value;
+            let phoneLocal = document.getElementById('businessPhone').value;
+            
+            // Remove all non-numeric characters
+            let cleanedLocal = phoneLocal.replace(/\D/g, '');
+            
+            // Remove leading zero if present
+            if (cleanedLocal.startsWith('0')) {
+                cleanedLocal = cleanedLocal.substring(1);
+            }
+            
+            // Check if user already entered country code
+            if (cleanedLocal.startsWith(countryCode)) {
+                return cleanedLocal;
+            }
+            
+            // Add country code
+            return countryCode + cleanedLocal;
+        }
+
         // Function to refresh the token
         async function refreshAccessToken(refreshToken) {
             const SUPABASE_URL = window.SUPABASE_URL;
@@ -387,19 +443,23 @@
                     return;
                 }
 
-                // Get form values with correct column names
+                // Get form values
                 const businessName = document.getElementById('businessName').value;
-                const businessPhone = document.getElementById('businessPhone').value;
-                const businessEmail = document.getElementById('businessEmail').value;
                 const businessAddress = document.getElementById('businessAddress').value;
                 const businessDescription = document.getElementById('businessDescription').value;
                 const businessType = document.getElementById('businessType').value;
+                const businessEmail = document.getElementById('businessEmail').value;
+                
+                // Format phone with country code
+                const formattedPhone = formatSellerPhone();
+                
+                console.log('Phone saved as:', formattedPhone);
 
                 // Use the correct column names from your database
                 const sellerData = {
                     user_id: userId,
                     business_name: businessName,
-                    business_phone: businessPhone,
+                    business_phone: formattedPhone,  // Formatted phone with country code
                     business_email: businessEmail,
                     business_address: businessAddress,
                     business_description: businessDescription,
@@ -420,12 +480,13 @@
                 document.getElementById('loadingSpinner').style.display = 'none';
 
                 if (response.ok) {
-                    // TRACK SELLER REGISTRATION - ADDED WITHOUT REMOVING ANYTHING
+                    // TRACK SELLER REGISTRATION
                     if (window.trackActivity) {
                         window.trackActivity('seller_register', { 
                             business_name: businessName,
                             business_type: businessType,
-                            email: businessEmail
+                            email: businessEmail,
+                            phone: formattedPhone
                         });
                         console.log('Seller registration tracked');
                     }
