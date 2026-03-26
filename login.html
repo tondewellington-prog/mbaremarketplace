@@ -96,134 +96,144 @@
             </div>
             <button class="btn-create-account" onclick="showRegisterForm()">Create your Mbare Marketplace account</button>
 
-          <!-- Registration Form (Updated with Country Selection) -->
-<div id="registerForm" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
-    <h2 style="margin-bottom: 15px; font-size: 20px;">Create Account</h2>
-    <form class="login-form" onsubmit="handleRegister(event)">
-        <div class="form-group">
-            <label>Full Name</label>
-            <input type="text" id="regName" required>
-        </div>
-        <div class="form-group">
-            <label>Email</label>
-            <input type="email" id="regEmail" required>
-        </div>
-        <div class="form-group">
-            <label>Password</label>
-            <input type="password" id="regPassword" required minlength="6">
-        </div>
-        
-        <!-- NEW: Country and Phone Number Section -->
-        <div class="form-group">
-            <label>Phone Number</label>
-            <div style="display: flex; gap: 10px;">
-                <select id="regCountryCode" style="width: 100px; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
-                    <option value="263">🇿🇼 Zimbabwe (+263)</option>
-                    <option value="27">🇿🇦 South Africa (+27)</option>
-                    <option value="44">🇬🇧 United Kingdom (+44)</option>
-                    <option value="1">🇺🇸 United States (+1)</option>
-                    <option value="61">🇦🇺 Australia (+61)</option>
-                    <option value="91">🇮🇳 India (+91)</option>
-                    <option value="86">🇨🇳 China (+86)</option>
-                    <option value="81">🇯🇵 Japan (+81)</option>
-                    <option value="49">🇩🇪 Germany (+49)</option>
-                    <option value="33">🇫🇷 France (+33)</option>
-                    <option value="34">🇪🇸 Spain (+34)</option>
-                    <option value="39">🇮🇹 Italy (+39)</option>
-                    <option value="55">🇧🇷 Brazil (+55)</option>
-                    <option value="52">🇲🇽 Mexico (+52)</option>
-                    <option value="82">🇰🇷 South Korea (+82)</option>
-                    <option value="65">🇸🇬 Singapore (+65)</option>
-                    <option value="60">🇲🇾 Malaysia (+60)</option>
-                    <option value="66">🇹🇭 Thailand (+66)</option>
-                    <option value="84">🇻🇳 Vietnam (+84)</option>
-                    <option value="63">🇵🇭 Philippines (+63)</option>
-                    <option value="62">🇮🇩 Indonesia (+62)</option>
-                    <option value="971">🇦🇪 UAE (+971)</option>
-                    <option value="966">🇸🇦 Saudi Arabia (+966)</option>
-                    <option value="20">🇪🇬 Egypt (+20)</option>
-                    <option value="234">🇳🇬 Nigeria (+234)</option>
-                    <option value="254">🇰🇪 Kenya (+254)</option>
-                    <option value="255">🇹🇿 Tanzania (+255)</option>
-                    <option value="256">🇺🇬 Uganda (+256)</option>
-                    <option value="260">🇿🇲 Zambia (+260)</option>
-                    <option value="263" selected>🇿🇼 Zimbabwe (+263)</option>
-                </select>
-                <input type="tel" id="regPhone" placeholder="Phone number (e.g., 712345678)" style="flex: 1;">
+            <!-- Registration Form (Updated with Country Selection) -->
+            <div id="registerForm" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
+                <h2 style="margin-bottom: 15px; font-size: 20px;">Create Account</h2>
+                <form class="login-form" onsubmit="handleRegister(event)">
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="regName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="regEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="regPassword" required minlength="6">
+                    </div>
+                    
+                    <!-- Country and Phone Number Section -->
+                    <div class="form-group">
+                        <label>Phone Number</label>
+                        <div style="display: flex; gap: 10px;">
+                            <select id="regCountryCode" style="width: 100px; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                                <option value="263">🇿🇼 Zimbabwe (+263)</option>
+                                <option value="27">🇿🇦 South Africa (+27)</option>
+                                <option value="44">🇬🇧 United Kingdom (+44)</option>
+                                <option value="1">🇺🇸 United States (+1)</option>
+                                <option value="61">🇦🇺 Australia (+61)</option>
+                                <option value="91">🇮🇳 India (+91)</option>
+                                <option value="86">🇨🇳 China (+86)</option>
+                                <option value="81">🇯🇵 Japan (+81)</option>
+                                <option value="49">🇩🇪 Germany (+49)</option>
+                                <option value="33">🇫🇷 France (+33)</option>
+                                <option value="34">🇪🇸 Spain (+34)</option>
+                                <option value="39">🇮🇹 Italy (+39)</option>
+                                <option value="55">🇧🇷 Brazil (+55)</option>
+                                <option value="52">🇲🇽 Mexico (+52)</option>
+                                <option value="82">🇰🇷 South Korea (+82)</option>
+                                <option value="65">🇸🇬 Singapore (+65)</option>
+                                <option value="60">🇲🇾 Malaysia (+60)</option>
+                                <option value="66">🇹🇭 Thailand (+66)</option>
+                                <option value="84">🇻🇳 Vietnam (+84)</option>
+                                <option value="63">🇵🇭 Philippines (+63)</option>
+                                <option value="62">🇮🇩 Indonesia (+62)</option>
+                                <option value="971">🇦🇪 UAE (+971)</option>
+                                <option value="966">🇸🇦 Saudi Arabia (+966)</option>
+                                <option value="20">🇪🇬 Egypt (+20)</option>
+                                <option value="234">🇳🇬 Nigeria (+234)</option>
+                                <option value="254">🇰🇪 Kenya (+254)</option>
+                                <option value="255">🇹🇿 Tanzania (+255)</option>
+                                <option value="256">🇺🇬 Uganda (+256)</option>
+                                <option value="260">🇿🇲 Zambia (+260)</option>
+                                <option value="263" selected>🇿🇼 Zimbabwe (+263)</option>
+                            </select>
+                            <input type="tel" id="regPhone" placeholder="Phone number (e.g., 712345678)" style="flex: 1;">
+                        </div>
+                        <small style="color: #666; font-size: 12px;">Enter phone number without country code (e.g., 712345678)</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Account Type</label>
+                        <select id="regRole" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="customer">👤 Customer - I want to buy products</option>
+                            <option value="seller">🏪 Seller - I want to sell products</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn-login">Create Account</button>
+                    <button type="button" class="btn-create-account" style="margin-top: 10px;" onclick="hideRegisterForm()">Cancel</button>
+                </form>
             </div>
-            <small style="color: #666; font-size: 12px;">Enter phone number without country code (e.g., 712345678)</small>
         </div>
-</div>
-        <button type="submit" class="btn-login">Create Account</button>
-        <button type="button" class="btn-create-account" style="margin-top: 10px;" onclick="hideRegisterForm()">Cancel</button>
-    </form>
-</div>
+    </div>
 
-<!-- Footer -->
-<footer class="footer">
-    <div class="footer-top">
-        <a href="#" class="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">Back to top</a>
-    </div>
-    <div class="footer-content">
-        <div class="container">
-            <div class="footer-columns">
-                <div class="footer-column">
-                    <h3>Get to Know Us</h3>
-                    <ul>
-                        <li><a href="#">Careers</a></li>
-                        <li><a href="#">Blog</a></li>
-                        <li><a href="#">About Mbare Marketplace</a></li>
-                        <li><a href="#">Investor Relations</a></li>
-                        <li><a href="#">Mbare Marketplace Devices</a></li>
-                    </ul>
-                </div>
-                <div class="footer-column">
-                    <h3>Make Money with Us</h3>
-                    <ul>
-                        <li><a href="#">Sell products on Mbare Marketplace</a></li>
-                        <li><a href="#">Sell on Mbare Marketplace Business</a></li>
-                        <li><a href="#">Sell apps on Mbare Marketplace</a></li>
-                        <li><a href="#">Become an Affiliate</a></li>
-                        <li><a href="#">Advertise Your Products</a></li>
-                    </ul>
-                </div>
-                <div class="footer-column">
-                    <h3>Mbare Payment Products</h3>
-                    <ul>
-                        <li><a href="#">Mbare Marketplace Business Card</a></li>
-                        <li><a href="#">Shop with Points</a></li>
-                        <li><a href="#">Reload Your Balance</a></li>
-                        <li><a href="#">Mbare Marketplace Currency Converter</a></li>
-                    </ul>
-                </div>
-                <div class="footer-column">
-                    <h3>Need Help?</h3>
-                    <ul>
-                        <li><a href="#">COVID-19 and Mbare Marketplace</a></li>
-                        <li><a href="#">Your Account</a></li>
-                        <li><a href="#">Your Orders</a></li>
-                        <li><a href="#">Shipping Rates & Policies</a></li>
-                        <li><a href="#">Returns & Replacements</a></li>
-                        <li><a href="#">Help</a></li>
-                    </ul>
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-top">
+            <a href="#" class="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">Back to top</a>
+        </div>
+        <div class="footer-content">
+            <div class="container">
+                <div class="footer-columns">
+                    <div class="footer-column">
+                        <h3>Get to Know Us</h3>
+                        <ul>
+                            <li><a href="#">Careers</a></li>
+                            <li><a href="#">Blog</a></li>
+                            <li><a href="#">About Mbare Marketplace</a></li>
+                            <li><a href="#">Investor Relations</a></li>
+                            <li><a href="#">Mbare Marketplace Devices</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h3>Make Money with Us</h3>
+                        <ul>
+                            <li><a href="#">Sell products on Mbare Marketplace</a></li>
+                            <li><a href="#">Sell on Mbare Marketplace Business</a></li>
+                            <li><a href="#">Sell apps on Mbare Marketplace</a></li>
+                            <li><a href="#">Become an Affiliate</a></li>
+                            <li><a href="#">Advertise Your Products</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h3>Mbare Payment Products</h3>
+                        <ul>
+                            <li><a href="#">Mbare Marketplace Business Card</a></li>
+                            <li><a href="#">Shop with Points</a></li>
+                            <li><a href="#">Reload Your Balance</a></li>
+                            <li><a href="#">Mbare Marketplace Currency Converter</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h3>Need Help?</h3>
+                        <ul>
+                            <li><a href="#">COVID-19 and Mbare Marketplace</a></li>
+                            <li><a href="#">Your Account</a></li>
+                            <li><a href="#">Your Orders</a></li>
+                            <li><a href="#">Shipping Rates & Policies</a></li>
+                            <li><a href="#">Returns & Replacements</a></li>
+                            <li><a href="#">Help</a></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-    <div class="footer-bottom">
-        <div class="container">
-            <div class="footer-logo">Mbare Marketplace</div>
-            <div class="footer-links">
-                <a href="#">Conditions of Use</a>
-                <a href="#">Privacy Notice</a>
-                <a href="#">Interest-Based Ads</a>
-            </div>
-            <div class="footer-copyright">
-                &copy; 2026, Mbaremarketplace.com, Inc. or its affiliates
+        <div class="footer-bottom">
+            <div class="container">
+                <div class="footer-logo">Mbare Marketplace</div>
+                <div class="footer-links">
+                    <a href="#">Conditions of Use</a>
+                    <a href="#">Privacy Notice</a>
+                    <a href="#">Interest-Based Ads</a>
+                </div>
+                <div class="footer-copyright">
+                    &copy; 2026, Mbaremarketplace.com, Inc. or its affiliates
+                </div>
             </div>
         </div>
-    </div>
-</footer>
+    </footer>
 
     <script src="api.js"></script>
     <script src="script.js"></script>
@@ -244,7 +254,6 @@
         
         try {
             showNotification('Logging in...', 'info');
-            // Check if api exists
             if (!window.api) {
                 throw new Error('API not loaded. Please refresh the page.');
             }
@@ -268,7 +277,9 @@
         const name = document.getElementById('regName').value;
         const email = document.getElementById('regEmail').value;
         const password = document.getElementById('regPassword').value;
-        const phone = document.getElementById('regPhone').value;
+        const countryCode = document.getElementById('regCountryCode').value;
+        const phoneLocal = document.getElementById('regPhone').value;
+        const role = document.getElementById('regRole').value;
         
         if (!name || !email || !password) {
             showNotification('Please fill in all required fields', 'error');
@@ -280,10 +291,19 @@
             return;
         }
         
+        // Format phone number with country code
+        let fullPhone = '';
+        if (phoneLocal) {
+            let cleanedLocal = phoneLocal.replace(/\D/g, '');
+            if (cleanedLocal.startsWith('0')) {
+                cleanedLocal = cleanedLocal.substring(1);
+            }
+            fullPhone = countryCode + cleanedLocal;
+        }
+        
         try {
             showNotification('Creating account...', 'info');
             
-            // Check if api exists
             if (!window.api) {
                 throw new Error('API not loaded. Please refresh the page.');
             }
@@ -292,11 +312,16 @@
                 name: name,
                 email: email,
                 password: password,
-                phone: phone
+                phone: fullPhone,
+                role: role
             });
             
             if (response.success) {
-                showNotification('Account created successfully! Please login.', 'success');
+                if (response.requiresConfirmation) {
+                    showNotification(response.message || 'Account created! Please check your email to confirm.', 'success');
+                } else {
+                    showNotification('Account created successfully! Please login.', 'success');
+                }
                 hideRegisterForm();
                 document.getElementById('regName').value = '';
                 document.getElementById('regEmail').value = '';
@@ -305,7 +330,12 @@
             }
         } catch (error) {
             console.error('Registration error:', error);
-            showNotification('Registration failed: ' + (error.message || 'Please try again'), 'error');
+            if (error.message.includes('already registered')) {
+                showNotification('This email is already registered. Please login instead.', 'error');
+                hideRegisterForm();
+            } else {
+                showNotification('Registration failed: ' + (error.message || 'Please try again'), 'error');
+            }
         }
     }
     
@@ -320,7 +350,6 @@
     }
     
     function showNotification(message, type = 'info') {
-        // Remove any existing notification
         const existing = document.querySelector('.custom-notification');
         if (existing) existing.remove();
         
@@ -353,7 +382,6 @@
         }, 3000);
     }
     
-    // Add animation
     const style = document.createElement('style');
     style.textContent = `
         @keyframes slideIn {
