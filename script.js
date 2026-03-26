@@ -11,6 +11,9 @@ let products = [];
 let sellersMap = {};
 let ratingsCache = {}; // Cache for ratings to avoid repeated fetches
 
+// Website URL constant
+const WEBSITE_URL = 'https://www.mbaremarketplace.com';
+
 // Initialize page
 document.addEventListener('DOMContentLoaded', async function() {
     try {
@@ -373,7 +376,7 @@ function createProductCard(product) {
     return card;
 }
 
-// Show seller contact information - UPDATED with login check
+// Show seller contact information - UPDATED with website URL
 function showSellerContact(productId) {
     // First check if user is logged in
     const sessionData = localStorage.getItem('supabase_session');
@@ -406,7 +409,13 @@ function showSellerContact(productId) {
     
     const phone = seller.business_phone || 'Not provided';
     const phoneDigits = phone.replace(/\D/g, '');
-    const whatsappLink = phoneDigits ? `https://wa.me/${phoneDigits}?text=Hi, I'm interested in ${encodeURIComponent(product.title)}` : '#';
+    
+    // ========== UPDATED WHATSAPP MESSAGE WITH WEBSITE URL ==========
+    const whatsappMessage = `Hello! I am interested in ${product.title}, I saw it on ${WEBSITE_URL}`;
+    const encodedMessage = encodeURIComponent(whatsappMessage);
+    const whatsappLink = phoneDigits ? `https://wa.me/${phoneDigits}?text=${encodedMessage}` : '#';
+    // =================================================================
+    
     const callLink = phoneDigits ? `tel:${phoneDigits}` : '#';
     
     // Create modal if it doesn't exist
@@ -775,7 +784,7 @@ function goToSlide(index) {
     moveCarousel(0);
 }
 
-// Load product detail
+// Load product detail - UPDATED with website URL in WhatsApp link
 async function loadProductDetail() {
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
@@ -808,6 +817,13 @@ function displayProductDetail(product, ratingInfo) {
     
     const ratingDisplay = ratingInfo ? ratingInfo.display : '<span style="color: #999;">No ratings yet</span>';
     
+    // ========== UPDATED WHATSAPP MESSAGE WITH WEBSITE URL ==========
+    const whatsappMessage = `Hello! I am interested in ${product.title}, I saw it on ${WEBSITE_URL}`;
+    const encodedMessage = encodeURIComponent(whatsappMessage);
+    const formattedWhatsappNumber = whatsappNumber ? whatsappNumber.replace(/[^0-9]/g, '') : '';
+    const whatsappLink = formattedWhatsappNumber ? `https://wa.me/${formattedWhatsappNumber}?text=${encodedMessage}` : '#';
+    // =================================================================
+    
     document.getElementById('productDetail').innerHTML = `
         <div class="product-detail-image-container">
             <img src="${product.image_url || product.image}" alt="${product.title}" class="product-detail-image" id="productMainImage" onerror="this.src='https://via.placeholder.com/500x500?text=Product'">
@@ -834,7 +850,7 @@ function displayProductDetail(product, ratingInfo) {
                 <p style="margin-bottom: 10px;"><strong>⭐ Rating:</strong> ${ratingDisplay}</p>
                 ${whatsappNumber ? `
                     <div style="margin-top: 15px;">
-                        <a href="https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}?text=Hi, I'm interested in ${encodeURIComponent(product.title)}" 
+                        <a href="${whatsappLink}" 
                            target="_blank" 
                            class="btn-buy-now-large" 
                            style="display: inline-block; text-decoration: none; background: #25D366; color: white; padding: 12px 30px; border-radius: 4px; font-weight: 600;">
@@ -856,7 +872,7 @@ function displayProductDetail(product, ratingInfo) {
             <div class="detail-actions">
                 <button class="btn-add-cart-large" onclick="addToBasket('${product.id}')">Add to Basket</button>
                 ${whatsappNumber ? `
-                    <a href="https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}?text=Hi, I'm interested in ${encodeURIComponent(product.title)}" 
+                    <a href="${whatsappLink}" 
                        target="_blank" 
                        class="btn-buy-now-large" 
                        style="display: inline-block; text-decoration: none; background: #25D366; color: white;">
