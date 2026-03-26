@@ -157,6 +157,79 @@ async function ensureUserProfile(userId, email, userMetadata = {}) {
     }
 }
 
+// ============================================
+// GET SELLER CONTACT - WITH UPDATED WHATSAPP MESSAGE
+// ============================================
+async function getSellerContact(productId) {
+    try {
+        // Fetch product with seller info
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${productId}&select=*,seller:seller_id(*)`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': SUPABASE_ANON_KEY
+            }
+        });
+        
+        const product = await response.json();
+        
+        if (!product || product.length === 0) {
+            return { success: false, error: 'Product not found' };
+        }
+        
+        const seller = product[0].seller;
+        const productName = product[0].name;
+        
+        if (!seller || !seller.business_phone) {
+            return { success: false, error: 'Seller contact not available' };
+        }
+        
+        // Format phone number
+        let phone = seller.business_phone.toString().replace(/\D/g, '');
+        if (phone.startsWith('0')) phone = phone.substring(1);
+        if (!phone.startsWith('263')) phone = '263' + phone;
+        
+        // Get buyer info if available
+        let buyerInfo = '';
+        const sessionData = localStorage.getItem('supabase_session');
+        if (sessionData) {
+            try {
+                const session = JSON.parse(sessionData);
+                const userEmail = session.user?.email;
+                if (userEmail) {
+                    buyerInfo = `\nBuyer email: ${userEmail}`;
+                }
+            } catch(e) {}
+        }
+        
+        // ========== UPDATED WHATSAPP MESSAGE ==========
+        const websiteUrl = 'https://www.mbaremarketplace.com';
+        
+        const message = `Hello! I am interested in ${productName}, I saw it on ${websiteUrl}${buyerInfo}`;
+        // =============================================
+        
+        const encodedMessage = encodeURIComponent(message);
+        const whatsappLink = `https://wa.me/${phone}?text=${encodedMessage}`;
+        
+        console.log('WhatsApp message:', message);
+        console.log('WhatsApp link:', whatsappLink);
+        
+        return {
+            success: true,
+            seller: seller,
+            whatsappLink: whatsappLink,
+            phone: seller.business_phone
+        };
+        
+    } catch (error) {
+        console.error('Error getting seller contact:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+// Make getSellerContact available globally
+window.getSellerContact = getSellerContact;
+
 const api = {
     async login(email, password) {
         try {
@@ -431,3 +504,4 @@ const api = {
 window.api = api;
 
 console.log('✅ API.js loaded with phone formatting and correct roles');
+console.log('✅ WhatsApp message includes website URL: https://www.mbaremarketplace.com');
