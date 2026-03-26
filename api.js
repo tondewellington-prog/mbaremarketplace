@@ -7,6 +7,27 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
 const SUPABASE_URL = window.SUPABASE_URL;
 const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
 
+// Helper function to format phone number
+function formatPhoneNumber(phone, countryCode = '263') {
+    if (!phone) return null;
+    
+    // Remove all non-numeric characters
+    let cleaned = phone.toString().replace(/\D/g, '');
+    
+    // Remove leading zero if present
+    if (cleaned.startsWith('0')) {
+        cleaned = cleaned.substring(1);
+    }
+    
+    // Remove country code if already present (to avoid duplication)
+    if (cleaned.startsWith(countryCode)) {
+        cleaned = cleaned.substring(countryCode.length);
+    }
+    
+    // Add country code
+    return countryCode + cleaned;
+}
+
 // Helper function to get headers
 function getHeaders(includeAuth = false) {
     const headers = {
@@ -29,15 +50,29 @@ function getHeaders(includeAuth = false) {
     return headers;
 }
 
-// Helper function to create user profile (used for both new and recreated users)
+// Helper function to create user profile
 async function createUserProfile(userId, email, userMetadata = {}) {
     try {
         console.log('📝 Creating profile for user:', userId);
+        console.log('📝 User metadata:', userMetadata);
         
-        const name = userMetadata.full_name || userMetadata.name || email.split('@')[0];
-        const phone = userMetadata.phone || null;
+        // Get name - use provided name, fallback to email prefix
+        let name = userMetadata.full_name || userMetadata.name;
+        if (!name || name === email) {
+            name = email.split('@')[0];
+        }
+        
+        // Format phone number if provided
+        let phone = userMetadata.phone;
+        if (phone) {
+            phone = formatPhoneNumber(phone);
+            console.log('📞 Formatted phone number:', phone);
+        }
+        
         const shop_name = userMetadata.shop_name || null;
         const address = userMetadata.address || null;
+        // Use 'customer' role instead of 'user' (matches your table)
+        const role = userMetadata.role || 'customer';
         
         const createResponse = await fetch(`${SUPABASE_URL}/rest/v1/users`, {
             method: 'POST',
@@ -53,7 +88,7 @@ async function createUserProfile(userId, email, userMetadata = {}) {
                 phone: phone,
                 shop_name: shop_name,
                 address: address,
-                role: 'user',
+                role: role,
                 is_active: true,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
@@ -92,20 +127,17 @@ async function ensureUserProfile(userId, email, userMetadata = {}) {
         
         if (!checkResponse.ok) {
             console.error('❌ Failed to check profile:', await checkResponse.text());
-            // Even if check fails, try to recreate
             console.log('🔄 Attempting to recreate profile anyway...');
             return await createUserProfile(userId, email, userMetadata);
         }
         
         const existingProfiles = await checkResponse.json();
         
-        // If profile exists, return it
         if (existingProfiles && existingProfiles.length > 0) {
             console.log('✅ Profile found for user:', userId);
             return { success: true, profile: existingProfiles[0], exists: true };
         }
         
-        // Profile doesn't exist - RECREATE IT
         console.log('⚠️⚠️⚠️ PROFILE MISSING for user:', userId);
         console.log('🔄 RECREATING profile automatically...');
         
@@ -121,7 +153,6 @@ async function ensureUserProfile(userId, email, userMetadata = {}) {
         
     } catch (error) {
         console.error('❌ Error in ensureUserProfile:', error);
-        // Last resort: try to create profile directly
         return await createUserProfile(userId, email, userMetadata);
     }
 }
@@ -156,11 +187,8 @@ const api = {
                 localStorage.setItem('supabase_session', JSON.stringify(data));
                 localStorage.setItem('isLoggedIn', 'true');
                 
-                // Get user metadata from the response
                 const userMetadata = data.user?.user_metadata || {};
                 
-                // CRITICAL: Ensure user has a profile in users table
-                // This will auto-recreate if the profile was deleted
                 const profileResult = await ensureUserProfile(
                     data.user.id, 
                     email, 
@@ -177,9 +205,6 @@ const api = {
                     } else {
                         console.log('✅ Existing user profile loaded');
                     }
-                } else {
-                    console.error('❌ Failed to get/create user profile');
-                    // Don't block login even if profile creation fails
                 }
             }
             
@@ -193,6 +218,15 @@ const api = {
     async register(userData) {
         try {
             console.log('📝 Registering user:', userData.email);
+            console.log('📝 Received name:', userData.name);
+            console.log('📝 Received phone:', userData.phone);
+            
+            // Format phone number if provided
+            let formattedPhone = null;
+            if (userData.phone) {
+                formattedPhone = formatPhoneNumber(userData.phone);
+                console.log('📞 Formatted phone:', formattedPhone);
+            }
             
             const response = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
                 method: 'POST',
@@ -207,9 +241,10 @@ const api = {
                         data: {
                             full_name: userData.name,
                             name: userData.name,
-                            phone: userData.phone || '',
+                            phone: formattedPhone || userData.phone || '',
                             shop_name: userData.shop_name || '',
-                            address: userData.address || ''
+                            address: userData.address || '',
+                            role: userData.role || 'customer'
                         }
                     }
                 })
@@ -227,24 +262,23 @@ const api = {
             if (data.user) {
                 console.log('✅ Auth user created:', data.user.id);
                 
-                // Check if email confirmation is required
                 if (data.user.confirmed_at === null) {
-                    console.log('📧 Email confirmation required. Confirmation email sent.');
+                    console.log('📧 Email confirmation required.');
                     return { 
                         success: true, 
                         user: data.user, 
                         requiresConfirmation: true,
-                        message: 'Please check your email to confirm your account before logging in.'
+                        message: `A confirmation email has been sent to ${userData.email}. Please check your inbox.`
                     };
                 }
                 
-                // Create profile in users table immediately
                 const userMetadata = {
                     full_name: userData.name,
                     name: userData.name,
-                    phone: userData.phone,
+                    phone: formattedPhone || userData.phone,
                     shop_name: userData.shop_name,
-                    address: userData.address
+                    address: userData.address,
+                    role: userData.role || 'customer'
                 };
                 
                 const profileResult = await createUserProfile(
@@ -254,7 +288,8 @@ const api = {
                 );
                 
                 if (profileResult.success) {
-                    console.log('✅ User profile created successfully');
+                    console.log('✅ User profile created with name:', profileResult.profile[0]?.name);
+                    console.log('✅ Phone saved:', profileResult.profile[0]?.phone);
                     localStorage.setItem('user_profile', JSON.stringify(profileResult.profile));
                 } else {
                     console.error('❌ Failed to create profile:', profileResult.error);
@@ -303,7 +338,6 @@ const api = {
                 return { success: false, user: null };
             }
             
-            // Get user profile from users table
             const userId = parsedSession.user?.id;
             if (userId) {
                 const profileResponse = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}&select=*`, {
@@ -331,6 +365,11 @@ const api = {
             if (session) {
                 const parsed = JSON.parse(session);
                 accessToken = parsed.access_token || '';
+            }
+            
+            // Format phone if being updated
+            if (updates.phone) {
+                updates.phone = formatPhoneNumber(updates.phone);
             }
             
             const response = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
@@ -391,4 +430,4 @@ const api = {
 // Make api available globally
 window.api = api;
 
-console.log('✅ API.js loaded with AUTO-RECREATION on login');
+console.log('✅ API.js loaded with phone formatting and correct roles');
