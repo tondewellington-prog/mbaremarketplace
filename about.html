@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Mbare Marketplace - Connecting Sellers & Buyers</title>
+    <meta name="description" content="Mbare Marketplace is a platform connecting sellers and buyers directly. Meet the founder, learn our story, and discover how we're bridging the gap between sellers and buyers worldwide.">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Structured Data for Google (Schema.org) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Mbare Marketplace",
+        "url": "https://www.mbaremarketplace.com",
+        "logo": "https://www.mbaremarketplace.com/logo.png",
+        "description": "A global marketplace connecting sellers and buyers directly. No middlemen, just real connections through WhatsApp and secure transactions.",
+        "founder": {
+            "@type": "Person",
+            "name": "Tonde Wellington",
+            "jobTitle": "Founder & CEO",
+            "url": "https://www.mbaremarketplace.com/about.html"
+        },
+        "sameAs": [
+            "https://www.facebook.com/mbaremarketplace",
+            "https://www.instagram.com/mbaremarketplace",
+            "https://twitter.com/mbaremarketplace"
+        ],
+        "contactPoint": {
+            "@type": "ContactPoint",
+            "email": "info@mbaremarketplace.com",
+            "contactType": "customer service"
+        }
+    }
+    </script>
+</head>
+<body>
+    <!-- Header (same as your index.html) -->
+    <header class="header">
+        <div class="header-top">
+            <div class="container">
+                <div class="logo">
+                    <a href="index.html">Mbare Marketplace</a>
+                </div>
+                <div class="search-bar">
+                    <select class="search-category">
+                        <option>All</option>
+                        <option>Electronics</option>
+                        <option>Books</option>
+                        <option>Clothing</option>
+                        <option>Home & Kitchen</option>
+                    </select>
+                    <input type="text" id="searchInput" placeholder="Search Mbare Marketplace" class="search-input">
+                    <button class="search-btn" onclick="handleSearch()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="header-right">
+                    <div class="account-menu" id="accountMenu">
+                        <span class="account-label">Hello, Sign in</span>
+                        <a href="login.html" class="account-link">Account & Lists</a>
+                    </div>
+                    <div class="returns">
+                        <span class="returns-label">Returns</span>
+                        <span class="returns-link">& Orders</span>
+                    </div>
+                    <a href="Basket.html" class="basket">
+                        <div class="basket-icon">
+                            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                                <line x1="3" y1="6" x2="21" y2="6"></line>
+                                <path d="M16 10a4 4 0 0 1-8 0"></path>
+                            </svg>
+                            <span class="basket-count" id="basketCount">0</span>
+                        </div>
+                        <span class="basket-text">Basket</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <nav class="nav-menu">
+            <div class="container">
+                <a href="index.html" class="nav-item all-menu">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                    All
+                </a>
+                <a href="index.html" class="nav-item">Today's Deals</a>
+                <a href="#" class="nav-item">Customer Service</a>
+                <a href="#" class="nav-item">Registry</a>
+                <a href="#" class="nav-item">Gift Cards</a>
+                <a href="seller-register.html" class="nav-item">Sell</a>
+                <a href="about.html" class="nav-item active">About</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- About Page Content -->
+    <main class="about-page">
+        <div class="container">
+            <!-- Hero Section -->
+            <section class="about-hero">
+                <h1>About Mbare Marketplace</h1>
+                <p class="tagline">Bridging Sellers & Buyers, One Connection at a Time</p>
+            </section>
+
+            <!-- Our Story -->
+            <section class="our-story">
+                <h2>Our Story</h2>
+                <p>Mbare Marketplace started with a simple idea: what if sellers and buyers could connect directly? No middlemen. No barriers. Just real conversations between real people.</p>
+                <p>Born from the vibrant energy of Mbare, we built a platform where sellers can share their products and stories, and buyers can discover unique items while connecting directly with the people behind them.</p>
+                <p>Today, Mbare Marketplace connects sellers and buyers across the globe—all through the power of direct conversation on WhatsApp and a marketplace built on trust.</p>
+            </section>
+
+            <!-- Meet the Founder -->
+            <section class="founder-section">
+                <div class="founder-card">
+                    <div class="founder-image">
+                        <div class="avatar-placeholder">
+                            <span>👨‍💼</span>
+                        </div>
+                    </div>
+                    <div class="founder-info">
+                        <h2>Meet the Founder</h2>
+                        <h3>Tonderai Wellington Nyamandi</h3>
+                        <p class="founder-title">Founder & CEO, Mbare Marketplace</p>
+                        <p>"I created Mbare Marketplace to bridge the gap between sellers and buyers. I believe that when people can connect directly, trust grows, communities strengthen, and small businesses thrive."</p>
+                        <p>With a passion for technology and a commitment to empowering local sellers, Tonde built Mbare Marketplace to be more than just a shopping platform—it's a place where real connections happen.</p>
+                        <div class="founder-contact">
+                            <a href="mailto:tondewellington@gmail.com" class="contact-founder">📧 Email Tonde</a>
+                            <a href="https://www.linkedin.com/in/tonde-wellington-977abb231/" target="_blank" class="contact-founder">🔗 LinkedIn</a>
+                          <a href="https://www.facebook.com/tondebolt.nyamz" target="_blank" class="contact-founder">🔗 Facebook</a>
+                          <a href="https://www.instagram.com/__tonde" target="_blank" class="contact-founder">🔗 Instagramn</a>
+                          <a href="https://www.x.com/zim_1_zw95?s=11" target="_blank" class="contact-founder">🔗 X</a>
+                   </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Our Mission & Vision -->
+            <section class="mission-vision">
+                <div class="mission">
+                    <h3>Our Mission</h3>
+                    <p>To create a trusted space where sellers and buyers connect directly, communicate freely, and transact with confidence—no middlemen, just real conversations.</p>
+                </div>
+                <div class="vision">
+                    <h3>Our Vision</h3>
+                    <p>A world where every seller can reach their ideal buyer, and every buyer can connect with the person behind the product.</p>
+                </div>
+            </section>
+
+            <!-- What We Believe -->
+            <section class="values">
+                <h2>What We Believe</h2>
+                <div class="values-grid">
+                    <div class="value-card">
+                        <div class="value-icon">🌉</div>
+                        <h3>Connection First</h3>
+                        <p>We exist to bridge sellers and buyers. Every feature is designed to make that connection stronger and more meaningful.</p>
+                    </div>
+                    <div class="value-card">
+                        <div class="value-icon">💬</div>
+                        <h3>Real Conversations</h3>
+                        <p>Sellers and buyers should talk to each other. WhatsApp integration makes it instant, personal, and real.</p>
+                    </div>
+                    <div class="value-card">
+                        <div class="value-icon">🔒</div>
+                        <h3>Trust & Transparency</h3>
+                        <p>Verified sellers, honest reviews, and secure transactions. Trust is the foundation of every connection.</p>
+                    </div>
+                    <div class="value-card">
+                        <div class="value-icon">🚀</div>
+                        <h3>Empowerment</h3>
+                        <p>We empower sellers to grow their business and buyers to shop with confidence.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Statistics -->
+            <section class="stats">
+                <h2>Our Impact</h2>
+                <div class="stats-grid">
+                    <div class="stat">
+                        <div class="stat-number">still growing</div>
+                        <div class="stat-label">Countries Reached</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">still growing</div>
+                        <div class="stat-label">Active Sellers</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">still growing</div>
+                        <div class="stat-label">Products Listed</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">still growing</div>
+                        <div class="stat-label">Happy Buyers</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Call to Action -->
+            <section class="cta-about">
+                <h2>Join Our Community</h2>
+                <p>Whether you're a seller looking to reach more buyers or a buyer searching for something special—Mbare Marketplace is here to connect you.</p>
+                <div class="cta-buttons">
+                    <a href="seller-register.html" class="btn-primary">Start Selling</a>
+                    <a href="index.html" class="btn-secondary">Start Shopping</a>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer (same as your index.html) -->
+    <footer class="footer">
+        <div class="footer-top">
+            <a href="#" class="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">Back to top</a>
+        </div>
+        <div class="footer-content">
+            <div class="container">
+                <div class="footer-columns">
+                    <div class="footer-column">
+                        <h3>Get to Know Us</h3>
+                        <ul>
+                            <li><a href="about.html">About Us</a></li>
+                            <li><a href="#">Careers</a></li>
+                            <li><a href="#">Blog</a></li>
+                            <li><a href="#">Investor Relations</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h3>Make Money with Us</h3>
+                        <ul>
+                            <li><a href="seller-register.html">Sell on Mbare Marketplace</a></li>
+                            <li><a href="#">Become an Affiliate</a></li>
+                            <li><a href="#">Advertise Your Products</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h3>Need Help?</h3>
+                        <ul>
+                            <li><a href="#">Your Account</a></li>
+                            <li><a href="#">Your Orders</a></li>
+                            <li><a href="#">Shipping Rates & Policies</a></li>
+                            <li><a href="#">Returns & Replacements</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="container">
+                <div class="footer-logo">Mbare Marketplace</div>
+                <div class="footer-links">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                </div>
+                <div class="footer-copyright">
+                    &copy; 2026, Mbare Marketplace. All rights reserved.
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="api.js"></script>
+    <script src="script.js"></script>
+    <script src="auth-check.js"></script>
+    
+    <!-- Add to styles.css -->
+    <style>
+        /* About Page Specific Styles */
+        .about-page {
+            padding: 40px 0;
+        }
+        
+        .about-hero {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        
+        .about-hero h1 {
+            font-size: 42px;
+            color: #232f3e;
+            margin-bottom: 15px;
+        }
+        
+        .about-hero .tagline {
+            font-size: 20px;
+            color: #666;
+            font-style: italic;
+        }
+        
+        .our-story, .mission-vision, .stats, .cta-about {
+            margin-bottom: 60px;
+        }
+        
+        .our-story h2, .values h2, .stats h2, .cta-about h2 {
+            font-size: 32px;
+            color: #232f3e;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .our-story p {
+            font-size: 18px;
+            line-height: 1.6;
+            color: #444;
+            margin-bottom: 20px;
+            text-align: center;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .founder-section {
+            margin-bottom: 60px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 40px;
+        }
+        
+        .founder-card {
+            display: flex;
+            gap: 40px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .founder-image .avatar-placeholder {
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(135deg, #232f3e, #37475a);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 80px;
+        }
+        
+        .founder-info {
+            flex: 1;
+        }
+        
+        .founder-info h2 {
+            font-size: 28px;
+            color: #232f3e;
+            margin-bottom: 5px;
+            text-align: left;
+        }
+        
+        .founder-info h3 {
+            font-size: 24px;
+            color: #f90;
+            margin-bottom: 5px;
+        }
+        
+        .founder-title {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .founder-info p {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #444;
+            margin-bottom: 15px;
+        }
+        
+        .founder-contact {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .contact-founder {
+            padding: 8px 16px;
+            background: #f0f0f0;
+            color: #232f3e;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        
+        .contact-founder:hover {
+            background: #e0e0e0;
+        }
+        
+        .mission-vision {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+        
+        .mission, .vision {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .mission h3, .vision h3 {
+            font-size: 24px;
+            color: #232f3e;
+            margin-bottom: 15px;
+        }
+        
+        .values-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+            margin-top: 30px;
+        }
+        
+        .value-card {
+            text-align: center;
+            padding: 30px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border: 1px solid #eee;
+        }
+        
+        .value-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        
+        .value-card h3 {
+            font-size: 20px;
+            color: #232f3e;
+            margin-bottom: 10px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 42px;
+            font-weight: bold;
+            color: #f90;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .cta-about {
+            text-align: center;
+            background: linear-gradient(135deg, #232f3e, #1a2533);
+            padding: 60px;
+            border-radius: 12px;
+            color: white;
+        }
+        
+        .cta-about h2 {
+            color: white;
+        }
+        
+        .cta-about p {
+            color: #ddd;
+            margin-bottom: 30px;
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+        
+        @media (max-width: 768px) {
+            .mission-vision {
+                grid-template-columns: 1fr;
+            }
+            .values-grid, .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .founder-card {
+                flex-direction: column;
+                text-align: center;
+            }
+            .founder-info h2 {
+                text-align: center;
+            }
+            .founder-contact {
+                justify-content: center;
+            }
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</body>
+</html>
