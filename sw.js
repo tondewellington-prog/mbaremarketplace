@@ -1,5 +1,5 @@
 // Service Worker for Mbare Marketplace
-const CACHE_NAME = 'mbare-cache-v5'; // Incremented version to force update
+const CACHE_NAME = 'mbare-cache-v6'; // Incremented version to force update
 const urlsToCache = [
   '/',
   '/index.html',
