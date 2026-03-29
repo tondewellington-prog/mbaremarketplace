@@ -33,11 +33,77 @@ document.addEventListener('DOMContentLoaded', async function() {
         await loadUserBasket();
         
         // Load products on homepage
-        if (document.getElementById('todaysDeals')) {
-            loadProducts('todaysDeals', products.slice(0, 4));
-            loadProducts('bestSellers', products.slice(4, 8));
-            loadProducts('recommended', products.slice(8, 12));
+        // ============================================
+// LOAD PRODUCTS BY CATEGORY
+// ============================================
+
+// Load Best Sellers in Electronic Devices
+async function loadBestSellersElectronics() {
+    try {
+        // Filter products by category
+        const electronicsProducts = products.filter(p => 
+            p.category === 'Electronic Devices' || 
+            p.category === 'Electronics' ||
+            p.category === 'Electronic'
+        );
+        
+        // Get top 6 products
+        const topElectronics = electronicsProducts.slice(0, 6);
+        
+        // Load into container
+        if (document.getElementById('bestSellersElectronics')) {
+            loadProducts('bestSellersElectronics', topElectronics);
         }
+    } catch (error) {
+        console.error('Error loading electronics:', error);
+    }
+}
+
+// Load Best Sellers in Clothing
+async function loadBestSellersClothing() {
+    try {
+        // Filter products by category
+        const clothingProducts = products.filter(p => 
+            p.category === 'Clothing' || 
+            p.category === 'Fashion' ||
+            p.category === 'Apparel'
+        );
+        
+        // Get top 6 products
+        const topClothing = clothingProducts.slice(0, 6);
+        
+        // Load into container
+        if (document.getElementById('bestSellersClothing')) {
+            loadProducts('bestSellersClothing', topClothing);
+        }
+    } catch (error) {
+        console.error('Error loading clothing:', error);
+    }
+}
+
+// Load All Products (for All Products section)
+async function loadAllProductsSection() {
+    if (document.getElementById('allProducts')) {
+        loadProducts('allProducts', products);
+    }
+}
+
+// Load Today's Deals
+async function loadTodaysDeals() {
+    if (document.getElementById('todaysDeals')) {
+        // Show first 4 products as deals
+        loadProducts('todaysDeals', products.slice(0, 4));
+    }
+}
+
+// Load Recommended Products
+async function loadRecommendedProducts() {
+    if (document.getElementById('recommended')) {
+        // Show products 8-12 as recommendations
+        loadProducts('recommended', products.slice(8, 12));
+    }
+}
+        
         
         // Load all products section if it exists
         if (document.getElementById('allProducts')) {
