@@ -15,7 +15,7 @@ let ratingsCache = {};
 const WEBSITE_URL = 'https://www.mbaremarketplace.com';
 
 // ============================================
-// FUNCTION DEFINITIONS (OUTSIDE DOMContentLoaded)
+// FUNCTION DEFINITIONS
 // ============================================
 
 // Generic function to load products by category
@@ -23,10 +23,10 @@ async function loadProductsByCategory(category, containerId, limit = 6) {
     try {
         console.log(`Loading ${category} products...`);
         
-        // Define category mappings (flexible matching)
         const categoryMatches = {
             'Electronic Devices': ['Electronic Devices', 'Electronics', 'Electronic'],
             'Clothing': ['Clothing', 'Fashion', 'Apparel', 'Clothes'],
+            'Books': ['Books', 'Book', 'Literature'],
             'Pet Supplies': ['Pet Supplies', 'Pets', 'Pet Food', 'Pet Accessories'],
             'Farm Products': ['Farm Products', 'Farming', 'Agricultural', 'Farm'],
             'Vehicle Parts & Accessories': ['Vehicle Parts & Accessories', 'Auto Parts', 'Car Parts', 'Vehicle Parts'],
@@ -34,10 +34,8 @@ async function loadProductsByCategory(category, containerId, limit = 6) {
             'Home & Kitchen': ['Home & Kitchen', 'Home', 'Kitchen', 'Home Decor', 'Furniture']
         };
         
-        // Get the array of possible category names for this category
         const possibleCategories = categoryMatches[category] || [category];
         
-        // Filter products that match any of the possible category names
         const filteredProducts = products.filter(p => 
             possibleCategories.some(cat => 
                 p.category && p.category.toLowerCase().includes(cat.toLowerCase())
@@ -48,7 +46,7 @@ async function loadProductsByCategory(category, containerId, limit = 6) {
         
         const topProducts = filteredProducts.slice(0, limit);
         if (document.getElementById(containerId)) {
-            loadProducts(containerId, topProducts);
+            await loadProductsWithRatings(containerId, topProducts);
         } else {
             console.warn(`Container not found: ${containerId}`);
         }
@@ -57,37 +55,69 @@ async function loadProductsByCategory(category, containerId, limit = 6) {
     }
 }
 
-// Load Best Sellers in Electronic Devices
+// NEW: Load products and fetch ratings for all of them
+async function loadProductsWithRatings(containerId, productList) {
+    const container = document.getElementById(containerId);
+    if (!container) {
+        console.warn('Container not found:', containerId);
+        return;
+    }
+    
+    if (!productList || productList.length === 0) {
+        container.innerHTML = '<p style="text-align: center; padding: 20px;">No products available in this category.</p>';
+        return;
+    }
+    
+    container.innerHTML = '';
+    
+    // Create product cards
+    productList.forEach(product => {
+        const productCard = createProductCard(product);
+        container.appendChild(productCard);
+    });
+    
+    // Fetch ratings for ALL products in this list
+    await fetchRatingsForProducts(productList);
+}
+
+// NEW: Fetch ratings for a list of products
+async function fetchRatingsForProducts(productList) {
+    for (const product of productList) {
+        if (product.seller_id) {
+            const ratingInfo = await getSellerRatings(product.seller_id);
+            const ratingElement = document.getElementById(`rating-${product.id}`);
+            if (ratingElement) {
+                ratingElement.innerHTML = ratingInfo.display;
+            }
+        }
+    }
+}
+
+// Load Best Sellers sections
 async function loadBestSellersElectronics() {
     await loadProductsByCategory('Electronic Devices', 'bestSellersElectronics', 6);
 }
 
-// Load Best Sellers in Clothing
 async function loadBestSellersClothing() {
     await loadProductsByCategory('Clothing', 'bestSellersClothing', 6);
 }
 
-// Load Best Sellers in Pet Supplies
 async function loadBestSellersPetSupplies() {
     await loadProductsByCategory('Pet Supplies', 'bestSellersPetSupplies', 6);
 }
 
-// Load Best Sellers in Farm Products
 async function loadBestSellersFarmProducts() {
     await loadProductsByCategory('Farm Products', 'bestSellersFarmProducts', 6);
 }
 
-// Load Best Sellers in Vehicle Parts & Accessories
 async function loadBestSellersVehicleParts() {
     await loadProductsByCategory('Vehicle Parts & Accessories', 'bestSellersVehicleParts&Accessories', 6);
 }
 
-// Load Best Sellers in Vehicles & Transportation
 async function loadBestSellersVehicles() {
     await loadProductsByCategory('Vehicles & Transportation', 'bestSellersVehicle&Transportation', 6);
 }
 
-// Load Best Sellers in Home & Kitchen
 async function loadBestSellersHomeKitchen() {
     await loadProductsByCategory('Home & Kitchen', 'bestSellersHome&Kitchen', 6);
 }
@@ -97,7 +127,8 @@ async function loadTodaysDeals() {
     try {
         console.log('Loading Today\'s Deals...');
         if (document.getElementById('todaysDeals')) {
-            loadProducts('todaysDeals', products.slice(0, 4));
+            const deals = products.slice(0, 4);
+            await loadProductsWithRatings('todaysDeals', deals);
         }
     } catch (error) {
         console.error('Error loading deals:', error);
@@ -109,9 +140,8 @@ async function loadRecommendedProducts() {
     try {
         console.log('Loading Recommended products...');
         if (document.getElementById('recommended')) {
-            // Show products from index 8 to 12 as recommendations
             const recommended = products.slice(8, 16);
-            loadProducts('recommended', recommended);
+            await loadProductsWithRatings('recommended', recommended);
         }
     } catch (error) {
         console.error('Error loading recommendations:', error);
@@ -123,7 +153,7 @@ async function loadAllProductsSection() {
     try {
         console.log('Loading All products...');
         if (document.getElementById('allProducts')) {
-            loadProducts('allProducts', products);
+            await loadProductsWithRatings('allProducts', products);
         }
     } catch (error) {
         console.error('Error loading all products:', error);
@@ -134,33 +164,25 @@ async function loadAllProductsSection() {
 // INITIALIZATION
 // ============================================
 
-// Initialize page
 document.addEventListener('DOMContentLoaded', async function() {
     try {
         console.log('DOM loaded, initializing...');
         
-        // Wait for API
         if (!window.api) {
             await new Promise(resolve => setTimeout(resolve, 500));
         }
         
-        // Load sellers first
         await loadSellersFromAPI();
         console.log('Sellers loaded:', Object.keys(sellersMap).length);
         
-        // Load products from API
         await loadProductsFromAPI();
         console.log('Products loaded:', products.length);
         console.log('Product categories:', [...new Set(products.map(p => p.category))]);
         
-        // Load user basket
         await loadUserBasket();
         
-        // ========== CALL ALL LOAD FUNCTIONS ==========
-        // Today's Deals
+        // Load all sections
         await loadTodaysDeals();
-        
-        // Best Sellers - All Categories
         await loadBestSellersElectronics();
         await loadBestSellersClothing();
         await loadBestSellersPetSupplies();
@@ -168,32 +190,23 @@ document.addEventListener('DOMContentLoaded', async function() {
         await loadBestSellersVehicleParts();
         await loadBestSellersVehicles();
         await loadBestSellersHomeKitchen();
-        
-        // Recommended for You
         await loadRecommendedProducts();
-        
-        // All Products
         await loadAllProductsSection();
-        // =============================================
         
-        // Load product detail if on product page
         if (document.getElementById('productDetail')) {
             await loadProductDetail();
         }
         
-        // Load Basket if on Basket page
         if (document.getElementById('basketItems')) {
             await loadBasketPage();
         }
         
-        // Auto-rotate carousel
         if (document.getElementById('carouselSlides')) {
             setInterval(() => {
                 moveCarousel(1);
             }, 5000);
         }
         
-        // Search functionality
         const searchInput = document.getElementById('searchInput');
         if (searchInput) {
             searchInput.addEventListener('keypress', function(e) {
@@ -213,7 +226,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 // API LOADING FUNCTIONS
 // ============================================
 
-// Load sellers from API
 async function loadSellersFromAPI() {
     try {
         const SUPABASE_URL = window.SUPABASE_URL;
@@ -240,7 +252,6 @@ async function loadSellersFromAPI() {
     }
 }
 
-// Load products from API
 async function loadProductsFromAPI() {
     try {
         const SUPABASE_URL = window.SUPABASE_URL;
@@ -277,7 +288,6 @@ async function loadProductsFromAPI() {
     }
 }
 
-// Load user basket
 async function loadUserBasket() {
     try {
         const sessionData = localStorage.getItem('supabase_session');
@@ -302,7 +312,6 @@ async function loadUserBasket() {
     }
 }
 
-// Fallback products if API fails
 function loadFallbackProducts() {
     products = [
         {
@@ -343,15 +352,14 @@ function loadFallbackProducts() {
         }
     ];
     
-    // Load fallback products for all containers
     if (document.getElementById('todaysDeals')) {
-        loadProducts('todaysDeals', products.slice(0, 2));
+        loadProductsWithRatings('todaysDeals', products.slice(0, 2));
     }
     if (document.getElementById('bestSellersElectronics')) {
-        loadProducts('bestSellersElectronics', products);
+        loadProductsWithRatings('bestSellersElectronics', products);
     }
     if (document.getElementById('allProducts')) {
-        loadProducts('allProducts', products);
+        loadProductsWithRatings('allProducts', products);
     }
 }
 
@@ -436,7 +444,7 @@ function generateStars(rating) {
     }
     
     if (hasHalfStar) {
-        starsHTML += '☆';
+        starsHTML += '½';
     }
     
     const emptyStars = 5 - Math.ceil(rating);
@@ -450,39 +458,6 @@ function generateStars(rating) {
 // ============================================
 // PRODUCT DISPLAY FUNCTIONS
 // ============================================
-
-function loadProducts(containerId, productList) {
-    const container = document.getElementById(containerId);
-    if (!container) {
-        console.warn('Container not found:', containerId);
-        return;
-    }
-    
-    if (!productList || productList.length === 0) {
-        container.innerHTML = '<p style="text-align: center; padding: 20px;">No products available in this category.</p>';
-        return;
-    }
-    
-    container.innerHTML = '';
-    
-    productList.forEach(product => {
-        const productCard = createProductCard(product);
-        container.appendChild(productCard);
-    });
-    
-    // Fetch ratings
-    setTimeout(() => {
-        productList.forEach(async (product) => {
-            if (product.seller_id) {
-                const ratingInfo = await getSellerRatings(product.seller_id);
-                const ratingElement = document.getElementById(`rating-${product.id}`);
-                if (ratingElement) {
-                    ratingElement.innerHTML = ratingInfo.display;
-                }
-            }
-        });
-    }, 100);
-}
 
 function createProductCard(product) {
     const card = document.createElement('div');
@@ -519,7 +494,7 @@ function createProductCard(product) {
 }
 
 // ============================================
-// REMAINING FUNCTIONS (Keep as they are)
+// REMAINING FUNCTIONS
 // ============================================
 
 function checkLoginAndNavigate(productId) {
@@ -551,7 +526,6 @@ function hideLoginPrompt() {
     document.getElementById('loginPromptModal').style.display = 'none';
 }
 
-// Show seller contact information
 async function showSellerContact(productId) {
     const sessionData = localStorage.getItem('supabase_session');
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
@@ -638,7 +612,6 @@ async function showSellerContact(productId) {
     };
 }
 
-// Add to Basket
 async function addToBasket(productId, quantity = 1) {
     try {
         const sessionData = localStorage.getItem('supabase_session');
@@ -745,7 +718,6 @@ function showNotification(message) {
     }, 2000);
 }
 
-// Carousel functionality
 let currentSlide = 0;
 const totalSlides = 3;
 
@@ -769,7 +741,6 @@ function goToSlide(index) {
     moveCarousel(0);
 }
 
-// Load product detail
 async function loadProductDetail() {
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
@@ -925,7 +896,6 @@ function handleSearch() {
     }
 }
 
-// Add CSS animations
 const styleSheet = document.createElement('style');
 styleSheet.textContent = `
     @keyframes slideIn {
@@ -939,7 +909,6 @@ styleSheet.textContent = `
 `;
 document.head.appendChild(styleSheet);
 
-// Make functions global
 window.checkLoginAndNavigate = checkLoginAndNavigate;
 window.goToProductDetail = checkLoginAndNavigate;
 window.logout = function() {
@@ -948,7 +917,6 @@ window.logout = function() {
     window.location.href = 'index.html';
 };
 
-// Register service worker
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW error:', err));
