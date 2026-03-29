@@ -18,44 +18,78 @@ const WEBSITE_URL = 'https://www.mbaremarketplace.com';
 // FUNCTION DEFINITIONS (OUTSIDE DOMContentLoaded)
 // ============================================
 
-// Load Best Sellers in Electronic Devices
-async function loadBestSellersElectronics() {
+// Generic function to load products by category
+async function loadProductsByCategory(category, containerId, limit = 6) {
     try {
-        console.log('Loading Electronics products...');
-        const electronicsProducts = products.filter(p => 
-            p.category === 'Electronic Devices' || 
-            p.category === 'Electronics' ||
-            p.category === 'Electronic'
-        );
-        console.log('Found electronics products:', electronicsProducts.length);
+        console.log(`Loading ${category} products...`);
         
-        const topElectronics = electronicsProducts.slice(0, 6);
-        if (document.getElementById('bestSellersElectronics')) {
-            loadProducts('bestSellersElectronics', topElectronics);
+        // Define category mappings (flexible matching)
+        const categoryMatches = {
+            'Electronic Devices': ['Electronic Devices', 'Electronics', 'Electronic'],
+            'Clothing': ['Clothing', 'Fashion', 'Apparel', 'Clothes'],
+            'Pet Supplies': ['Pet Supplies', 'Pets', 'Pet Food', 'Pet Accessories'],
+            'Farm Products': ['Farm Products', 'Farming', 'Agricultural', 'Farm'],
+            'Vehicle Parts & Accessories': ['Vehicle Parts & Accessories', 'Auto Parts', 'Car Parts', 'Vehicle Parts'],
+            'Vehicles & Transportation': ['Vehicles & Transportation', 'Vehicles', 'Cars', 'Transportation'],
+            'Home & Kitchen': ['Home & Kitchen', 'Home', 'Kitchen', 'Home Decor', 'Furniture']
+        };
+        
+        // Get the array of possible category names for this category
+        const possibleCategories = categoryMatches[category] || [category];
+        
+        // Filter products that match any of the possible category names
+        const filteredProducts = products.filter(p => 
+            possibleCategories.some(cat => 
+                p.category && p.category.toLowerCase().includes(cat.toLowerCase())
+            )
+        );
+        
+        console.log(`Found ${filteredProducts.length} products for ${category}`);
+        
+        const topProducts = filteredProducts.slice(0, limit);
+        if (document.getElementById(containerId)) {
+            loadProducts(containerId, topProducts);
+        } else {
+            console.warn(`Container not found: ${containerId}`);
         }
     } catch (error) {
-        console.error('Error loading electronics:', error);
+        console.error(`Error loading ${category}:`, error);
     }
+}
+
+// Load Best Sellers in Electronic Devices
+async function loadBestSellersElectronics() {
+    await loadProductsByCategory('Electronic Devices', 'bestSellersElectronics', 6);
 }
 
 // Load Best Sellers in Clothing
 async function loadBestSellersClothing() {
-    try {
-        console.log('Loading Clothing products...');
-        const clothingProducts = products.filter(p => 
-            p.category === 'Clothing' || 
-            p.category === 'Fashion' ||
-            p.category === 'Apparel'
-        );
-        console.log('Found clothing products:', clothingProducts.length);
-        
-        const topClothing = clothingProducts.slice(0, 6);
-        if (document.getElementById('bestSellersClothing')) {
-            loadProducts('bestSellersClothing', topClothing);
-        }
-    } catch (error) {
-        console.error('Error loading clothing:', error);
-    }
+    await loadProductsByCategory('Clothing', 'bestSellersClothing', 6);
+}
+
+// Load Best Sellers in Pet Supplies
+async function loadBestSellersPetSupplies() {
+    await loadProductsByCategory('Pet Supplies', 'bestSellersPetSupplies', 6);
+}
+
+// Load Best Sellers in Farm Products
+async function loadBestSellersFarmProducts() {
+    await loadProductsByCategory('Farm Products', 'bestSellersFarmProducts', 6);
+}
+
+// Load Best Sellers in Vehicle Parts & Accessories
+async function loadBestSellersVehicleParts() {
+    await loadProductsByCategory('Vehicle Parts & Accessories', 'bestSellersVehicleParts&Accessories', 6);
+}
+
+// Load Best Sellers in Vehicles & Transportation
+async function loadBestSellersVehicles() {
+    await loadProductsByCategory('Vehicles & Transportation', 'bestSellersVehicle&Transportation', 6);
+}
+
+// Load Best Sellers in Home & Kitchen
+async function loadBestSellersHomeKitchen() {
+    await loadProductsByCategory('Home & Kitchen', 'bestSellersHome&Kitchen', 6);
 }
 
 // Load Today's Deals
@@ -75,7 +109,9 @@ async function loadRecommendedProducts() {
     try {
         console.log('Loading Recommended products...');
         if (document.getElementById('recommended')) {
-            loadProducts('recommended', products.slice(8, 12));
+            // Show products from index 8 to 12 as recommendations
+            const recommended = products.slice(8, 16);
+            loadProducts('recommended', recommended);
         }
     } catch (error) {
         console.error('Error loading recommendations:', error);
@@ -120,15 +156,18 @@ document.addEventListener('DOMContentLoaded', async function() {
         // Load user basket
         await loadUserBasket();
         
-        // ========== CALL THE LOAD FUNCTIONS ==========
+        // ========== CALL ALL LOAD FUNCTIONS ==========
         // Today's Deals
         await loadTodaysDeals();
         
-        // Best Sellers in Electronic Devices
+        // Best Sellers - All Categories
         await loadBestSellersElectronics();
-        
-        // Best Sellers in Clothing
         await loadBestSellersClothing();
+        await loadBestSellersPetSupplies();
+        await loadBestSellersFarmProducts();
+        await loadBestSellersVehicleParts();
+        await loadBestSellersVehicles();
+        await loadBestSellersHomeKitchen();
         
         // Recommended for You
         await loadRecommendedProducts();
@@ -289,10 +328,22 @@ function loadFallbackProducts() {
             description: "Advanced smartwatch...",
             features: ["Heart rate monitor", "GPS tracking"],
             seller_id: null
+        },
+        {
+            id: 3,
+            title: "Casual T-Shirt",
+            price: 24.99,
+            rating: 4.3,
+            reviews: 89,
+            image: "https://via.placeholder.com/300x300?text=T-Shirt",
+            category: "Clothing",
+            description: "Comfortable cotton t-shirt",
+            features: ["100% Cotton", "Breathable"],
+            seller_id: null
         }
     ];
     
-    // Load fallback products
+    // Load fallback products for all containers
     if (document.getElementById('todaysDeals')) {
         loadProducts('todaysDeals', products.slice(0, 2));
     }
@@ -774,7 +825,6 @@ async function buyNow(productId) {
 }
 
 async function loadBasketPage() {
-    // Keep your existing loadBasketPage function
     const basketItemsContainer = document.getElementById('basketItems');
     if (!basketItemsContainer) return;
     
