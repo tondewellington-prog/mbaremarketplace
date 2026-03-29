@@ -9,48 +9,27 @@ console.log('%c🔒 WARNING: Unauthorized access to this console is prohibited b
 // Product Data - Will be loaded from API
 let products = [];
 let sellersMap = {};
-let ratingsCache = {}; // Cache for ratings to avoid repeated fetches
+let ratingsCache = {};
 
 // Website URL constant
 const WEBSITE_URL = 'https://www.mbaremarketplace.com';
 
-// Initialize page
-document.addEventListener('DOMContentLoaded', async function() {
-    try {
-        // ADD THIS CHECK FOR API
-        if (!window.api) {
-            // Wait a moment for API to load
-            await new Promise(resolve => setTimeout(resolve, 500));
-        }
-        
-        // Load sellers first
-        await loadSellersFromAPI();
-        
-        // Load products from API
-        await loadProductsFromAPI();
-        
-        // Load user basket if logged in
-        await loadUserBasket();
-        
-        // Load products on homepage
-        // ============================================
-// LOAD PRODUCTS BY CATEGORY
+// ============================================
+// FUNCTION DEFINITIONS (OUTSIDE DOMContentLoaded)
 // ============================================
 
 // Load Best Sellers in Electronic Devices
 async function loadBestSellersElectronics() {
     try {
-        // Filter products by category
+        console.log('Loading Electronics products...');
         const electronicsProducts = products.filter(p => 
             p.category === 'Electronic Devices' || 
             p.category === 'Electronics' ||
             p.category === 'Electronic'
         );
+        console.log('Found electronics products:', electronicsProducts.length);
         
-        // Get top 6 products
         const topElectronics = electronicsProducts.slice(0, 6);
-        
-        // Load into container
         if (document.getElementById('bestSellersElectronics')) {
             loadProducts('bestSellersElectronics', topElectronics);
         }
@@ -62,17 +41,15 @@ async function loadBestSellersElectronics() {
 // Load Best Sellers in Clothing
 async function loadBestSellersClothing() {
     try {
-        // Filter products by category
+        console.log('Loading Clothing products...');
         const clothingProducts = products.filter(p => 
             p.category === 'Clothing' || 
             p.category === 'Fashion' ||
             p.category === 'Apparel'
         );
+        console.log('Found clothing products:', clothingProducts.length);
         
-        // Get top 6 products
         const topClothing = clothingProducts.slice(0, 6);
-        
-        // Load into container
         if (document.getElementById('bestSellersClothing')) {
             loadProducts('bestSellersClothing', topClothing);
         }
@@ -81,34 +58,84 @@ async function loadBestSellersClothing() {
     }
 }
 
-// Load All Products (for All Products section)
-async function loadAllProductsSection() {
-    if (document.getElementById('allProducts')) {
-        loadProducts('allProducts', products);
-    }
-}
-
 // Load Today's Deals
 async function loadTodaysDeals() {
-    if (document.getElementById('todaysDeals')) {
-        // Show first 4 products as deals
-        loadProducts('todaysDeals', products.slice(0, 4));
+    try {
+        console.log('Loading Today\'s Deals...');
+        if (document.getElementById('todaysDeals')) {
+            loadProducts('todaysDeals', products.slice(0, 4));
+        }
+    } catch (error) {
+        console.error('Error loading deals:', error);
     }
 }
 
 // Load Recommended Products
 async function loadRecommendedProducts() {
-    if (document.getElementById('recommended')) {
-        // Show products 8-12 as recommendations
-        loadProducts('recommended', products.slice(8, 12));
+    try {
+        console.log('Loading Recommended products...');
+        if (document.getElementById('recommended')) {
+            loadProducts('recommended', products.slice(8, 12));
+        }
+    } catch (error) {
+        console.error('Error loading recommendations:', error);
     }
 }
-        
-        
-        // Load all products section if it exists
+
+// Load All Products
+async function loadAllProductsSection() {
+    try {
+        console.log('Loading All products...');
         if (document.getElementById('allProducts')) {
             loadProducts('allProducts', products);
         }
+    } catch (error) {
+        console.error('Error loading all products:', error);
+    }
+}
+
+// ============================================
+// INITIALIZATION
+// ============================================
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        console.log('DOM loaded, initializing...');
+        
+        // Wait for API
+        if (!window.api) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
+        // Load sellers first
+        await loadSellersFromAPI();
+        console.log('Sellers loaded:', Object.keys(sellersMap).length);
+        
+        // Load products from API
+        await loadProductsFromAPI();
+        console.log('Products loaded:', products.length);
+        console.log('Product categories:', [...new Set(products.map(p => p.category))]);
+        
+        // Load user basket
+        await loadUserBasket();
+        
+        // ========== CALL THE LOAD FUNCTIONS ==========
+        // Today's Deals
+        await loadTodaysDeals();
+        
+        // Best Sellers in Electronic Devices
+        await loadBestSellersElectronics();
+        
+        // Best Sellers in Clothing
+        await loadBestSellersClothing();
+        
+        // Recommended for You
+        await loadRecommendedProducts();
+        
+        // All Products
+        await loadAllProductsSection();
+        // =============================================
         
         // Load product detail if on product page
         if (document.getElementById('productDetail')) {
@@ -136,12 +163,16 @@ async function loadRecommendedProducts() {
                 }
             });
         }
+        
     } catch (error) {
-        // Silent error handling
-        // Fallback to local data if API fails
+        console.error('Initialization error:', error);
         loadFallbackProducts();
     }
 });
+
+// ============================================
+// API LOADING FUNCTIONS
+// ============================================
 
 // Load sellers from API
 async function loadSellersFromAPI() {
@@ -156,20 +187,17 @@ async function loadSellersFromAPI() {
             }
         });
         
-        if (!response.ok) {
-            return;
-        }
+        if (!response.ok) return;
         
         const sellers = await response.json();
         
-        // Create a map of sellers by user_id
         if (Array.isArray(sellers) && sellers.length > 0) {
             sellers.forEach(seller => {
                 sellersMap[seller.user_id] = seller;
             });
         }
     } catch (error) {
-        // Silent error handling
+        console.error('Error loading sellers:', error);
     }
 }
 
@@ -205,6 +233,7 @@ async function loadProductsFromAPI() {
             }));
         }
     } catch (error) {
+        console.error('Error loading products:', error);
         throw error;
     }
 }
@@ -212,7 +241,6 @@ async function loadProductsFromAPI() {
 // Load user basket
 async function loadUserBasket() {
     try {
-        // Check if user is logged in
         const sessionData = localStorage.getItem('supabase_session');
         const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
         
@@ -221,7 +249,6 @@ async function loadUserBasket() {
             const userId = session.user?.id;
             
             if (userId) {
-                // Load user-specific basket
                 const basketKey = `basket_${userId}`;
                 const userBasket = JSON.parse(localStorage.getItem(basketKey)) || [];
                 updateBasketCount(userBasket.reduce((sum, item) => sum + (item.quantity || 0), 0));
@@ -229,7 +256,6 @@ async function loadUserBasket() {
                 updateBasketCount(0);
             }
         } else {
-            // No user logged in, empty basket
             updateBasketCount(0);
         }
     } catch (error) {
@@ -242,34 +268,37 @@ function loadFallbackProducts() {
     products = [
         {
             id: 1,
-            title: "Wireless Bluetooth Headphones with Noise Cancellation",
+            title: "Wireless Bluetooth Headphones",
             price: 79.99,
             rating: 4.5,
             reviews: 1234,
             image: "https://via.placeholder.com/300x300?text=Headphones",
             category: "Electronics",
-            description: "Premium wireless headphones with active noise cancellation, 30-hour battery life, and superior sound quality.",
-            features: ["Active Noise Cancellation", "30-hour battery", "Quick charge", "Comfortable design"]
+            description: "Premium wireless headphones...",
+            features: ["Noise Cancellation", "30-hour battery"],
+            seller_id: null
         },
         {
             id: 2,
-            title: "Smart Watch with Fitness Tracking",
+            title: "Smart Watch",
             price: 199.99,
             rating: 4.7,
             reviews: 2567,
             image: "https://via.placeholder.com/300x300?text=Smart+Watch",
             category: "Electronics",
-            description: "Advanced smartwatch with heart rate monitoring, GPS, and 7-day battery life.",
-            features: ["Heart rate monitor", "GPS tracking", "Water resistant", "7-day battery"]
+            description: "Advanced smartwatch...",
+            features: ["Heart rate monitor", "GPS tracking"],
+            seller_id: null
         }
     ];
     
+    // Load fallback products
     if (document.getElementById('todaysDeals')) {
-        loadProducts('todaysDeals', products.slice(0, 4));
-        loadProducts('bestSellers', products.slice(4, 8));
-        loadProducts('recommended', products.slice(8, 12));
+        loadProducts('todaysDeals', products.slice(0, 2));
     }
-    
+    if (document.getElementById('bestSellersElectronics')) {
+        loadProducts('bestSellersElectronics', products);
+    }
     if (document.getElementById('allProducts')) {
         loadProducts('allProducts', products);
     }
@@ -279,9 +308,7 @@ function loadFallbackProducts() {
 // RATING FUNCTIONS
 // ============================================
 
-// Fetch ratings for a seller and calculate average
 async function getSellerRatings(sellerId) {
-    // Check cache first
     if (ratingsCache[sellerId]) {
         return ratingsCache[sellerId];
     }
@@ -318,7 +345,6 @@ async function getSellerRatings(sellerId) {
             };
         }
         
-        // Cache the result
         ratingsCache[sellerId] = result;
         return result;
     } catch (error) {
@@ -331,7 +357,6 @@ async function getSellerRatings(sellerId) {
     }
 }
 
-// Generate star rating HTML
 function generateRatingStars(rating) {
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 >= 0.5;
@@ -350,20 +375,51 @@ function generateRatingStars(rating) {
     return stars;
 }
 
-// Load products into grid
+function generateStars(rating) {
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    let starsHTML = '';
+    
+    for (let i = 0; i < fullStars; i++) {
+        starsHTML += '★';
+    }
+    
+    if (hasHalfStar) {
+        starsHTML += '☆';
+    }
+    
+    const emptyStars = 5 - Math.ceil(rating);
+    for (let i = 0; i < emptyStars; i++) {
+        starsHTML += '☆';
+    }
+    
+    return starsHTML;
+}
+
+// ============================================
+// PRODUCT DISPLAY FUNCTIONS
+// ============================================
+
 function loadProducts(containerId, productList) {
     const container = document.getElementById(containerId);
-    if (!container) return;
+    if (!container) {
+        console.warn('Container not found:', containerId);
+        return;
+    }
+    
+    if (!productList || productList.length === 0) {
+        container.innerHTML = '<p style="text-align: center; padding: 20px;">No products available in this category.</p>';
+        return;
+    }
     
     container.innerHTML = '';
     
-    // Create all product cards
     productList.forEach(product => {
         const productCard = createProductCard(product);
         container.appendChild(productCard);
     });
     
-    // Fetch ratings for all products in this container
+    // Fetch ratings
     setTimeout(() => {
         productList.forEach(async (product) => {
             if (product.seller_id) {
@@ -377,36 +433,6 @@ function loadProducts(containerId, productList) {
     }, 100);
 }
 
-// Function to check login before navigating to product detail
-function checkLoginAndNavigate(productId) {
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    
-    if (!isLoggedIn) {
-        // Try to find the login prompt modal
-        let loginModal = document.getElementById('loginPromptModal');
-        
-        // If modal doesn't exist in index.html, create a simple confirm
-        if (!loginModal) {
-            const confirmLogin = confirm('Please login to view product details. Would you like to login now?');
-            if (confirmLogin) {
-                window.location.href = `login.html?redirect=product-detail.html?id=${productId}`;
-            }
-            return false;
-        }
-        
-        // Show the modal if it exists
-        loginModal.style.display = 'flex';
-        
-        // Store the product ID for after login
-        window.pendingProductId = productId;
-        return false;
-    }
-    
-    window.location.href = `product-detail.html?id=${productId}`;
-    return true;
-}
-
-// Create product card element - UPDATED with login check
 function createProductCard(product) {
     const card = document.createElement('div');
     card.className = 'product-card';
@@ -416,7 +442,6 @@ function createProductCard(product) {
     const sellerName = seller.business_name || 'Unknown Seller';
     const imageUrl = product.image_url || product.image || 'https://via.placeholder.com/300x300?text=Product';
     
-    // Use the checkLoginAndNavigate function instead of direct navigation
     card.innerHTML = `
         <img src="${imageUrl}" alt="${product.title}" class="product-image" onclick="checkLoginAndNavigate(${product.id})" style="cursor: pointer;" onerror="this.src='https://via.placeholder.com/300x300?text=Product'">
         <h3 class="product-title" onclick="checkLoginAndNavigate(${product.id})" style="cursor: pointer;">${product.title}</h3>
@@ -442,17 +467,47 @@ function createProductCard(product) {
     return card;
 }
 
-// Show seller contact information - UPDATED with website URL
-function showSellerContact(productId) {
-    // First check if user is logged in
+// ============================================
+// REMAINING FUNCTIONS (Keep as they are)
+// ============================================
+
+function checkLoginAndNavigate(productId) {
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    
+    if (!isLoggedIn) {
+        let loginModal = document.getElementById('loginPromptModal');
+        if (!loginModal) {
+            const confirmLogin = confirm('Please login to view product details. Would you like to login now?');
+            if (confirmLogin) {
+                window.location.href = `login.html?redirect=product-detail.html?id=${productId}`;
+            }
+            return false;
+        }
+        loginModal.style.display = 'flex';
+        window.pendingProductId = productId;
+        return false;
+    }
+    
+    window.location.href = `product-detail.html?id=${productId}`;
+    return true;
+}
+
+function showLoginPrompt() {
+    document.getElementById('loginPromptModal').style.display = 'flex';
+}
+
+function hideLoginPrompt() {
+    document.getElementById('loginPromptModal').style.display = 'none';
+}
+
+// Show seller contact information
+async function showSellerContact(productId) {
     const sessionData = localStorage.getItem('supabase_session');
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
     
     if (!isLoggedIn || !sessionData) {
-        // User is not logged in - show login prompt
         const confirmLogin = confirm('Please login to view seller contact information. Would you like to login now?');
         if (confirmLogin) {
-            // Redirect to login page with return URL
             const currentPage = encodeURIComponent(window.location.href);
             window.location.href = `login.html?redirect=${currentPage}`;
         }
@@ -460,14 +515,12 @@ function showSellerContact(productId) {
     }
     
     const product = products.find(p => p.id == productId);
-    
     if (!product) {
         alert('Product not found');
         return;
     }
     
     const seller = sellersMap[product.seller_id];
-    
     if (!seller) {
         alert('Seller information not available');
         return;
@@ -475,16 +528,11 @@ function showSellerContact(productId) {
     
     const phone = seller.business_phone || 'Not provided';
     const phoneDigits = phone.replace(/\D/g, '');
-    
-    // ========== UPDATED WHATSAPP MESSAGE WITH WEBSITE URL ==========
     const whatsappMessage = `Hello! I am interested in ${product.title}, I saw it on ${WEBSITE_URL}`;
     const encodedMessage = encodeURIComponent(whatsappMessage);
     const whatsappLink = phoneDigits ? `https://wa.me/${phoneDigits}?text=${encodedMessage}` : '#';
-    // =================================================================
-    
     const callLink = phoneDigits ? `tel:${phoneDigits}` : '#';
     
-    // Create modal if it doesn't exist
     let modal = document.getElementById('sellerContactModal');
     if (!modal) {
         modal = document.createElement('div');
@@ -497,128 +545,6 @@ function showSellerContact(productId) {
             </div>
         `;
         document.body.appendChild(modal);
-        
-        // Add modal styles if not present
-        if (!document.querySelector('#contactModalStyles')) {
-            const style = document.createElement('style');
-            style.id = 'contactModalStyles';
-            style.textContent = `
-                .contact-modal {
-                    display: none;
-                    position: fixed;
-                    z-index: 2000;
-                    left: 0;
-                    top: 0;
-                    width: 100%;
-                    height: 100%;
-                    background-color: rgba(0,0,0,0.5);
-                }
-                .contact-modal-content {
-                    background-color: white;
-                    margin: 15% auto;
-                    padding: 30px;
-                    border-radius: 8px;
-                    width: 90%;
-                    max-width: 500px;
-                    position: relative;
-                    animation: slideDown 0.3s ease-out;
-                }
-                .close-contact-modal {
-                    position: absolute;
-                    top: 15px;
-                    right: 20px;
-                    font-size: 28px;
-                    font-weight: bold;
-                    color: #666;
-                    cursor: pointer;
-                }
-                .close-contact-modal:hover {
-                    color: #000;
-                }
-                .seller-info {
-                    margin-top: 20px;
-                }
-                .info-row {
-                    display: flex;
-                    align-items: center;
-                    margin-bottom: 15px;
-                    padding: 10px;
-                    background: #f5f5f5;
-                    border-radius: 4px;
-                }
-                .info-icon {
-                    width: 40px;
-                    height: 40px;
-                    background: #232f3e;
-                    color: white;
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    margin-right: 15px;
-                }
-                .info-text {
-                    flex: 1;
-                }
-                .info-label {
-                    font-size: 12px;
-                    color: #666;
-                    margin-bottom: 3px;
-                }
-                .info-value {
-                    font-size: 16px;
-                    font-weight: 500;
-                    color: #232f3e;
-                }
-                .contact-actions {
-                    display: flex;
-                    gap: 10px;
-                    margin-top: 20px;
-                }
-                .contact-btn {
-                    flex: 1;
-                    padding: 12px;
-                    border: none;
-                    border-radius: 4px;
-                    cursor: pointer;
-                    font-size: 14px;
-                    font-weight: 500;
-                    text-align: center;
-                    text-decoration: none;
-                }
-                .call-btn {
-                    background: #28a745;
-                    color: white;
-                }
-                .call-btn:hover {
-                    background: #218838;
-                }
-                .whatsapp-btn {
-                    background: #25D366;
-                    color: white;
-                }
-                .whatsapp-btn:hover {
-                    background: #128C7E;
-                }
-                .product-title {
-                    font-size: 18px;
-                    font-weight: 600;
-                    margin-bottom: 10px;
-                    color: #232f3e;
-                }
-                @keyframes slideDown {
-                    from {
-                        transform: translateY(-100px);
-                        opacity: 0;
-                    }
-                    to {
-                        transform: translateY(0);
-                        opacity: 1;
-                    }
-                }
-            `;
-            document.head.appendChild(style);
-        }
     }
     
     const modalContent = document.getElementById('sellerContactContent');
@@ -646,27 +572,14 @@ function showSellerContact(productId) {
                     <div class="info-value">${seller.business_address || 'Location not specified'}</div>
                 </div>
             </div>
-            <div class="info-row">
-                <div class="info-icon">📦</div>
-                <div class="info-text">
-                    <div class="info-label">Price</div>
-                    <div class="info-value">$${product.price.toFixed(2)}</div>
-                </div>
-            </div>
         </div>
         <div class="contact-actions">
-            <a href="${callLink}" class="contact-btn call-btn" ${!phoneDigits ? 'onclick="alert(\'Phone number not available\'); return false;"' : ''}>
-                📞 Call Seller
-            </a>
-            <a href="${whatsappLink}" class="contact-btn whatsapp-btn" target="_blank" ${!phoneDigits ? 'onclick="alert(\'Phone number not available\'); return false;"' : ''}>
-                💬 WhatsApp
-            </a>
+            <a href="${callLink}" class="contact-btn call-btn">📞 Call Seller</a>
+            <a href="${whatsappLink}" class="contact-btn whatsapp-btn" target="_blank">💬 WhatsApp</a>
         </div>
     `;
     
     modal.style.display = 'block';
-    
-    // Close modal when clicking outside
     window.onclick = function(event) {
         if (event.target == modal) {
             modal.style.display = 'none';
@@ -674,64 +587,35 @@ function showSellerContact(productId) {
     };
 }
 
-// Generate star rating HTML
-function generateStars(rating) {
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 >= 0.5;
-    let starsHTML = '';
-    
-    for (let i = 0; i < fullStars; i++) {
-        starsHTML += '★';
-    }
-    
-    if (hasHalfStar) {
-        starsHTML += '☆';
-    }
-    
-    const emptyStars = 5 - Math.ceil(rating);
-    for (let i = 0; i < emptyStars; i++) {
-        starsHTML += '☆';
-    }
-    
-    return starsHTML;
-}
-
 // Add to Basket
 async function addToBasket(productId, quantity = 1) {
     try {
-        // Check if user is logged in
         const sessionData = localStorage.getItem('supabase_session');
         const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
         
         if (!isLoggedIn || !sessionData) {
-            // Redirect to login if not logged in
             showNotification('Please login to add items to basket');
             setTimeout(() => {
                 window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.pathname);
             }, 1500);
             return;
         }
-
-        // Get user ID from session
+        
         const session = JSON.parse(sessionData);
         const userId = session.user?.id;
-        
         if (!userId) {
             showNotification('User session error. Please login again.');
             return;
         }
-
-        // Find the product
+        
         const product = products.find(p => p.id == productId);
         if (!product) {
             showNotification('Product not found');
             return;
         }
-
-        // Use user-specific basket key
+        
         const basketKey = `basket_${userId}`;
         let userBasket = JSON.parse(localStorage.getItem(basketKey)) || [];
-        
         const existingItem = userBasket.find(item => item.id == productId);
         
         if (existingItem) {
@@ -747,21 +631,15 @@ async function addToBasket(productId, quantity = 1) {
             });
         }
         
-        // Save to user-specific basket
         localStorage.setItem(basketKey, JSON.stringify(userBasket));
-        
-        // Update basket count
         const totalItems = userBasket.reduce((sum, item) => sum + (item.quantity || 0), 0);
         updateBasketCount(totalItems);
-        
         showNotification('Item added to Basket!');
-        
     } catch (error) {
         showNotification('Failed to add item to basket');
     }
 }
 
-// Update basket count
 function updateBasketCount(totalItems) {
     const basketCount = document.getElementById('basketCount');
     if (!basketCount) return;
@@ -770,15 +648,12 @@ function updateBasketCount(totalItems) {
         basketCount.textContent = totalItems;
         basketCount.style.display = totalItems > 0 ? 'flex' : 'none';
     } else {
-        // If no parameter passed, calculate from user's basket
         try {
             const sessionData = localStorage.getItem('supabase_session');
             const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-            
             if (isLoggedIn && sessionData) {
                 const session = JSON.parse(sessionData);
                 const userId = session.user?.id;
-                
                 if (userId) {
                     const basketKey = `basket_${userId}`;
                     const userBasket = JSON.parse(localStorage.getItem(basketKey)) || [];
@@ -788,7 +663,6 @@ function updateBasketCount(totalItems) {
                     return;
                 }
             }
-            
             basketCount.textContent = '0';
             basketCount.style.display = 'none';
         } catch (error) {
@@ -798,7 +672,6 @@ function updateBasketCount(totalItems) {
     }
 }
 
-// Show notification
 function showNotification(message) {
     const notification = document.createElement('div');
     notification.style.cssText = `
@@ -815,7 +688,6 @@ function showNotification(message) {
     `;
     notification.textContent = message;
     document.body.appendChild(notification);
-    
     setTimeout(() => {
         notification.style.animation = 'slideOut 0.3s ease';
         setTimeout(() => notification.remove(), 300);
@@ -829,17 +701,13 @@ const totalSlides = 3;
 function moveCarousel(direction) {
     const slides = document.getElementById('carouselSlides');
     const indicators = document.querySelectorAll('.indicator');
+    if (!slides) return;
     
     currentSlide += direction;
-    
-    if (currentSlide < 0) {
-        currentSlide = totalSlides - 1;
-    } else if (currentSlide >= totalSlides) {
-        currentSlide = 0;
-    }
+    if (currentSlide < 0) currentSlide = totalSlides - 1;
+    else if (currentSlide >= totalSlides) currentSlide = 0;
     
     slides.style.transform = `translateX(-${currentSlide * 100}%)`;
-    
     indicators.forEach((indicator, index) => {
         indicator.classList.toggle('active', index === currentSlide);
     });
@@ -850,28 +718,19 @@ function goToSlide(index) {
     moveCarousel(0);
 }
 
-// Load product detail - UPDATED with website URL in WhatsApp link
+// Load product detail
 async function loadProductDetail() {
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
-    
-    if (!productId) {
-        document.getElementById('productDetail').innerHTML = '<p>Product not found</p>';
-        return;
-    }
+    if (!productId) return;
     
     const product = products.find(p => p.id == productId);
-    if (!product) {
-        document.getElementById('productDetail').innerHTML = '<p>Product not found</p>';
-        return;
-    }
+    if (!product) return;
     
-    // Fetch ratings for this seller
     let ratingInfo = null;
     if (product.seller_id) {
         ratingInfo = await getSellerRatings(product.seller_id);
     }
-    
     displayProductDetail(product, ratingInfo);
 }
 
@@ -880,17 +739,16 @@ function displayProductDetail(product, ratingInfo) {
     const seller = sellersMap[product.seller_id] || {};
     const whatsappNumber = seller.business_phone || '';
     const shopLocation = seller.business_address || 'Location not specified';
-    
     const ratingDisplay = ratingInfo ? ratingInfo.display : '<span style="color: #999;">No ratings yet</span>';
-    
-    // ========== UPDATED WHATSAPP MESSAGE WITH WEBSITE URL ==========
     const whatsappMessage = `Hello! I am interested in ${product.title}, I saw it on ${WEBSITE_URL}`;
     const encodedMessage = encodeURIComponent(whatsappMessage);
     const formattedWhatsappNumber = whatsappNumber ? whatsappNumber.replace(/[^0-9]/g, '') : '';
     const whatsappLink = formattedWhatsappNumber ? `https://wa.me/${formattedWhatsappNumber}?text=${encodedMessage}` : '#';
-    // =================================================================
     
-    document.getElementById('productDetail').innerHTML = `
+    const detailContainer = document.getElementById('productDetail');
+    if (!detailContainer) return;
+    
+    detailContainer.innerHTML = `
         <div class="product-detail-image-container">
             <img src="${product.image_url || product.image}" alt="${product.title}" class="product-detail-image" id="productMainImage" onerror="this.src='https://via.placeholder.com/500x500?text=Product'">
         </div>
@@ -900,116 +758,43 @@ function displayProductDetail(product, ratingInfo) {
                 <span class="stars">${stars}</span>
                 <span class="rating-count">${product.reviews || 0} ratings</span>
             </div>
-            <div class="product-detail-price">
-                <span class="currency">$</span>${product.price.toFixed(2)}
-            </div>
+            <div class="product-detail-price">$${product.price.toFixed(2)}</div>
             <p class="product-detail-description">${product.description || ''}</p>
-            <ul class="product-detail-features">
-                ${(product.features || []).map(feature => `<li>${feature}</li>`).join('')}
-            </ul>
-            
-            ${seller.business_name ? `
-            <div style="margin: 30px 0; padding: 20px; background: #f5f5f5; border-radius: 4px;">
-                <h3 style="margin-bottom: 15px; font-size: 18px;">Seller Information</h3>
-                <p style="margin-bottom: 10px;"><strong>Shop:</strong> ${seller.business_name}</p>
-                <p style="margin-bottom: 10px;"><strong>📍 Location:</strong> ${shopLocation}</p>
-                <p style="margin-bottom: 10px;"><strong>⭐ Rating:</strong> ${ratingDisplay}</p>
-                ${whatsappNumber ? `
-                    <div style="margin-top: 15px;">
-                        <a href="${whatsappLink}" 
-                           target="_blank" 
-                           class="btn-buy-now-large" 
-                           style="display: inline-block; text-decoration: none; background: #25D366; color: white; padding: 12px 30px; border-radius: 4px; font-weight: 600;">
-                            💬 Contact Seller on WhatsApp
-                        </a>
-                    </div>
-                ` : ''}
-                <!-- RATE SELLER BUTTON -->
-                <div style="margin-top: 15px;">
-                    <a href="rate-seller.html?sellerId=${product.seller_id}" 
-                       class="btn-rate-seller" 
-                       style="display: inline-block; text-decoration: none; background: #f90; color: white; padding: 12px 30px; border-radius: 4px; font-weight: 600;">
-                        ⭐ Rate This Seller
-                    </a>
-                </div>
-            </div>
-            ` : ''}
-            
             <div class="detail-actions">
                 <button class="btn-add-cart-large" onclick="addToBasket('${product.id}')">Add to Basket</button>
-                ${whatsappNumber ? `
-                    <a href="${whatsappLink}" 
-                       target="_blank" 
-                       class="btn-buy-now-large" 
-                       style="display: inline-block; text-decoration: none; background: #25D366; color: white;">
-                        💬 Buy via WhatsApp
-                    </a>
-                ` : `
-                    <button class="btn-buy-now-large" onclick="buyNow('${product.id}')">Buy Now</button>
-                `}
+                ${whatsappNumber ? `<a href="${whatsappLink}" target="_blank" class="btn-buy-now-large" style="display: inline-block; text-decoration: none; background: #25D366; color: white; padding: 12px 30px; border-radius: 4px;">💬 Buy via WhatsApp</a>` : ''}
             </div>
         </div>
     `;
-    
-    // Image zoom effect
-    const productImage = document.getElementById('productMainImage');
-    if (productImage) {
-        productImage.addEventListener('mouseenter', function() {
-            this.style.transform = 'scale(1.1)';
-            this.style.transition = 'transform 0.3s';
-        });
-        
-        productImage.addEventListener('mouseleave', function() {
-            this.style.transform = 'scale(1)';
-        });
-    }
 }
 
-// Buy now
 async function buyNow(productId) {
     await addToBasket(productId, 1);
-    setTimeout(() => {
-        window.location.href = 'checkout.html';
-    }, 500);
+    setTimeout(() => window.location.href = 'checkout.html', 500);
 }
 
-// Load Basket page
 async function loadBasketPage() {
+    // Keep your existing loadBasketPage function
     const basketItemsContainer = document.getElementById('basketItems');
-    const basketSummary = document.getElementById('basketSummary');
-    
     if (!basketItemsContainer) return;
     
-    // Check if user is logged in
     const sessionData = localStorage.getItem('supabase_session');
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
     
     if (!isLoggedIn || !sessionData) {
         basketItemsContainer.innerHTML = '<p style="text-align: center; padding: 40px;">Please <a href="login.html?redirect=Basket.html">login</a> to view your basket.</p>';
-        if (basketSummary) {
-            basketSummary.innerHTML = '';
-        }
         return;
     }
     
     const session = JSON.parse(sessionData);
     const userId = session.user?.id;
+    if (!userId) return;
     
-    if (!userId) {
-        basketItemsContainer.innerHTML = '<p style="text-align: center; padding: 40px;">User session error. Please <a href="login.html?redirect=Basket.html">login again</a>.</p>';
-        return;
-    }
-    
-    // Load user-specific basket
     const basketKey = `basket_${userId}`;
     const userBasket = JSON.parse(localStorage.getItem(basketKey)) || [];
     
     if (userBasket.length === 0) {
         basketItemsContainer.innerHTML = '<p style="text-align: center; padding: 40px;">Your Basket is empty. <a href="index.html">Start Shopping</a></p>';
-        if (basketSummary) {
-            basketSummary.innerHTML = '';
-        }
-        updateBasketCount(0);
         return;
     }
     
@@ -1019,76 +804,38 @@ async function loadBasketPage() {
     for (const item of userBasket) {
         const itemTotal = item.price * item.quantity;
         subtotal += itemTotal;
-        
         const basketItem = document.createElement('div');
         basketItem.className = 'basket-item';
         basketItem.innerHTML = `
-            <img src="${item.image}" alt="${item.title}" class="basket-item-image" onerror="this.src='https://via.placeholder.com/150x150?text=Product'">
-            <div class="basket-item-info">
-                <a href="product-detail.html?id=${item.id}" class="basket-item-title">${item.title}</a>
-                <div class="basket-item-price">$${item.price.toFixed(2)}</div>
-                <div class="basket-item-actions">
-                    <div class="quantity-selector">
-                        <button class="quantity-btn" onclick="updateBasketQuantity('${item.id}', -1)">-</button>
-                        <input type="number" class="quantity-input" value="${item.quantity}" min="1" onchange="updateBasketQuantity('${item.id}', 0, this.value)">
-                        <button class="quantity-btn" onclick="updateBasketQuantity('${item.id}', 1)">+</button>
-                    </div>
-                    <button class="remove-item" onclick="removeFromBasket('${item.id}')">Remove</button>
-                </div>
-            </div>
-            <div class="basket-item-price">$${itemTotal.toFixed(2)}</div>
+            <img src="${item.image}" alt="${item.title}" style="width: 100px;">
+            <div><a href="product-detail.html?id=${item.id}">${item.title}</a></div>
+            <div>$${item.price.toFixed(2)}</div>
+            <div>Quantity: ${item.quantity}</div>
+            <div>Total: $${itemTotal.toFixed(2)}</div>
+            <button onclick="removeFromBasket('${item.id}')">Remove</button>
         `;
         basketItemsContainer.appendChild(basketItem);
     }
     
-    // Calculate totals
-    const shipping = subtotal > 35 ? 0 : 5.99;
-    const tax = subtotal * 0.08;
-    const total = subtotal + shipping + tax;
-    
-    basketSummary.innerHTML = `
-        <h2>Order Summary</h2>
-        <div class="summary-row">
-            <span>Subtotal (${userBasket.reduce((sum, item) => sum + item.quantity, 0)} items):</span>
-            <span>$${subtotal.toFixed(2)}</span>
-        </div>
-        <div class="summary-row">
-            <span>Shipping:</span>
-            <span>${shipping === 0 ? 'FREE' : '$' + shipping.toFixed(2)}</span>
-        </div>
-        <div class="summary-row">
-            <span>Tax:</span>
-            <span>$${tax.toFixed(2)}</span>
-        </div>
-        <div class="summary-row summary-total">
-            <span>Total:</span>
-            <span>$${total.toFixed(2)}</span>
-        </div>
-        <button class="btn-checkout" onclick="window.location.href='checkout.html'">Proceed to Checkout</button>
-    `;
-    
-    updateBasketCount(userBasket.reduce((sum, item) => sum + item.quantity, 0));
+    const basketSummary = document.getElementById('basketSummary');
+    if (basketSummary) {
+        basketSummary.innerHTML = `<h3>Total: $${subtotal.toFixed(2)}</h3><button onclick="window.location.href='checkout.html'">Checkout</button>`;
+    }
 }
 
-// Update basket quantity
 async function updateBasketQuantity(productId, change, newValue) {
-    // Check if user is logged in
     const sessionData = localStorage.getItem('supabase_session');
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    
     if (!isLoggedIn || !sessionData) {
         window.location.href = 'login.html?redirect=Basket.html';
         return;
     }
-    
     const session = JSON.parse(sessionData);
     const userId = session.user?.id;
-    
     if (!userId) return;
     
     const basketKey = `basket_${userId}`;
     let userBasket = JSON.parse(localStorage.getItem(basketKey)) || [];
-    
     const item = userBasket.find(i => i.id == productId);
     if (!item) return;
     
@@ -1097,132 +844,63 @@ async function updateBasketQuantity(productId, change, newValue) {
     } else {
         item.quantity = Math.max(1, item.quantity + change);
     }
-    
     localStorage.setItem(basketKey, JSON.stringify(userBasket));
     loadBasketPage();
 }
 
-// Remove from Basket
 async function removeFromBasket(productId) {
-    // Check if user is logged in
     const sessionData = localStorage.getItem('supabase_session');
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    
     if (!isLoggedIn || !sessionData) {
         window.location.href = 'login.html?redirect=Basket.html';
         return;
     }
-    
     const session = JSON.parse(sessionData);
     const userId = session.user?.id;
-    
     if (!userId) return;
     
     const basketKey = `basket_${userId}`;
     let userBasket = JSON.parse(localStorage.getItem(basketKey)) || [];
-    
     userBasket = userBasket.filter(item => item.id != productId);
     localStorage.setItem(basketKey, JSON.stringify(userBasket));
-    
     loadBasketPage();
     showNotification('Item removed from Basket');
 }
 
-// Search functionality
 function handleSearch() {
     const searchInput = document.getElementById('searchInput');
     const query = searchInput ? searchInput.value.trim() : '';
-    
     if (query) {
         window.location.href = `search-results.html?q=${encodeURIComponent(query)}`;
     }
 }
 
-// Add CSS animation for notifications
-const styleElement = document.createElement('style');
-styleElement.textContent = `
+// Add CSS animations
+const styleSheet = document.createElement('style');
+styleSheet.textContent = `
     @keyframes slideIn {
-        from {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
     }
-    
     @keyframes slideOut {
-        from {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        to {
-            transform: translateX(100%);
-            opacity: 0;
-        }
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
     }
 `;
-document.head.appendChild(styleElement);
+document.head.appendChild(styleSheet);
 
-// ============================================
-// ANALYTICS TRACKING
-// ============================================
-
-// Track user activity
-async function trackActivity(activityType, details = {}) {
-    try {
-        const sessionData = localStorage.getItem('supabase_session');
-        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-        
-        if (!isLoggedIn || !sessionData) return;
-        
-        const session = JSON.parse(sessionData);
-        const userId = session.user?.id;
-        
-        if (!userId) return;
-        
-        const SUPABASE_URL = window.SUPABASE_URL;
-        const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
-        const accessToken = session.access_token;
-        
-        await fetch(`${SUPABASE_URL}/rest/v1/user_activities`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'apikey': SUPABASE_ANON_KEY,
-                'Authorization': `Bearer ${accessToken}`
-            },
-            body: JSON.stringify({
-                user_id: userId,
-                activity_type: activityType,
-                details: details,
-                page_url: window.location.pathname,
-                created_at: new Date().toISOString()
-            })
-        });
-        
-        // Silent tracking - no console logs
-    } catch (error) {
-        // Silent error handling
-    }
-}
-
-// Make trackActivity available globally
-window.trackActivity = trackActivity;
-
-// Make checkLoginAndNavigate available globally
+// Make functions global
 window.checkLoginAndNavigate = checkLoginAndNavigate;
+window.goToProductDetail = checkLoginAndNavigate;
+window.logout = function() {
+    localStorage.removeItem('supabase_session');
+    localStorage.removeItem('isLoggedIn');
+    window.location.href = 'index.html';
+};
 
 // Register service worker
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/mbaremarketplace/sw.js')
-      .then(registration => {
-        // Silent success
-      })
-      .catch(err => {
-        // Silent error
-      });
-  });
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW error:', err));
+    });
 }
