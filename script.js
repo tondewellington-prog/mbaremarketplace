@@ -15,26 +15,32 @@ let ratingsCache = {};
 const WEBSITE_URL = 'https://www.mbaremarketplace.com';
 
 // ============================================
+// CATEGORY MAPPINGS (UPDATED WITH NEW CATEGORIES)
+// ============================================
+
+const CATEGORY_MATCHES = {
+    'Electronic Devices': ['Electronic Devices', 'Electronics', 'Electronic', 'Gadgets', 'Tech', 'Computers', 'Phones'],
+    'Clothing': ['Clothing', 'Fashion', 'Apparel', 'Clothes', 'Wear', 'Shirt', 'Dress', 'Jeans', 'Shoes'],
+    'Books': ['Books', 'Book', 'Literature', 'Magazine', 'Textbook', 'Novel'],
+    'Pet Supplies': ['Pet Supplies', 'Pets', 'Pet Food', 'Pet Accessories', 'Dog', 'Cat', 'Bird', 'Fish'],
+    'Pets & Livestock': ['Pets & Livestock', 'Pets', 'Livestock', 'Cattle', 'Goats', 'Sheep', 'Chickens', 'Dogs', 'Cats', 'Rabbits', 'Horses', 'Animals'],
+    'Farm Products': ['Farm Products', 'Farming', 'Agricultural', 'Farm', 'Crops', 'Livestock', 'Vegetables', 'Fruits', 'Seeds', 'Fertilizer'],
+    'Vehicle Parts & Accessories': ['Vehicle Parts & Accessories', 'Auto Parts', 'Car Parts', 'Vehicle Parts', 'Accessories', 'Spare Parts', 'Tires', 'Batteries'],
+    'Vehicles & Transportation': ['Vehicles & Transportation', 'Vehicles', 'Cars', 'Transportation', 'Trucks', 'Motorcycles', 'Bikes', 'Vans'],
+    'Home & Kitchen': ['Home & Kitchen', 'Home', 'Kitchen', 'Home Decor', 'Furniture', 'Cookware', 'Appliances', 'Bedding'],
+    'Beauty & Cosmetics': ['Beauty & Cosmetics', 'Beauty', 'Cosmetics', 'Makeup', 'Skincare', 'Hair Care', 'Perfume', 'Lotion', 'Cream', 'Lipstick']
+};
+
+// ============================================
 // FUNCTION DEFINITIONS
 // ============================================
 
-// Generic function to load products by category
+// Generic function to load products by category with ratings
 async function loadProductsByCategory(category, containerId, limit = 6) {
     try {
-        console.log(`Loading ${category} products...`);
+        console.log(`📦 Loading ${category} products...`);
         
-        const categoryMatches = {
-            'Electronic Devices': ['Electronic Devices', 'Electronics', 'Electronic'],
-            'Clothing': ['Clothing', 'Fashion', 'Apparel', 'Clothes'],
-            'Books': ['Books', 'Book', 'Literature'],
-            'Pet Supplies': ['Pet Supplies', 'Pets', 'Pet Food', 'Pet Accessories'],
-            'Farm Products': ['Farm Products', 'Farming', 'Agricultural', 'Farm'],
-            'Vehicle Parts & Accessories': ['Vehicle Parts & Accessories', 'Auto Parts', 'Car Parts', 'Vehicle Parts'],
-            'Vehicles & Transportation': ['Vehicles & Transportation', 'Vehicles', 'Cars', 'Transportation'],
-            'Home & Kitchen': ['Home & Kitchen', 'Home', 'Kitchen', 'Home Decor', 'Furniture']
-        };
-        
-        const possibleCategories = categoryMatches[category] || [category];
+        const possibleCategories = CATEGORY_MATCHES[category] || [category];
         
         const filteredProducts = products.filter(p => 
             possibleCategories.some(cat => 
@@ -42,24 +48,24 @@ async function loadProductsByCategory(category, containerId, limit = 6) {
             )
         );
         
-        console.log(`Found ${filteredProducts.length} products for ${category}`);
+        console.log(`✅ Found ${filteredProducts.length} products for ${category}`);
         
         const topProducts = filteredProducts.slice(0, limit);
         if (document.getElementById(containerId)) {
             await loadProductsWithRatings(containerId, topProducts);
         } else {
-            console.warn(`Container not found: ${containerId}`);
+            console.warn(`⚠️ Container not found: ${containerId}`);
         }
     } catch (error) {
-        console.error(`Error loading ${category}:`, error);
+        console.error(`❌ Error loading ${category}:`, error);
     }
 }
 
-// NEW: Load products and fetch ratings for all of them
+// Load products and fetch ratings for ALL of them
 async function loadProductsWithRatings(containerId, productList) {
     const container = document.getElementById(containerId);
     if (!container) {
-        console.warn('Container not found:', containerId);
+        console.warn(`⚠️ Container not found: ${containerId}`);
         return;
     }
     
@@ -70,24 +76,30 @@ async function loadProductsWithRatings(containerId, productList) {
     
     container.innerHTML = '';
     
-    // Create product cards
     productList.forEach(product => {
         const productCard = createProductCard(product);
         container.appendChild(productCard);
     });
     
-    // Fetch ratings for ALL products in this list
     await fetchRatingsForProducts(productList);
 }
 
-// NEW: Fetch ratings for a list of products
+// Fetch ratings for a list of products
 async function fetchRatingsForProducts(productList) {
     for (const product of productList) {
         if (product.seller_id) {
-            const ratingInfo = await getSellerRatings(product.seller_id);
-            const ratingElement = document.getElementById(`rating-${product.id}`);
-            if (ratingElement) {
-                ratingElement.innerHTML = ratingInfo.display;
+            try {
+                const ratingInfo = await getSellerRatings(product.seller_id);
+                const ratingElement = document.getElementById(`rating-${product.id}`);
+                if (ratingElement) {
+                    ratingElement.innerHTML = ratingInfo.display;
+                }
+            } catch (error) {
+                console.warn(`⚠️ Failed to fetch rating for product ${product.id}:`, error);
+                const ratingElement = document.getElementById(`rating-${product.id}`);
+                if (ratingElement) {
+                    ratingElement.innerHTML = '<span style="color: #999;">Rating unavailable</span>';
+                }
             }
         }
     }
@@ -106,6 +118,10 @@ async function loadBestSellersPetSupplies() {
     await loadProductsByCategory('Pet Supplies', 'bestSellersPetSupplies', 6);
 }
 
+async function loadBestSellersPetsLivestock() {
+    await loadProductsByCategory('Pets & Livestock', 'bestSellersPetsLivestock', 6);
+}
+
 async function loadBestSellersFarmProducts() {
     await loadProductsByCategory('Farm Products', 'bestSellersFarmProducts', 6);
 }
@@ -122,41 +138,45 @@ async function loadBestSellersHomeKitchen() {
     await loadProductsByCategory('Home & Kitchen', 'bestSellersHome&Kitchen', 6);
 }
 
+async function loadBestSellersBeautyCosmetics() {
+    await loadProductsByCategory('Beauty & Cosmetics', 'bestSellersBeautyCosmetics', 6);
+}
+
 // Load Today's Deals
 async function loadTodaysDeals() {
     try {
-        console.log('Loading Today\'s Deals...');
+        console.log('📦 Loading Today\'s Deals...');
         if (document.getElementById('todaysDeals')) {
             const deals = products.slice(0, 4);
             await loadProductsWithRatings('todaysDeals', deals);
         }
     } catch (error) {
-        console.error('Error loading deals:', error);
+        console.error('❌ Error loading deals:', error);
     }
 }
 
 // Load Recommended Products
 async function loadRecommendedProducts() {
     try {
-        console.log('Loading Recommended products...');
+        console.log('📦 Loading Recommended products...');
         if (document.getElementById('recommended')) {
             const recommended = products.slice(8, 16);
             await loadProductsWithRatings('recommended', recommended);
         }
     } catch (error) {
-        console.error('Error loading recommendations:', error);
+        console.error('❌ Error loading recommendations:', error);
     }
 }
 
 // Load All Products
 async function loadAllProductsSection() {
     try {
-        console.log('Loading All products...');
+        console.log('📦 Loading All products...');
         if (document.getElementById('allProducts')) {
             await loadProductsWithRatings('allProducts', products);
         }
     } catch (error) {
-        console.error('Error loading all products:', error);
+        console.error('❌ Error loading all products:', error);
     }
 }
 
@@ -166,18 +186,18 @@ async function loadAllProductsSection() {
 
 document.addEventListener('DOMContentLoaded', async function() {
     try {
-        console.log('DOM loaded, initializing...');
+        console.log('🚀 DOM loaded, initializing...');
         
         if (!window.api) {
             await new Promise(resolve => setTimeout(resolve, 500));
         }
         
         await loadSellersFromAPI();
-        console.log('Sellers loaded:', Object.keys(sellersMap).length);
+        console.log('👥 Sellers loaded:', Object.keys(sellersMap).length);
         
         await loadProductsFromAPI();
-        console.log('Products loaded:', products.length);
-        console.log('Product categories:', [...new Set(products.map(p => p.category))]);
+        console.log('📦 Products loaded:', products.length);
+        console.log('🏷️ Product categories:', [...new Set(products.map(p => p.category))]);
         
         await loadUserBasket();
         
@@ -186,10 +206,12 @@ document.addEventListener('DOMContentLoaded', async function() {
         await loadBestSellersElectronics();
         await loadBestSellersClothing();
         await loadBestSellersPetSupplies();
+        await loadBestSellersPetsLivestock();
         await loadBestSellersFarmProducts();
         await loadBestSellersVehicleParts();
         await loadBestSellersVehicles();
         await loadBestSellersHomeKitchen();
+        await loadBestSellersBeautyCosmetics();
         await loadRecommendedProducts();
         await loadAllProductsSection();
         
@@ -216,8 +238,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             });
         }
         
+        console.log('✅ Initialization complete!');
+        
     } catch (error) {
-        console.error('Initialization error:', error);
+        console.error('❌ Initialization error:', error);
         loadFallbackProducts();
     }
 });
@@ -494,7 +518,7 @@ function createProductCard(product) {
 }
 
 // ============================================
-// REMAINING FUNCTIONS
+// REMAINING FUNCTIONS (Keep as they are)
 // ============================================
 
 function checkLoginAndNavigate(productId) {
@@ -916,9 +940,3 @@ window.logout = function() {
     localStorage.removeItem('isLoggedIn');
     window.location.href = 'index.html';
 };
-
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW error:', err));
-    });
-}
