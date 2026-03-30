@@ -29,7 +29,7 @@ const CATEGORY_MATCHES = {
     'Vehicles & Transportation': ['Vehicles & Transportation', 'Vehicles', 'Cars', 'Transportation', 'Trucks', 'Motorcycles', 'Bikes', 'Vans'],
     'Home & Kitchen': ['Home & Kitchen', 'Home', 'Kitchen', 'Home Decor', 'Furniture', 'Cookware', 'Appliances', 'Bedding'],
     'Beauty & Cosmetics': ['Beauty & Cosmetics', 'Beauty', 'Cosmetics', 'Makeup', 'Skincare', 'Hair Care', 'Perfume', 'Lotion', 'Cream', 'Lipstick'],
-    'Hardware': ['Hardware', 'Steel', 'Wood', 'Poles', 'locks', 'keys', 'Bricks'],
+    'Hardware': ['Hardware', 'Steel', 'Wood', 'Poles', 'locks', 'keys', 'Bricks', 'Tools', 'Building'],
 };
 
 // ============================================
@@ -142,8 +142,10 @@ async function loadBestSellersHomeKitchen() {
 async function loadBestSellersBeautyCosmetics() {
     await loadProductsByCategory('Beauty & Cosmetics', 'bestSellersBeautyCosmetics', 6);
 }
-async function loadBestHardware() {
-    await loadProductsByCategory('Hardware', 'bestSellersHardwares', 6);
+
+// FIXED: Renamed to match the call in initialization
+async function loadBestSellersHardwareProducts() {
+    await loadProductsByCategory('Hardware', 'bestSellersHardware', 6);
 }       
     
 // Load Today's Deals
@@ -212,7 +214,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         await loadBestSellersPetSupplies();
         await loadBestSellersPetsLivestock();
         await loadBestSellersFarmProducts();
-        await loadBestSellersHardwareProducts();
+        await loadBestSellersHardwareProducts();  // FIXED: Now matches function name
         await loadBestSellersVehicleParts();
         await loadBestSellersVehicles();
         await loadBestSellersHomeKitchen();
@@ -523,7 +525,7 @@ function createProductCard(product) {
 }
 
 // ============================================
-// REMAINING FUNCTIONS (Keep as they are)
+// REMAINING FUNCTIONS
 // ============================================
 
 function checkLoginAndNavigate(productId) {
