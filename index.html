@@ -598,9 +598,11 @@
                         <option>Clothing</option>
                         <option>Home & Kitchen</option>
                         <option>Pet Supplies</option>
+                        <option>Pets & Livestock</option>
                         <option>Vehicle Parts & Accessories</option>
                         <option>Vehicles & Transportation</option>
                         <option>Farm Products</option>
+                        <option>Beauty & Cosmetics</option>
                     </select>
                     <input type="text" id="searchInput" placeholder="Search On Mbare Marketplace" class="search-input">
                     <button class="search-btn" onclick="handleSearch()">
@@ -728,7 +730,15 @@
 
             <section class="product-section">
                 <div class="section-header">
-                    <h2>Best Sellers in Farm Prpducts</h2>
+                    <h2>Best Sellers in Pets & Livestock</h2>
+                    <a href="#" class="see-all">See more</a>
+                </div>
+                <div class="product-grid" id="bestSellersPetsLivestock"></div>
+            </section>
+
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>Best Sellers in Farm Products</h2>
                     <a href="#" class="see-all">See more</a>
                 </div>
                 <div class="product-grid" id="bestSellersFarmProducts"></div>
@@ -744,7 +754,7 @@
 
             <section class="product-section">
                 <div class="section-header">
-                    <h2>Best Sellers in Vehicle & Transportation</h2>
+                    <h2>Best Sellers in Vehicles & Transportation</h2>
                     <a href="#" class="see-all">See more</a>
                 </div>
                 <div class="product-grid" id="bestSellersVehicle&Transportation"></div>
@@ -756,6 +766,14 @@
                     <a href="#" class="see-all">See more</a>
                 </div>
                 <div class="product-grid" id="bestSellersHome&Kitchen"></div>
+            </section>
+
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>Best Sellers in Beauty & Cosmetics</h2>
+                    <a href="#" class="see-all">See more</a>
+                </div>
+                <div class="product-grid" id="bestSellersBeautyCosmetics"></div>
             </section>
 
             <section class="product-section">
@@ -1119,6 +1137,28 @@
                 }
             }
         });
-    </script>    
+    </script>
+    
+    <!-- ========================================== -->
+    <!-- SERVICE WORKER REGISTRATION (UPDATED) -->
+    <!-- ========================================== -->
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js', { 
+                updateViaCache: 'none'
+            }).then(registration => {
+                console.log('✅ Service Worker registered with scope:', registration.scope);
+                
+                setInterval(() => {
+                    registration.update();
+                    console.log('🔄 Checking for service worker updates...');
+                }, 60000);
+            }).catch(err => {
+                console.log('❌ Service Worker registration failed:', err);
+            });
+        });
+    }
+    </script>
 </body>
 </html>
