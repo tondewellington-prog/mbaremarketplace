@@ -28,7 +28,7 @@ const CATEGORY_MATCHES = {
     'Vehicle Parts & Accessories': ['Vehicle Parts & Accessories', 'Auto Parts', 'Car Parts', 'Vehicle Parts', 'Accessories', 'Spare Parts', 'Tires', 'Batteries'],
     'Vehicles & Transportation': ['Vehicles & Transportation', 'Vehicles', 'Cars', 'Transportation', 'Trucks', 'Motorcycles', 'Bikes', 'Vans'],
     'Home & Kitchen': ['Home & Kitchen', 'Home', 'Kitchen', 'Home Decor', 'Furniture', 'Cookware', 'Appliances', 'Bedding'],
-    'Beauty & Cosmetics': ['Beauty & Cosmetics', 'Beauty', 'Cosmetics', 'Makeup', 'Skincare', 'Hair Care', 'Perfume', 'Lotion', 'Cream', 'Lipstick']
+    'Beauty & Cosmetics': ['Beauty & Cosmetics', 'Beauty', 'Cosmetics', 'Makeup', 'Skincare', 'Hair Care', 'Perfume', 'Lotion', 'Cream', 'Lipstick'],
     'Hardware': ['Hardware', 'Steel', 'Wood', 'Poles', 'locks', 'keys', 'Bricks'],
 };
 
