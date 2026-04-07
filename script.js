@@ -153,7 +153,7 @@ async function loadTodaysDeals() {
     try {
         console.log('📦 Loading Today\'s Deals...');
         if (document.getElementById('todaysDeals')) {
-            const deals = products.slice(0, 4);
+            const deals = products.slice(0, 5);
             await loadProductsWithRatings('todaysDeals', deals);
         }
     } catch (error) {
