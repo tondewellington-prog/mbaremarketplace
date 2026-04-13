@@ -420,8 +420,118 @@
             background: #1a2533;
         }
         
-        /* Mobile responsive styles */
+        /* ========== NEW CUSTOM DROPDOWN STYLES ========== */
+        .custom-category-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .dropdown-trigger {
+            background: transparent;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+            text-decoration: none;
+            border: none;
+            font-family: inherit;
+        }
+        
+        .dropdown-trigger:hover {
+            background: rgba(255,255,255,0.15);
+        }
+        
+        .dropdown-arrow {
+            font-size: 12px;
+            transition: transform 0.2s;
+        }
+        
+        .dropdown-trigger[aria-expanded="true"] .dropdown-arrow {
+            transform: rotate(180deg);
+        }
+        
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            min-width: 240px;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            z-index: 1000;
+            display: none;
+            margin-top: 4px;
+            overflow: hidden;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .dropdown-menu.show {
+            display: block;
+            animation: fadeInDown 0.2s ease;
+        }
+        
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .dropdown-category-item {
+            display: block;
+            padding: 12px 20px;
+            color: #333;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .dropdown-category-item:last-child {
+            border-bottom: none;
+        }
+        
+        .dropdown-category-item:hover {
+            background: #f5f5f5;
+            color: #232f3e;
+            padding-left: 24px;
+        }
+        
+        .dropdown-header {
+            padding: 10px 20px;
+            background: #f8f8f8;
+            font-weight: 600;
+            color: #232f3e;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        /* Mobile responsive adjustments */
         @media (max-width: 768px) {
+            .dropdown-trigger {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+            .dropdown-menu {
+                min-width: 200px;
+                right: 0;
+                left: auto;
+            }
+            .dropdown-category-item {
+                padding: 10px 16px;
+                font-size: 13px;
+            }
             .search-bar {
                 width: 100%;
                 margin: 10px 0;
@@ -495,6 +605,10 @@
         }
         
         @media (max-width: 480px) {
+            .dropdown-trigger {
+                padding: 4px 10px;
+                font-size: 11px;
+            }
             .search-bar select {
                 width: 35%;
                 font-size: 12px;
@@ -551,6 +665,14 @@
         .account-menu.logged-in .account-link {
             color: #232f3e;
             font-weight: 600;
+        }
+        
+        /* Fix nav menu spacing */
+        .nav-menu .container {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
         }
     </style>
 </head>
@@ -648,7 +770,27 @@
                     All
                 </a>
                 <a href="#" class="nav-item">Today's Deals</a>
-                <a href="#" class="nav-item">Customer Service</a>
+                <!-- REPLACED: Customer Service with "What do you want to buy today?" dropdown -->
+                <div class="custom-category-dropdown nav-item" style="position: relative;">
+                    <button class="dropdown-trigger" id="categoryDropdownBtn" aria-expanded="false">
+                        What do you want to buy today?
+                        <span class="dropdown-arrow">▼</span>
+                    </button>
+                    <div class="dropdown-menu" id="categoryDropdownMenu">
+                        <div class="dropdown-header">SHOP BY CATEGORY</div>
+                        <a href="#" class="dropdown-category-item" data-category="Electronic Devices">📱 Electronic Devices</a>
+                        <a href="#" class="dropdown-category-item" data-category="Books">📚 Books</a>
+                        <a href="#" class="dropdown-category-item" data-category="Clothing">👕 Clothing</a>
+                        <a href="#" class="dropdown-category-item" data-category="Home & Kitchen">🏠 Home & Kitchen</a>
+                        <a href="#" class="dropdown-category-item" data-category="Pet Supplies">🐾 Pet Supplies</a>
+                        <a href="#" class="dropdown-category-item" data-category="Pets & Livestock">🐄 Pets & Livestock</a>
+                        <a href="#" class="dropdown-category-item" data-category="Vehicle Parts & Accessories">🔧 Vehicle Parts & Accessories</a>
+                        <a href="#" class="dropdown-category-item" data-category="Vehicles & Transportation">🚗 Vehicles & Transportation</a>
+                        <a href="#" class="dropdown-category-item" data-category="Farm Products">🌾 Farm Products</a>
+                        <a href="#" class="dropdown-category-item" data-category="Hardware">🔨 Hardware</a>
+                        <a href="#" class="dropdown-category-item" data-category="Beauty & Cosmetics">💄 Beauty & Cosmetics</a>
+                    </div>
+                </div>
                 <a href="#" class="nav-item">Registry</a>
                 <a href="#" class="nav-item">Gift Cards</a>
                 <a href="seller-register.html" class="nav-item">Sell</a>
@@ -695,7 +837,7 @@
             </div>
         </section>
 
-        <!-- Product Categories -->
+        <!-- Product Categories (keeping existing sections) -->
         <div class="container">
             <section class="product-section">
                 <div class="section-header">
@@ -905,7 +1047,52 @@
     <script src="script.js"></script>
     <script src="auth-check.js"></script>
     
-    <!-- APP DOWNLOAD TRACKING -->
+    <!-- DROPDOWN FUNCTIONALITY SCRIPT -->
+    <script>
+        // Category Dropdown functionality
+        const dropdownBtn = document.getElementById('categoryDropdownBtn');
+        const dropdownMenu = document.getElementById('categoryDropdownMenu');
+        
+        function toggleDropdown(event) {
+            event.stopPropagation();
+            const isExpanded = dropdownBtn.getAttribute('aria-expanded') === 'true';
+            dropdownBtn.setAttribute('aria-expanded', !isExpanded);
+            dropdownMenu.classList.toggle('show');
+        }
+        
+        function closeDropdown() {
+            dropdownBtn.setAttribute('aria-expanded', 'false');
+            dropdownMenu.classList.remove('show');
+        }
+        
+        if (dropdownBtn) {
+            dropdownBtn.addEventListener('click', toggleDropdown);
+        }
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!dropdownBtn?.contains(event.target) && !dropdownMenu?.contains(event.target)) {
+                closeDropdown();
+            }
+        });
+        
+        // Handle category clicks - redirect to category page
+        const categoryItems = document.querySelectorAll('.dropdown-category-item');
+        categoryItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const category = this.getAttribute('data-category');
+                if (category) {
+                    // Build category page URL or use search with category filter
+                    // You can modify this to redirect to specific category pages
+                    window.location.href = `category.html?cat=${encodeURIComponent(category)}`;
+                }
+                closeDropdown();
+            });
+        });
+    </script>
+    
+    <!-- APP DOWNLOAD TRACKING & EXISTING SCRIPTS -->
     <script>
         window.SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
         window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
@@ -970,9 +1157,8 @@
                 recordAppDownload('install_click', { method: 'click_event' });
             }
         });
-    </script>
-    <script>
-        // FIXED: PWA Install Button - Remembers installation
+        
+        // PWA Install Button Logic
         let deferredPrompt;
         const installButton = document.getElementById('installButton');
         const iosPrompt = document.getElementById('iosPromptModal');
@@ -981,48 +1167,31 @@
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
         const isAndroid = /Android/i.test(navigator.userAgent);
         
-        // Check if app is already installed (via display mode)
-        let isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
-                           window.navigator.standalone === true;
-        
-        // Also check if user previously installed (saved in localStorage)
+        let isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
         const wasInstalled = localStorage.getItem('pwa_installed') === 'true';
         
-        // If user installed before, hide the button
         if (isStandalone || wasInstalled) {
             installButton.style.display = 'none';
-            console.log('App already installed - button hidden');
         }
 
-        // Listen for the beforeinstallprompt event
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            // Only show button if not already installed
             if (!isStandalone && !wasInstalled) {
                 installButton.style.display = 'flex';
             }
-            console.log('✅ Install prompt captured - button ready');
         });
 
-        // Show button on mobile if not installed
         if (isMobile && !isStandalone && !wasInstalled) {
             installButton.style.display = 'flex';
         }
 
-        // Handle button click
         installButton.addEventListener('click', async () => {
-            console.log('Install button clicked - device:', isAndroid ? 'Android' : (isIOS ? 'iOS' : 'Other'));
-            
             if (deferredPrompt) {
-                // Show the system install prompt (Android/Windows/Chrome)
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
-                console.log('Install outcome:', outcome);
-                
                 if (outcome === 'accepted') {
                     recordAppDownload('install_accepted');
-                    // Save that user installed the app
                     localStorage.setItem('pwa_installed', 'true');
                     installButton.style.display = 'none';
                 } else {
@@ -1030,32 +1199,25 @@
                 }
                 deferredPrompt = null;
             } else if (isIOS) {
-                // iOS - show modal instructions
                 iosPrompt.style.display = 'block';
                 recordAppDownload('ios_install_modal_shown');
             } else if (isAndroid) {
-                // Android fallback - show manual instructions
                 alert('To install the app:\n\n1. Tap the three dots ⋮ in the top right\n2. Tap "Install app"\n3. Tap "Install"');
                 recordAppDownload('android_manual_install');
             } else {
-                // Windows/Desktop fallback
                 alert('To install the app:\n\n1. Click the install icon in the address bar\n2. Click "Install"\n\nOr look for "Install app" in the browser menu');
                 recordAppDownload('install_fallback');
             }
         });
 
-        // Listen for appinstalled event (works on Chrome)
         window.addEventListener('appinstalled', () => {
-            console.log('✅ App installed event fired');
             localStorage.setItem('pwa_installed', 'true');
             installButton.style.display = 'none';
             recordAppDownload('pwa_install_complete');
         });
 
-        // Also listen for display mode change (if user switches to standalone)
         window.matchMedia('(display-mode: standalone)').addEventListener('change', (e) => {
             if (e.matches) {
-                console.log('App switched to standalone mode');
                 localStorage.setItem('pwa_installed', 'true');
                 installButton.style.display = 'none';
             }
@@ -1071,7 +1233,6 @@
             }
         });
 
-        // Login functions
         function showLoginPrompt() {
             document.getElementById('loginPromptModal').style.display = 'flex';
         }
@@ -1148,9 +1309,7 @@
         });
     </script>
     
-    <!-- ========================================== -->
-    <!-- SERVICE WORKER REGISTRATION (UPDATED) -->
-    <!-- ========================================== -->
+    <!-- SERVICE WORKER REGISTRATION -->
     <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
