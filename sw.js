@@ -1,5 +1,5 @@
 // Service Worker for Mbare Marketplace
-const CACHE_NAME = 'mbare-cache-v9'; // Incremented version to force update
+const CACHE_NAME = 'mbare-cache-v10'; // Incremented version to force update
 const STATIC_CACHE_NAME = 'mbare-static-v1';
 
 // Files that should ALWAYS come from network first (never cached)
