@@ -420,7 +420,7 @@
             background: #1a2533;
         }
         
-        /* ========== NEW CUSTOM DROPDOWN STYLES ========== */
+        /* ========== CUSTOM DROPDOWN STYLES ========== */
         .custom-category-dropdown {
             position: relative;
             display: inline-block;
@@ -461,7 +461,7 @@
             top: 100%;
             left: 0;
             background: white;
-            min-width: 240px;
+            min-width: 260px;
             border-radius: 8px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.2);
             z-index: 1000;
@@ -518,30 +518,6 @@
             border-bottom: 1px solid #e0e0e0;
         }
         
-        /* Category Toast Notification */
-        .category-toast {
-            position: fixed;
-            top: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #232f3e;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            z-index: 10001;
-            font-size: 14px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            white-space: nowrap;
-            animation: fadeInOut 2.5s ease forwards;
-        }
-        
-        @keyframes fadeInOut {
-            0% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
-            15% { opacity: 1; transform: translateX(-50%) translateY(0); }
-            85% { opacity: 1; transform: translateX(-50%) translateY(0); }
-            100% { opacity: 0; transform: translateX(-50%) translateY(-10px); visibility: hidden; }
-        }
-        
         /* Mobile responsive adjustments */
         @media (max-width: 768px) {
             .dropdown-trigger {
@@ -549,7 +525,7 @@
                 font-size: 12px;
             }
             .dropdown-menu {
-                min-width: 200px;
+                min-width: 220px;
                 right: 0;
                 left: auto;
             }
@@ -627,14 +603,6 @@
                 font-size: 12px;
                 padding: 6px;
             }
-            
-            .category-toast {
-                white-space: normal;
-                text-align: center;
-                font-size: 12px;
-                padding: 8px 16px;
-                top: 70px;
-            }
         }
         
         @media (max-width: 480px) {
@@ -679,7 +647,7 @@
             }
         }
 
-        /* Login status indicator - fixed to match website colors */
+        /* Login status indicator */
         .login-status-indicator {
             background-color: #f0f0f0;
             color: #232f3e;
@@ -803,7 +771,7 @@
                     All
                 </a>
                 <a href="#" class="nav-item">Today's Deals</a>
-                <!-- REPLACED: Customer Service with "What do you want to buy today?" dropdown -->
+                <!-- "What do you want to buy today?" dropdown - categories link to # placeholders -->
                 <div class="custom-category-dropdown nav-item" style="position: relative;">
                     <button class="dropdown-trigger" id="categoryDropdownBtn" aria-expanded="false">
                         What do you want to buy today?
@@ -811,17 +779,18 @@
                     </button>
                     <div class="dropdown-menu" id="categoryDropdownMenu">
                         <div class="dropdown-header">SHOP BY CATEGORY</div>
-                        <div class="dropdown-category-item" data-category="Electronic Devices">📱 Electronic Devices</div>
-                        <div class="dropdown-category-item" data-category="Books">📚 Books</div>
-                        <div class="dropdown-category-item" data-category="Clothing">👕 Clothing</div>
-                        <div class="dropdown-category-item" data-category="Home & Kitchen">🏠 Home & Kitchen</div>
-                        <div class="dropdown-category-item" data-category="Pet Supplies">🐾 Pet Supplies</div>
-                        <div class="dropdown-category-item" data-category="Pets & Livestock">🐄 Pets & Livestock</div>
-                        <div class="dropdown-category-item" data-category="Vehicle Parts & Accessories">🔧 Vehicle Parts & Accessories</div>
-                        <div class="dropdown-category-item" data-category="Vehicles & Transportation">🚗 Vehicles & Transportation</div>
-                        <div class="dropdown-category-item" data-category="Farm Products">🌾 Farm Products</div>
-                        <div class="dropdown-category-item" data-category="Hardware">🔨 Hardware</div>
-                        <div class="dropdown-category-item" data-category="Beauty & Cosmetics">💄 Beauty & Cosmetics</div>
+                        <!-- Each category is a clickable link with href="#" - ready for you to replace with actual page URLs -->
+                        <a href="#" class="dropdown-category-item" data-category="Electronic Devices">📱 Electronic Devices</a>
+                        <a href="#" class="dropdown-category-item" data-category="Books">📚 Books</a>
+                        <a href="#" class="dropdown-category-item" data-category="Clothing">👕 Clothing</a>
+                        <a href="#" class="dropdown-category-item" data-category="Home & Kitchen">🏠 Home & Kitchen</a>
+                        <a href="pet-supplies.html" class="dropdown-category-item" data-category="Pet Supplies">🐾 Pet Supplies</a>
+                        <a href="#" class="dropdown-category-item" data-category="Pets & Livestock">🐄 Pets & Livestock</a>
+                        <a href="#" class="dropdown-category-item" data-category="Vehicle Parts & Accessories">🔧 Vehicle Parts & Accessories</a>
+                        <a href="#" class="dropdown-category-item" data-category="Vehicles & Transportation">🚗 Vehicles & Transportation</a>
+                        <a href="#" class="dropdown-category-item" data-category="Farm Products">🌾 Farm Products</a>
+                        <a href="#" class="dropdown-category-item" data-category="Hardware">🔨 Hardware</a>
+                        <a href="#" class="dropdown-category-item" data-category="Beauty & Cosmetics">💄 Beauty & Cosmetics</a>
                     </div>
                 </div>
                 <a href="#" class="nav-item">Registry</a>
@@ -1080,7 +1049,7 @@
     <script src="script.js"></script>
     <script src="auth-check.js"></script>
     
-    <!-- DROPDOWN FUNCTIONALITY SCRIPT - FIXED (NO 404 ERROR) -->
+    <!-- DROPDOWN FUNCTIONALITY SCRIPT - Categories link to "#" placeholders -->
     <script>
         // Category Dropdown functionality
         const dropdownBtn = document.getElementById('categoryDropdownBtn');
@@ -1109,54 +1078,23 @@
             }
         });
         
-        // Show toast notification
-        function showCategoryToast(category) {
-            const existingToast = document.querySelector('.category-toast');
-            if (existingToast) existingToast.remove();
-            
-            const toast = document.createElement('div');
-            toast.className = 'category-toast';
-            toast.textContent = `🔍 Showing products in: ${category}`;
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                if (toast) toast.remove();
-            }, 2500);
-        }
+        // Category items are already <a href="#"> - they will navigate to "#" by default
+        // You can replace the href values with actual page URLs like "electronics.html", "books.html", etc.
+        // The data-category attribute stores the category name for reference
         
-        // Handle category clicks - FILTER PRODUCTS ON CURRENT PAGE (NO 404)
+        // Optional: Add click handler to close dropdown when a category is clicked
         const categoryItems = document.querySelectorAll('.dropdown-category-item');
         categoryItems.forEach(item => {
-            item.addEventListener('click', function(e) {
-                e.preventDefault();
-                const category = this.getAttribute('data-category');
-                if (category) {
-                    // Set the search input to the selected category
-                    const searchInput = document.getElementById('searchInput');
-                    if (searchInput) {
-                        searchInput.value = category;
-                    }
-                    
-                    // Also update the category dropdown in the search bar
-                    const categorySelect = document.querySelector('.search-category');
-                    if (categorySelect) {
-                        categorySelect.value = category;
-                    }
-                    
-                    // Trigger the search function to show filtered products
-                    if (typeof handleSearch === 'function') {
-                        handleSearch();
-                    }
-                    
-                    // Show confirmation toast
-                    showCategoryToast(category);
-                }
+            item.addEventListener('click', function() {
+                // Close dropdown when a category is clicked
                 closeDropdown();
+                // The link will navigate to the href value (currently "#")
+                // Replace the href attribute with your actual category page URL
             });
         });
     </script>
     
-    <!-- APP DOWNLOAD TRACKING & EXISTING SCRIPTS -->
+    <!-- APP DOWNLOAD TRACKING & EXISTING SCRIPTS (minified for brevity, keeping core functionality) -->
     <script>
         window.SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
         window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
