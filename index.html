@@ -16,32 +16,26 @@
 }
 </script>
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
-    <!-- FIXED: Changed to relative path to fix CORS -->
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#232f3e">
-
-<!-- iOS specific icons -->
-<!-- FIXED: Changed to relative path -->
-<link rel="apple-touch-icon" href="/icons/icon-152.png">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-<!-- Windows tiles -->
-<!-- FIXED: Changed to relative path -->
-<meta name="msapplication-TileColor" content="#232f3e">
-<meta name="msapplication-TileImage" content="/icons/icon-144.png">
+    <meta name="theme-color" content="#232f3e">
+    <link rel="apple-touch-icon" href="/icons/icon-152.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="msapplication-TileColor" content="#232f3e">
+    <meta name="msapplication-TileImage" content="/icons/icon-144.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mbare Marketplace - Online Shopping</title>
-    <!-- Favicon fix -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛒</text></svg>">
+    <!-- Fixed favicon - removed problematic quotes -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%3C/text%3E%3C/svg%3E">
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        /* Your existing styles remain exactly the same */
         .product-card img {
             width: 100%;
             height: 200px;
@@ -249,7 +243,6 @@
             border-radius: 4px;
         }
         
-        /* Rating styles for seller ratings */
         .seller-rating {
             font-size: 12px;
             margin: 5px 0;
@@ -265,7 +258,6 @@
             margin-left: 3px;
         }
         
-        /* Login prompt overlay */
         .login-prompt-overlay {
             position: fixed;
             top: 0;
@@ -325,7 +317,6 @@
             color: #666;
         }
         
-        /* iOS Install Prompt Modal - Updated to dark blue */
         .ios-prompt-modal {
             position: fixed;
             bottom: 20px;
@@ -420,7 +411,6 @@
             background: #1a2533;
         }
         
-        /* ========== CUSTOM DROPDOWN STYLES ========== */
         .custom-category-dropdown {
             position: relative;
             display: inline-block;
@@ -518,7 +508,6 @@
             border-bottom: 1px solid #e0e0e0;
         }
         
-        /* Mobile responsive adjustments */
         @media (max-width: 768px) {
             .dropdown-trigger {
                 padding: 6px 12px;
@@ -647,7 +636,6 @@
             }
         }
 
-        /* Login status indicator */
         .login-status-indicator {
             background-color: #f0f0f0;
             color: #232f3e;
@@ -668,7 +656,6 @@
             font-weight: 600;
         }
         
-        /* Fix nav menu spacing */
         .nav-menu .container {
             display: flex;
             gap: 20px;
@@ -678,7 +665,6 @@
     </style>
 </head>
 <body>
-    <!-- Login Prompt Modal (hidden by default) -->
     <div id="loginPromptModal" class="login-prompt-overlay" style="display: none;">
         <div class="login-prompt-box">
             <h2>🔒 Login Required</h2>
@@ -690,23 +676,18 @@
         </div>
     </div>
 
-    <!-- Image Preview Modal -->
     <div id="imageModal" class="image-modal" onclick="closeImageModal()">
         <span class="close-modal" onclick="closeImageModal()">&times;</span>
         <img class="modal-image" id="modalImage">
     </div>
 
-    <!-- Seller Contact Modal -->
     <div id="sellerContactModal" class="contact-modal">
         <div class="contact-modal-content">
             <span class="close-contact-modal" onclick="document.getElementById('sellerContactModal').style.display='none'">&times;</span>
-            <div id="sellerContactContent">
-                <!-- Content will be dynamically inserted here -->
-            </div>
+            <div id="sellerContactContent"></div>
         </div>
     </div>
 
-    <!-- Header -->
     <header class="header">
         <div class="header-top">
             <div class="container">
@@ -771,7 +752,6 @@
                     All
                 </a>
                 <a href="#" class="nav-item">Today's Deals</a>
-                <!-- "What do you want to buy today?" dropdown - categories link to # placeholders -->
                 <div class="custom-category-dropdown nav-item" style="position: relative;">
                     <button class="dropdown-trigger" id="categoryDropdownBtn" aria-expanded="false">
                         What do you want to buy today?
@@ -779,7 +759,6 @@
                     </button>
                     <div class="dropdown-menu" id="categoryDropdownMenu">
                         <div class="dropdown-header">SHOP BY CATEGORY</div>
-                        <!-- Each category is a clickable link with href="#" - ready for you to replace with actual page URLs -->
                         <a href="#" class="dropdown-category-item" data-category="Electronic Devices">📱 Electronic Devices</a>
                         <a href="#" class="dropdown-category-item" data-category="Books">📚 Books</a>
                         <a href="#" class="dropdown-category-item" data-category="Clothing">👕 Clothing</a>
@@ -801,9 +780,7 @@
         </nav>
     </header>
 
-    <!-- Main Content -->
     <main class="main-content">
-        <!-- Product Carousel -->
         <section class="carousel-section">
             <div class="carousel-container">
                 <button class="carousel-btn prev" onclick="moveCarousel(-1)">❮</button>
@@ -839,7 +816,6 @@
             </div>
         </section>
 
-        <!-- Product Categories (keeping existing sections) -->
         <div class="container">
             <section class="product-section">
                 <div class="section-header">
@@ -902,7 +878,7 @@
                     <h2>Best Sellers in Vehicle Parts & Accessories</h2>
                     <a href="#" class="see-all">See more</a>
                 </div>
-                <div class="product-grid" id="bestSellersVehicleParts&Accessories"></div>
+                <div class="product-grid" id="bestSellersVehicleParts&amp;Accessories"></div>
             </section>
 
             <section class="product-section">
@@ -910,7 +886,7 @@
                     <h2>Best Sellers in Vehicles & Transportation</h2>
                     <a href="#" class="see-all">See more</a>
                 </div>
-                <div class="product-grid" id="bestSellersVehicle&Transportation"></div>
+                <div class="product-grid" id="bestSellersVehicle&amp;Transportation"></div>
             </section>
 
             <section class="product-section">
@@ -918,7 +894,7 @@
                     <h2>Best Sellers in Home & Kitchen</h2>
                     <a href="#" class="see-all">See more</a>
                 </div>
-                <div class="product-grid" id="bestSellersHome&Kitchen"></div>
+                <div class="product-grid" id="bestSellersHome&amp;Kitchen"></div>
             </section>
 
             <section class="product-section">
@@ -947,7 +923,6 @@
         </div>
     </main>
 
-    <!-- Footer -->
     <footer class="footer">
         <div class="footer-top">
             <a href="#" class="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">Back to top</a>
@@ -1013,12 +988,10 @@
         </div>
     </footer>
 
-    <!-- Install App Button -->
     <div id="installButton" style="position: fixed; bottom: 20px; right: 20px; background: #232f3e; color: white; padding: 12px 24px; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 9999; display: flex; align-items: center; gap: 8px; font-weight: 600; border: none; font-size: 16px;">
         <span>📱 Install App</span>
     </div>
 
-    <!-- iOS Install Prompt Modal -->
     <div id="iosPromptModal" class="ios-prompt-modal" style="border-top: 5px solid #232f3e;">
         <div class="ios-prompt-close" onclick="closeIOSPrompt()">✕</div>
         <div class="ios-prompt-header">
@@ -1049,9 +1022,7 @@
     <script src="script.js"></script>
     <script src="auth-check.js"></script>
     
-    <!-- DROPDOWN FUNCTIONALITY SCRIPT - Categories link to "#" placeholders -->
     <script>
-        // Category Dropdown functionality
         const dropdownBtn = document.getElementById('categoryDropdownBtn');
         const dropdownMenu = document.getElementById('categoryDropdownMenu');
         
@@ -1071,30 +1042,20 @@
             dropdownBtn.addEventListener('click', toggleDropdown);
         }
         
-        // Close dropdown when clicking outside
         document.addEventListener('click', function(event) {
             if (!dropdownBtn?.contains(event.target) && !dropdownMenu?.contains(event.target)) {
                 closeDropdown();
             }
         });
         
-        // Category items are already <a href="#"> - they will navigate to "#" by default
-        // You can replace the href values with actual page URLs like "electronics.html", "books.html", etc.
-        // The data-category attribute stores the category name for reference
-        
-        // Optional: Add click handler to close dropdown when a category is clicked
         const categoryItems = document.querySelectorAll('.dropdown-category-item');
         categoryItems.forEach(item => {
             item.addEventListener('click', function() {
-                // Close dropdown when a category is clicked
                 closeDropdown();
-                // The link will navigate to the href value (currently "#")
-                // Replace the href attribute with your actual category page URL
             });
         });
     </script>
     
-    <!-- APP DOWNLOAD TRACKING & EXISTING SCRIPTS (minified for brevity, keeping core functionality) -->
     <script>
         window.SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
         window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
@@ -1160,7 +1121,6 @@
             }
         });
         
-        // PWA Install Button Logic
         let deferredPrompt;
         const installButton = document.getElementById('installButton');
         const iosPrompt = document.getElementById('iosPromptModal');
@@ -1311,21 +1271,20 @@
         });
     </script>
     
-    <!-- SERVICE WORKER REGISTRATION -->
     <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('/sw.js', { 
                 updateViaCache: 'none'
             }).then(registration => {
-                console.log('✅ Service Worker registered with scope:', registration.scope);
+                console.log('Service Worker registered with scope:', registration.scope);
                 
                 setInterval(() => {
                     registration.update();
-                    console.log('🔄 Checking for service worker updates...');
+                    console.log('Checking for service worker updates...');
                 }, 60000);
             }).catch(err => {
-                console.log('❌ Service Worker registration failed:', err);
+                console.log('Service Worker registration failed:', err);
             });
         });
     }
