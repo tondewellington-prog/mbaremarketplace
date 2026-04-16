@@ -26,16 +26,15 @@
     <meta name="msapplication-TileColor" content="#232f3e">
     <meta name="msapplication-TileImage" content="/icons/icon-144.png">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Mbare Marketplace - Online Shopping</title>
-    <!-- Fixed favicon - removed problematic quotes -->
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%3C/text%3E%3C/svg%3E">
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Your existing styles remain exactly the same */
+        /* Base styles - unchanged */
         .product-card img {
             width: 100%;
             height: 200px;
@@ -508,41 +507,53 @@
             border-bottom: 1px solid #e0e0e0;
         }
         
+        /* FIXED: Mobile responsive styles - Adjusted search bar and section headers */
         @media (max-width: 768px) {
-            .dropdown-trigger {
-                padding: 6px 12px;
-                font-size: 12px;
-            }
-            .dropdown-menu {
-                min-width: 220px;
-                right: 0;
-                left: auto;
-            }
-            .dropdown-category-item {
-                padding: 10px 16px;
-                font-size: 13px;
-            }
+            /* FIX 1: Search bar adjustments */
             .search-bar {
                 width: 100%;
                 margin: 10px 0;
                 padding: 0 10px;
+                display: flex;
+                gap: 5px;
             }
             
             .search-bar select {
-                width: 30%;
-                font-size: 14px;
+                width: 35%;
+                font-size: 12px;
+                padding: 8px 4px;
             }
             
             .search-bar input {
-                width: 60%;
-                font-size: 14px;
-            }
-            
-            .search-bar button {
-                width: 10%;
+                width: 55%;
+                font-size: 13px;
                 padding: 8px;
             }
             
+            .search-bar button {
+                width: 12%;
+                padding: 8px 0;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            
+            .search-bar button svg {
+                width: 16px;
+                height: 16px;
+            }
+            
+            /* FIX 2: Section header adjustments */
+            .section-header h2 {
+                font-size: 18px !important;
+                margin-bottom: 5px !important;
+            }
+            
+            .section-header .see-all {
+                font-size: 12px !important;
+            }
+            
+            /* General layout fixes */
             .contact-modal-content {
                 margin: 2% auto;
                 width: 95%;
@@ -571,8 +582,8 @@
             }
             
             .product-title {
-                font-size: 16px;
-                margin-bottom: 12px;
+                font-size: 14px;
+                margin-bottom: 8px;
             }
             
             .product-grid {
@@ -585,35 +596,52 @@
             }
             
             .product-price {
-                font-size: 18px;
+                font-size: 16px;
             }
             
             .product-actions button {
+                font-size: 11px;
+                padding: 5px;
+            }
+            
+            /* Dropdown adjustments */
+            .dropdown-trigger {
+                padding: 6px 10px;
                 font-size: 12px;
-                padding: 6px;
+            }
+            .dropdown-menu {
+                min-width: 200px;
+                right: 0;
+                left: auto;
+            }
+            .dropdown-category-item {
+                padding: 8px 12px;
+                font-size: 12px;
             }
         }
         
         @media (max-width: 480px) {
             .dropdown-trigger {
-                padding: 4px 10px;
+                padding: 4px 8px;
                 font-size: 11px;
             }
+            .section-header h2 {
+                font-size: 16px !important;
+            }
+            .section-header .see-all {
+                font-size: 11px !important;
+            }
             .search-bar select {
-                width: 35%;
-                font-size: 12px;
+                font-size: 11px;
+                width: 38%;
             }
-            
             .search-bar input {
-                width: 55%;
                 font-size: 12px;
+                width: 52%;
             }
-            
             .search-bar button {
                 width: 10%;
-                padding: 6px;
             }
-            
             .contact-modal-content {
                 padding: 15px;
             }
@@ -632,7 +660,7 @@
             }
             
             .product-price {
-                font-size: 16px;
+                font-size: 15px;
             }
         }
 
