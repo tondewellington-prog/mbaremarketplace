@@ -507,7 +507,34 @@
             border-bottom: 1px solid #e0e0e0;
         }
         
-        /* FIXED: Mobile responsive styles - Adjusted search bar and section headers */
+        /* FIXED: Tablet & Mobile Responsive styles */
+        @media (max-width: 1024px) { /* Target tablets */
+            .header-top .container {
+                flex-wrap: wrap;
+            }
+            .search-bar {
+                order: 3; /* Move search bar to a new line */
+                margin-top: 10px;
+                width: 100%;
+                display: flex;
+                gap: 8px;
+            }
+            .search-bar select {
+                width: 25%;
+                font-size: 14px;
+                padding: 10px 8px;
+            }
+            .search-bar input {
+                width: 65%;
+                font-size: 14px;
+                padding: 10px;
+            }
+            .search-bar button {
+                width: 10%;
+                padding: 10px 0;
+            }
+        }
+
         @media (max-width: 768px) {
             /* FIX 1: Search bar adjustments */
             .search-bar {
@@ -543,17 +570,29 @@
                 height: 16px;
             }
             
-            /* FIX 2: Section header adjustments */
+            /* FIX 2: Make section headers horizontally scrollable (Amazon-style) */
+            .section-header {
+                display: flex;
+                flex-wrap: nowrap; /* Prevent wrapping */
+                overflow-x: auto; /* Enable horizontal scroll */
+                gap: 15px;
+                padding-bottom: 8px; /* Space for scrollbar */
+                margin-bottom: 15px;
+                -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
+                scrollbar-width: thin; /* Thinner scrollbar for Firefox */
+            }
             .section-header h2 {
                 font-size: 18px !important;
-                margin-bottom: 5px !important;
+                white-space: nowrap;
+                flex-shrink: 0;
             }
-            
             .section-header .see-all {
-                font-size: 12px !important;
+                font-size: 13px !important;
+                white-space: nowrap;
+                flex-shrink: 0;
+                margin-left: auto;
             }
             
-            /* General layout fixes */
             .contact-modal-content {
                 margin: 2% auto;
                 width: 95%;
@@ -747,7 +786,7 @@
                 </div>
                 <div class="header-right">
                     <div class="account-menu" id="accountMenu">
-                        <span class="account-label">Hello, Sign in</span>
+                        <span class="account-label">👤 Hello, Sign in</span> <!-- Added Icon -->
                         <a href="login.html" class="account-link">Account & Lists</a>
                         <button id="logoutBtn" class="logout-btn" onclick="logout()" style="display: none;">Logout</button>
                     </div>
