@@ -508,9 +508,59 @@
         }
         
         /* ============================================ */
-        /* FIXED: Tablet & Mobile Responsive styles     */
-        /* FORCED SCROLLING FOR SECTION HEADERS         */
+        /* FIXED: Section Headers - ALWAYS SCROLLABLE  */
         /* ============================================ */
+        
+        /* Make section headers scrollable on ALL devices */
+        .section-header {
+            display: flex;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            gap: 15px;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            white-space: nowrap;
+        }
+        
+        /* Ensure text never wraps */
+        .section-header h2 {
+            font-size: 20px;
+            color: #232f3e;
+            margin: 0;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        
+        .section-header .see-all {
+            font-size: 14px;
+            color: #f90;
+            text-decoration: none;
+            white-space: nowrap;
+            flex-shrink: 0;
+            margin-left: auto;
+            padding-right: 5px;
+        }
+        
+        .section-header .see-all:hover {
+            text-decoration: underline;
+        }
+        
+        /* Hide scrollbar on Chrome/Safari but keep functionality */
+        .section-header::-webkit-scrollbar {
+            height: 3px;
+        }
+        
+        .section-header::-webkit-scrollbar-track {
+            background: #e0e0e0;
+            border-radius: 10px;
+        }
+        
+        .section-header::-webkit-scrollbar-thumb {
+            background: #f90;
+            border-radius: 10px;
+        }
         
         /* Tablet landscape and smaller desktops */
         @media (max-width: 1024px) {
@@ -537,27 +587,6 @@
             .search-bar button {
                 width: 10%;
                 padding: 10px 0;
-            }
-            /* Force horizontal scroll on tablets too */
-            .section-header {
-                display: flex;
-                flex-wrap: nowrap;
-                overflow-x: auto;
-                gap: 15px;
-                padding-bottom: 8px;
-                margin-bottom: 15px;
-                -webkit-overflow-scrolling: touch;
-                scrollbar-width: thin;
-            }
-            .section-header h2 {
-                font-size: 18px !important;
-                white-space: nowrap;
-                flex-shrink: 0;
-            }
-            .section-header .see-all {
-                font-size: 13px !important;
-                white-space: nowrap;
-                flex-shrink: 0;
             }
         }
 
@@ -597,26 +626,12 @@
                 height: 16px;
             }
             
-            /* FORCED SCROLLING for section headers - Mobile */
-            .section-header {
-                display: flex;
-                flex-wrap: nowrap;
-                overflow-x: auto;
-                gap: 15px;
-                padding-bottom: 8px;
-                margin-bottom: 15px;
-                -webkit-overflow-scrolling: touch;
-                scrollbar-width: thin;
-            }
+            /* Section headers - mobile adjustments */
             .section-header h2 {
-                font-size: 18px !important;
-                white-space: nowrap;
-                flex-shrink: 0;
+                font-size: 16px !important;
             }
             .section-header .see-all {
-                font-size: 13px !important;
-                white-space: nowrap;
-                flex-shrink: 0;
+                font-size: 12px !important;
             }
             
             /* Rest of mobile styles */
@@ -692,7 +707,7 @@
                 font-size: 11px;
             }
             .section-header h2 {
-                font-size: 16px !important;
+                font-size: 14px !important;
             }
             .section-header .see-all {
                 font-size: 11px !important;
