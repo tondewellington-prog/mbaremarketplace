@@ -507,13 +507,18 @@
             border-bottom: 1px solid #e0e0e0;
         }
         
-        /* FIXED: Tablet & Mobile Responsive styles */
-        @media (max-width: 1024px) { /* Target tablets */
+        /* ============================================ */
+        /* FIXED: Tablet & Mobile Responsive styles     */
+        /* FORCED SCROLLING FOR SECTION HEADERS         */
+        /* ============================================ */
+        
+        /* Tablet landscape and smaller desktops */
+        @media (max-width: 1024px) {
             .header-top .container {
                 flex-wrap: wrap;
             }
             .search-bar {
-                order: 3; /* Move search bar to a new line */
+                order: 3;
                 margin-top: 10px;
                 width: 100%;
                 display: flex;
@@ -533,10 +538,32 @@
                 width: 10%;
                 padding: 10px 0;
             }
+            /* Force horizontal scroll on tablets too */
+            .section-header {
+                display: flex;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                gap: 15px;
+                padding-bottom: 8px;
+                margin-bottom: 15px;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: thin;
+            }
+            .section-header h2 {
+                font-size: 18px !important;
+                white-space: nowrap;
+                flex-shrink: 0;
+            }
+            .section-header .see-all {
+                font-size: 13px !important;
+                white-space: nowrap;
+                flex-shrink: 0;
+            }
         }
 
+        /* Mobile phones */
         @media (max-width: 768px) {
-            /* FIX 1: Search bar adjustments */
+            /* Search bar adjustments */
             .search-bar {
                 width: 100%;
                 margin: 10px 0;
@@ -570,16 +597,16 @@
                 height: 16px;
             }
             
-            /* FIX 2: Make section headers horizontally scrollable (Amazon-style) */
+            /* FORCED SCROLLING for section headers - Mobile */
             .section-header {
                 display: flex;
-                flex-wrap: nowrap; /* Prevent wrapping */
-                overflow-x: auto; /* Enable horizontal scroll */
+                flex-wrap: nowrap;
+                overflow-x: auto;
                 gap: 15px;
-                padding-bottom: 8px; /* Space for scrollbar */
+                padding-bottom: 8px;
                 margin-bottom: 15px;
-                -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
-                scrollbar-width: thin; /* Thinner scrollbar for Firefox */
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: thin;
             }
             .section-header h2 {
                 font-size: 18px !important;
@@ -590,9 +617,9 @@
                 font-size: 13px !important;
                 white-space: nowrap;
                 flex-shrink: 0;
-                margin-left: auto;
             }
             
+            /* Rest of mobile styles */
             .contact-modal-content {
                 margin: 2% auto;
                 width: 95%;
@@ -786,7 +813,7 @@
                 </div>
                 <div class="header-right">
                     <div class="account-menu" id="accountMenu">
-                        <span class="account-label">👤 Hello, Sign in</span> <!-- Added Icon -->
+                        <span class="account-label">👤 Hello, Sign in</span>
                         <a href="login.html" class="account-link">Account & Lists</a>
                         <button id="logoutBtn" class="logout-btn" onclick="logout()" style="display: none;">Logout</button>
                     </div>
@@ -1358,3 +1385,4 @@
     </script>
 </body>
 </html>
+```
