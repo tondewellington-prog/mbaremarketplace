@@ -29,6 +29,11 @@
             line-height: 1.6;
         }
 
+        /* Purple notification styling */
+        .custom-notification.purple {
+            background-color: #6b38af !important;
+        }
+
         .mail-action-link {
             display: inline-block;
             margin-top: 15px;
@@ -473,7 +478,8 @@
             });
             
             if (response.success) {
-                showNotification('Account successfully created! Please check your mailbox to confirm your email and press the confirm email button.');
+                // Purple notification for successful account creation (no mail button)
+                showNotification('✅ Account successfully created! Please check your email to confirm your account before logging in.', 'confirm-purple');
                 
                 hideRegisterForm();
                 document.getElementById('regName').value = '';
@@ -493,18 +499,22 @@
         const notification = document.createElement('div');
         notification.className = 'custom-notification';
         
-        // Define colors
-        let bgColor = '#232F3E'; // Info
-        if (type === 'error') bgColor = '#d32f2f';
-        if (type === 'success') bgColor = '#2e7d32';
-        if (type === 'confirm-purple') bgColor = '#6b38af'; // Success Purple
+        // Define colors based on type
+        if (type === 'error') {
+            notification.style.backgroundColor = '#d32f2f';
+        } else if (type === 'success') {
+            notification.style.backgroundColor = '#2e7d32';
+        } else if (type === 'confirm-purple') {
+            notification.style.backgroundColor = '#6b38af'; // Purple color
+        } else {
+            notification.style.backgroundColor = '#232F3E'; // Default dark blue
+        }
         
-        notification.style.backgroundColor = bgColor;
         notification.innerHTML = message;
         document.body.appendChild(notification);
         
-        // Stay longer for the purple confirmation so they have time to click
-        const duration = type === 'confirm-purple' ? 8000 : 3500;
+        // Stay longer for the purple confirmation so users have time to read
+        const duration = type === 'confirm-purple' ? 6000 : 3500;
         
         setTimeout(() => {
             notification.style.opacity = '0';
