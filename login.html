@@ -473,8 +473,8 @@
             });
             
             if (response.success) {
-                // Purple Message with Mailbox Link
-                const mailLink = '<br><a href="mailto:" class="mail-action-link">Open Mailbox</a>';
+                // FIXED: Mail link that opens the user's default email app
+                const mailLink = '<br><a href="mailto:?subject=Confirm%20Your%20Email%20on%20Mbare%20Marketplace&body=Please%20check%20your%20inbox%20to%20confirm%20your%20email%20address." class="mail-action-link">📧 Open Email App</a>';
                 showNotification('Account successfully created! Please check your mailbox to confirm your email and press the confirm email button.' + mailLink, 'confirm-purple');
                 
                 hideRegisterForm();
