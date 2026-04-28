@@ -13,10 +13,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
+        /* DASHBOARD & HEADER STYLES */
         .category-header {
             background: linear-gradient(135deg, #232f3e, #1a2533);
             color: white;
-            padding: 20px 0;
+            padding: 15px 0; /* Minimal white space */
             text-align: center;
             position: relative;
         }
@@ -25,15 +26,13 @@
             display: grid;
             gap: 10px;
             padding: 0 15px;
-            margin-bottom: 10px;
-            /* Desktop: 4 items per row */
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(4, 1fr); /* 4 in a row for desktop */
             position: relative;
         }
 
         .slide-panel {
             position: relative;
-            height: 200px;
+            height: 200px; /* Fits the blue area from screenshot */
             border-radius: 12px;
             overflow: hidden;
             background: #1a2533;
@@ -48,7 +47,7 @@
 
         .slider-overlay-text {
             position: absolute;
-            bottom: 20px;
+            bottom: 15px;
             left: 0;
             right: 0;
             z-index: 10;
@@ -56,22 +55,23 @@
         }
 
         .category-header h1 {
-            font-size: 24px;
+            font-size: 22px; /* Decreased size as requested */
             margin: 0;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-            background: rgba(0,0,0,0.3);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.4);
             display: inline-block;
-            padding: 5px 15px;
+            padding: 4px 12px;
             border-radius: 5px;
         }
         
         .category-header p {
-            font-size: 14px;
+            font-size: 13px;
             opacity: 0.9;
-            margin-top: 5px;
+            margin-top: 4px;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
         }
 
+        /* FILTER BAR & GRID */
         .filter-bar {
             background: white;
             padding: 15px 0;
@@ -89,15 +89,15 @@
             gap: 15px;
         }
         
+        .category-breadcrumb { padding: 12px 0; background: #f8f9fa; font-size: 14px; }
+        .category-breadcrumb a { color: #232f3e; text-decoration: none; }
+        .category-breadcrumb a:hover { color: #f90; }
+
         @media (max-width: 768px) {
             .slider-container {
-                /* Corrected for mobile: exactly 3 items per row */
-                grid-template-columns: repeat(3, 1fr) !important;
+                grid-template-columns: repeat(3, 1fr) !important; /* 3 in a row for mobile */
             }
-            /* Hide the 4th panel on small screens to maintain 3 per row */
-            .slide-panel:nth-child(4) {
-                display: none;
-            }
+            .slide-panel:nth-child(4) { display: none; } /* Hide 4th panel on phones */
             .slide-panel { height: 140px; }
             .category-header h1 { font-size: 18px; }
             .product-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
@@ -156,7 +156,7 @@
                 
                 <div class="slider-overlay-text">
                     <h1>🐾 Pet Supplies</h1>
-                    <p>Quality products for your pets</p>
+                    <p>Everything your pet needs</p>
                 </div>
             </div>
         </div>
@@ -188,8 +188,8 @@
         let sellersMap = {};
         let ratingsCache = {};
 
+        // Dashboard Shuffling
         const petImages = ['pet_supplies/1.jpg', 'pet_supplies/2.jpg', 'pet_supplies/3.jpg', 'pet_supplies/4.jpg', 'pet_supplies/5.jpg', 'pet_supplies/6.jpg'];
-
         function shuffleSlider() {
             const panels = document.querySelectorAll('.slide-panel img');
             panels.forEach(img => {
@@ -202,6 +202,7 @@
         }
         setInterval(shuffleSlider, 5000);
 
+        // Core Functions (Exactly as original)
         async function loadSellers() {
             try {
                 const response = await fetch(`${window.SUPABASE_URL}/rest/v1/sellers?select=*`, {
@@ -212,6 +213,17 @@
             } catch (e) { console.error(e); }
         }
 
+        function generateRatingStars(rating) {
+            const fullStars = Math.floor(rating);
+            const hasHalfStar = rating % 1 >= 0.5;
+            let stars = '';
+            for (let i = 0; i < fullStars; i++) stars += '★';
+            if (hasHalfStar) stars += '½';
+            const emptyStars = 5 - Math.ceil(rating);
+            for (let i = 0; i < emptyStars; i++) stars += '☆';
+            return stars;
+        }
+
         async function getSellerRatings(sellerId) {
             if (ratingsCache[sellerId]) return ratingsCache[sellerId];
             try {
@@ -219,20 +231,18 @@
                     headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}` }
                 });
                 const ratings = await response.json();
-                let display = '<span style="color:#999">No ratings yet</span>';
-                if (ratings.length > 0) {
-                    const avg = ratings.reduce((a, b) => a + b.rating, 0) / ratings.length;
-                    const fullStars = Math.floor(avg);
-                    const stars = '★'.repeat(fullStars) + (avg % 1 >= 0.5 ? '½' : '');
-                    display = `<span style="color:#f90">${stars}</span> (${ratings.length})`;
+                let display = '<span style="color: #999;">No ratings yet</span>';
+                if (ratings && ratings.length > 0) {
+                    const avg = ratings.reduce((acc, curr) => acc + curr.rating, 0) / ratings.length;
+                    display = `<span style="color: #f90;">${generateRatingStars(avg)}</span> <span style="color: #666;">(${ratings.length})</span>`;
                 }
                 ratingsCache[sellerId] = { display };
                 return ratingsCache[sellerId];
-            } catch { return { display: 'No ratings' }; }
+            } catch { return { display: '<span style="color: #999;">No ratings</span>' }; }
         }
 
         async function loadPetSupplies() {
-            const response = await fetch(`${window.SUPABASE_URL}/rest/v1/products?select=*`, {
+            const response = await fetch(`${window.SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
                 headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}` }
             });
             const data = await response.json();
@@ -251,8 +261,8 @@
                 const card = document.createElement('div');
                 card.className = 'product-card';
                 card.innerHTML = `
-                    <img src="${p.image_url}" class="product-image" onclick="location.href='product-detail.html?id=${p.id}'">
-                    <h3 class="product-title">${p.title}</h3>
+                    <img src="${p.image_url}" class="product-image" onclick="viewProduct('${p.id}')" style="cursor: pointer;">
+                    <h3 class="product-title" onclick="viewProduct('${p.id}')" style="cursor: pointer;">${p.title}</h3>
                     <div class="product-price">$${p.price.toFixed(2)}</div>
                     <div class="product-seller">🏪 ${seller.business_name || 'Pet Store'}</div>
                     <div class="seller-rating">${ratingInfo.display}</div>
@@ -266,22 +276,27 @@
             document.getElementById('resultsCount').textContent = `${products.length} products found`;
         }
 
+        function viewProduct(productId) {
+            window.location.href = `product-detail.html?id=${productId}`;
+        }
+
         function addToBasket(productId) {
-            const session = JSON.parse(localStorage.getItem('supabase_session'));
-            if (!session) return (window.location.href = 'login.html');
+            const sessionData = localStorage.getItem('supabase_session');
+            if (!sessionData) return (window.location.href = 'login.html');
+            const session = JSON.parse(sessionData);
             const basketKey = `basket_${session.user.id}`;
             let basket = JSON.parse(localStorage.getItem(basketKey)) || [];
             const product = allProducts.find(p => p.id == productId);
             basket.push({ ...product, quantity: 1 });
             localStorage.setItem(basketKey, JSON.stringify(basket));
             updateBasketCount(basket.length);
-            alert('Added to basket!');
+            alert('Item added!');
         }
 
         function contactSeller(productId) {
             const product = allProducts.find(p => p.id == productId);
             const seller = sellersMap[product.seller_id];
-            if (seller && seller.business_phone) {
+            if (seller?.business_phone) {
                 const phone = seller.business_phone.replace(/\D/g, '');
                 window.open(`https://wa.me/${phone}?text=Interested in ${product.title}`, '_blank');
             }
@@ -299,8 +314,9 @@
             if (sessionData) {
                 const session = JSON.parse(sessionData);
                 const basket = JSON.parse(localStorage.getItem(`basket_${session.user.id}`)) || [];
-                updateBasketCount(basket.length);
+                updateBasketCount(basket.reduce((sum, item) => sum + (item.quantity || 0), 0));
                 document.getElementById('logoutBtn').style.display = 'inline-block';
+                document.querySelector('.account-label').textContent = `Hello, ${session.user.email.split('@')[0]}`;
             }
         });
     </script>
