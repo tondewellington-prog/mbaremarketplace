@@ -17,7 +17,7 @@
         .category-header {
             background: linear-gradient(135deg, #232f3e, #1a2533);
             color: white;
-            padding: 15px 0; /* Minimal white space */
+            padding: 15px 0;
             text-align: center;
             position: relative;
         }
@@ -26,13 +26,13 @@
             display: grid;
             gap: 10px;
             padding: 0 15px;
-            grid-template-columns: repeat(4, 1fr); /* 4 in a row for desktop */
+            grid-template-columns: repeat(4, 1fr);
             position: relative;
         }
 
         .slide-panel {
             position: relative;
-            height: 200px; /* Fits the blue area from screenshot */
+            height: 200px;
             border-radius: 12px;
             overflow: hidden;
             background: #1a2533;
@@ -55,7 +55,7 @@
         }
 
         .category-header h1 {
-            font-size: 22px; /* Decreased size as requested */
+            font-size: 22px;
             margin: 0;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
             background: rgba(0,0,0,0.4);
@@ -71,7 +71,6 @@
             text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
         }
 
-        /* FILTER BAR & GRID */
         .filter-bar {
             background: white;
             padding: 15px 0;
@@ -95,9 +94,9 @@
 
         @media (max-width: 768px) {
             .slider-container {
-                grid-template-columns: repeat(3, 1fr) !important; /* 3 in a row for mobile */
+                grid-template-columns: repeat(3, 1fr) !important;
             }
-            .slide-panel:nth-child(4) { display: none; } /* Hide 4th panel on phones */
+            .slide-panel:nth-child(4) { display: none; }
             .slide-panel { height: 140px; }
             .category-header h1 { font-size: 18px; }
             .product-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
@@ -188,7 +187,6 @@
         let sellersMap = {};
         let ratingsCache = {};
 
-        // Dashboard Shuffling
         const petImages = ['pet_supplies/1.jpg', 'pet_supplies/2.jpg', 'pet_supplies/3.jpg', 'pet_supplies/4.jpg', 'pet_supplies/5.jpg', 'pet_supplies/6.jpg'];
         function shuffleSlider() {
             const panels = document.querySelectorAll('.slide-panel img');
@@ -202,7 +200,6 @@
         }
         setInterval(shuffleSlider, 5000);
 
-        // Core Functions (Exactly as original)
         async function loadSellers() {
             try {
                 const response = await fetch(`${window.SUPABASE_URL}/rest/v1/sellers?select=*`, {
@@ -250,6 +247,7 @@
                 .map(p => ({ ...p, price: parseFloat(p.price) }));
             currentProducts = [...allProducts];
             displayProducts(currentProducts);
+            updateResultsCount(currentProducts.length);
         }
 
         async function displayProducts(products) {
@@ -273,7 +271,35 @@
                 `;
                 container.appendChild(card);
             }
-            document.getElementById('resultsCount').textContent = `${products.length} products found`;
+        }
+
+        function handleSearch() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            if (!searchTerm) {
+                currentProducts = [...allProducts];
+            } else {
+                currentProducts = allProducts.filter(product => 
+                    product.title.toLowerCase().includes(searchTerm) ||
+                    (product.description && product.description.toLowerCase().includes(searchTerm))
+                );
+            }
+            displayProducts(currentProducts);
+            updateResultsCount(currentProducts.length);
+        }
+
+        function updateResultsCount(count) {
+            const countElement = document.getElementById('resultsCount');
+            if (countElement) {
+                countElement.textContent = `${count} product${count !== 1 ? 's' : ''} found`;
+            }
+        }
+
+        function sortProducts() {
+            const sortValue = document.getElementById('sortSelect').value;
+            if (sortValue === 'price_low') currentProducts.sort((a, b) => a.price - b.price);
+            else if (sortValue === 'price_high') currentProducts.sort((a, b) => b.price - a.price);
+            else currentProducts.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            displayProducts(currentProducts);
         }
 
         function viewProduct(productId) {
@@ -306,6 +332,10 @@
             const el = document.getElementById('basketCount');
             if (el) { el.textContent = count; el.style.display = count > 0 ? 'flex' : 'none'; }
         }
+
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleSearch();
+        });
 
         document.addEventListener('DOMContentLoaded', async () => {
             await loadSellers();
