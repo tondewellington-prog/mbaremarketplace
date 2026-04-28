@@ -7,61 +7,71 @@
     <meta name="description" content="Shop pet supplies including food, toys, accessories, and more. Find quality products for your dogs, cats, birds, and other pets.">
     
     <link rel="canonical" href="https://www.mbaremarketplace.com/category-pet-supplies.html">
-    
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
-        /* Category Page Specific Styles */
         .category-header {
             background: linear-gradient(135deg, #232f3e, #1a2533);
             color: white;
-            padding: 40px 0;
+            padding: 20px 0;
             text-align: center;
-            overflow: hidden;
-        }
-        
-        .category-header h1 {
-            font-size: 36px;
-            margin-bottom: 10px;
             position: relative;
-            z-index: 2;
         }
         
-        .category-header p {
-            font-size: 18px;
-            opacity: 0.9;
-        }
-
-        /* Responsive Image Slider Grid */
         .slider-container {
             display: grid;
-            gap: 15px;
-            margin-bottom: 30px;
-            padding: 0 20px;
-            /* Desktop: 4 items in a row */
+            gap: 10px;
+            padding: 0 15px;
+            margin-bottom: 10px;
+            /* Desktop: 4 items per row */
             grid-template-columns: repeat(4, 1fr);
+            position: relative;
         }
 
         .slide-panel {
             position: relative;
-            height: 180px;
+            height: 200px;
             border-radius: 12px;
             overflow: hidden;
             background: #1a2533;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
 
         .slide-panel img {
             width: 100%;
             height: 100%;
-            object-fit: cover; /* Ensures scaling is proper without stretching */
+            object-fit: cover;
             transition: opacity 0.8s ease-in-out;
-            opacity: 1;
+        }
+
+        .slider-overlay-text {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .category-header h1 {
+            font-size: 24px;
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.3);
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 5px;
         }
         
+        .category-header p {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 5px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+
         .filter-bar {
             background: white;
             padding: 15px 0;
@@ -79,86 +89,18 @@
             gap: 15px;
         }
         
-        .results-count {
-            color: #666;
-            font-size: 14px;
-        }
-        
-        .sort-select {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background: white;
-            cursor: pointer;
-        }
-        
-        .category-breadcrumb {
-            padding: 15px 0;
-            background: #f8f9fa;
-            font-size: 14px;
-        }
-        
-        .category-breadcrumb a {
-            color: #232f3e;
-            text-decoration: none;
-        }
-        
-        .category-breadcrumb a:hover {
-            color: #f90;
-        }
-        
-        .category-breadcrumb span {
-            color: #666;
-        }
-        
-        .no-products {
-            text-align: center;
-            padding: 60px 20px;
-            background: #f8f9fa;
-            border-radius: 12px;
-        }
-        
-        .no-products h3 {
-            font-size: 24px;
-            color: #232f3e;
-            margin-bottom: 10px;
-        }
-        
-        .no-products p {
-            color: #666;
-            margin-bottom: 20px;
-        }
-        
-        .back-to-shop {
-            display: inline-block;
-            background: #f90;
-            color: #232f3e;
-            padding: 12px 24px;
-            border-radius: 4px;
-            text-decoration: none;
-            font-weight: 600;
-        }
-        
         @media (max-width: 768px) {
-            .category-header h1 {
-                font-size: 28px;
-            }
-            .filter-bar .container {
-                flex-direction: column;
-            }
             .slider-container {
-                /* Phone: 3 items in a row */
-                grid-template-columns: repeat(3, 1fr);
-                gap: 8px;
-                padding: 0 10px;
+                /* Corrected for mobile: exactly 3 items per row */
+                grid-template-columns: repeat(3, 1fr) !important;
             }
-            .slide-panel {
-                height: 110px;
+            /* Hide the 4th panel on small screens to maintain 3 per row */
+            .slide-panel:nth-child(4) {
+                display: none;
             }
-            .product-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 12px;
-            }
+            .slide-panel { height: 140px; }
+            .category-header h1 { font-size: 18px; }
+            .product-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
         }
     </style>
 </head>
@@ -167,29 +109,15 @@
     <header class="header">
         <div class="header-top">
             <div class="container">
-                <div class="logo">
-                    <a href="index.html">Mbare Marketplace</a>
-                </div>
+                <div class="logo"><a href="index.html">Mbare Marketplace</a></div>
                 <div class="search-bar">
                     <select class="search-category" id="searchCategory">
                         <option>All</option>
-                        <option>Electronic Devices</option>
-                        <option>Books</option>
-                        <option>Clothing</option>
-                        <option>Home & Kitchen</option>
                         <option selected>Pet Supplies</option>
-                        <option>Pets & Livestock</option>
-                        <option>Vehicle Parts & Accessories</option>
-                        <option>Vehicles & Transportation</option>
-                        <option>Farm Products</option>
-                        <option>Beauty & Cosmetics</option>
                     </select>
                     <input type="text" id="searchInput" placeholder="Search pet supplies..." class="search-input">
                     <button class="search-btn" onclick="handleSearch()">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <path d="m21 21-4.35-4.35"></path>
-                        </svg>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
                     </button>
                 </div>
                 <div class="header-right">
@@ -197,10 +125,6 @@
                         <span class="account-label">Hello, Sign in</span>
                         <a href="login.html" class="account-link">Account & Lists</a>
                         <button id="logoutBtn" class="logout-btn" onclick="logout()" style="display: none;">Logout</button>
-                    </div>
-                    <div class="returns">
-                        <span class="returns-label">Returns</span>
-                        <span class="returns-link">& Orders</span>
                     </div>
                     <a href="Basket.html" class="basket">
                         <div class="basket-icon">
@@ -216,51 +140,36 @@
                 </div>
             </div>
         </div>
-        <nav class="nav-menu">
-            <div class="container">
-                <a href="index.html" class="nav-item">Home</a>
-                <a href="index.html" class="nav-item">Today's Deals</a>
-                <a href="#" class="nav-item">Customer Service</a>
-                <a href="seller-register.html" class="nav-item">Sell</a>
-                <a href="about.html" class="nav-item">About</a>
-            </div>
-        </nav>
     </header>
 
     <div class="category-breadcrumb">
-        <div class="container">
-            <a href="index.html">Home</a> > 
-            <span>Pet Supplies</span>
-        </div>
+        <div class="container"><a href="index.html">Home</a> > <span>Pet Supplies</span></div>
     </div>
 
     <section class="category-header">
         <div class="container">
-            <div class="slider-container" id="petSlider">
+            <div class="slider-container" id="heroSlider">
                 <div class="slide-panel"><img src="pet_supplies/1.jpg" alt="Pet Supply"></div>
                 <div class="slide-panel"><img src="pet_supplies/2.jpg" alt="Pet Supply"></div>
                 <div class="slide-panel"><img src="pet_supplies/3.jpg" alt="Pet Supply"></div>
                 <div class="slide-panel"><img src="pet_supplies/4.jpg" alt="Pet Supply"></div>
+                
+                <div class="slider-overlay-text">
+                    <h1>🐾 Pet Supplies</h1>
+                    <p>Quality products for your pets</p>
+                </div>
             </div>
-            <h1>🐾 Pet Supplies</h1>
-            <p>Everything your furry, feathered, or scaly friend needs</p>
         </div>
     </section>
 
     <div class="filter-bar">
         <div class="container">
-            <div class="results-count" id="resultsCount">
-                Loading products...
-            </div>
-            <div>
-                <label style="margin-right: 10px; color: #666;">Sort by:</label>
-                <select id="sortSelect" class="sort-select" onchange="sortProducts()">
-                    <option value="newest">Newest First</option>
-                    <option value="price_low">Price: Low to High</option>
-                    <option value="price_high">Price: High to Low</option>
-                    <option value="popular">Most Popular</option>
-                </select>
-            </div>
+            <div class="results-count" id="resultsCount">Loading products...</div>
+            <select id="sortSelect" class="sort-select" onchange="sortProducts()">
+                <option value="newest">Newest First</option>
+                <option value="price_low">Price: Low to High</option>
+                <option value="price_high">Price: High to Low</option>
+            </select>
         </div>
     </div>
 
@@ -270,198 +179,128 @@
         </div>
     </main>
 
-    <footer class="footer">
-        <div class="footer-top">
-            <a href="#" class="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">Back to top</a>
-        </div>
-        <div class="footer-content">
-            <div class="container">
-                <div class="footer-columns">
-                    <div class="footer-column">
-                        <h3>Get to Know Us</h3>
-                        <ul>
-                            <li><a href="#">Careers</a></li>
-                            <li><a href="#">Blog</a></li>
-                            <li><a href="about.html">About Mbare Marketplace</a></li>
-                        </ul>
-                    </div>
-                    <div class="footer-column">
-                        <h3>Make Money with Us</h3>
-                        <ul>
-                            <li><a href="seller-register.html">Sell on Mbare Marketplace</a></li>
-                            <li><a href="#">Become an Affiliate</a></li>
-                        </ul>
-                    </div>
-                    <div class="footer-column">
-                        <h3>Need Help?</h3>
-                        <ul>
-                            <li><a href="#">Your Account</a></li>
-                            <li><a href="#">Your Orders</a></li>
-                            <li><a href="#">Help Center</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <div class="container">
-                <div class="footer-logo">Mbare Marketplace</div>
-                <div class="footer-links">
-                    <a href="#">Privacy Policy</a>
-                    <a href="#">Terms of Service</a>
-                </div>
-                <div class="footer-copyright">
-                    &copy; 2026, Mbare Marketplace. All rights reserved.
-                </div>
-            </div>
-        </div>
-    </footer>
-
     <script src="api.js"></script>
     <script src="auth-check.js"></script>
     
     <script>
-        // Image shuffling configuration
-        const petImages = [
-            'pet_supplies/1.jpg',
-            'pet_supplies/2.jpg',
-            'pet_supplies/3.jpg',
-            'pet_supplies/4.jpg',
-            'pet_supplies/5.jpg',
-            'pet_supplies/6.jpg'
-        ];
-
-        function shuffleHeaderImages() {
-            const panels = document.querySelectorAll('.slide-panel img');
-            panels.forEach((img) => {
-                // Fade out effect
-                img.style.opacity = '0.3';
-                
-                setTimeout(() => {
-                    // Select a random image from the folder array
-                    const randomIndex = Math.floor(Math.random() * petImages.length);
-                    img.src = petImages[randomIndex];
-                    // Fade back in
-                    img.style.opacity = '1';
-                }, 800);
-            });
-        }
-
-        // Start shuffling every 4 seconds
-        setInterval(shuffleHeaderImages, 4000);
-
-        // Product Loading Logic
         let allProducts = [];
         let currentProducts = [];
         let sellersMap = {};
         let ratingsCache = {};
 
-        const categoryKeywords = [
-            'Pet Supplies', 'Pet', 'Pets', 'Pet Food', 'Pet Accessories',
-            'Dog', 'Cat', 'Bird', 'Fish', 'Rabbit', 'Hamster',
-            'Food', 'Toys', 'Treats', 'Leash', 'Collar', 'Bed', 'Cage'
-        ];
+        const petImages = ['pet_supplies/1.jpg', 'pet_supplies/2.jpg', 'pet_supplies/3.jpg', 'pet_supplies/4.jpg', 'pet_supplies/5.jpg', 'pet_supplies/6.jpg'];
+
+        function shuffleSlider() {
+            const panels = document.querySelectorAll('.slide-panel img');
+            panels.forEach(img => {
+                img.style.opacity = '0.3';
+                setTimeout(() => {
+                    img.src = petImages[Math.floor(Math.random() * petImages.length)];
+                    img.style.opacity = '1';
+                }, 800);
+            });
+        }
+        setInterval(shuffleSlider, 5000);
 
         async function loadSellers() {
             try {
-                const SUPABASE_URL = window.SUPABASE_URL;
-                const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/sellers?select=*`, {
-                    headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+                const response = await fetch(`${window.SUPABASE_URL}/rest/v1/sellers?select=*`, {
+                    headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}` }
                 });
-                if (response.ok) {
-                    const sellers = await response.json();
-                    sellers.forEach(seller => { sellersMap[seller.user_id] = seller; });
+                const sellers = await response.json();
+                sellers.forEach(s => sellersMap[s.user_id] = s);
+            } catch (e) { console.error(e); }
+        }
+
+        async function getSellerRatings(sellerId) {
+            if (ratingsCache[sellerId]) return ratingsCache[sellerId];
+            try {
+                const response = await fetch(`${window.SUPABASE_URL}/rest/v1/ratings?seller_id=eq.${sellerId}&select=rating`, {
+                    headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}` }
+                });
+                const ratings = await response.json();
+                let display = '<span style="color:#999">No ratings yet</span>';
+                if (ratings.length > 0) {
+                    const avg = ratings.reduce((a, b) => a + b.rating, 0) / ratings.length;
+                    const fullStars = Math.floor(avg);
+                    const stars = '★'.repeat(fullStars) + (avg % 1 >= 0.5 ? '½' : '');
+                    display = `<span style="color:#f90">${stars}</span> (${ratings.length})`;
                 }
-            } catch (error) { console.error('Error loading sellers:', error); }
+                ratingsCache[sellerId] = { display };
+                return ratingsCache[sellerId];
+            } catch { return { display: 'No ratings' }; }
         }
 
         async function loadPetSupplies() {
-            try {
-                const SUPABASE_URL = window.SUPABASE_URL;
-                const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
-                    headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
-                });
-                const data = await response.json();
-                if (Array.isArray(data)) {
-                    allProducts = data.filter(product => {
-                        const category = (product.category || '').toLowerCase();
-                        const title = (product.title || '').toLowerCase();
-                        return categoryKeywords.some(keyword => 
-                            category.includes(keyword.toLowerCase()) || title.includes(keyword.toLowerCase())
-                        );
-                    }).map(p => ({
-                        id: p.id,
-                        title: p.title,
-                        price: parseFloat(p.price),
-                        image: p.image_url || 'https://via.placeholder.com/300x300?text=Pet+Product',
-                        seller_id: p.seller_id,
-                        created_at: p.created_at
-                    }));
-                    currentProducts = [...allProducts];
-                    displayProducts(currentProducts);
-                    updateResultsCount(currentProducts.length);
-                }
-            } catch (error) {
-                console.error('Error loading products:', error);
-            }
+            const response = await fetch(`${window.SUPABASE_URL}/rest/v1/products?select=*`, {
+                headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}` }
+            });
+            const data = await response.json();
+            allProducts = data.filter(p => (p.category || '').toLowerCase().includes('pet') || (p.title || '').toLowerCase().includes('pet'))
+                .map(p => ({ ...p, price: parseFloat(p.price) }));
+            currentProducts = [...allProducts];
+            displayProducts(currentProducts);
         }
 
-        async function displayProducts(productsToShow) {
+        async function displayProducts(products) {
             const container = document.getElementById('petSuppliesGrid');
-            if (!productsToShow || productsToShow.length === 0) {
-                container.innerHTML = `<div class="no-products"><h3>🐾 No Products Found</h3><a href="index.html" class="back-to-shop">Back to Home</a></div>`;
-                return;
-            }
             container.innerHTML = '';
-            for (const product of productsToShow) {
-                const seller = sellersMap[product.seller_id] || {};
+            for (const p of products) {
+                const seller = sellersMap[p.seller_id] || {};
+                const ratingInfo = await getSellerRatings(p.seller_id);
                 const card = document.createElement('div');
                 card.className = 'product-card';
                 card.innerHTML = `
-                    <img src="${product.image}" class="product-image" onclick="viewProduct('${product.id}')" style="cursor: pointer;">
-                    <h3 class="product-title">${product.title}</h3>
-                    <div class="product-price"><span class="currency">$</span>${product.price.toFixed(2)}</div>
+                    <img src="${p.image_url}" class="product-image" onclick="location.href='product-detail.html?id=${p.id}'">
+                    <h3 class="product-title">${p.title}</h3>
+                    <div class="product-price">$${p.price.toFixed(2)}</div>
                     <div class="product-seller">🏪 ${seller.business_name || 'Pet Store'}</div>
-                    <button class="btn-add-cart" onclick="addToBasket('${product.id}')">Add to Basket</button>
+                    <div class="seller-rating">${ratingInfo.display}</div>
+                    <div class="product-actions">
+                        <button class="btn-add-cart" onclick="addToBasket('${p.id}')">Add to Basket</button>
+                        <button onclick="contactSeller('${p.id}')" style="background:#25D366;color:white;border:none;padding:8px;border-radius:4px;width:100%;margin-top:5px;cursor:pointer">💬 Contact Seller</button>
+                    </div>
                 `;
                 container.appendChild(card);
             }
+            document.getElementById('resultsCount').textContent = `${products.length} products found`;
         }
 
-        function updateResultsCount(count) {
-            document.getElementById('resultsCount').textContent = `${count} product${count !== 1 ? 's' : ''} found`;
+        function addToBasket(productId) {
+            const session = JSON.parse(localStorage.getItem('supabase_session'));
+            if (!session) return (window.location.href = 'login.html');
+            const basketKey = `basket_${session.user.id}`;
+            let basket = JSON.parse(localStorage.getItem(basketKey)) || [];
+            const product = allProducts.find(p => p.id == productId);
+            basket.push({ ...product, quantity: 1 });
+            localStorage.setItem(basketKey, JSON.stringify(basket));
+            updateBasketCount(basket.length);
+            alert('Added to basket!');
         }
 
-        function sortProducts() {
-            const val = document.getElementById('sortSelect').value;
-            if (val === 'price_low') currentProducts.sort((a,b) => a.price - b.price);
-            else if (val === 'price_high') currentProducts.sort((a,b) => b.price - a.price);
-            displayProducts(currentProducts);
-        }
-
-        function handleSearch() {
-            const term = document.getElementById('searchInput').value.toLowerCase();
-            currentProducts = allProducts.filter(p => p.title.toLowerCase().includes(term));
-            displayProducts(currentProducts);
-            updateResultsCount(currentProducts.length);
+        function contactSeller(productId) {
+            const product = allProducts.find(p => p.id == productId);
+            const seller = sellersMap[product.seller_id];
+            if (seller && seller.business_phone) {
+                const phone = seller.business_phone.replace(/\D/g, '');
+                window.open(`https://wa.me/${phone}?text=Interested in ${product.title}`, '_blank');
+            }
         }
 
         function updateBasketCount(count) {
-            const bc = document.getElementById('basketCount');
-            if (bc) { bc.textContent = count; bc.style.display = count > 0 ? 'flex' : 'none'; }
+            const el = document.getElementById('basketCount');
+            if (el) { el.textContent = count; el.style.display = count > 0 ? 'flex' : 'none'; }
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
             await loadSellers();
             await loadPetSupplies();
-            // Header login update
-            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-            if (isLoggedIn) {
+            const sessionData = localStorage.getItem('supabase_session');
+            if (sessionData) {
+                const session = JSON.parse(sessionData);
+                const basket = JSON.parse(localStorage.getItem(`basket_${session.user.id}`)) || [];
+                updateBasketCount(basket.length);
                 document.getElementById('logoutBtn').style.display = 'inline-block';
-                const session = JSON.parse(localStorage.getItem('supabase_session'));
-                document.querySelector('.account-label').textContent = `Hello, ${session.user.email.split('@')[0]}`;
             }
         });
     </script>
