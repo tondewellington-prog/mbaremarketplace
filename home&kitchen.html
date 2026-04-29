@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Home & Kitchen | Mbare Marketplace</title>
-    <meta name="description" content="Buy latest Gadgets and Tech Essentials.">
+    <meta name="description" content="Buy Home & Kitchen essentials - appliances, cookware, furniture and more at Mbare Marketplace.">
     
     <link rel="canonical" href="https://www.mbaremarketplace.com/category-home&kitchen.html">
     <link rel="stylesheet" href="styles.css">
@@ -13,7 +13,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
-        /* DASHBOARD & HEADER STYLES */
         .category-header {
             background: linear-gradient(135deg, #232f3e, #1a2533);
             color: white;
@@ -154,8 +153,8 @@
                 <div class="slide-panel"><img src="home&kitchen/4.jpg" alt="home&kitchen"></div>
                 
                 <div class="slider-overlay-text">
-                    <h1>🏠Home & Kitchen</h1>
-                    <p>Buy latest Gadgets and Tech Essentials</p>
+                    <h1>🏠 Home & Kitchen</h1>
+                    <p>Transform your living space with our premium products</p>
                 </div>
             </div>
         </div>
@@ -174,7 +173,7 @@
 
     <main class="main-content">
         <div class="container">
-            <div class="product-grid" id="home&kitchenGrid"></div>
+            <div class="product-grid" id="homeAndKitchenGrid"></div>
         </div>
     </main>
 
@@ -188,6 +187,7 @@
         let ratingsCache = {};
 
         const homekitchenImages = ['home&kitchen/1.jpg', 'home&kitchen/2.jpg', 'home&kitchen/3.jpg', 'home&kitchen/4.jpg', 'home&kitchen/5.jpg', 'home&kitchen/6.jpg','home&kitchen/7.jpg','home&kitchen/8.jpg','home&kitchen/9.jpg','home&kitchen/10.jpg'];
+        
         function shuffleSlider() {
             const panels = document.querySelectorAll('.slide-panel img');
             panels.forEach(img => {
@@ -238,31 +238,67 @@
             } catch { return { display: '<span style="color: #999;">No ratings</span>' }; }
         }
 
-        async function loadhomekitchen() {
-            const response = await fetch(`${window.SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
-                headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}` }
-            });
-            const data = await response.json();
-            allProducts = data.filter(p => (p.category || '').toLowerCase().includes('homekitchen') || (p.title || '').toLowerCase().includes('homekitchen'))
-                .map(p => ({ ...p, price: parseFloat(p.price) }));
-            currentProducts = [...allProducts];
-            displayProducts(currentProducts);
-            updateResultsCount(currentProducts.length);
+        async function loadHomeAndKitchen() {
+            try {
+                const response = await fetch(`${window.SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
+                    headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}` }
+                });
+                const data = await response.json();
+                
+                // FIXED: Better category filtering for Home & Kitchen
+                allProducts = data.filter(p => {
+                    const category = (p.category || '').toLowerCase();
+                    const title = (p.title || '').toLowerCase();
+                    const description = (p.description || '').toLowerCase();
+                    
+                    return category.includes('home') || 
+                           category.includes('kitchen') ||
+                           category.includes('homekitchen') ||
+                           title.includes('home') ||
+                           title.includes('kitchen') ||
+                           description.includes('home') ||
+                           description.includes('kitchen') ||
+                           category === 'Home & Kitchen';
+                }).map(p => ({ 
+                    ...p, 
+                    price: parseFloat(p.price),
+                    created_at: p.created_at || new Date().toISOString()
+                }));
+                
+                console.log('Home & Kitchen products found:', allProducts.length);
+                currentProducts = [...allProducts];
+                displayProducts(currentProducts);
+                updateResultsCount(currentProducts.length);
+            } catch (error) {
+                console.error('Error loading products:', error);
+                document.getElementById('homeAndKitchenGrid').innerHTML = '<p style="text-align:center; padding:40px;">Error loading products. Please refresh the page.</p>';
+            }
         }
 
         async function displayProducts(products) {
-            const container = document.getElementById('homekitchenGrid');
+            const container = document.getElementById('homeAndKitchenGrid');
+            if (!container) {
+                console.error('Container homeAndKitchenGrid not found!');
+                return;
+            }
+            
+            if (!products || products.length === 0) {
+                container.innerHTML = '<p style="text-align:center; padding:40px;">No Home & Kitchen products found.</p>';
+                return;
+            }
+            
             container.innerHTML = '';
+            
             for (const p of products) {
                 const seller = sellersMap[p.seller_id] || {};
                 const ratingInfo = await getSellerRatings(p.seller_id);
                 const card = document.createElement('div');
                 card.className = 'product-card';
                 card.innerHTML = `
-                    <img src="${p.image_url}" class="product-image" onclick="viewProduct('${p.id}')" style="cursor: pointer;">
-                    <h3 class="product-title" onclick="viewProduct('${p.id}')" style="cursor: pointer;">${p.title}</h3>
-                    <div class="product-price">$${p.price.toFixed(2)}</div>
-                    <div class="product-seller">🏪 ${seller.business_name || 'Home&Kitchen Store'}</div>
+                    <img src="${p.image_url || 'https://via.placeholder.com/300x300?text=Product'}" class="product-image" onclick="viewProduct('${p.id}')" style="cursor: pointer;" onerror="this.src='https://via.placeholder.com/300x300?text=Product'">
+                    <h3 class="product-title" onclick="viewProduct('${p.id}')" style="cursor: pointer;">${p.title || 'Product'}</h3>
+                    <div class="product-price">$${(p.price || 0).toFixed(2)}</div>
+                    <div class="product-seller">🏪 ${seller.business_name || 'Home & Kitchen Store'}</div>
                     <div class="seller-rating">${ratingInfo.display}</div>
                     <div class="product-actions">
                         <button class="btn-add-cart" onclick="addToBasket('${p.id}')">Add to Basket</button>
@@ -279,7 +315,7 @@
                 currentProducts = [...allProducts];
             } else {
                 currentProducts = allProducts.filter(product => 
-                    product.title.toLowerCase().includes(searchTerm) ||
+                    (product.title && product.title.toLowerCase().includes(searchTerm)) ||
                     (product.description && product.description.toLowerCase().includes(searchTerm))
                 );
             }
@@ -296,9 +332,13 @@
 
         function sortProducts() {
             const sortValue = document.getElementById('sortSelect').value;
-            if (sortValue === 'price_low') currentProducts.sort((a, b) => a.price - b.price);
-            else if (sortValue === 'price_high') currentProducts.sort((a, b) => b.price - a.price);
-            else currentProducts.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            if (sortValue === 'price_low') {
+                currentProducts.sort((a, b) => (a.price || 0) - (b.price || 0));
+            } else if (sortValue === 'price_high') {
+                currentProducts.sort((a, b) => (b.price || 0) - (a.price || 0));
+            } else {
+                currentProducts.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+            }
             displayProducts(currentProducts);
         }
 
@@ -308,29 +348,51 @@
 
         function addToBasket(productId) {
             const sessionData = localStorage.getItem('supabase_session');
-            if (!sessionData) return (window.location.href = 'login.html');
+            if (!sessionData) {
+                window.location.href = 'login.html';
+                return;
+            }
             const session = JSON.parse(sessionData);
             const basketKey = `basket_${session.user.id}`;
             let basket = JSON.parse(localStorage.getItem(basketKey)) || [];
             const product = allProducts.find(p => p.id == productId);
-            basket.push({ ...product, quantity: 1 });
-            localStorage.setItem(basketKey, JSON.stringify(basket));
-            updateBasketCount(basket.length);
-            alert('Item added!');
+            if (product) {
+                const existingItem = basket.find(item => item.id == productId);
+                if (existingItem) {
+                    existingItem.quantity = (existingItem.quantity || 1) + 1;
+                } else {
+                    basket.push({ ...product, quantity: 1 });
+                }
+                localStorage.setItem(basketKey, JSON.stringify(basket));
+                updateBasketCount(basket.reduce((sum, item) => sum + (item.quantity || 1), 0));
+                alert('Item added to basket!');
+            }
         }
 
         function contactSeller(productId) {
             const product = allProducts.find(p => p.id == productId);
-            const seller = sellersMap[product.seller_id];
+            const seller = sellersMap[product?.seller_id];
             if (seller?.business_phone) {
                 const phone = seller.business_phone.replace(/\D/g, '');
-                window.open(`https://wa.me/${phone}?text=Interested in ${product.title}`, '_blank');
+                const message = encodeURIComponent(`Hello! I am interested in ${product.title} from Mbare Marketplace.`);
+                window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
+            } else {
+                alert('Seller contact information not available.');
             }
         }
 
         function updateBasketCount(count) {
             const el = document.getElementById('basketCount');
-            if (el) { el.textContent = count; el.style.display = count > 0 ? 'flex' : 'none'; }
+            if (el) { 
+                el.textContent = count; 
+                el.style.display = count > 0 ? 'flex' : 'none'; 
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('supabase_session');
+            localStorage.removeItem('isLoggedIn');
+            window.location.href = 'index.html';
         }
 
         document.getElementById('searchInput').addEventListener('keypress', (e) => {
@@ -339,14 +401,17 @@
 
         document.addEventListener('DOMContentLoaded', async () => {
             await loadSellers();
-            await loadhomekitchen();
+            await loadHomeAndKitchen();
+            
             const sessionData = localStorage.getItem('supabase_session');
             if (sessionData) {
                 const session = JSON.parse(sessionData);
                 const basket = JSON.parse(localStorage.getItem(`basket_${session.user.id}`)) || [];
-                updateBasketCount(basket.reduce((sum, item) => sum + (item.quantity || 0), 0));
-                document.getElementById('logoutBtn').style.display = 'inline-block';
-                document.querySelector('.account-label').textContent = `Hello, ${session.user.email.split('@')[0]}`;
+                updateBasketCount(basket.reduce((sum, item) => sum + (item.quantity || 1), 0));
+                const logoutBtn = document.getElementById('logoutBtn');
+                if (logoutBtn) logoutBtn.style.display = 'inline-block';
+                const accountLabel = document.querySelector('.account-label');
+                if (accountLabel) accountLabel.textContent = `Hello, ${session.user.email.split('@')[0]}`;
             }
         });
     </script>
