@@ -41,7 +41,7 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transition: opacity 0.8s ease-in-out;
+            transition: opacity 0.5s ease-in-out;
         }
 
         .slider-overlay-text {
@@ -51,6 +51,7 @@
             right: 0;
             z-index: 10;
             pointer-events: none;
+            text-align: center;
         }
 
         .category-header h1 {
@@ -91,14 +92,34 @@
         .category-breadcrumb a { color: #232f3e; text-decoration: none; }
         .category-breadcrumb a:hover { color: #f90; }
 
+        /* FIXED: Ensure all 4 panels are visible on desktop */
         @media (max-width: 768px) {
             .slider-container {
                 grid-template-columns: repeat(3, 1fr) !important;
             }
-            .slide-panel:nth-child(4) { display: none; }
-            .slide-panel { height: 140px; }
-            .category-header h1 { font-size: 18px; }
-            .product-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+            .slide-panel:nth-child(4) { 
+                display: none; 
+            }
+            .slide-panel { 
+                height: 140px; 
+            }
+            .category-header h1 { 
+                font-size: 18px; 
+            }
+            .product-grid { 
+                grid-template-columns: repeat(2, 1fr); 
+                gap: 12px; 
+            }
+        }
+        
+        /* Ensure desktop shows all 4 panels */
+        @media (min-width: 769px) {
+            .slider-container {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            .slide-panel:nth-child(4) { 
+                display: block; 
+            }
         }
     </style>
 </head>
@@ -147,10 +168,18 @@
     <section class="category-header">
         <div class="container">
             <div class="slider-container" id="heroSlider">
-                <div class="slide-panel"><img src="home&kitchen/1.jpg" alt="home&kitchen"></div>
-                <div class="slide-panel"><img src="home&kitchen/2.jpg" alt="home&kitchen"></div>
-                <div class="slide-panel"><img src="home&kitchen/3.jpg" alt="home&kitchen"></div>
-                <div class="slide-panel"><img src="home&kitchen/4.jpg" alt="home&kitchen"></div>
+                <div class="slide-panel">
+                    <img src="home&kitchen/1.jpg" alt="home&kitchen" id="slideImg1">
+                </div>
+                <div class="slide-panel">
+                    <img src="home&kitchen/2.jpg" alt="home&kitchen" id="slideImg2">
+                </div>
+                <div class="slide-panel">
+                    <img src="home&kitchen/3.jpg" alt="home&kitchen" id="slideImg3">
+                </div>
+                <div class="slide-panel">
+                    <img src="home&kitchen/4.jpg" alt="home&kitchen" id="slideImg4">
+                </div>
                 
                 <div class="slider-overlay-text">
                     <h1>🏠 Home & Kitchen</h1>
@@ -186,19 +215,47 @@
         let sellersMap = {};
         let ratingsCache = {};
 
-        const homekitchenImages = ['home&kitchen/1.jpg', 'home&kitchen/2.jpg', 'home&kitchen/3.jpg', 'home&kitchen/4.jpg', 'home&kitchen/5.jpg', 'home&kitchen/6.jpg','home&kitchen/7.jpg','home&kitchen/8.jpg','home&kitchen/9.jpg','home&kitchen/10.jpg'];
+        const homekitchenImages = [
+            'home&kitchen/1.jpg', 
+            'home&kitchen/2.jpg', 
+            'home&kitchen/3.jpg', 
+            'home&kitchen/4.jpg', 
+            'home&kitchen/5.jpg', 
+            'home&kitchen/6.jpg',
+            'home&kitchen/7.jpg',
+            'home&kitchen/8.jpg',
+            'home&kitchen/9.jpg',
+            'home&kitchen/10.jpg'
+        ];
         
+        // FIXED: Shuffle slider - each panel gets a new image without breaking layout
         function shuffleSlider() {
-            const panels = document.querySelectorAll('.slide-panel img');
-            panels.forEach(img => {
-                img.style.opacity = '0.3';
-                setTimeout(() => {
-                    img.src = homekitchenImages[Math.floor(Math.random() * homekitchenImages.length)];
-                    img.style.opacity = '1';
-                }, 800);
+            // Get all slide panels
+            const panels = document.querySelectorAll('.slide-panel');
+            
+            panels.forEach(panel => {
+                // Get the img element inside this panel
+                const img = panel.querySelector('img');
+                if (img) {
+                    // Fade out
+                    img.style.opacity = '0.3';
+                    
+                    // Change image after short delay
+                    setTimeout(() => {
+                        let newIndex;
+                        do {
+                            newIndex = Math.floor(Math.random() * homekitchenImages.length);
+                        } while (homekitchenImages[newIndex] === img.src && homekitchenImages.length > 1); // Avoid same image
+                        
+                        img.src = homekitchenImages[newIndex];
+                        img.style.opacity = '1';
+                    }, 300);
+                }
             });
         }
-        setInterval(shuffleSlider, 5000);
+        
+        // Set interval for shuffling images (every 5 seconds)
+        let sliderInterval = setInterval(shuffleSlider, 5000);
 
         async function loadSellers() {
             try {
@@ -207,7 +264,7 @@
                 });
                 const sellers = await response.json();
                 sellers.forEach(s => sellersMap[s.user_id] = s);
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error('Error loading sellers:', e); }
         }
 
         function generateRatingStars(rating) {
@@ -245,7 +302,7 @@
                 });
                 const data = await response.json();
                 
-                // FIXED: Better category filtering for Home & Kitchen
+                // Better category filtering for Home & Kitchen
                 allProducts = data.filter(p => {
                     const category = (p.category || '').toLowerCase();
                     const title = (p.title || '').toLowerCase();
@@ -254,6 +311,9 @@
                     return category.includes('home') || 
                            category.includes('kitchen') ||
                            category.includes('homekitchen') ||
+                           category.includes('furniture') ||
+                           category.includes('appliance') ||
+                           category.includes('cookware') ||
                            title.includes('home') ||
                            title.includes('kitchen') ||
                            description.includes('home') ||
@@ -271,7 +331,10 @@
                 updateResultsCount(currentProducts.length);
             } catch (error) {
                 console.error('Error loading products:', error);
-                document.getElementById('homeAndKitchenGrid').innerHTML = '<p style="text-align:center; padding:40px;">Error loading products. Please refresh the page.</p>';
+                const grid = document.getElementById('homeAndKitchenGrid');
+                if (grid) {
+                    grid.innerHTML = '<p style="text-align:center; padding:40px;">Error loading products. Please refresh the page.</p>';
+                }
             }
         }
 
@@ -412,6 +475,13 @@
                 if (logoutBtn) logoutBtn.style.display = 'inline-block';
                 const accountLabel = document.querySelector('.account-label');
                 if (accountLabel) accountLabel.textContent = `Hello, ${session.user.email.split('@')[0]}`;
+            }
+        });
+        
+        // Clean up interval on page unload to prevent memory leaks
+        window.addEventListener('beforeunload', () => {
+            if (sliderInterval) {
+                clearInterval(sliderInterval);
             }
         });
     </script>
