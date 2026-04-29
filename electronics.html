@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Electronics | Mbare Marketplace</title>
+    <meta name="description" content="Buy latest Gadgets and Tech Essentials.">
+    
+    <link rel="canonical" href="https://www.mbaremarketplace.com/category-electronics.html">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* DASHBOARD & HEADER STYLES */
+        .category-header {
+            background: linear-gradient(135deg, #232f3e, #1a2533);
+            color: white;
+            padding: 15px 0;
+            text-align: center;
+            position: relative;
+        }
+        
+        .slider-container {
+            display: grid;
+            gap: 10px;
+            padding: 0 15px;
+            grid-template-columns: repeat(4, 1fr);
+            position: relative;
+        }
+
+        .slide-panel {
+            position: relative;
+            height: 200px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #1a2533;
+        }
+
+        .slide-panel img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: opacity 0.8s ease-in-out;
+        }
+
+        .slider-overlay-text {
+            position: absolute;
+            bottom: 15px;
+            left: 0;
+            right: 0;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .category-header h1 {
+            font-size: 22px;
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.4);
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 5px;
+        }
+        
+        .category-header p {
+            font-size: 13px;
+            opacity: 0.9;
+            margin-top: 4px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+
+        .filter-bar {
+            background: white;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .filter-bar .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .category-breadcrumb { padding: 12px 0; background: #f8f9fa; font-size: 14px; }
+        .category-breadcrumb a { color: #232f3e; text-decoration: none; }
+        .category-breadcrumb a:hover { color: #f90; }
+
+        @media (max-width: 768px) {
+            .slider-container {
+                grid-template-columns: repeat(3, 1fr) !important;
+            }
+            .slide-panel:nth-child(4) { display: none; }
+            .slide-panel { height: 140px; }
+            .category-header h1 { font-size: 18px; }
+            .product-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="header-top">
+            <div class="container">
+                <div class="logo"><a href="index.html">Mbare Marketplace</a></div>
+                <div class="search-bar">
+                    <select class="search-category" id="searchCategory">
+                        <option>All</option>
+                        <option selected>Electronics</option>
+                    </select>
+                    <input type="text" id="searchInput" placeholder="Search Electronics..." class="search-input">
+                    <button class="search-btn" onclick="handleSearch()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+                    </button>
+                </div>
+                <div class="header-right">
+                    <div class="account-menu" id="accountMenu">
+                        <span class="account-label">Hello, Sign in</span>
+                        <a href="login.html" class="account-link">Account & Lists</a>
+                        <button id="logoutBtn" class="logout-btn" onclick="logout()" style="display: none;">Logout</button>
+                    </div>
+                    <a href="Basket.html" class="basket">
+                        <div class="basket-icon">
+                            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                                <line x1="3" y1="6" x2="21" y2="6"></line>
+                                <path d="M16 10a4 4 0 0 1-8 0"></path>
+                            </svg>
+                            <span class="basket-count" id="basketCount">0</span>
+                        </div>
+                        <span class="basket-text">Basket</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="category-breadcrumb">
+        <div class="container"><a href="index.html">Home</a> > <span>Electronics</span></div>
+    </div>
+
+    <section class="category-header">
+        <div class="container">
+            <div class="slider-container" id="heroSlider">
+                <div class="slide-panel"><img src="electronics/1.jpg" alt="Electronics"></div>
+                <div class="slide-panel"><img src="electronics/2.jpg" alt="Electronics"></div>
+                <div class="slide-panel"><img src="electronics/3.jpg" alt="Electronics"></div>
+                <div class="slide-panel"><img src="electronics/4.jpg" alt="Electronics"></div>
+                
+                <div class="slider-overlay-text">
+                    <h1>⚡ Electronics</h1>
+                    <p>Buy latest Gadgets and Tech Essentials</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="filter-bar">
+        <div class="container">
+            <div class="results-count" id="resultsCount">Loading products...</div>
+            <select id="sortSelect" class="sort-select" onchange="sortProducts()">
+                <option value="newest">Newest First</option>
+                <option value="price_low">Price: Low to High</option>
+                <option value="price_high">Price: High to Low</option>
+            </select>
+        </div>
+    </div>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="product-grid" id="ElectronicsGrid"></div>
+        </div>
+    </main>
+
+    <script src="api.js"></script>
+    <script src="auth-check.js"></script>
+    
+    <script>
+        let allProducts = [];
+        let currentProducts = [];
+        let sellersMap = {};
+        let ratingsCache = {};
+
+        const ElectronicsImages = ['electronics/1.jpg', 'electronics/2.jpg', 'electronics/3.jpg', 'electronics/4.jpg', 'electronics/5.jpg', 'electronics/6.jpg'];
+        function shuffleSlider() {
+            const panels = document.querySelectorAll('.slide-panel img');
+            panels.forEach(img => {
+                img.style.opacity = '0.3';
+                setTimeout(() => {
+                    img.src = ElectronicsImages[Math.floor(Math.random() * ElectronicsImages.length)];
+                    img.style.opacity = '1';
+                }, 800);
+            });
+        }
+        setInterval(shuffleSlider, 5000);
+
+        async function loadSellers() {
+            try {
+                const response = await fetch(`${window.SUPABASE_URL}/rest/v1/sellers?select=*`, {
+                    headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}` }
+                });
+                const sellers = await response.json();
+                sellers.forEach(s => sellersMap[s.user_id] = s);
+            } catch (e) { console.error(e); }
+        }
+
+        function generateRatingStars(rating) {
+            const fullStars = Math.floor(rating);
+            const hasHalfStar = rating % 1 >= 0.5;
+            let stars = '';
+            for (let i = 0; i < fullStars; i++) stars += '★';
+            if (hasHalfStar) stars += '½';
+            const emptyStars = 5 - Math.ceil(rating);
+            for (let i = 0; i < emptyStars; i++) stars += '☆';
+            return stars;
+        }
+
+        async function getSellerRatings(sellerId) {
+            if (ratingsCache[sellerId]) return ratingsCache[sellerId];
+            try {
+                const response = await fetch(`${window.SUPABASE_URL}/rest/v1/ratings?seller_id=eq.${sellerId}&select=rating`, {
+                    headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}` }
+                });
+                const ratings = await response.json();
+                let display = '<span style="color: #999;">No ratings yet</span>';
+                if (ratings && ratings.length > 0) {
+                    const avg = ratings.reduce((acc, curr) => acc + curr.rating, 0) / ratings.length;
+                    display = `<span style="color: #f90;">${generateRatingStars(avg)}</span> <span style="color: #666;">(${ratings.length})</span>`;
+                }
+                ratingsCache[sellerId] = { display };
+                return ratingsCache[sellerId];
+            } catch { return { display: '<span style="color: #999;">No ratings</span>' }; }
+        }
+
+        async function loadElectronics() {
+            const response = await fetch(`${window.SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
+                headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}` }
+            });
+            const data = await response.json();
+            allProducts = data.filter(p => (p.category || '').toLowerCase().includes('Electronics') || (p.title || '').toLowerCase().includes('Electronics'))
+                .map(p => ({ ...p, price: parseFloat(p.price) }));
+            currentProducts = [...allProducts];
+            displayProducts(currentProducts);
+            updateResultsCount(currentProducts.length);
+        }
+
+        async function displayProducts(products) {
+            const container = document.getElementById('ElectronicsGrid');
+            container.innerHTML = '';
+            for (const p of products) {
+                const seller = sellersMap[p.seller_id] || {};
+                const ratingInfo = await getSellerRatings(p.seller_id);
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.innerHTML = `
+                    <img src="${p.image_url}" class="product-image" onclick="viewProduct('${p.id}')" style="cursor: pointer;">
+                    <h3 class="product-title" onclick="viewProduct('${p.id}')" style="cursor: pointer;">${p.title}</h3>
+                    <div class="product-price">$${p.price.toFixed(2)}</div>
+                    <div class="product-seller">🏪 ${seller.business_name || 'Electronics Store'}</div>
+                    <div class="seller-rating">${ratingInfo.display}</div>
+                    <div class="product-actions">
+                        <button class="btn-add-cart" onclick="addToBasket('${p.id}')">Add to Basket</button>
+                        <button onclick="contactSeller('${p.id}')" style="background:#25D366;color:white;border:none;padding:8px;border-radius:4px;width:100%;margin-top:5px;cursor:pointer">💬 Contact Seller</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            }
+        }
+
+        function handleSearch() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            if (!searchTerm) {
+                currentProducts = [...allProducts];
+            } else {
+                currentProducts = allProducts.filter(product => 
+                    product.title.toLowerCase().includes(searchTerm) ||
+                    (product.description && product.description.toLowerCase().includes(searchTerm))
+                );
+            }
+            displayProducts(currentProducts);
+            updateResultsCount(currentProducts.length);
+        }
+
+        function updateResultsCount(count) {
+            const countElement = document.getElementById('resultsCount');
+            if (countElement) {
+                countElement.textContent = `${count} product${count !== 1 ? 's' : ''} found`;
+            }
+        }
+
+        function sortProducts() {
+            const sortValue = document.getElementById('sortSelect').value;
+            if (sortValue === 'price_low') currentProducts.sort((a, b) => a.price - b.price);
+            else if (sortValue === 'price_high') currentProducts.sort((a, b) => b.price - a.price);
+            else currentProducts.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            displayProducts(currentProducts);
+        }
+
+        function viewProduct(productId) {
+            window.location.href = `product-detail.html?id=${productId}`;
+        }
+
+        function addToBasket(productId) {
+            const sessionData = localStorage.getItem('supabase_session');
+            if (!sessionData) return (window.location.href = 'login.html');
+            const session = JSON.parse(sessionData);
+            const basketKey = `basket_${session.user.id}`;
+            let basket = JSON.parse(localStorage.getItem(basketKey)) || [];
+            const product = allProducts.find(p => p.id == productId);
+            basket.push({ ...product, quantity: 1 });
+            localStorage.setItem(basketKey, JSON.stringify(basket));
+            updateBasketCount(basket.length);
+            alert('Item added!');
+        }
+
+        function contactSeller(productId) {
+            const product = allProducts.find(p => p.id == productId);
+            const seller = sellersMap[product.seller_id];
+            if (seller?.business_phone) {
+                const phone = seller.business_phone.replace(/\D/g, '');
+                window.open(`https://wa.me/${phone}?text=Interested in ${product.title}`, '_blank');
+            }
+        }
+
+        function updateBasketCount(count) {
+            const el = document.getElementById('basketCount');
+            if (el) { el.textContent = count; el.style.display = count > 0 ? 'flex' : 'none'; }
+        }
+
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleSearch();
+        });
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadSellers();
+            await loadElectronics();
+            const sessionData = localStorage.getItem('supabase_session');
+            if (sessionData) {
+                const session = JSON.parse(sessionData);
+                const basket = JSON.parse(localStorage.getItem(`basket_${session.user.id}`)) || [];
+                updateBasketCount(basket.reduce((sum, item) => sum + (item.quantity || 0), 0));
+                document.getElementById('logoutBtn').style.display = 'inline-block';
+                document.querySelector('.account-label').textContent = `Hello, ${session.user.email.split('@')[0]}`;
+            }
+        });
+    </script>
+</body>
+</html>
