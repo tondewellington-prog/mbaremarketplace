@@ -187,13 +187,13 @@
         let sellersMap = {};
         let ratingsCache = {};
 
-        const home&kitchenImages = ['home&kitchen/1.jpg', 'home&kitchen/2.jpg', 'home&kitchen/3.jpg', 'home&kitchen/4.jpg', 'home&kitchen/5.jpg', 'home&kitchen/6.jpg','home&kitchen/7.jpg','home&kitchen/8.jpg','home&kitchen/9.jpg','home&kitchen/10.jpg'];
+        const homekitchenImages = ['home&kitchen/1.jpg', 'home&kitchen/2.jpg', 'home&kitchen/3.jpg', 'home&kitchen/4.jpg', 'home&kitchen/5.jpg', 'home&kitchen/6.jpg','home&kitchen/7.jpg','home&kitchen/8.jpg','home&kitchen/9.jpg','home&kitchen/10.jpg'];
         function shuffleSlider() {
             const panels = document.querySelectorAll('.slide-panel img');
             panels.forEach(img => {
                 img.style.opacity = '0.3';
                 setTimeout(() => {
-                    img.src = home&kitchenImages[Math.floor(Math.random() * home&kitchenImages.length)];
+                    img.src = homekitchenImages[Math.floor(Math.random() * homekitchenImages.length)];
                     img.style.opacity = '1';
                 }, 800);
             });
@@ -238,12 +238,12 @@
             } catch { return { display: '<span style="color: #999;">No ratings</span>' }; }
         }
 
-        async function loadhome&kitchen() {
+        async function loadhomekitchen() {
             const response = await fetch(`${window.SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
                 headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}` }
             });
             const data = await response.json();
-            allProducts = data.filter(p => (p.category || '').toLowerCase().includes('home&kitchen') || (p.title || '').toLowerCase().includes('home&kitchen'))
+            allProducts = data.filter(p => (p.category || '').toLowerCase().includes('homekitchen') || (p.title || '').toLowerCase().includes('homekitchen'))
                 .map(p => ({ ...p, price: parseFloat(p.price) }));
             currentProducts = [...allProducts];
             displayProducts(currentProducts);
@@ -251,7 +251,7 @@
         }
 
         async function displayProducts(products) {
-            const container = document.getElementById('home&kitchenGrid');
+            const container = document.getElementById('homekitchenGrid');
             container.innerHTML = '';
             for (const p of products) {
                 const seller = sellersMap[p.seller_id] || {};
@@ -339,7 +339,7 @@
 
         document.addEventListener('DOMContentLoaded', async () => {
             await loadSellers();
-            await loadhome&kitchen();
+            await loadhomekitchen();
             const sessionData = localStorage.getItem('supabase_session');
             if (sessionData) {
                 const session = JSON.parse(sessionData);
