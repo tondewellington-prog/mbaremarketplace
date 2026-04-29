@@ -114,7 +114,7 @@
                         <option>All</option>
                         <option selected>Electronics</option>
                     </select>
-                    <input type="text" id="searchInput" placeholder="Search Electronics..." class="search-input">
+                    <input type="text" id="searchInput" placeholder="Search electronics..." class="search-input">
                     <button class="search-btn" onclick="handleSearch()">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
                     </button>
@@ -148,10 +148,10 @@
     <section class="category-header">
         <div class="container">
             <div class="slider-container" id="heroSlider">
-                <div class="slide-panel"><img src="electronics/1.jpg" alt="Electronics"></div>
-                <div class="slide-panel"><img src="electronics/2.jpg" alt="Electronics"></div>
-                <div class="slide-panel"><img src="electronics/3.jpg" alt="Electronics"></div>
-                <div class="slide-panel"><img src="electronics/4.jpg" alt="Electronics"></div>
+                <div class="slide-panel"><img src="electronics/1.jpg" alt="electronics"></div>
+                <div class="slide-panel"><img src="electronics/2.jpg" alt="electronics"></div>
+                <div class="slide-panel"><img src="electronics/3.jpg" alt="electronics"></div>
+                <div class="slide-panel"><img src="electronics/4.jpg" alt="electronics"></div>
                 
                 <div class="slider-overlay-text">
                     <h1>⚡ Electronics</h1>
@@ -174,7 +174,7 @@
 
     <main class="main-content">
         <div class="container">
-            <div class="product-grid" id="ElectronicsGrid"></div>
+            <div class="product-grid" id="electronicsGrid"></div>
         </div>
     </main>
 
@@ -187,13 +187,13 @@
         let sellersMap = {};
         let ratingsCache = {};
 
-        const ElectronicsImages = ['electronics/1.jpg', 'electronics/2.jpg', 'electronics/3.jpg', 'electronics/4.jpg', 'electronics/5.jpg', 'electronics/6.jpg'];
+        const electronicsImages = ['electronics/1.jpg', 'electronics/2.jpg', 'electronics/3.jpg', 'electronics/4.jpg', 'electronics/5.jpg', 'electronics/6.jpg'];
         function shuffleSlider() {
             const panels = document.querySelectorAll('.slide-panel img');
             panels.forEach(img => {
                 img.style.opacity = '0.3';
                 setTimeout(() => {
-                    img.src = ElectronicsImages[Math.floor(Math.random() * ElectronicsImages.length)];
+                    img.src = electronicsImages[Math.floor(Math.random() * electronicsImages.length)];
                     img.style.opacity = '1';
                 }, 800);
             });
@@ -238,12 +238,12 @@
             } catch { return { display: '<span style="color: #999;">No ratings</span>' }; }
         }
 
-        async function loadElectronics() {
+        async function loadelectronics() {
             const response = await fetch(`${window.SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
                 headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}` }
             });
             const data = await response.json();
-            allProducts = data.filter(p => (p.category || '').toLowerCase().includes('Electronics') || (p.title || '').toLowerCase().includes('Electronics'))
+            allProducts = data.filter(p => (p.category || '').toLowerCase().includes('electronics') || (p.title || '').toLowerCase().includes('electronics'))
                 .map(p => ({ ...p, price: parseFloat(p.price) }));
             currentProducts = [...allProducts];
             displayProducts(currentProducts);
@@ -251,7 +251,7 @@
         }
 
         async function displayProducts(products) {
-            const container = document.getElementById('ElectronicsGrid');
+            const container = document.getElementById('electronicsGrid');
             container.innerHTML = '';
             for (const p of products) {
                 const seller = sellersMap[p.seller_id] || {};
@@ -339,7 +339,7 @@
 
         document.addEventListener('DOMContentLoaded', async () => {
             await loadSellers();
-            await loadElectronics();
+            await loadelectronics();
             const sessionData = localStorage.getItem('supabase_session');
             if (sessionData) {
                 const session = JSON.parse(sessionData);
