@@ -92,7 +92,132 @@
         .category-breadcrumb a { color: #232f3e; text-decoration: none; }
         .category-breadcrumb a:hover { color: #f90; }
 
-        /* FIXED: Ensure all 4 panels are visible on desktop */
+        /* Contact Modal Styles */
+        .contact-modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            overflow-y: auto;
+            padding: 20px 0;
+        }
+        .contact-modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            animation: slideDown 0.3s ease-out;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        @keyframes slideDown {
+            from { transform: translateY(-100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .close-contact-modal {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            color: #666;
+            cursor: pointer;
+            z-index: 10;
+        }
+        .close-contact-modal:hover {
+            color: #000;
+        }
+        .info-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 12px;
+            background: #f5f5f5;
+            border-radius: 4px;
+        }
+        .info-icon {
+            width: 40px;
+            height: 40px;
+            background: #232f3e;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        .info-text {
+            flex: 1;
+            min-width: 0;
+        }
+        .info-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 3px;
+        }
+        .info-value {
+            font-size: 16px;
+            font-weight: 500;
+            color: #232f3e;
+            word-wrap: break-word;
+        }
+        .contact-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .contact-btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 14px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            text-align: center;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+        .contact-btn:hover {
+            opacity: 0.9;
+        }
+        .call-btn {
+            background: #28a745;
+            color: white;
+        }
+        .whatsapp-btn {
+            background: #25D366;
+            color: white;
+        }
+        .product-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #232f3e;
+            padding-right: 30px;
+        }
+
+        @media (min-width: 769px) {
+            .slider-container {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            .slide-panel:nth-child(4) { 
+                display: block; 
+            }
+        }
+
         @media (max-width: 768px) {
             .slider-container {
                 grid-template-columns: repeat(3, 1fr) !important;
@@ -110,20 +235,24 @@
                 grid-template-columns: repeat(2, 1fr); 
                 gap: 12px; 
             }
-        }
-        
-        /* Ensure desktop shows all 4 panels */
-        @media (min-width: 769px) {
-            .slider-container {
-                grid-template-columns: repeat(4, 1fr);
+            .contact-actions {
+                flex-direction: column;
             }
-            .slide-panel:nth-child(4) { 
-                display: block; 
+            .contact-btn {
+                width: 100%;
             }
         }
     </style>
 </head>
 <body>
+
+    <!-- Seller Contact Modal -->
+    <div id="sellerContactModal" class="contact-modal">
+        <div class="contact-modal-content">
+            <span class="close-contact-modal" onclick="document.getElementById('sellerContactModal').style.display='none'">&times;</span>
+            <div id="sellerContactContent"></div>
+        </div>
+    </div>
 
     <header class="header">
         <div class="header-top">
@@ -168,18 +297,10 @@
     <section class="category-header">
         <div class="container">
             <div class="slider-container" id="heroSlider">
-                <div class="slide-panel">
-                    <img src="home&kitchen/1.jpg" alt="home&kitchen" id="slideImg1">
-                </div>
-                <div class="slide-panel">
-                    <img src="home&kitchen/2.jpg" alt="home&kitchen" id="slideImg2">
-                </div>
-                <div class="slide-panel">
-                    <img src="home&kitchen/3.jpg" alt="home&kitchen" id="slideImg3">
-                </div>
-                <div class="slide-panel">
-                    <img src="home&kitchen/4.jpg" alt="home&kitchen" id="slideImg4">
-                </div>
+                <div class="slide-panel"><img src="home&kitchen/1.jpg" alt="home&kitchen" id="slideImg1"></div>
+                <div class="slide-panel"><img src="home&kitchen/2.jpg" alt="home&kitchen" id="slideImg2"></div>
+                <div class="slide-panel"><img src="home&kitchen/3.jpg" alt="home&kitchen" id="slideImg3"></div>
+                <div class="slide-panel"><img src="home&kitchen/4.jpg" alt="home&kitchen" id="slideImg4"></div>
                 
                 <div class="slider-overlay-text">
                     <h1>🏠 Home & Kitchen</h1>
@@ -210,51 +331,28 @@
     <script src="auth-check.js"></script>
     
     <script>
+        const WEBSITE_URL = 'https://www.mbaremarketplace.com';
         let allProducts = [];
         let currentProducts = [];
         let sellersMap = {};
         let ratingsCache = {};
 
         const homekitchenImages = [
-            'home&kitchen/1.jpg', 
-            'home&kitchen/2.jpg', 
-            'home&kitchen/3.jpg', 
-            'home&kitchen/4.jpg', 
-            'home&kitchen/5.jpg', 
-            'home&kitchen/6.jpg',
-            'home&kitchen/7.jpg',
-            'home&kitchen/8.jpg',
-            'home&kitchen/9.jpg',
-            'home&kitchen/10.jpg'
+            'home&kitchen/1.jpg', 'home&kitchen/2.jpg', 'home&kitchen/3.jpg', 'home&kitchen/4.jpg',
+            'home&kitchen/5.jpg', 'home&kitchen/6.jpg', 'home&kitchen/7.jpg', 'home&kitchen/8.jpg',
+            'home&kitchen/9.jpg', 'home&kitchen/10.jpg'
         ];
         
-        // FIXED: Shuffle slider - each panel gets a new image without breaking layout
         function shuffleSlider() {
-            // Get all slide panels
-            const panels = document.querySelectorAll('.slide-panel');
-            
-            panels.forEach(panel => {
-                // Get the img element inside this panel
-                const img = panel.querySelector('img');
-                if (img) {
-                    // Fade out
-                    img.style.opacity = '0.3';
-                    
-                    // Change image after short delay
-                    setTimeout(() => {
-                        let newIndex;
-                        do {
-                            newIndex = Math.floor(Math.random() * homekitchenImages.length);
-                        } while (homekitchenImages[newIndex] === img.src && homekitchenImages.length > 1); // Avoid same image
-                        
-                        img.src = homekitchenImages[newIndex];
-                        img.style.opacity = '1';
-                    }, 300);
-                }
+            const panels = document.querySelectorAll('.slide-panel img');
+            panels.forEach(img => {
+                img.style.opacity = '0.3';
+                setTimeout(() => {
+                    img.src = homekitchenImages[Math.floor(Math.random() * homekitchenImages.length)];
+                    img.style.opacity = '1';
+                }, 300);
             });
         }
-        
-        // Set interval for shuffling images (every 5 seconds)
         let sliderInterval = setInterval(shuffleSlider, 5000);
 
         async function loadSellers() {
@@ -302,7 +400,6 @@
                 });
                 const data = await response.json();
                 
-                // Better category filtering for Home & Kitchen
                 allProducts = data.filter(p => {
                     const category = (p.category || '').toLowerCase();
                     const title = (p.title || '').toLowerCase();
@@ -310,15 +407,13 @@
                     
                     return category.includes('home') || 
                            category.includes('kitchen') ||
-                           category.includes('homekitchen') ||
                            category.includes('furniture') ||
                            category.includes('appliance') ||
                            category.includes('cookware') ||
                            title.includes('home') ||
                            title.includes('kitchen') ||
                            description.includes('home') ||
-                           description.includes('kitchen') ||
-                           category === 'Home & Kitchen';
+                           description.includes('kitchen');
                 }).map(p => ({ 
                     ...p, 
                     price: parseFloat(p.price),
@@ -331,19 +426,13 @@
                 updateResultsCount(currentProducts.length);
             } catch (error) {
                 console.error('Error loading products:', error);
-                const grid = document.getElementById('homeAndKitchenGrid');
-                if (grid) {
-                    grid.innerHTML = '<p style="text-align:center; padding:40px;">Error loading products. Please refresh the page.</p>';
-                }
+                document.getElementById('homeAndKitchenGrid').innerHTML = '<p style="text-align:center; padding:40px;">Error loading products. Please refresh the page.</p>';
             }
         }
 
         async function displayProducts(products) {
             const container = document.getElementById('homeAndKitchenGrid');
-            if (!container) {
-                console.error('Container homeAndKitchenGrid not found!');
-                return;
-            }
+            if (!container) return;
             
             if (!products || products.length === 0) {
                 container.innerHTML = '<p style="text-align:center; padding:40px;">No Home & Kitchen products found.</p>';
@@ -365,11 +454,80 @@
                     <div class="seller-rating">${ratingInfo.display}</div>
                     <div class="product-actions">
                         <button class="btn-add-cart" onclick="addToBasket('${p.id}')">Add to Basket</button>
-                        <button onclick="contactSeller('${p.id}')" style="background:#25D366;color:white;border:none;padding:8px;border-radius:4px;width:100%;margin-top:5px;cursor:pointer">💬 Contact Seller</button>
+                        <button onclick="showSellerContact('${p.id}')" style="background:#25D366;color:white;border:none;padding:8px;border-radius:4px;width:100%;margin-top:5px;cursor:pointer">💬 Contact Seller</button>
                     </div>
                 `;
                 container.appendChild(card);
             }
+        }
+
+        async function showSellerContact(productId) {
+            const product = allProducts.find(p => p.id == productId);
+            if (!product) {
+                alert('Product not found');
+                return;
+            }
+            
+            const seller = sellersMap[product.seller_id];
+            if (!seller) {
+                alert('Seller information not available');
+                return;
+            }
+            
+            const phone = seller.business_phone || 'Not provided';
+            const phoneDigits = phone.replace(/\D/g, '');
+            const whatsappMessage = `Hello! I am interested in ${product.title}, I saw it on ${WEBSITE_URL}`;
+            const encodedMessage = encodeURIComponent(whatsappMessage);
+            const whatsappLink = phoneDigits ? `https://wa.me/${phoneDigits}?text=${encodedMessage}` : '#';
+            const callLink = phoneDigits ? `tel:${phoneDigits}` : '#';
+            
+            const modal = document.getElementById('sellerContactModal');
+            const modalContent = document.getElementById('sellerContactContent');
+            
+            modalContent.innerHTML = `
+                <div class="product-title">${product.title}</div>
+                <div class="seller-info">
+                    <div class="info-row">
+                        <div class="info-icon">🏪</div>
+                        <div class="info-text">
+                            <div class="info-label">Seller</div>
+                            <div class="info-value">${seller.business_name || 'Unknown Seller'}</div>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-icon">📞</div>
+                        <div class="info-text">
+                            <div class="info-label">Phone Number</div>
+                            <div class="info-value">${phone}</div>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-icon">📍</div>
+                        <div class="info-text">
+                            <div class="info-label">Shop Location</div>
+                            <div class="info-value">${seller.business_address || 'Location not specified'}</div>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-icon">📦</div>
+                        <div class="info-text">
+                            <div class="info-label">Price</div>
+                            <div class="info-value">$${product.price.toFixed(2)}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="contact-actions">
+                    <a href="${callLink}" class="contact-btn call-btn">📞 Call Seller</a>
+                    <a href="${whatsappLink}" class="contact-btn whatsapp-btn" target="_blank">💬 WhatsApp</a>
+                </div>
+            `;
+            
+            modal.style.display = 'block';
+            window.onclick = function(event) {
+                if (event.target == modal) {
+                    modal.style.display = 'none';
+                }
+            };
         }
 
         function handleSearch() {
@@ -432,18 +590,6 @@
             }
         }
 
-        function contactSeller(productId) {
-            const product = allProducts.find(p => p.id == productId);
-            const seller = sellersMap[product?.seller_id];
-            if (seller?.business_phone) {
-                const phone = seller.business_phone.replace(/\D/g, '');
-                const message = encodeURIComponent(`Hello! I am interested in ${product.title} from Mbare Marketplace.`);
-                window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
-            } else {
-                alert('Seller contact information not available.');
-            }
-        }
-
         function updateBasketCount(count) {
             const el = document.getElementById('basketCount');
             if (el) { 
@@ -478,12 +624,11 @@
             }
         });
         
-        // Clean up interval on page unload to prevent memory leaks
         window.addEventListener('beforeunload', () => {
-            if (sliderInterval) {
-                clearInterval(sliderInterval);
-            }
+            if (sliderInterval) clearInterval(sliderInterval);
         });
+        
+        window.showSellerContact = showSellerContact;
     </script>
 </body>
 </html>
