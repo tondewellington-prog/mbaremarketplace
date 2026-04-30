@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Pet Supplies | Mbare Marketplace</title>
+    <title>Pet Supplies </title>
     <meta name="description" content="Shop pet supplies including food, toys, accessories, and more. Find quality products for your dogs, cats, birds, and other pets.">
     
     <link rel="canonical" href="https://www.mbaremarketplace.com/category-pet-supplies.html">
@@ -395,22 +395,14 @@
                     const title = (p.title || '').toLowerCase();
                     const description = (p.description || '').toLowerCase();
                     
-                    return category.includes('pet supply') ||
-                           category.includes('pet food') ||
-                           category.includes('pet toy') ||
-                           category.includes('pet accessory') ||
-                           category.includes('dog food') ||
-                           category.includes('cat food') ||
-                           title.includes('pet food') ||
-                           title.includes('pet toy') ||
-                           title.includes('pet supply') ||
-                           title.includes('dog food') ||
-                           title.includes('cat food') ||
-                           title.includes('leash') ||
-                           title.includes('collar') ||
-                           title.includes('pet bed') ||
-                           description.includes('pet food') ||
-                           description.includes('pet supply');
+                    return category.includes('pet') || 
+                           category.includes('dog') ||
+                           category.includes('cat') ||
+                           category.includes('bird') ||
+                           category.includes('fish') ||
+                           category.includes('animal') ||
+                           title.includes('pet') ||
+                           description.includes('pet');
                 }).map(p => ({ 
                     ...p, 
                     price: parseFloat(p.price),
