@@ -399,18 +399,61 @@
                     const title = (p.title || '').toLowerCase();
                     const description = (p.description || '').toLowerCase();
                     
-                    return category.includes('pet') || 
-                           category.includes('livestock') ||
-                           category.includes('cattle') ||
-                           category.includes('goat') ||
-                           category.includes('sheep') ||
-                           category.includes('chicken') ||
-                           category.includes('pig') ||
-                           category.includes('horse') ||
-                           category.includes('animal') ||
-                           title.includes('pet') ||
-                           title.includes('live') ||
-                           description.includes('pet');
+                    // Match live animals and livestock
+                    const isAnimal = 
+                        category.includes('pet') ||
+                        category.includes('livestock') ||
+                        category.includes('cattle') ||
+                        category.includes('goat') ||
+                        category.includes('sheep') ||
+                        category.includes('chicken') ||
+                        category.includes('pig') ||
+                        category.includes('horse') ||
+                        category.includes('poultry') ||
+                        category.includes('dog') ||
+                        category.includes('cat') ||
+                        category.includes('bird') ||
+                        category.includes('fish') ||
+                        category.includes('animal') ||
+                        title.includes('dog') ||
+                        title.includes('cat') ||
+                        title.includes('bird') ||
+                        title.includes('fish') ||
+                        title.includes('puppy') ||
+                        title.includes('kitten') ||
+                        title.includes('cattle') ||
+                        title.includes('cow') ||
+                        title.includes('bull') ||
+                        title.includes('goat') ||
+                        title.includes('sheep') ||
+                        title.includes('chicken') ||
+                        title.includes('pig') ||
+                        title.includes('horse') ||
+                        title.includes('livestock') ||
+                        title.includes('live');
+                    
+                    // Exclude supplies/products (not live animals)
+                    const isSupply = 
+                        title.includes('food') ||
+                        title.includes('toy') ||
+                        title.includes('supply') ||
+                        title.includes('supplies') ||
+                        title.includes('leash') ||
+                        title.includes('collar') ||
+                        title.includes('bed') ||
+                        title.includes('bowl') ||
+                        title.includes('cage') ||
+                        title.includes('tank') ||
+                        title.includes('aquarium') ||
+                        title.includes('treat') ||
+                        title.includes('shampoo') ||
+                        title.includes('medicine') ||
+                        title.includes('vitamin') ||
+                        description.includes('pet food') ||
+                        description.includes('pet supply') ||
+                        description.includes('pet toy');
+                    
+                    return isAnimal && !isSupply;
                 }).map(p => ({ 
                     ...p, 
                     price: parseFloat(p.price),
