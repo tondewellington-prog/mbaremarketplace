@@ -34,7 +34,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Base styles - unchanged */
+        /* Keep all your existing styles - they are fine */
         .product-card img {
             width: 100%;
             height: 200px;
@@ -507,11 +507,7 @@
             border-bottom: 1px solid #e0e0e0;
         }
         
-        /* ============================================ */
-        /* FIXED: Section Headers - ALWAYS SCROLLABLE  */
-        /* ============================================ */
-        
-        /* Make section headers scrollable on ALL devices */
+        /* Section Headers - ALWAYS SCROLLABLE */
         .section-header {
             display: flex;
             flex-wrap: nowrap;
@@ -524,7 +520,6 @@
             white-space: nowrap;
         }
         
-        /* Ensure text never wraps */
         .section-header h2 {
             font-size: 20px;
             color: #232f3e;
@@ -547,7 +542,6 @@
             text-decoration: underline;
         }
         
-        /* Hide scrollbar on Chrome/Safari but keep functionality */
         .section-header::-webkit-scrollbar {
             height: 3px;
         }
@@ -562,7 +556,6 @@
             border-radius: 10px;
         }
         
-        /* Tablet landscape and smaller desktops */
         @media (max-width: 1024px) {
             .header-top .container {
                 flex-wrap: wrap;
@@ -590,9 +583,7 @@
             }
         }
 
-        /* Mobile phones */
         @media (max-width: 768px) {
-            /* Search bar adjustments */
             .search-bar {
                 width: 100%;
                 margin: 10px 0;
@@ -600,19 +591,16 @@
                 display: flex;
                 gap: 5px;
             }
-            
             .search-bar select {
                 width: 35%;
                 font-size: 12px;
                 padding: 8px 4px;
             }
-            
             .search-bar input {
                 width: 55%;
                 font-size: 13px;
                 padding: 8px;
             }
-            
             .search-bar button {
                 width: 12%;
                 padding: 8px 0;
@@ -620,72 +608,56 @@
                 justify-content: center;
                 align-items: center;
             }
-            
             .search-bar button svg {
                 width: 16px;
                 height: 16px;
             }
-            
-            /* Section headers - mobile adjustments */
             .section-header h2 {
                 font-size: 16px !important;
             }
             .section-header .see-all {
                 font-size: 12px !important;
             }
-            
-            /* Rest of mobile styles */
             .contact-modal-content {
                 margin: 2% auto;
                 width: 95%;
                 padding: 20px;
                 max-height: 90vh;
             }
-            
             .contact-actions {
                 flex-direction: column;
                 gap: 8px;
             }
-            
             .contact-btn {
                 width: 100%;
                 padding: 15px;
             }
-            
             .info-row {
                 padding: 12px 8px;
             }
-            
             .info-icon {
                 width: 35px;
                 height: 35px;
                 font-size: 16px;
             }
-            
             .product-title {
                 font-size: 14px;
                 margin-bottom: 8px;
             }
-            
             .product-grid {
                 grid-template-columns: repeat(2, 1fr);
                 gap: 10px;
             }
-            
             .product-card img {
                 height: 150px;
             }
-            
             .product-price {
                 font-size: 16px;
             }
-            
             .product-actions button {
                 font-size: 11px;
                 padding: 5px;
             }
-            
-            /* Dropdown adjustments */
             .dropdown-trigger {
                 padding: 6px 10px;
                 font-size: 12px;
@@ -726,20 +698,16 @@
             .contact-modal-content {
                 padding: 15px;
             }
-            
             .info-value {
                 font-size: 14px;
             }
-            
             .contact-btn {
                 padding: 12px;
                 font-size: 14px;
             }
-            
             .product-card img {
                 height: 130px;
             }
-            
             .product-price {
                 font-size: 15px;
             }
@@ -868,17 +836,17 @@
                     </button>
                     <div class="dropdown-menu" id="categoryDropdownMenu">
                         <div class="dropdown-header">SHOP BY CATEGORY</div>
-                        <a href="electronics.html" class="dropdown-category-item" data-category="Electronic Devices">📱 Electronic Devices</a>
-                        <a href="#" class="dropdown-category-item" data-category="Books">📚 Books</a>
-                        <a href="#" class="dropdown-category-item" data-category="Clothing">👕 Clothing</a>
-                        <a href="home&kitchen.html" class="dropdown-category-item" data-category="Home & Kitchen">🏠 Home & Kitchen</a>
-                        <a href="pet-supplies.html" class="dropdown-category-item" data-category="Pet Supplies">🐾 Pet Supplies</a>
-                        <a href="#" class="dropdown-category-item" data-category="Pets & Livestock">🐄 Pets & Livestock</a>
-                        <a href="#" class="dropdown-category-item" data-category="Vehicle Parts & Accessories">🔧 Vehicle Parts & Accessories</a>
-                        <a href="#" class="dropdown-category-item" data-category="Vehicles & Transportation">🚗 Vehicles & Transportation</a>
-                        <a href="#" class="dropdown-category-item" data-category="Farm Products">🌾 Farm Products</a>
-                        <a href="#" class="dropdown-category-item" data-category="Hardware">🔨 Hardware</a>
-                        <a href="#" class="dropdown-category-item" data-category="Beauty & Cosmetics">💄 Beauty & Cosmetics</a>
+                        <a href="electronics.html" class="dropdown-category-item">📱 Electronic Devices</a>
+                        <a href="books.html" class="dropdown-category-item">📚 Books</a>
+                        <a href="clothing.html" class="dropdown-category-item">👕 Clothing</a>
+                        <a href="home&kitchen.html" class="dropdown-category-item">🏠 Home & Kitchen</a>
+                        <a href="pet-supplies.html" class="dropdown-category-item">🐾 Pet Supplies</a>
+                        <a href="pets-livestock.html" class="dropdown-category-item">🐄 Pets & Livestock</a>
+                        <a href="vehicle-parts.html" class="dropdown-category-item">🔧 Vehicle Parts & Accessories</a>
+                        <a href="vehicles-transportation.html" class="dropdown-category-item">🚗 Vehicles & Transportation</a>
+                        <a href="farm-products.html" class="dropdown-category-item">🌾 Farm Products</a>
+                        <a href="hardware.html" class="dropdown-category-item">🔨 Hardware</a>
+                        <a href="beauty-cosmetics.html" class="dropdown-category-item">💄 Beauty & Cosmetics</a>
                     </div>
                 </div>
                 <a href="#" class="nav-item">Registry</a>
@@ -905,7 +873,7 @@
                         <div class="slide-content">
                             <h2>Fashion Deals</h2>
                             <p>Up to 50% off on clothing</p>
-                            <a href="#" class="slide-btn">Shop Now</a>
+                            <a href="clothing.html" class="slide-btn">Shop Now</a>
                         </div>
                     </div>
                     <div class="carousel-slide">
@@ -945,7 +913,7 @@
              <section class="product-section">
                 <div class="section-header">
                     <h2>Best Sellers in Clothing</h2>
-                    <a href="#" class="see-all">See more</a>
+                    <a href="clothing.html" class="see-all">See more</a>
                 </div>
                 <div class="product-grid" id="bestSellersClothing"></div>
             </section>
@@ -961,7 +929,7 @@
             <section class="product-section">
                 <div class="section-header">
                     <h2>Best Sellers in Pets & Livestock</h2>
-                    <a href="#" class="see-all">See more</a>
+                    <a href="pets-livestock.html" class="see-all">See more</a>
                 </div>
                 <div class="product-grid" id="bestSellersPetsLivestock"></div>
             </section>
@@ -969,7 +937,7 @@
             <section class="product-section">
                 <div class="section-header">
                     <h2>Best Sellers in Farm Products</h2>
-                    <a href="#" class="see-all">See more</a>
+                    <a href="farm-products.html" class="see-all">See more</a>
                 </div>
                 <div class="product-grid" id="bestSellersFarmProducts"></div>
             </section>
@@ -977,7 +945,7 @@
             <section class="product-section">
                 <div class="section-header">
                     <h2>Best Sellers in Hardware</h2>
-                    <a href="#" class="see-all">See more</a>
+                    <a href="hardware.html" class="see-all">See more</a>
                 </div>
                 <div class="product-grid" id="bestSellersHardware"></div>
             </section>
@@ -985,7 +953,7 @@
             <section class="product-section">
                 <div class="section-header">
                     <h2>Best Sellers in Vehicle Parts & Accessories</h2>
-                    <a href="#" class="see-all">See more</a>
+                    <a href="vehicle-parts.html" class="see-all">See more</a>
                 </div>
                 <div class="product-grid" id="bestSellersVehicleParts&amp;Accessories"></div>
             </section>
@@ -993,7 +961,7 @@
             <section class="product-section">
                 <div class="section-header">
                     <h2>Best Sellers in Vehicles & Transportation</h2>
-                    <a href="#" class="see-all">See more</a>
+                    <a href="vehicles-transportation.html" class="see-all">See more</a>
                 </div>
                 <div class="product-grid" id="bestSellersVehicle&amp;Transportation"></div>
             </section>
@@ -1009,7 +977,7 @@
             <section class="product-section">
                 <div class="section-header">
                     <h2>Best Sellers in Beauty & Cosmetics</h2>
-                    <a href="#" class="see-all">See more</a>
+                    <a href="beauty-cosmetics.html" class="see-all">See more</a>
                 </div>
                 <div class="product-grid" id="bestSellersBeautyCosmetics"></div>
             </section>
@@ -1132,6 +1100,7 @@
     <script src="auth-check.js"></script>
     
     <script>
+        // Keep all your existing JavaScript - it's working fine
         const dropdownBtn = document.getElementById('categoryDropdownBtn');
         const dropdownMenu = document.getElementById('categoryDropdownMenu');
         
