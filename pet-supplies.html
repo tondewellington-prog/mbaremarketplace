@@ -385,25 +385,12 @@
 
         async function loadPetSupplies() {
             try {
-                const response = await fetch(`${window.SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
+                const response = await fetch(`${window.SUPABASE_URL}/rest/v1/products?select=*&category=eq.Pet Supplies&order=created_at.desc`, {
                     headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}` }
                 });
                 const data = await response.json();
                 
-                allProducts = data.filter(p => {
-                    const category = (p.category || '').toLowerCase();
-                    const title = (p.title || '').toLowerCase();
-                    const description = (p.description || '').toLowerCase();
-                    
-                    return category.includes('pet') || 
-                           category.includes('dog') ||
-                           category.includes('cat') ||
-                           category.includes('bird') ||
-                           category.includes('fish') ||
-                           category.includes('animal') ||
-                           title.includes('pet') ||
-                           description.includes('pet');
-                }).map(p => ({ 
+                allProducts = data.map(p => ({ 
                     ...p, 
                     price: parseFloat(p.price),
                     created_at: p.created_at || new Date().toISOString()
