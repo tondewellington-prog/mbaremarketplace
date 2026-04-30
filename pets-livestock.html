@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Pets & Livestock | Mbare Marketplace</title>
+    <title>Pets & Livestock </title>
     <meta name="description" content="Buy and sell pets, livestock, cattle, goats, chickens, and more at Mbare Marketplace.">
     
     <link rel="canonical" href="https://www.mbaremarketplace.com/category-pets-livestock.html">
@@ -399,23 +399,18 @@
                     const title = (p.title || '').toLowerCase();
                     const description = (p.description || '').toLowerCase();
                     
-                    return category.includes('livestock') ||
+                    return category.includes('pet') || 
+                           category.includes('livestock') ||
                            category.includes('cattle') ||
                            category.includes('goat') ||
                            category.includes('sheep') ||
                            category.includes('chicken') ||
                            category.includes('pig') ||
                            category.includes('horse') ||
-                           category.includes('poultry') ||
-                           title.includes('cattle') ||
-                           title.includes('cow') ||
-                           title.includes('bull') ||
-                           title.includes('goat') ||
-                           title.includes('sheep') ||
-                           title.includes('chicken') ||
-                           title.includes('pig') ||
-                           title.includes('horse') ||
-                           title.includes('livestock');
+                           category.includes('animal') ||
+                           title.includes('pet') ||
+                           title.includes('live') ||
+                           description.includes('pet');
                 }).map(p => ({ 
                     ...p, 
                     price: parseFloat(p.price),
