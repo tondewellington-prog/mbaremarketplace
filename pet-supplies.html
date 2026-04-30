@@ -395,14 +395,22 @@
                     const title = (p.title || '').toLowerCase();
                     const description = (p.description || '').toLowerCase();
                     
-                    return category.includes('pet') || 
-                           category.includes('dog') ||
-                           category.includes('cat') ||
-                           category.includes('bird') ||
-                           category.includes('fish') ||
-                           category.includes('animal') ||
-                           title.includes('pet') ||
-                           description.includes('pet');
+                    return category.includes('pet supply') ||
+                           category.includes('pet food') ||
+                           category.includes('pet toy') ||
+                           category.includes('pet accessory') ||
+                           category.includes('dog food') ||
+                           category.includes('cat food') ||
+                           title.includes('pet food') ||
+                           title.includes('pet toy') ||
+                           title.includes('pet supply') ||
+                           title.includes('dog food') ||
+                           title.includes('cat food') ||
+                           title.includes('leash') ||
+                           title.includes('collar') ||
+                           title.includes('pet bed') ||
+                           description.includes('pet food') ||
+                           description.includes('pet supply');
                 }).map(p => ({ 
                     ...p, 
                     price: parseFloat(p.price),
@@ -507,4 +515,83 @@
                 </div>
                 <div class="contact-actions">
                     <a href="${callLink}" class="contact-btn call-btn">📞 Call Seller</a>
-                    <a href="${whatsappLink}" class="contact-btn whatsapp
+                    <a href="${whatsappLink}" class="contact-btn whatsapp-btn" target="_blank">💬 WhatsApp</a>
+                </div>
+            `;
+            modal.style.display = 'block';
+            window.onclick = function(event) { if (event.target == modal) modal.style.display = 'none'; };
+        }
+
+        function handleSearch() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            if (!searchTerm) currentProducts = [...allProducts];
+            else currentProducts = allProducts.filter(product => (product.title && product.title.toLowerCase().includes(searchTerm)) || (product.description && product.description.toLowerCase().includes(searchTerm)));
+            displayProducts(currentProducts);
+            updateResultsCount(currentProducts.length);
+        }
+
+        function updateResultsCount(count) {
+            const countElement = document.getElementById('resultsCount');
+            if (countElement) countElement.textContent = `${count} product${count !== 1 ? 's' : ''} found`;
+        }
+
+        function sortProducts() {
+            const sortValue = document.getElementById('sortSelect').value;
+            if (sortValue === 'price_low') currentProducts.sort((a, b) => (a.price || 0) - (b.price || 0));
+            else if (sortValue === 'price_high') currentProducts.sort((a, b) => (b.price || 0) - (a.price || 0));
+            else currentProducts.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+            displayProducts(currentProducts);
+        }
+
+        function viewProduct(productId) { window.location.href = `product-detail.html?id=${productId}`; }
+
+        function addToBasket(productId) {
+            const sessionData = localStorage.getItem('supabase_session');
+            if (!sessionData) { window.location.href = 'login.html'; return; }
+            const session = JSON.parse(sessionData);
+            const basketKey = `basket_${session.user.id}`;
+            let basket = JSON.parse(localStorage.getItem(basketKey)) || [];
+            const product = allProducts.find(p => p.id == productId);
+            if (product) {
+                const existingItem = basket.find(item => item.id == productId);
+                if (existingItem) existingItem.quantity = (existingItem.quantity || 1) + 1;
+                else basket.push({ ...product, quantity: 1 });
+                localStorage.setItem(basketKey, JSON.stringify(basket));
+                updateBasketCount(basket.reduce((sum, item) => sum + (item.quantity || 1), 0));
+                alert('Item added to basket!');
+            }
+        }
+
+        function updateBasketCount(count) {
+            const el = document.getElementById('basketCount');
+            if (el) { el.textContent = count; el.style.display = count > 0 ? 'flex' : 'none'; }
+        }
+
+        function logout() {
+            localStorage.removeItem('supabase_session');
+            localStorage.removeItem('isLoggedIn');
+            window.location.href = 'index.html';
+        }
+
+        document.getElementById('searchInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSearch(); });
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadSellers();
+            await loadPetSupplies();
+            const sessionData = localStorage.getItem('supabase_session');
+            if (sessionData) {
+                const session = JSON.parse(sessionData);
+                const basket = JSON.parse(localStorage.getItem(`basket_${session.user.id}`)) || [];
+                updateBasketCount(basket.reduce((sum, item) => sum + (item.quantity || 1), 0));
+                const logoutBtn = document.getElementById('logoutBtn');
+                if (logoutBtn) logoutBtn.style.display = 'inline-block';
+                const accountLabel = document.querySelector('.account-label');
+                if (accountLabel) accountLabel.textContent = `Hello, ${session.user.email.split('@')[0]}`;
+            }
+        });
+        
+        window.addEventListener('beforeunload', () => { if (sliderInterval) clearInterval(sliderInterval); });
+        window.showSellerContact = showSellerContact;
+    </script>
+</body>
+</html>
