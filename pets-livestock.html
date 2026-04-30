@@ -399,18 +399,23 @@
                     const title = (p.title || '').toLowerCase();
                     const description = (p.description || '').toLowerCase();
                     
-                    return category.includes('pet') || 
-                           category.includes('livestock') ||
+                    return category.includes('livestock') ||
                            category.includes('cattle') ||
                            category.includes('goat') ||
                            category.includes('sheep') ||
                            category.includes('chicken') ||
                            category.includes('pig') ||
                            category.includes('horse') ||
-                           category.includes('animal') ||
-                           title.includes('pet') ||
-                           title.includes('live') ||
-                           description.includes('pet');
+                           category.includes('poultry') ||
+                           title.includes('cattle') ||
+                           title.includes('cow') ||
+                           title.includes('bull') ||
+                           title.includes('goat') ||
+                           title.includes('sheep') ||
+                           title.includes('chicken') ||
+                           title.includes('pig') ||
+                           title.includes('horse') ||
+                           title.includes('livestock');
                 }).map(p => ({ 
                     ...p, 
                     price: parseFloat(p.price),
