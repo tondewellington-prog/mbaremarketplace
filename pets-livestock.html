@@ -335,7 +335,7 @@
         let sellersMap = {};
         let ratingsCache = {};
 
-        const petsLivestockImages = ['pets_livestock/1.jpg', 'pets_livestock/2.jpg', 'pets_livestock/3.jpg', 'pets_livestock/4.jpg', 'pets_livestock/5.jpg', 'pets_livestock/6.jpg','pets_livestock/7.jpg','pets_livestock/8.jpg','pets_livestock/9.jpg','pets_livestock/10.jpg'];
+        const petsLivestockImages = ['pets_livestock/1.jpg', 'pets_livestock/2.jpg', 'pets_livestock/3.jpg', 'pets_livestock/4.jpg', 'pets_livestock/5.jpg', 'pets_livestock/6.jpg', 'pets_livestock/7.jpg', 'pets_livestock/8.jpg', 'pets_livestock/9.jpg', 'pets_livestock/10.jpg'];
         
         function shuffleSlider() {
             const panels = document.querySelectorAll('.slide-panel img');
@@ -529,4 +529,38 @@
                 updateBasketCount(basket.reduce((sum, item) => sum + (item.quantity || 1), 0));
                 alert('Item added to basket!');
             }
-       
+        }
+
+        function updateBasketCount(count) {
+            const el = document.getElementById('basketCount');
+            if (el) { el.textContent = count; el.style.display = count > 0 ? 'flex' : 'none'; }
+        }
+
+        function logout() {
+            localStorage.removeItem('supabase_session');
+            localStorage.removeItem('isLoggedIn');
+            window.location.href = 'index.html';
+        }
+
+        document.getElementById('searchInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSearch(); });
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadSellers();
+            await loadPetsLivestock();
+            const sessionData = localStorage.getItem('supabase_session');
+            if (sessionData) {
+                const session = JSON.parse(sessionData);
+                const basket = JSON.parse(localStorage.getItem(`basket_${session.user.id}`)) || [];
+                updateBasketCount(basket.reduce((sum, item) => sum + (item.quantity || 1), 0));
+                const logoutBtn = document.getElementById('logoutBtn');
+                if (logoutBtn) logoutBtn.style.display = 'inline-block';
+                const accountLabel = document.querySelector('.account-label');
+                if (accountLabel) accountLabel.textContent = `Hello, ${session.user.email.split('@')[0]}`;
+            }
+        });
+        
+        window.addEventListener('beforeunload', () => { if (sliderInterval) clearInterval(sliderInterval); });
+        window.showSellerContact = showSellerContact;
+    </script>
+</body>
+</html>
