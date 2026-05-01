@@ -556,26 +556,69 @@
             border-radius: 10px;
         }
         
+        /* FIXED: Search bar now stays inline on small screens like clothing page */
+        .header-top .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+        
         @media (max-width: 1024px) {
             .header-top .container {
-                flex-wrap: wrap;
+                flex-wrap: nowrap;
             }
             .search-bar {
-                order: 3;
-                margin-top: 10px;
-                width: 100%;
+                flex: 1;
+                min-width: 0;
                 display: flex;
-                gap: 8px;
+                gap: 5px;
+            }
+            .search-bar .search-input {
+                flex: 1;
+                min-width: 0;
             }
         }
 
         @media (max-width: 768px) {
+            .header-top .container {
+                flex-wrap: nowrap;
+                gap: 8px;
+            }
+            .logo a {
+                font-size: 16px;
+            }
             .search-bar {
-                width: 100%;
-                margin: 10px 0;
-                padding: 0 10px;
+                flex: 1;
+                min-width: 0;
+                padding: 0;
+                margin: 0;
                 display: flex;
-                gap: 5px;
+                gap: 3px;
+            }
+            .search-bar .search-category {
+                display: none;
+            }
+            .search-bar .search-input {
+                flex: 1;
+                min-width: 0;
+                padding: 8px 10px;
+                font-size: 13px;
+            }
+            .search-bar .search-btn {
+                padding: 8px 10px;
+            }
+            .header-right {
+                flex-shrink: 0;
+            }
+            .header-right .returns {
+                display: none;
+            }
+            .account-label {
+                font-size: 11px;
+            }
+            .account-link {
+                font-size: 11px;
             }
             .section-header h2 {
                 font-size: 16px !important;
@@ -639,6 +682,28 @@
         }
         
         @media (max-width: 480px) {
+            .header-top .container {
+                gap: 5px;
+            }
+            .logo a {
+                font-size: 14px;
+            }
+            .search-bar .search-input {
+                padding: 7px 8px;
+                font-size: 12px;
+            }
+            .search-bar .search-btn {
+                padding: 7px 8px;
+            }
+            .account-label {
+                font-size: 10px;
+            }
+            .account-link {
+                font-size: 10px;
+            }
+            .basket-text {
+                display: none;
+            }
             .dropdown-trigger {
                 padding: 4px 8px;
                 font-size: 11px;
