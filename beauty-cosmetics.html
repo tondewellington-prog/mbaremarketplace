@@ -208,12 +208,58 @@
             padding-right: 30px;
         }
 
-        @media (min-width: 769px) {
-            .slider-container { grid-template-columns: repeat(4, 1fr); }
-            .slide-panel:nth-child(4) { display: block; }
+        /* FIXED: Header container and search bar for small screens */
+        .header-top .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+        
+        @media (max-width: 1024px) {
+            .header-top .container {
+                flex-wrap: nowrap;
+            }
+            .search-bar {
+                flex: 1;
+                min-width: 0;
+                display: flex;
+                gap: 5px;
+            }
+            .search-bar .search-input {
+                flex: 1;
+                min-width: 0;
+            }
         }
 
         @media (max-width: 768px) {
+            .header-top .container {
+                flex-wrap: nowrap;
+                gap: 8px;
+            }
+            .search-bar {
+                flex: 1;
+                min-width: 0;
+                padding: 0;
+                margin: 0;
+                display: flex;
+                gap: 3px;
+            }
+            .search-bar .search-category {
+                display: none;
+            }
+            .search-bar .search-input {
+                flex: 1;
+                min-width: 0;
+                padding: 8px 10px;
+                font-size: 13px;
+            }
+            .search-bar .search-btn {
+                padding: 8px 10px;
+            }
+            .header-right {
+                flex-shrink: 0;
+            }
             .slider-container { grid-template-columns: repeat(3, 1fr) !important; }
             .slide-panel:nth-child(4) { display: none; }
             .slide-panel { height: 140px; }
@@ -221,6 +267,24 @@
             .product-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
             .contact-actions { flex-direction: column; }
             .contact-btn { width: 100%; }
+        }
+        
+        @media (max-width: 480px) {
+            .header-top .container {
+                gap: 5px;
+            }
+            .search-bar .search-input {
+                padding: 7px 8px;
+                font-size: 12px;
+            }
+            .search-bar .search-btn {
+                padding: 7px 8px;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .slider-container { grid-template-columns: repeat(4, 1fr); }
+            .slide-panel:nth-child(4) { display: block; }
         }
     </style>
 </head>
@@ -344,7 +408,7 @@
             const fullStars = Math.floor(rating);
             const hasHalfStar = rating % 1 >= 0.5;
             let stars = '';
-            for (let i = 0; i < fullStars; i++) stars += '';
+            for (let i = 0; i < fullStars; i++) stars += '★';
             if (hasHalfStar) stars += '½';
             const emptyStars = 5 - Math.ceil(rating);
             for (let i = 0; i < emptyStars; i++) stars += '☆';
@@ -370,32 +434,12 @@
 
         async function loadBeautyProducts() {
             try {
-                const response = await fetch(`${window.SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
+                const response = await fetch(`${window.SUPABASE_URL}/rest/v1/products?select=*&category=eq.Beauty %26 Cosmetics&order=created_at.desc`, {
                     headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}` }
                 });
                 const data = await response.json();
                 
-                allProducts = data.filter(p => {
-                    const category = (p.category || '').toLowerCase();
-                    const title = (p.title || '').toLowerCase();
-                    const description = (p.description || '').toLowerCase();
-                    
-                    return category.includes('beauty') || 
-                           category.includes('cosmetic') ||
-                           category.includes('makeup') ||
-                           category.includes('skincare') ||
-                           category.includes('haircare') ||
-                           category.includes('fragrance') ||
-                           category.includes('perfume') ||
-                           category.includes('lotion') ||
-                           category.includes('cream') ||
-                           category.includes('lipstick') ||
-                           category.includes('foundation') ||
-                           category.includes('mascara') ||
-                           title.includes('beauty') ||
-                           title.includes('cosmetic') ||
-                           description.includes('beauty');
-                }).map(p => ({ 
+                allProducts = data.map(p => ({ 
                     ...p, 
                     price: parseFloat(p.price),
                     created_at: p.created_at || new Date().toISOString()
