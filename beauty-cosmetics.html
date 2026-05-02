@@ -484,6 +484,11 @@
         }
 
         async function showSellerContact(productId) {
+            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+if (!isLoggedIn) {
+    showLoginPrompt();
+    return;
+}
             const product = allProducts.find(p => p.id == productId);
             if (!product) return;
             const seller = sellersMap[product.seller_id];
