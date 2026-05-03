@@ -407,6 +407,14 @@
             'home&kitchen/9.jpg', 'home&kitchen/10.jpg'
         ];
         
+        function checkLogin() {
+            if (localStorage.getItem('isLoggedIn') !== 'true') {
+                showLoginPrompt();
+                return false;
+            }
+            return true;
+        }
+
         function shuffleSlider() {
             const panels = document.querySelectorAll('.slide-panel img');
             panels.forEach(img => {
@@ -512,6 +520,7 @@
         }
 
         async function showSellerContact(productId) {
+            if (!checkLogin()) return;
             const product = allProducts.find(p => p.id == productId);
             if (!product) {
                 alert('Product not found');
@@ -614,7 +623,8 @@
         }
 
         function viewProduct(productId) {
-            window.location.href = `product-detail.html?id=${productId}`;
+            if (!checkLogin()) return;
+            window.location.href = 'product-detail.html?id=' + productId;
         }
 
         function addToBasket(productId) {
