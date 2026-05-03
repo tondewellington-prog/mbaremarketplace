@@ -333,6 +333,14 @@
 
         const petImages = ['pet_supplies/1.jpg', 'pet_supplies/2.jpg', 'pet_supplies/3.jpg', 'pet_supplies/4.jpg', 'pet_supplies/5.jpg', 'pet_supplies/6.jpg'];
         
+        function checkLogin() {
+            if (localStorage.getItem('isLoggedIn') !== 'true') {
+                showLoginPrompt();
+                return false;
+            }
+            return true;
+        }
+
         function shuffleSlider() {
             const panels = document.querySelectorAll('.slide-panel img');
             panels.forEach(img => {
@@ -359,7 +367,7 @@
             const fullStars = Math.floor(rating);
             const hasHalfStar = rating % 1 >= 0.5;
             let stars = '';
-            for (let i = 0; i < fullStars; i++) stars += '';
+            for (let i = 0; i < fullStars; i++) stars += '★';
             if (hasHalfStar) stars += '½';
             const emptyStars = 5 - Math.ceil(rating);
             for (let i = 0; i < emptyStars; i++) stars += '☆';
@@ -438,6 +446,7 @@
         }
 
         async function showSellerContact(productId) {
+            if (!checkLogin()) return;
             const product = allProducts.find(p => p.id == productId);
             if (!product) {
                 alert('Product not found');
@@ -522,7 +531,10 @@
             displayProducts(currentProducts);
         }
 
-        function viewProduct(productId) { window.location.href = `product-detail.html?id=${productId}`; }
+        function viewProduct(productId) {
+            if (!checkLogin()) return;
+            window.location.href = 'product-detail.html?id=' + productId;
+        }
 
         function addToBasket(productId) {
             const sessionData = localStorage.getItem('supabase_session');
