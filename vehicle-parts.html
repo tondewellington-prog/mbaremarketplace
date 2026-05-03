@@ -208,7 +208,6 @@
             padding-right: 30px;
         }
 
-        /* FIXED: Header container and search bar for small screens */
         .header-top .container {
             display: flex;
             align-items: center;
@@ -382,6 +381,14 @@
 
         const vehicleImages = ['vehicle_parts/1.jpg', 'vehicle_parts/2.jpg', 'vehicle_parts/3.jpg', 'vehicle_parts/4.jpg', 'vehicle_parts/5.jpg', 'vehicle_parts/6.jpg', 'vehicle_parts/7.jpg', 'vehicle_parts/8.jpg', 'vehicle_parts/9.jpg', 'vehicle_parts/10.jpg'];
         
+        function checkLogin() {
+            if (localStorage.getItem('isLoggedIn') !== 'true') {
+                showLoginPrompt();
+                return false;
+            }
+            return true;
+        }
+
         function shuffleSlider() {
             const panels = document.querySelectorAll('.slide-panel img');
             panels.forEach(img => {
@@ -484,6 +491,7 @@
         }
 
         async function showSellerContact(productId) {
+            if (!checkLogin()) return;
             const product = allProducts.find(p => p.id == productId);
             if (!product) return;
             const seller = sellersMap[product.seller_id];
@@ -534,7 +542,10 @@
             displayProducts(currentProducts);
         }
 
-        function viewProduct(productId) { window.location.href = `product-detail.html?id=${productId}`; }
+        function viewProduct(productId) {
+            if (!checkLogin()) return;
+            window.location.href = 'product-detail.html?id=' + productId;
+        }
 
         function addToBasket(productId) {
             const sessionData = localStorage.getItem('supabase_session');
