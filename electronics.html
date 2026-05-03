@@ -339,6 +339,14 @@
 
         const electronicsImages = ['electronics/1.jpg', 'electronics/2.jpg', 'electronics/3.jpg', 'electronics/4.jpg', 'electronics/5.jpg', 'electronics/6.jpg','electronics/7.jpg','electronics/8.jpg','electronics/9.jpg','electronics/10.jpg'];
         
+        function checkLogin() {
+            if (localStorage.getItem('isLoggedIn') !== 'true') {
+                showLoginPrompt();
+                return false;
+            }
+            return true;
+        }
+
         function shuffleSlider() {
             const panels = document.querySelectorAll('.slide-panel img');
             panels.forEach(img => {
@@ -463,6 +471,7 @@
         }
 
         async function showSellerContact(productId) {
+            if (!checkLogin()) return;
             const product = allProducts.find(p => p.id == productId);
             if (!product) {
                 alert('Product not found');
@@ -477,7 +486,6 @@
             
             const phone = seller.business_phone || 'Not provided';
             const phoneDigits = phone.replace(/\D/g, '');
-            // FIXED: WhatsApp message includes website URL
             const whatsappMessage = `Hello! I am interested in ${product.title}, I saw it on ${WEBSITE_URL}`;
             const encodedMessage = encodeURIComponent(whatsappMessage);
             const whatsappLink = phoneDigits ? `https://wa.me/${phoneDigits}?text=${encodedMessage}` : '#';
@@ -570,7 +578,8 @@
         }
 
         function viewProduct(productId) {
-            window.location.href = `product-detail.html?id=${productId}`;
+            if (!checkLogin()) return;
+            window.location.href = 'product-detail.html?id=' + productId;
         }
 
         function addToBasket(productId) {
