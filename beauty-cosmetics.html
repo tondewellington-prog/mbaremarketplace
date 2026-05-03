@@ -382,6 +382,15 @@
 
         const beautyImages = ['beauty/1.jpg', 'beauty/2.jpg', 'beauty/3.jpg', 'beauty/4.jpg', 'beauty/5.jpg', 'beauty/6.jpg', 'beauty/7.jpg', 'beauty/8.jpg', 'beauty/9.jpg', 'beauty/10.jpg', 'beauty/11.jpg', 'beauty/12.jpg'];
         
+        // Login check helper
+        function checkLogin() {
+            if (localStorage.getItem('isLoggedIn') !== 'true') {
+                showLoginPrompt();
+                return false;
+            }
+            return true;
+        }
+
         function shuffleSlider() {
             const panels = document.querySelectorAll('.slide-panel img');
             panels.forEach(img => {
@@ -484,11 +493,7 @@
         }
 
         async function showSellerContact(productId) {
-            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-if (!isLoggedIn) {
-    showLoginPrompt();
-    return;
-}
+            if (!checkLogin()) return;
             const product = allProducts.find(p => p.id == productId);
             if (!product) return;
             const seller = sellersMap[product.seller_id];
@@ -539,7 +544,10 @@ if (!isLoggedIn) {
             displayProducts(currentProducts);
         }
 
-        function viewProduct(productId) { window.location.href = `product-detail.html?id=${productId}`; }
+        function viewProduct(productId) {
+            if (!checkLogin()) return;
+            window.location.href = 'product-detail.html?id=' + productId;
+        }
 
         function addToBasket(productId) {
             const sessionData = localStorage.getItem('supabase_session');
