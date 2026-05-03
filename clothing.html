@@ -337,6 +337,14 @@
 
         const clothingImages = ['clothing/1.jpg', 'clothing/2.jpg', 'clothing/3.jpg', 'clothing/4.jpg', 'clothing/5.jpg', 'clothing/6.jpg','clothing/7.jpg','clothing/8.jpg','clothing/9.jpg','clothing/10.jpg'];
         
+        function checkLogin() {
+            if (localStorage.getItem('isLoggedIn') !== 'true') {
+                showLoginPrompt();
+                return false;
+            }
+            return true;
+        }
+
         function shuffleSlider() {
             const panels = document.querySelectorAll('.slide-panel img');
             panels.forEach(img => {
@@ -456,6 +464,7 @@
         }
 
         async function showSellerContact(productId) {
+            if (!checkLogin()) return;
             const product = allProducts.find(p => p.id == productId);
             if (!product) return;
             const seller = sellersMap[product.seller_id];
@@ -509,7 +518,10 @@
             displayProducts(currentProducts);
         }
 
-        function viewProduct(productId) { window.location.href = `product-detail.html?id=${productId}`; }
+        function viewProduct(productId) {
+            if (!checkLogin()) return;
+            window.location.href = 'product-detail.html?id=' + productId;
+        }
 
         function addToBasket(productId) {
             const sessionData = localStorage.getItem('supabase_session');
