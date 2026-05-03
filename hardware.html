@@ -318,6 +318,14 @@
 
         const hardwareImages = ['hardware/1.jpg', 'hardware/2.jpg', 'hardware/3.jpg', 'hardware/4.jpg', 'hardware/5.jpg', 'hardware/6.jpg', 'hardware/7.jpg', 'hardware/8.jpg', 'hardware/9.jpg', 'hardware/10.jpg'];
         
+        function checkLogin() {
+            if (localStorage.getItem('isLoggedIn') !== 'true') {
+                showLoginPrompt();
+                return false;
+            }
+            return true;
+        }
+
         function shuffleSlider() {
             const panels = document.querySelectorAll('.slide-panel img');
             panels.forEach(img => {
@@ -344,7 +352,7 @@
             const fullStars = Math.floor(rating);
             const hasHalfStar = rating % 1 >= 0.5;
             let stars = '';
-            for (let i = 0; i < fullStars; i++) stars += '';
+            for (let i = 0; i < fullStars; i++) stars += '★';
             if (hasHalfStar) stars += '½';
             const emptyStars = 5 - Math.ceil(rating);
             for (let i = 0; i < emptyStars; i++) stars += '☆';
@@ -437,6 +445,7 @@
         }
 
         async function showSellerContact(productId) {
+            if (!checkLogin()) return;
             const product = allProducts.find(p => p.id == productId);
             if (!product) return;
             const seller = sellersMap[product.seller_id];
@@ -487,7 +496,10 @@
             displayProducts(currentProducts);
         }
 
-        function viewProduct(productId) { window.location.href = `product-detail.html?id=${productId}`; }
+        function viewProduct(productId) {
+            if (!checkLogin()) return;
+            window.location.href = 'product-detail.html?id=' + productId;
+        }
 
         function addToBasket(productId) {
             const sessionData = localStorage.getItem('supabase_session');
