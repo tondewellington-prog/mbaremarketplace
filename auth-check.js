@@ -93,10 +93,85 @@ window.hideLoginPrompt = function() {
     if (modal) modal.style.display = 'none';
 };
 
+// ==================== PROTECTED ACTIONS ====================
+// Check if user is logged in before navigating to product detail
+window.requireLogin = function(callback) {
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    if (!isLoggedIn) {
+        showLoginPrompt();
+        return false;
+    }
+    if (typeof callback === 'function') {
+        callback();
+    }
+    return true;
+};
+
+// Navigate to product detail (protected)
+window.goToProductDetail = function(productId) {
+    if (requireLogin(function() {
+        window.location.href = 'product-detail.html?id=' + productId;
+    })) {
+        // requireLogin already handled the navigation
+    }
+};
+
+// Add to basket (protected) - also check basket
+window.addToBasket = function(productId) {
+    const sessionData = localStorage.getItem('supabase_session');
+    if (!sessionData) {
+        showLoginPrompt();
+        return;
+    }
+    const session = JSON.parse(sessionData);
+    const basketKey = 'basket_' + session.user.id;
+    let basket = JSON.parse(localStorage.getItem(basketKey)) || [];
+    
+    // The product should be found by the calling page
+    // This is a helper that the page can use
+    if (typeof window.allProducts !== 'undefined') {
+        const product = window.allProducts.find(p => p.id == productId);
+        if (product) {
+            const existingItem = basket.find(item => item.id == productId);
+            if (existingItem) {
+                existingItem.quantity = (existingItem.quantity || 1) + 1;
+            } else {
+                basket.push({ ...product, quantity: 1 });
+            }
+            localStorage.setItem(basketKey, JSON.stringify(basket));
+            updateBasketCount(basket.reduce((sum, item) => sum + (item.quantity || 1), 0));
+            alert('Item added to basket!');
+        }
+    }
+};
+
+// Show seller contact (protected)
+window.showSellerContactSafe = function(callback) {
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    if (!isLoggedIn) {
+        showLoginPrompt();
+        return false;
+    }
+    if (typeof callback === 'function') {
+        callback();
+    }
+    return true;
+};
+
+// Update basket count
+window.updateBasketCount = function(count) {
+    const el = document.getElementById('basketCount');
+    if (el) { 
+        el.textContent = count; 
+        el.style.display = count > 0 ? 'flex' : 'none'; 
+    }
+};
+
 // ==================== CHECK LOGIN STATUS ====================
 document.addEventListener('DOMContentLoaded', function() {
     injectLoginPrompt();
     checkLoginStatus();
+    updateBasketFromStorage();
 });
 
 // Also check when page becomes visible (in case user logs in/out in another tab)
@@ -110,7 +185,6 @@ function checkLoginStatus() {
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
     const sessionData = localStorage.getItem('supabase_session');
     
-    // Find the account menu elements
     const accountLabel = document.querySelector('.account-label');
     const accountLink = document.querySelector('.account-link');
     const logoutBtn = document.getElementById('logoutBtn');
@@ -121,17 +195,14 @@ function checkLoginStatus() {
             const userEmail = session.user?.email || 'User';
             const userName = session.user?.user_metadata?.full_name || userEmail.split('@')[0];
             
-            // Update UI for logged in user
             accountLabel.textContent = 'Hello,';
             accountLink.textContent = userName;
             accountLink.href = '#';
             
-            // Show logout button
             if (logoutBtn) {
                 logoutBtn.style.display = 'inline-block';
             }
         } catch (e) {
-            // If error, clear storage and show logged out state
             localStorage.removeItem('isLoggedIn');
             localStorage.removeItem('supabase_session');
             setLoggedOutState(accountLabel, accountLink, logoutBtn);
@@ -146,9 +217,20 @@ function setLoggedOutState(accountLabel, accountLink, logoutBtn) {
     accountLink.textContent = 'Account & Lists';
     accountLink.href = 'login.html';
     
-    // Hide logout button
     if (logoutBtn) {
         logoutBtn.style.display = 'none';
+    }
+}
+
+function updateBasketFromStorage() {
+    const sessionData = localStorage.getItem('supabase_session');
+    if (sessionData) {
+        try {
+            const session = JSON.parse(sessionData);
+            const basketKey = 'basket_' + session.user.id;
+            const basket = JSON.parse(localStorage.getItem(basketKey)) || [];
+            updateBasketCount(basket.reduce((sum, item) => sum + (item.quantity || 1), 0));
+        } catch (e) {}
     }
 }
 
