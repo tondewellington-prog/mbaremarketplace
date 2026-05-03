@@ -337,6 +337,14 @@
 
         const petsLivestockImages = ['pets_livestock/1.jpg', 'pets_livestock/2.jpg', 'pets_livestock/3.jpg', 'pets_livestock/4.jpg', 'pets_livestock/5.jpg', 'pets_livestock/6.jpg', 'pets_livestock/7.jpg', 'pets_livestock/8.jpg', 'pets_livestock/9.jpg', 'pets_livestock/10.jpg', 'pets_livestock/11.jpg', 'pets_livestock/12.jpg', 'pets_livestock/13.jpg', 'pets_livestock/14.jpg', 'pets_livestock/15.jpg'];
         
+        function checkLogin() {
+            if (localStorage.getItem('isLoggedIn') !== 'true') {
+                showLoginPrompt();
+                return false;
+            }
+            return true;
+        }
+
         function shuffleSlider() {
             const panels = document.querySelectorAll('.slide-panel img');
             panels.forEach(img => {
@@ -363,7 +371,7 @@
             const fullStars = Math.floor(rating);
             const hasHalfStar = rating % 1 >= 0.5;
             let stars = '';
-            for (let i = 0; i < fullStars; i++) stars += '';
+            for (let i = 0; i < fullStars; i++) stars += '★';
             if (hasHalfStar) stars += '½';
             const emptyStars = 5 - Math.ceil(rating);
             for (let i = 0; i < emptyStars; i++) stars += '☆';
@@ -442,6 +450,7 @@
         }
 
         async function showSellerContact(productId) {
+            if (!checkLogin()) return;
             const product = allProducts.find(p => p.id == productId);
             if (!product) return;
             const seller = sellersMap[product.seller_id];
@@ -495,7 +504,10 @@
             displayProducts(currentProducts);
         }
 
-        function viewProduct(productId) { window.location.href = `product-detail.html?id=${productId}`; }
+        function viewProduct(productId) {
+            if (!checkLogin()) return;
+            window.location.href = 'product-detail.html?id=' + productId;
+        }
 
         function addToBasket(productId) {
             const sessionData = localStorage.getItem('supabase_session');
