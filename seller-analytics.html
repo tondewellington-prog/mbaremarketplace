@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * {
             margin: 0;
@@ -108,12 +109,9 @@
             color: #111;
             transition: 0.2s;
         }
-        .btn-primary:hover {
-            background: #F7CA00;
-        }
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 24px;
             margin-bottom: 30px;
         }
@@ -148,6 +146,12 @@
             border-left: 4px solid #f90;
             padding-left: 16px;
         }
+        .two-columns {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 28px;
+            margin-bottom: 28px;
+        }
         .product-list {
             list-style: none;
         }
@@ -174,49 +178,20 @@
         .badge-success {
             background: #28a745;
         }
-        .category-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid #eef2f6;
+        .chart-container {
+            max-width: 100%;
+            height: 300px;
         }
-        .category-name {
-            font-weight: 500;
-        }
-        .category-count {
-            background: #f3f4f6;
-            padding: 4px 12px;
-            border-radius: 30px;
-            font-size: 13px;
-            font-weight: 600;
-            color: #B12704;
-        }
-        .subscription-info {
-            background: #f0fdf4;
-            border-radius: 16px;
-            padding: 20px;
-            margin-top: 10px;
-            border-left: 4px solid #28a745;
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #666;
         }
         .upgrade-message {
             text-align: center;
-            padding: 50px 30px;
+            padding: 60px 30px;
             background: white;
             border-radius: 24px;
-        }
-        .upgrade-message h2 {
-            margin-bottom: 16px;
-            color: #232f3e;
-        }
-        .upgrade-message p {
-            margin-bottom: 24px;
-            color: #4b5563;
-        }
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: #6b7280;
         }
         .footer {
             margin-top: 50px;
@@ -229,10 +204,17 @@
             padding: 18px;
             font-size: 0.8rem;
         }
-        .two-columns {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 24px;
+        .date-filter {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .date-filter input {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
         }
     </style>
 </head>
@@ -251,7 +233,6 @@
                 <a href="seller-dashboard.html" class="nav-item">Dashboard</a>
                 <a href="#" class="nav-item">All</a>
                 <a href="#" class="nav-item">Today's Deals</a>
-                <a href="#" class="nav-item">Customer Service</a>
             </div>
         </nav>
     </header>
@@ -260,13 +241,13 @@
         <div class="page-header">
             <div>
                 <h1>Seller Analytics</h1>
-                <p>Your personal performance overview and insights</p>
+                <p>Track your product performance and customer engagement</p>
             </div>
             <button class="btn-back" onclick="window.location.href='seller-dashboard.html'">← Back to Dashboard</button>
         </div>
 
         <div id="analyticsContent">
-            <!-- Content will be loaded dynamically based on subscription status -->
+            <div class="loading">Loading analytics data...</div>
         </div>
     </div>
 
@@ -275,255 +256,343 @@
     </footer>
 
     <script>
-        // Configuration
+        // Supabase configuration - UPDATE WITH YOUR VALUES
+        const SUPABASE_URL = 'https://your-project.supabase.co';  // ← REPLACE
+        const SUPABASE_ANON_KEY = 'your-anon-key';  // ← REPLACE
+        
         let currentSellerId = "seller_mbare_001";
         let currentTier = "free";
-        let sellerProducts = [];
+        let chartViews = null;
+        let chartClicks = null;
 
-        // Load data from localStorage
-        function loadSellerData() {
+        // Get seller tier from localStorage
+        function getSellerTier() {
             const savedTier = localStorage.getItem(`mbare_tier_${currentSellerId}`);
             if (savedTier && (savedTier === 'tier_150' || savedTier === 'tier_5')) {
                 currentTier = savedTier;
+                return true;
             }
-            
-            const stored = localStorage.getItem(`mbare_products_${currentSellerId}`);
-            sellerProducts = stored ? JSON.parse(stored) : [];
+            return false;
         }
 
-        // Helper to escape HTML
+        // Fetch product views from Supabase
+        async function fetchProductViews(days = 30) {
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - days);
+            
+            try {
+                const response = await fetch(
+                    `${SUPABASE_URL}/rest/v1/product_views?select=*&seller_id=eq.${currentSellerId}&viewed_at=gte.${startDate.toISOString()}&order=viewed_at.asc`,
+                    {
+                        headers: {
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                        }
+                    }
+                );
+                return await response.json();
+            } catch (error) {
+                console.error('Error fetching product views:', error);
+                return [];
+            }
+        }
+
+        // Fetch WhatsApp clicks from Supabase
+        async function fetchWhatsAppClicks(days = 30) {
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - days);
+            
+            try {
+                const response = await fetch(
+                    `${SUPABASE_URL}/rest/v1/whatsapp_clicks?select=*&seller_id=eq.${currentSellerId}&clicked_at=gte.${startDate.toISOString()}&order=clicked_at.asc`,
+                    {
+                        headers: {
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                        }
+                    }
+                );
+                return await response.json();
+            } catch (error) {
+                console.error('Error fetching whatsapp clicks:', error);
+                return [];
+            }
+        }
+
+        // Fetch seller activities from Supabase
+        async function fetchSellerActivities() {
+            try {
+                const response = await fetch(
+                    `${SUPABASE_URL}/rest/v1/seller_activities?select=*&seller_id=eq.${currentSellerId}&order=created_at.desc&limit=20`,
+                    {
+                        headers: {
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                        }
+                    }
+                );
+                return await response.json();
+            } catch (error) {
+                console.error('Error fetching seller activities:', error);
+                return [];
+            }
+        }
+
+        // Fetch daily stats from Supabase
+        async function fetchDailyStats(days = 30) {
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - days);
+            const startDateStr = startDate.toISOString().split('T')[0];
+            
+            try {
+                const response = await fetch(
+                    `${SUPABASE_URL}/rest/v1/daily_seller_stats?select=*&seller_id=eq.${currentSellerId}&date=gte.${startDateStr}&order=date.asc`,
+                    {
+                        headers: {
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                        }
+                    }
+                );
+                return await response.json();
+            } catch (error) {
+                console.error('Error fetching daily stats:', error);
+                return [];
+            }
+        }
+
+        // Fetch products from Supabase
+        async function fetchProducts() {
+            try {
+                const response = await fetch(
+                    `${SUPABASE_URL}/rest/v1/products?select=*&seller_id=eq.${currentSellerId}`,
+                    {
+                        headers: {
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                        }
+                    }
+                );
+                return await response.json();
+            } catch (error) {
+                console.error('Error fetching products:', error);
+                return [];
+            }
+        }
+
+        // Group data by date for charts
+        function groupByDate(data, dateField) {
+            const grouped = {};
+            data.forEach(item => {
+                const date = new Date(item[dateField]).toLocaleDateString();
+                grouped[date] = (grouped[date] || 0) + 1;
+            });
+            return grouped;
+        }
+
+        // Create charts
+        function createCharts(dailyStats, productViews, whatsappClicks) {
+            const dates = dailyStats.map(d => new Date(d.date).toLocaleDateString());
+            const viewsData = dailyStats.map(d => d.total_product_views || 0);
+            const clicksData = dailyStats.map(d => d.total_whatsapp_clicks || 0);
+            
+            // Views Chart
+            const ctxViews = document.getElementById('viewsChart')?.getContext('2d');
+            if (ctxViews && chartViews) chartViews.destroy();
+            if (ctxViews) {
+                chartViews = new Chart(ctxViews, {
+                    type: 'line',
+                    data: {
+                        labels: dates,
+                        datasets: [{
+                            label: 'Product Views',
+                            data: viewsData,
+                            borderColor: '#f90',
+                            backgroundColor: 'rgba(255, 153, 0, 0.1)',
+                            fill: true,
+                            tension: 0.3
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: true }
+                });
+            }
+            
+            // Clicks Chart
+            const ctxClicks = document.getElementById('clicksChart')?.getContext('2d');
+            if (ctxClicks && chartClicks) chartClicks.destroy();
+            if (ctxClicks) {
+                chartClicks = new Chart(ctxClicks, {
+                    type: 'line',
+                    data: {
+                        labels: dates,
+                        datasets: [{
+                            label: 'WhatsApp Inquiries',
+                            data: clicksData,
+                            borderColor: '#25D366',
+                            backgroundColor: 'rgba(37, 211, 102, 0.1)',
+                            fill: true,
+                            tension: 0.3
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: true }
+                });
+            }
+        }
+
+        // Get top products by views
+        async function getTopProducts() {
+            const views = await fetchProductViews(30);
+            const productStats = {};
+            views.forEach(view => {
+                const title = view.product_title;
+                if (!productStats[title]) {
+                    productStats[title] = { views: 0, clicks: 0, productId: view.product_id };
+                }
+                productStats[title].views++;
+            });
+            
+            const clicks = await fetchWhatsAppClicks(30);
+            clicks.forEach(click => {
+                const title = click.product_title;
+                if (productStats[title]) {
+                    productStats[title].clicks++;
+                } else {
+                    productStats[title] = { views: 0, clicks: 1, productId: click.product_id };
+                }
+            });
+            
+            return Object.entries(productStats)
+                .sort((a, b) => b[1].views - a[1].views)
+                .slice(0, 5);
+        }
+
+        // Render analytics page
+        async function renderAnalytics() {
+            const container = document.getElementById('analyticsContent');
+            
+            if (!getSellerTier()) {
+                container.innerHTML = `
+                    <div class="upgrade-message">
+                        <h2>Analytics Unlocked</h2>
+                        <p>Analytics and insights are available exclusively for paid subscribers.</p>
+                        <div style="max-width: 400px; margin: 0 auto 25px auto; background: #f8f9fa; padding: 20px; border-radius: 16px;">
+                            <h3 style="margin-bottom: 12px;">What you get:</h3>
+                            <ul style="text-align: left; list-style: none;">
+                                <li>✓ Product view tracking</li>
+                                <li>✓ WhatsApp inquiry analytics</li>
+                                <li>✓ Performance charts</li>
+                                <li>✓ Top products insights</li>
+                            </ul>
+                        </div>
+                        <button class="btn-primary" onclick="window.location.href='seller-dashboard.html'">View Plans</button>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = '<div class="loading">Loading analytics...</div>';
+            
+            const [products, productViews, whatsappClicks, dailyStats, topProducts] = await Promise.all([
+                fetchProducts(),
+                fetchProductViews(30),
+                fetchWhatsAppClicks(30),
+                fetchDailyStats(30),
+                getTopProducts()
+            ]);
+            
+            const totalProducts = products.length;
+            const totalViews = productViews.length;
+            const totalWhatsapp = whatsappClicks.length;
+            const conversionRate = totalViews > 0 ? ((totalWhatsapp / totalViews) * 100).toFixed(1) : 0;
+            
+            container.innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-number">${totalProducts}</div><div class="stat-label">Total Products</div></div>
+                    <div class="stat-card"><div class="stat-number">${totalViews}</div><div class="stat-label">Product Views (30d)</div></div>
+                    <div class="stat-card"><div class="stat-number">${totalWhatsapp}</div><div class="stat-label">WhatsApp Inquiries</div></div>
+                    <div class="stat-card"><div class="stat-number">${conversionRate}%</div><div class="stat-label">Inquiry Rate</div></div>
+                </div>
+                
+                <div class="two-columns">
+                    <div class="section">
+                        <h2>Product Views Trend</h2>
+                        <div class="chart-container">
+                            <canvas id="viewsChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="section">
+                        <h2>WhatsApp Inquiries Trend</h2>
+                        <div class="chart-container">
+                            <canvas id="clicksChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="two-columns">
+                    <div class="section">
+                        <h2>Top 5 Products (Most Viewed)</h2>
+                        ${topProducts.length === 0 ? '<p>No data yet. Share your products to start tracking.</p>' : `
+                            <ul class="product-list">
+                                ${topProducts.map(([title, stats]) => `
+                                    <li>
+                                        <span><strong>${escapeHtml(title)}</strong></span>
+                                        <span><span class="badge-success" style="background:#f90; padding:4px 12px;">👁️ ${stats.views} views</span> <span class="badge-success" style="background:#25D366;">💬 ${stats.clicks} inquiries</span></span>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        `}
+                    </div>
+                    <div class="section">
+                        <h2>Recent Activity</h2>
+                        <div id="activitiesList">Loading activities...</div>
+                    </div>
+                </div>
+            `;
+            
+            // Load activities separately
+            loadActivities();
+            
+            // Create charts
+            createCharts(dailyStats, productViews, whatsappClicks);
+        }
+        
+        async function loadActivities() {
+            const activities = await fetchSellerActivities();
+            const container = document.querySelector('#activitiesList');
+            if (!container) return;
+            
+            if (activities.length === 0) {
+                container.innerHTML = '<p>No recent activities.</p>';
+                return;
+            }
+            
+            const activityIcons = {
+                'product_added': '🟢 Added product',
+                'product_deleted': '🔴 Deleted product',
+                'login': '🔵 Logged in',
+                'subscription_changed': '🟡 Subscription changed'
+            };
+            
+            container.innerHTML = `
+                <ul class="product-list">
+                    ${activities.slice(0, 10).map(activity => `
+                        <li>
+                            <span>${activityIcons[activity.activity_type] || activity.activity_type}</span>
+                            <span style="font-size: 12px; color: #666;">${new Date(activity.created_at).toLocaleDateString()}</span>
+                        </li>
+                    `).join('')}
+                </ul>
+            `;
+        }
+        
         function escapeHtml(str) {
             if (!str) return '';
             return str.replace(/[&<>]/g, function(m) {
                 return m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;';
             });
         }
-
-        // Get WhatsApp clicks for this seller
-        function getWhatsAppClicks() {
-            const allClicks = JSON.parse(localStorage.getItem('mbare_whatsapp_clicks') || '[]');
-            return allClicks.filter(c => c.sellerId === currentSellerId).length;
-        }
-
-        // Get product clicks per product
-        function getProductClicks() {
-            const allClicks = JSON.parse(localStorage.getItem('mbare_whatsapp_clicks') || '[]');
-            const sellerClicks = allClicks.filter(c => c.sellerId === currentSellerId);
-            const productMap = {};
-            sellerClicks.forEach(click => {
-                const title = click.productTitle;
-                if (title) productMap[title] = (productMap[title] || 0) + 1;
-            });
-            return productMap;
-        }
-
-        // Calculate category breakdown
-        function getCategoryBreakdown() {
-            const breakdown = {};
-            sellerProducts.forEach(p => {
-                const cat = p.category || 'Other';
-                breakdown[cat] = (breakdown[cat] || 0) + 1;
-            });
-            return breakdown;
-        }
-
-        // Calculate total inventory value
-        function getTotalInventoryValue() {
-            return sellerProducts.reduce((sum, p) => sum + (p.price * (p.stock || 0)), 0);
-        }
-
-        // Calculate total stock
-        function getTotalStock() {
-            return sellerProducts.reduce((sum, p) => sum + (p.stock || 0), 0);
-        }
-
-        // Find low stock products (stock < 5)
-        function getLowStockProducts() {
-            return sellerProducts.filter(p => p.stock < 5 && p.stock > 0);
-        }
-
-        // Find out of stock products
-        function getOutOfStockProducts() {
-            return sellerProducts.filter(p => p.stock === 0);
-        }
-
-        // Get top products by WhatsApp inquiries
-        function getTopProductsByInquiries() {
-            const clicks = getProductClicks();
-            return Object.entries(clicks)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 5);
-        }
-
-        // Render the analytics page based on subscription status
-        function renderAnalytics() {
-            const container = document.getElementById('analyticsContent');
-            
-            if (currentTier === 'free') {
-                // Free user - show upgrade message
-                container.innerHTML = `
-                    <div class="upgrade-message">
-                        <h2>📊 Seller Analytics Unlocked</h2>
-                        <p>Analytics and insights are available exclusively for paid subscribers.</p>
-                        <div style="max-width: 400px; margin: 0 auto 25px auto; background: #f8f9fa; padding: 20px; border-radius: 16px;">
-                            <h3 style="margin-bottom: 12px;">What you get with a paid plan:</h3>
-                            <ul style="text-align: left; list-style: none; padding-left: 0;">
-                                <li style="margin: 10px 0;">✓ Product performance tracking</li>
-                                <li style="margin: 10px 0;">✓ Low stock and out of stock alerts</li>
-                                <li style="margin: 10px 0;">✓ WhatsApp inquiry analytics</li>
-                                <li style="margin: 10px 0;">✓ Category performance breakdown</li>
-                                <li style="margin: 10px 0;">✓ Inventory value trends</li>
-                                <li style="margin: 10px 0;">✓ Unlimited products (up to 200)</li>
-                            </ul>
-                        </div>
-                        <button class="btn-primary" id="upgradeBtn">View Subscription Plans</button>
-                    </div>
-                `;
-                document.getElementById('upgradeBtn').addEventListener('click', () => {
-                    window.location.href = 'seller-dashboard.html';
-                });
-                return;
-            }
-
-            // Paid user - show full analytics
-            const totalProducts = sellerProducts.length;
-            const totalStock = getTotalStock();
-            const totalValue = getTotalInventoryValue();
-            const whatsappClicks = getWhatsAppClicks();
-            const lowStock = getLowStockProducts();
-            const outOfStock = getOutOfStockProducts();
-            const categoryBreakdown = getCategoryBreakdown();
-            const topProducts = getTopProductsByInquiries();
-            const planName = currentTier === 'tier_150' ? 'Merchant Basic' : 'Video Ads Plan';
-            const planPrice = currentTier === 'tier_150' ? '$1.50' : '$5.00';
-            const productLimit = currentTier === 'tier_150' ? 50 : 200;
-            const remainingSlots = productLimit - totalProducts;
-
-            container.innerHTML = `
-                <!-- Stats Cards -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-number">${totalProducts}</div>
-                        <div class="stat-label">Total Products</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number">${totalStock}</div>
-                        <div class="stat-label">Items in Stock</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number">$${totalValue.toFixed(2)}</div>
-                        <div class="stat-label">Inventory Value</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number">${whatsappClicks}</div>
-                        <div class="stat-label">WhatsApp Inquiries</div>
-                    </div>
-                </div>
-
-                <!-- Two column layout -->
-                <div class="two-columns">
-                    <!-- Left Column -->
-                    <div>
-                        <!-- Low Stock Alerts -->
-                        <div class="section">
-                            <h2>⚠️ Low Stock Alerts</h2>
-                            ${lowStock.length === 0 ? '<p class="empty-state">No low stock items. Good inventory management!</p>' : `
-                                <ul class="product-list">
-                                    ${lowStock.map(p => `
-                                        <li>
-                                            <span><strong>${escapeHtml(p.title)}</strong></span>
-                                            <span class="badge badge-warning">Stock: ${p.stock}</span>
-                                        </li>
-                                    `).join('')}
-                                </ul>
-                            `}
-                        </div>
-
-                        <!-- Out of Stock -->
-                        <div class="section">
-                            <h2>🚫 Out of Stock Products</h2>
-                            ${outOfStock.length === 0 ? '<p class="empty-state">All products are in stock.</p>' : `
-                                <ul class="product-list">
-                                    ${outOfStock.map(p => `
-                                        <li>
-                                            <span><strong>${escapeHtml(p.title)}</strong></span>
-                                            <span class="badge">Out of Stock</span>
-                                        </li>
-                                    `).join('')}
-                                </ul>
-                            `}
-                        </div>
-                    </div>
-
-                    <!-- Right Column -->
-                    <div>
-                        <!-- Products by Category -->
-                        <div class="section">
-                            <h2>📁 Products by Category</h2>
-                            ${Object.keys(categoryBreakdown).length === 0 ? '<p class="empty-state">No products categorized yet.</p>' : `
-                                ${Object.entries(categoryBreakdown).map(([cat, count]) => `
-                                    <div class="category-item">
-                                        <span class="category-name">${escapeHtml(cat)}</span>
-                                        <span class="category-count">${count} product${count !== 1 ? 's' : ''}</span>
-                                    </div>
-                                `).join('')}
-                            `}
-                        </div>
-
-                        <!-- Top Products by WhatsApp Inquiries -->
-                        <div class="section">
-                            <h2>📞 Top WhatsApp Inquiries</h2>
-                            ${topProducts.length === 0 ? '<p class="empty-state">No WhatsApp inquiries yet. Share your products to get inquiries.</p>' : `
-                                <ul class="product-list">
-                                    ${topProducts.map(([title, count]) => `
-                                        <li>
-                                            <span><strong>${escapeHtml(title)}</strong></span>
-                                            <span class="badge-success" style="background: #28a745; padding: 4px 12px; border-radius: 30px;">${count} inquiry${count !== 1 ? 's' : ''}</span>
-                                        </li>
-                                    `).join('')}
-                                </ul>
-                            `}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Subscription Info -->
-                <div class="section">
-                    <h2>💳 Your Subscription</h2>
-                    <div class="subscription-info">
-                        <p><strong>Current Plan:</strong> ${planName} (${planPrice}/month)</p>
-                        <p><strong>Product Limit:</strong> ${productLimit} products</p>
-                        <p><strong>Products Used:</strong> ${totalProducts} / ${productLimit} (${remainingSlots} slots remaining)</p>
-                        <p><strong>Benefits:</strong> ${currentTier === 'tier_150' ? 'Priority support, up to 50 products' : 'Video ads on social platforms, up to 200 products, priority support'}</p>
-                    </div>
-                </div>
-
-                <!-- All Products List -->
-                <div class="section">
-                    <h2>📦 All Products Overview</h2>
-                    ${sellerProducts.length === 0 ? '<p class="empty-state">No products added yet. Start adding products to see them here.</p>' : `
-                        <ul class="product-list">
-                            ${sellerProducts.map(p => `
-                                <li>
-                                    <div>
-                                        <strong>${escapeHtml(p.title)}</strong>
-                                        <span style="color: #666; font-size: 13px; margin-left: 10px;">${escapeHtml(p.category || 'Uncategorized')}</span>
-                                    </div>
-                                    <div>
-                                        <span style="margin-right: 15px;">💰 $${parseFloat(p.price).toFixed(2)}</span>
-                                        <span style="margin-right: 15px;">📦 Stock: ${p.stock || 0}</span>
-                                        <span>📞 ${getProductClicks()[p.title] || 0} inquiries</span>
-                                    </div>
-                                </li>
-                            `).join('')}
-                        </ul>
-                    `}
-                </div>
-            `;
-        }
-
+        
         // Initialize
-        loadSellerData();
         renderAnalytics();
     </script>
 </body>
