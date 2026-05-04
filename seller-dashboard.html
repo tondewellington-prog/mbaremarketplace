@@ -128,6 +128,10 @@
         .btn-primary:hover {
             background: #F7CA00;
         }
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
         .btn-secondary {
             background: #e7e9ec;
             border: none;
@@ -372,9 +376,29 @@
         }
         .banner h1 { margin: 0; }
         .banner p { margin-top: 8px; opacity: 0.9; }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
     </style>
 </head>
 <body>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div style="text-align: center;">
+            <div class="spinner"></div>
+            <p style="margin-top: 16px; color: #666;">Loading dashboard...</p>
+        </div>
+    </div>
+
     <header class="header">
         <div class="header-top">
             <div class="container">
@@ -458,10 +482,15 @@
     </footer>
 
     <script>
+        // Supabase configuration - same as index page
+        window.SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
+        window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
+        
         // Paynow credentials
         const PAYNOW_INTEGRATION_ID = '24522';
         
-        let currentSellerId = "seller_mbare_001";
+        let currentSellerId = null;
+        let currentAccessToken = null;
         let currentTier = "free";
         let sellerProducts = [];
 
@@ -470,6 +499,110 @@
             tier_150: { name: "Merchant Basic", price: "$1.50 / month", maxProducts: 50, perks: "50 products · priority support", badge: "POPULAR" },
             tier_5: { name: "Video Ads Plan", price: "$5 / month", maxProducts: 200, perks: "200 products + video ads on social platforms", badge: "VIDEO BOOST" }
         };
+
+        // Check authentication first
+        async function checkAuth() {
+            const sessionData = localStorage.getItem('supabase_session');
+            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+            
+            if (!isLoggedIn || !sessionData) {
+                alert('Please login first to access the seller dashboard.');
+                window.location.href = 'login.html?redirect=seller-dashboard.html';
+                return false;
+            }
+            
+            try {
+                const session = JSON.parse(sessionData);
+                currentSellerId = session.user?.id;
+                currentAccessToken = session.access_token;
+                
+                if (!currentSellerId) {
+                    throw new Error('No seller ID found');
+                }
+                
+                // Update header
+                const userEmail = session.user?.email || 'Seller';
+                document.querySelector('.account-menu').textContent = `Hello, ${userEmail.split('@')[0]}`;
+                
+                return true;
+            } catch (error) {
+                console.error('Session error:', error);
+                alert('Session expired. Please login again.');
+                window.location.href = 'login.html';
+                return false;
+            }
+        }
+
+        // Fetch subscription from Supabase
+        async function fetchSubscription() {
+            try {
+                const response = await fetch(
+                    `${window.SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${currentSellerId}&select=*&order=created_at.desc&limit=1`,
+                    {
+                        headers: {
+                            'apikey': window.SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${currentAccessToken}`
+                        }
+                    }
+                );
+                
+                if (!response.ok) {
+                    console.warn('Could not fetch subscription, using free tier');
+                    return null;
+                }
+                
+                const subscriptions = await response.json();
+                
+                if (subscriptions && subscriptions.length > 0) {
+                    const activeSub = subscriptions[0];
+                    
+                    // Check if subscription is active (not expired)
+                    if (activeSub.status === 'active' || activeSub.status === 'paid') {
+                        // Map subscription tier
+                        if (activeSub.tier === 'tier_5' || activeSub.plan_id === 'tier_5' || activeSub.amount >= 4.99) {
+                            return 'tier_5';
+                        } else if (activeSub.tier === 'tier_150' || activeSub.plan_id === 'tier_150' || activeSub.amount >= 1.49) {
+                            return 'tier_150';
+                        }
+                    }
+                }
+                
+                return null; // No active subscription found
+            } catch (error) {
+                console.error('Error fetching subscription:', error);
+                return null;
+            }
+        }
+
+        // Initialize dashboard
+        async function initializeDashboard() {
+            const isAuthenticated = await checkAuth();
+            if (!isAuthenticated) return;
+            
+            // Fetch subscription from Supabase
+            const subscriptionTier = await fetchSubscription();
+            
+            if (subscriptionTier) {
+                currentTier = subscriptionTier;
+                // Also save to localStorage for quick access
+                localStorage.setItem(`mbare_tier_${currentSellerId}`, currentTier);
+            } else {
+                // Check localStorage fallback
+                const savedTier = localStorage.getItem(`mbare_tier_${currentSellerId}`);
+                if (savedTier && tierMap[savedTier]) {
+                    currentTier = savedTier;
+                } else {
+                    currentTier = 'free';
+                }
+            }
+            
+            // Load products from localStorage (or Supabase in future)
+            loadProducts();
+            renderTiers();
+            
+            // Hide loading overlay
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
 
         function loadProducts() {
             const stored = localStorage.getItem(`mbare_products_${currentSellerId}`);
@@ -492,6 +625,7 @@
             const container = document.getElementById('tierContainer');
             if (!container) return;
             container.innerHTML = '';
+            
             for (const [key, def] of Object.entries(tierMap)) {
                 const isActive = (currentTier === key);
                 const activeClass = isActive ? 'tier-highlight' : '';
@@ -516,18 +650,89 @@
                     const tierKey = btn.dataset.tier;
                     if (tierKey === 'free') {
                         if (confirm('Switch to Free plan? Max 8 products.')) {
-                            currentTier = 'free';
-                            localStorage.setItem(`mbare_tier_${currentSellerId}`, currentTier);
-                            renderTiers();
-                            enforceProductLimit();
-                            updateStatsAndLimits();
-                            alert('Plan changed to Starter Plan (Free)');
+                            updateSubscriptionInSupabase('free');
                         }
                     } else {
                         openPaymentModal(tierKey);
                     }
                 });
             });
+        }
+
+        async function updateSubscriptionInSupabase(tier) {
+            try {
+                // Update or insert subscription record
+                const subscriptionData = {
+                    seller_id: currentSellerId,
+                    tier: tier,
+                    status: tier === 'free' ? 'cancelled' : 'active',
+                    updated_at: new Date().toISOString()
+                };
+                
+                // Check if subscription exists
+                const checkResponse = await fetch(
+                    `${window.SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${currentSellerId}&select=id`,
+                    {
+                        headers: {
+                            'apikey': window.SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${currentAccessToken}`
+                        }
+                    }
+                );
+                
+                if (checkResponse.ok) {
+                    const existing = await checkResponse.json();
+                    if (existing && existing.length > 0) {
+                        // Update existing
+                        await fetch(
+                            `${window.SUPABASE_URL}/rest/v1/seller_subscriptions?id=eq.${existing[0].id}`,
+                            {
+                                method: 'PATCH',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'apikey': window.SUPABASE_ANON_KEY,
+                                    'Authorization': `Bearer ${currentAccessToken}`,
+                                    'Prefer': 'return=minimal'
+                                },
+                                body: JSON.stringify(subscriptionData)
+                            }
+                        );
+                    } else {
+                        // Insert new
+                        await fetch(
+                            `${window.SUPABASE_URL}/rest/v1/seller_subscriptions`,
+                            {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'apikey': window.SUPABASE_ANON_KEY,
+                                    'Authorization': `Bearer ${currentAccessToken}`,
+                                    'Prefer': 'return=minimal'
+                                },
+                                body: JSON.stringify({
+                                    ...subscriptionData,
+                                    created_at: new Date().toISOString()
+                                })
+                            }
+                        );
+                    }
+                }
+                
+                currentTier = tier;
+                localStorage.setItem(`mbare_tier_${currentSellerId}`, currentTier);
+                renderTiers();
+                enforceProductLimit();
+                updateStatsAndLimits();
+                alert(`Plan changed to ${tierMap[tier].name}`);
+            } catch (error) {
+                console.error('Error updating subscription:', error);
+                // Fallback to localStorage only
+                currentTier = tier;
+                localStorage.setItem(`mbare_tier_${currentSellerId}`, currentTier);
+                renderTiers();
+                enforceProductLimit();
+                updateStatsAndLimits();
+            }
         }
 
         function openPaymentModal(tierKey) {
@@ -611,8 +816,10 @@
                     const statusText = await statusResp.text();
                     if (statusText.includes('Paid') || statusText.includes('Completed')) {
                         clearInterval(interval);
-                        currentTier = tierKey;
-                        localStorage.setItem(`mbare_tier_${currentSellerId}`, currentTier);
+                        
+                        // Update subscription in Supabase
+                        await updateSubscriptionInSupabase(tierKey);
+                        
                         if (modalElement) modalElement.remove();
                         renderTiers();
                         enforceProductLimit();
@@ -657,13 +864,21 @@
             const limit = getCurrentLimit();
             const remaining = limit - total;
             const warningDiv = document.getElementById('tierMessage');
+            
             if (currentTier === 'free') {
                 warningDiv.innerHTML = `<strong>Free Plan Limit:</strong> ${total} of ${limit} products used. ${remaining > 0 ? `You can add ${remaining} more.` : 'Maximum limit reached. Upgrade to add more products.'} <a href="#" id="upgradeLink" class="inline-link">View Plans</a>`;
                 const link = document.getElementById('upgradeLink');
-                if (link) link.onclick = (e) => { e.preventDefault(); document.querySelector('[data-tier="tier_150"]')?.click(); };
+                if (link) {
+                    link.onclick = (e) => {
+                        e.preventDefault();
+                        // Scroll to plans section
+                        document.getElementById('tierContainer').scrollIntoView({ behavior: 'smooth' });
+                    };
+                }
             } else {
-                warningDiv.innerHTML = `<strong>${tierMap[currentTier]?.name} Active:</strong> ${remaining} product slots remaining. Video ads included for Video Ads Plan.`;
+                warningDiv.innerHTML = `<strong>${tierMap[currentTier]?.name} Active:</strong> ${remaining} product slots remaining. ${currentTier === 'tier_5' ? 'Video ads included.' : ''}`;
             }
+            
             document.getElementById('totalProducts').innerText = total;
             const totalStock = sellerProducts.reduce((s,p) => s + (p.stock || 0), 0);
             const totalVal = sellerProducts.reduce((s,p) => s + (p.price * (p.stock || 0)), 0);
@@ -838,74 +1053,58 @@
             alert('Product added successfully!');
         };
 
-        // Seller Analytics button handler - encourages subscription for free users, shows analytics for paid users
-        document.getElementById('analyticsNavBtn').addEventListener('click', (e) => {
+        // Analytics button - redirects to seller-analytics.html after checking subscription
+        document.getElementById('analyticsNavBtn').addEventListener('click', async (e) => {
             if (currentTier === 'free') {
-                // Encourage free users to subscribe
+                // Encourage free users to subscribe - show ALL plans
                 const modalDiv = document.createElement('div');
                 modalDiv.className = 'payment-modal';
                 modalDiv.innerHTML = `
                     <div class="payment-card" style="text-align: center;">
-                        <h3>Unlock Seller Analytics</h3>
+                        <h3>🔒 Unlock Seller Analytics</h3>
                         <p style="margin: 15px 0;">Seller Analytics is available exclusively for paid subscribers.</p>
                         <p style="margin: 10px 0; font-size: 14px; color: #666;">Get insights on:</p>
                         <ul style="text-align: left; margin: 10px 20px; color: #555;">
-                            <li>Product performance & stock alerts</li>
-                            <li>WhatsApp inquiry tracking</li>
-                            <li>Category breakdown & trends</li>
-                            <li>Inventory value analytics</li>
+                            <li>📊 Product performance & stock alerts</li>
+                            <li>📱 WhatsApp inquiry tracking</li>
+                            <li>📂 Category breakdown & trends</li>
+                            <li>💰 Inventory value analytics</li>
+                            <li>👥 Customer engagement metrics</li>
                         </ul>
-                        <button class="btn-primary" id="upgradeFromAnalytics" style="margin-top: 20px; width: 100%;">View Subscription Plans</button>
-                        <button class="btn-secondary" id="closeAnalyticsModal" style="margin-top: 10px; width: 100%;">Close</button>
+                        <p style="margin: 15px 0; font-size: 14px; font-weight: 600; color: #232f3e;">Choose a plan to unlock analytics:</p>
+                        <button class="btn-primary upgrade-plan-btn" data-tier="tier_150" style="margin: 8px 0; width: 100%; background: #f90; color: white;">
+                            Merchant Basic - $1.50/month
+                        </button>
+                        <button class="btn-primary upgrade-plan-btn" data-tier="tier_5" style="margin: 8px 0; width: 100%; background: #ff6b00; color: white;">
+                            Video Ads Plan - $5/month
+                        </button>
+                        <button class="btn-secondary" id="closeAnalyticsModal" style="margin-top: 10px; width: 100%;">Maybe Later</button>
                     </div>
                 `;
                 document.body.appendChild(modalDiv);
+                
                 document.getElementById('closeAnalyticsModal').onclick = () => modalDiv.remove();
-                document.getElementById('upgradeFromAnalytics').onclick = () => {
-                    modalDiv.remove();
-                    document.querySelector('[data-tier="tier_150"]')?.click();
-                };
+                
+                // Handle upgrade button clicks
+                modalDiv.querySelectorAll('.upgrade-plan-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const tier = btn.dataset.tier;
+                        modalDiv.remove();
+                        openPaymentModal(tier);
+                    });
+                });
+                
                 return;
             }
             
-            // Paid user - show analytics
-            const totalProducts = sellerProducts.length;
-            const totalStock = sellerProducts.reduce((s,p) => s + (p.stock || 0), 0);
-            const totalValue = sellerProducts.reduce((s,p) => s + (p.price * (p.stock || 0)), 0);
-            const whatsappClicks = JSON.parse(localStorage.getItem('mbare_whatsapp_clicks') || '[]').filter(c => c.sellerId === currentSellerId).length;
-            const lowStockProducts = sellerProducts.filter(p => p.stock < 5);
-            const outOfStock = sellerProducts.filter(p => p.stock === 0);
-            const categoryCount = {};
-            sellerProducts.forEach(p => { const cat = p.category || 'Other'; categoryCount[cat] = (categoryCount[cat] || 0) + 1; });
-            
-            const analyticsWindow = window.open('', '_blank');
-            analyticsWindow.document.write(`
-                <!DOCTYPE html>
-                <html>
-                <head><title>Seller Analytics - Mbare Marketplace</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"><style>
-                    *{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif;}body{background:#EAEDED;padding:30px 20px;}.container{max-width:1200px;margin:0 auto;}h1{color:#131921;margin-bottom:8px;}.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;margin:30px 0;}.stat-card{background:white;padding:24px;border-radius:16px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.1);}.stat-number{font-size:36px;font-weight:800;color:#B12704;}.section{background:white;border-radius:16px;padding:24px;margin-bottom:24px;}.section h2{margin-bottom:20px;color:#232f3e;border-bottom:2px solid #FFD814;padding-bottom:8px;display:inline-block;}.product-list{list-style:none;}.product-list li{padding:10px 0;border-bottom:1px solid #eee;display:flex;justify-content:space-between;}.badge{background:#dc3545;color:white;padding:2px 8px;border-radius:20px;font-size:12px;}.badge-warning{background:#f90;}.btn-back{background:#FFD814;border:none;padding:10px 24px;border-radius:30px;cursor:pointer;font-weight:600;margin-bottom:20px;}
-                </style></head>
-                <body><div class="container"><button class="btn-back" onclick="window.close()">← Back to Dashboard</button>
-                <h1>Seller Analytics</h1><p style="color:#666;">Your personal performance overview</p>
-                <div class="stats-grid"><div class="stat-card"><div class="stat-number">${totalProducts}</div><div>Total Products</div></div>
-                <div class="stat-card"><div class="stat-number">${totalStock}</div><div>Total Stock</div></div>
-                <div class="stat-card"><div class="stat-number">$${totalValue.toFixed(2)}</div><div>Inventory Value</div></div>
-                <div class="stat-card"><div class="stat-number">${whatsappClicks}</div><div>WhatsApp Inquiries</div></div></div>
-                <div class="section"><h2>Low Stock Alerts</h2>${lowStockProducts.length ? `<ul class="product-list">${lowStockProducts.map(p => `<li><span>${escapeHtml(p.title)}</span><span class="badge badge-warning">Stock: ${p.stock}</span></li>`).join('')}</ul>` : '<p>No low stock items. Good inventory!</p>'}</div>
-                <div class="section"><h2>Out of Stock Products</h2>${outOfStock.length ? `<ul class="product-list">${outOfStock.map(p => `<li><span>${escapeHtml(p.title)}</span><span class="badge">Out of Stock</span></li>`).join('')}</ul>` : '<p>All products in stock.</p>'}</div>
-                <div class="section"><h2>Products by Category</h2><ul class="product-list">${Object.entries(categoryCount).map(([cat, count]) => `<li><span>${cat}</span><span><strong>${count}</strong> product${count !== 1 ? 's' : ''}</span></li>`).join('')}</ul></div>
-                <div class="section"><h2>Your Subscription</h2><p><strong>Current Plan:</strong> ${currentTier === 'tier_150' ? 'Merchant Basic ($1.50/month)' : 'Video Ads Plan ($5/month)'}</p><p><strong>Product Limit:</strong> ${currentTier === 'tier_150' ? '50' : '200'} products</p><p><strong>Products Used:</strong> ${totalProducts} / ${currentTier === 'tier_150' ? '50' : '200'}</p></div>
-                </div></body></html>
-            `);
-            analyticsWindow.document.close();
+            // Paid user - redirect to analytics page
+            window.location.href = 'seller-analytics.html';
         });
 
         document.getElementById('productForm').addEventListener('submit', handleAddProduct);
         
-        const savedTier = localStorage.getItem(`mbare_tier_${currentSellerId}`);
-        if (savedTier && tierMap[savedTier]) currentTier = savedTier;
-        renderTiers();
-        loadProducts();
+        // Initialize dashboard
+        initializeDashboard();
     </script>
 </body>
 </html>
