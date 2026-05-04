@@ -29,7 +29,6 @@
         .footer { margin-top: 50px; background: #232f3e; color: white; }
         .footer-top { text-align: center; padding: 14px; background: #37475a; }
         .footer-bottom { background: #131921; text-align: center; padding: 18px; font-size: 0.8rem; }
-        .container { max-width: 1300px; margin: 0 auto; padding: 0 20px; }
         .btn-primary {
             background: #FFD814; border: none; padding: 10px 22px; border-radius: 10px;
             font-weight: 600; cursor: pointer; color: #111; transition: 0.2s;
@@ -72,12 +71,8 @@
         .form-row .form-group { flex: 1; }
         .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 24px; }
         .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; }
-        .mt-30 { margin-top: 30px; }
-        .mb-30 { margin-bottom: 30px; }
-        .mb-20 { margin-bottom: 20px; }
-        .p-30 { padding: 30px; }
-        .bg-white { background: white; }
-        .rounded-xl { border-radius: 20px; }
+        .mt-30 { margin-top: 30px; } .mb-30 { margin-bottom: 30px; } .mb-20 { margin-bottom: 20px; }
+        .p-30 { padding: 30px; } .bg-white { background: white; } .rounded-xl { border-radius: 20px; }
         .whatsapp-btn {
             background: #25D366; color: white; border: none; padding: 8px 16px;
             border-radius: 40px; font-weight: 500; cursor: pointer; font-size: 13px;
@@ -95,7 +90,7 @@
         }
         .payment-card {
             background: white; max-width: 460px; width: 90%;
-            border-radius: 28px; padding: 28px;
+            border-radius: 28px; padding: 28px; max-height: 90vh; overflow-y: auto;
         }
         .spinner {
             width: 48px; height: 48px; border: 4px solid #f3f3f3;
@@ -108,6 +103,7 @@
         .analytics-btn {
             background: #2c7da0; color: white; padding: 10px 24px; border-radius: 40px;
             font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: 0.2s;
+            text-decoration: none; display: inline-block;
         }
         .analytics-btn:hover { background: #1f5e7a; transform: scale(1.02); }
         .banner {
@@ -116,14 +112,12 @@
             display: flex; justify-content: space-between; align-items: center;
             flex-wrap: wrap; gap: 20px;
         }
-        .banner h1 { margin: 0; }
-        .banner p { margin-top: 8px; opacity: 0.9; }
+        .banner h1 { margin: 0; } .banner p { margin-top: 8px; opacity: 0.9; }
         .loading-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(255,255,255,0.9); display: flex;
             align-items: center; justify-content: center; z-index: 9999;
         }
-        /* Image upload styles */
         .image-upload-area {
             border: 2px dashed #ccc; border-radius: 12px; padding: 30px;
             text-align: center; background: #fafafa; cursor: pointer;
@@ -216,7 +210,6 @@
                     <div class="form-group">
                         <label>Product Image *</label>
                         <input type="file" id="imageFileInput" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
-                        
                         <div class="image-upload-area" id="uploadArea" onclick="document.getElementById('imageFileInput').click()">
                             <div id="uploadPlaceholder">
                                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="1.5">
@@ -224,28 +217,24 @@
                                     <circle cx="8.5" cy="8.5" r="1.5"/>
                                     <polyline points="21 15 16 10 5 21"/>
                                 </svg>
-                                <p style="color: #666; margin-top: 10px;">Click to upload or drag & drop</p>
-                                <p style="color: #999; font-size: 12px;">PNG, JPG, GIF up to 10MB</p>
+                                <p style="color:#666;margin-top:10px;">Click to upload or drag & drop</p>
+                                <p style="color:#999;font-size:12px;">PNG, JPG, GIF up to 10MB</p>
                                 <div class="upload-actions">
-                                    <button type="button" class="camera-btn" onclick="event.stopPropagation(); openCamera()">📷 Take Photo</button>
-                                    <button type="button" class="camera-btn" onclick="event.stopPropagation(); document.getElementById('imageFileInput').click()">🖼️ Choose File</button>
+                                    <button type="button" class="camera-btn" onclick="event.stopPropagation();openCamera()">📷 Take Photo</button>
+                                    <button type="button" class="camera-btn" onclick="event.stopPropagation();document.getElementById('imageFileInput').click()">🖼️ Choose File</button>
                                 </div>
                             </div>
                         </div>
-                        
                         <div class="image-preview-container" id="imagePreviewContainer">
                             <img id="imagePreview" src="" alt="Preview">
                             <button type="button" class="remove-image-btn" onclick="removeImage()">✕</button>
                         </div>
-                        
                         <div class="upload-progress-bar" id="uploadProgressBar">
                             <div class="upload-progress-fill" id="uploadProgressFill"></div>
                         </div>
-                        
                         <input type="hidden" id="prodImage" required>
-                        <small style="color:#666; display: block; margin-top: 5px;" id="imageStatus"></small>
+                        <small style="color:#666;display:block;margin-top:5px;" id="imageStatus"></small>
                     </div>
-
                     <div class="form-row">
                         <div class="form-group"><label>Product Title *</label><input type="text" id="prodTitle" required></div>
                         <div class="form-group">
@@ -274,7 +263,7 @@
                         <div class="form-group"><label>Price ($) *</label><input type="number" id="prodPrice" step="0.01" min="0" required></div>
                         <div class="form-group"><label>Stock Quantity *</label><input type="number" id="prodStock" min="0" required></div>
                     </div>
-                    <div style="display: flex; gap: 12px;">
+                    <div style="display:flex;gap:12px;">
                         <button type="button" class="btn-primary" id="submitProductBtn" onclick="handleAddProduct()">Add Product</button>
                         <button type="button" class="btn-secondary" onclick="toggleProductForm()">Cancel</button>
                     </div>
@@ -290,74 +279,56 @@
 
     <footer class="footer">
         <div class="footer-top"><a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="color:white;">Back to top</a></div>
-        <div class="footer-bottom"><div class="container">© 2026 Mbare Marketplace</div></div>
+        <div class="footer-bottom"><div class="container">&copy; 2026 Mbare Marketplace</div></div>
     </footer>
 
     <script>
-        // Supabase configuration - from index page
+        // ==================== CONFIGURATION ====================
         window.SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
         window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
-        
-        // ImgBB API Key
         const IMGBB_API_KEY = '670ea8c38e955ebdfdf84a41489713bf';
         const PAYNOW_INTEGRATION_ID = '24522';
-        
+
+        // ==================== GLOBAL STATE ====================
         let currentSellerId = null;
         let currentAccessToken = null;
-        let currentTier = "free";
+        let currentTier = 'free';
         let sellerProducts = [];
         let selectedImageFile = null;
 
         const tierMap = {
-            free: { name: "Starter Plan", price: "Free", maxProducts: 8, perks: "8 active products", badge: "" },
-            tier_150: { name: "Merchant Basic", price: "$1.50 / month", maxProducts: 50, perks: "50 products · priority support", badge: "POPULAR" },
-            tier_5: { name: "Video Ads Plan", price: "$5 / month", maxProducts: 200, perks: "200 products + video ads on social platforms", badge: "VIDEO BOOST" }
+            free: { name: 'Starter Plan', price: 'Free', maxProducts: 8, perks: '8 active products', badge: '' },
+            tier_150: { name: 'Merchant Basic', price: '$1.50 / month', maxProducts: 50, perks: '50 products · priority support', badge: 'POPULAR' },
+            tier_5: { name: 'Video Ads Plan', price: '$5 / month', maxProducts: 200, perks: '200 products + video ads on social platforms', badge: 'VIDEO BOOST' }
         };
 
-        // ============ IMAGE UPLOAD FUNCTIONS ============
-        const uploadArea = document.getElementById('uploadArea');
-        if (uploadArea) {
-            uploadArea.addEventListener('dragover', function(e) {
+        // ==================== IMAGE UPLOAD ====================
+        (function initUpload() {
+            const area = document.getElementById('uploadArea');
+            if (!area) return;
+            area.addEventListener('dragover', e => { e.preventDefault(); area.classList.add('dragover'); });
+            area.addEventListener('dragleave', () => area.classList.remove('dragover'));
+            area.addEventListener('drop', e => {
                 e.preventDefault();
-                e.stopPropagation();
-                uploadArea.classList.add('dragover');
+                area.classList.remove('dragover');
+                if (e.dataTransfer.files.length > 0) handleImageFile(e.dataTransfer.files[0]);
             });
-            
-            uploadArea.addEventListener('dragleave', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                uploadArea.classList.remove('dragover');
-            });
-            
-            uploadArea.addEventListener('drop', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                uploadArea.classList.remove('dragover');
-                const files = e.dataTransfer.files;
-                if (files.length > 0) handleImageFile(files[0]);
-            });
-        }
+        })();
 
-        window.handleFileSelect = function(event) {
-            const file = event.target.files[0];
-            if (file) handleImageFile(file);
-        };
+        window.handleFileSelect = function(e) { if (e.target.files[0]) handleImageFile(e.target.files[0]); };
 
         function handleImageFile(file) {
-            if (!file.type.match('image.*')) { alert('Please select an image file (PNG, JPG, GIF)'); return; }
-            if (file.size > 10 * 1024 * 1024) { alert('Image size must be less than 10MB'); return; }
-            
+            if (!file.type.match('image.*')) return alert('Please select an image file');
+            if (file.size > 10 * 1024 * 1024) return alert('Image must be under 10MB');
             selectedImageFile = file;
-            
             const reader = new FileReader();
             reader.onload = function(e) {
                 document.getElementById('imagePreview').src = e.target.result;
                 document.getElementById('imagePreviewContainer').style.display = 'block';
                 document.getElementById('uploadPlaceholder').style.display = 'none';
-                document.getElementById('imageStatus').textContent = 'Image selected. Will upload when you add the product.';
+                document.getElementById('imageStatus').textContent = 'Image ready. Will upload when you add the product.';
             };
             reader.readAsDataURL(file);
-            
             document.getElementById('prodImage').value = '';
         }
 
@@ -382,440 +353,306 @@
         };
 
         async function uploadImageToImgBB(file) {
-            const progressBar = document.getElementById('uploadProgressBar');
-            const progressFill = document.getElementById('uploadProgressFill');
-            const statusText = document.getElementById('imageStatus');
-            
-            progressBar.style.display = 'block';
-            progressFill.style.width = '30%';
-            statusText.textContent = 'Uploading image...';
-            
-            const formData = new FormData();
-            formData.append('image', file);
-            formData.append('key', IMGBB_API_KEY);
-            
-            try {
-                const response = await fetch('https://api.imgbb.com/1/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                progressFill.style.width = '80%';
-                const data = await response.json();
-                
-                if (data.success) {
-                    progressFill.style.width = '100%';
-                    statusText.textContent = '✓ Image uploaded!';
-                    document.getElementById('prodImage').value = data.data.url;
-                    setTimeout(() => { progressBar.style.display = 'none'; }, 1000);
-                    return data.data.url;
-                } else {
-                    throw new Error(data.error?.message || 'Upload failed');
-                }
-            } catch (error) {
-                statusText.textContent = '✗ Upload failed: ' + error.message;
-                progressBar.style.display = 'none';
-                throw error;
+            const bar = document.getElementById('uploadProgressBar');
+            const fill = document.getElementById('uploadProgressFill');
+            const status = document.getElementById('imageStatus');
+            bar.style.display = 'block';
+            fill.style.width = '30%';
+            status.textContent = 'Uploading image...';
+            const fd = new FormData();
+            fd.append('image', file);
+            fd.append('key', IMGBB_API_KEY);
+            const resp = await fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: fd });
+            fill.style.width = '80%';
+            const data = await resp.json();
+            if (data.success) {
+                fill.style.width = '100%';
+                status.textContent = '✓ Image uploaded!';
+                document.getElementById('prodImage').value = data.data.url;
+                setTimeout(() => { bar.style.display = 'none'; }, 1000);
+                return data.data.url;
             }
+            throw new Error(data.error?.message || 'Upload failed');
         }
 
-        // ============ AUTH & SUBSCRIPTION ============
+        // ==================== AUTH ====================
         async function checkAuth() {
             const sessionData = localStorage.getItem('supabase_session');
             const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-            
             if (!isLoggedIn || !sessionData) {
-                alert('Please login first to access the seller dashboard.');
+                alert('Please login first.');
                 window.location.href = 'login.html?redirect=seller-dashboard.html';
                 return false;
             }
-            
             try {
                 const session = JSON.parse(sessionData);
                 currentSellerId = session.user?.id;
                 currentAccessToken = session.access_token;
-                if (!currentSellerId) throw new Error('No seller ID');
-                document.querySelector('.account-menu').textContent = `Hello, ${(session.user?.email || 'Seller').split('@')[0]}`;
+                if (!currentSellerId) throw new Error('No ID');
+                document.querySelector('.account-menu').textContent = 'Hello, ' + (session.user?.email || 'Seller').split('@')[0];
                 return true;
-            } catch (error) {
-                alert('Session expired. Please login again.');
+            } catch (e) {
                 window.location.href = 'login.html';
                 return false;
             }
         }
 
+        // ==================== SUBSCRIPTION (matches your table) ====================
         async function fetchSubscription() {
             try {
-                const response = await fetch(
+                const resp = await fetch(
                     `${window.SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${currentSellerId}&status=eq.active&select=*&order=created_at.desc&limit=1`,
-                    {
-                        headers: {
-                            'apikey': window.SUPABASE_ANON_KEY,
-                            'Authorization': `Bearer ${currentAccessToken}`
-                        }
-                    }
+                    { headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${currentAccessToken}` } }
                 );
-                
-                if (response.ok) {
-                    const subscriptions = await response.json();
-                    if (subscriptions && subscriptions.length > 0) {
-                        const sub = subscriptions[0];
-                        if (sub.tier === 'tier_5' || sub.plan_id === 'tier_5') return 'tier_5';
-                        if (sub.tier === 'tier_150' || sub.plan_id === 'tier_150') return 'tier_150';
+                if (resp.ok) {
+                    const subs = await resp.json();
+                    if (subs?.length > 0) {
+                        const s = subs[0];
+                        if (s.plan_type === 'tier_5') return 'tier_5';
+                        if (s.plan_type === 'tier_150') return 'tier_150';
                     }
                 }
                 return null;
-            } catch (error) { return null; }
+            } catch (e) { return null; }
         }
 
-        // ============ SUPABASE PRODUCT OPERATIONS ============
-        async function loadProductsFromSupabase() {
+        async function updateSubscription(planType) {
             try {
-                const response = await fetch(
-                    `${window.SUPABASE_URL}/rest/v1/products?seller_id=eq.${currentSellerId}&select=*&order=created_at.desc`,
-                    {
-                        headers: {
-                            'apikey': window.SUPABASE_ANON_KEY,
-                            'Authorization': `Bearer ${currentAccessToken}`
-                        }
-                    }
+                const checkResp = await fetch(
+                    `${window.SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${currentSellerId}&select=id`,
+                    { headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${currentAccessToken}` } }
                 );
-                
-                if (response.ok) {
-                    const products = await response.json();
-                    sellerProducts = products || [];
-                    return true;
+                const existing = checkResp.ok ? await checkResp.json() : [];
+                const subData = {
+                    seller_id: String(currentSellerId),
+                    plan_type: planType,
+                    status: planType === 'free' ? 'cancelled' : 'active',
+                    payment_status: planType === 'free' ? 'cancelled' : 'completed'
+                };
+                if (existing?.length > 0) {
+                    await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?id=eq.${existing[0].id}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json', 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${currentAccessToken}`, 'Prefer': 'return=minimal' },
+                        body: JSON.stringify(subData)
+                    });
+                } else {
+                    await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${currentAccessToken}`, 'Prefer': 'return=minimal' },
+                        body: JSON.stringify({ ...subData, created_at: new Date().toISOString() })
+                    });
                 }
-                return false;
-            } catch (error) {
-                console.error('Error loading from Supabase:', error);
-                return false;
-            }
-        }
-
-        async function saveProductToSupabase(productData) {
-            const response = await fetch(`${window.SUPABASE_URL}/rest/v1/products`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'apikey': window.SUPABASE_ANON_KEY,
-                    'Authorization': `Bearer ${currentAccessToken}`,
-                    'Prefer': 'return=representation'
-                },
-                body: JSON.stringify({
-                    seller_id: currentSellerId,
-                    title: productData.title,
-                    description: productData.description || '',
-                    price: productData.price,
-                    category: productData.category,
-                    stock: productData.stock,
-                    image_url: productData.image_url,
-                    created_at: new Date().toISOString()
-                })
-            });
-            
-            if (response.ok) {
-                const saved = await response.json();
-                return saved;
-            } else {
-                const error = await response.json();
-                throw new Error(error.message || 'Failed to save product');
-            }
-        }
-
-        async function deleteProductFromSupabase(productId) {
-            const response = await fetch(
-                `${window.SUPABASE_URL}/rest/v1/products?id=eq.${productId}&seller_id=eq.${currentSellerId}`,
-                {
-                    method: 'DELETE',
-                    headers: {
-                        'apikey': window.SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${currentAccessToken}`
-                    }
-                }
-            );
-            return response.ok;
-        }
-
-        // ============ DASHBOARD FUNCTIONS ============
-        function loadProducts() {
-            loadProductsFromSupabase().then(success => {
-                if (!success) {
-                    const stored = localStorage.getItem(`mbare_products_${currentSellerId}`);
-                    sellerProducts = stored ? JSON.parse(stored) : [];
-                }
-                renderProducts();
-                updateStatsAndLimits();
-            });
-        }
-
-        function saveProducts() {
-            localStorage.setItem(`mbare_products_${currentSellerId}`, JSON.stringify(sellerProducts));
-        }
-
-        function renderTiers() {
-            const container = document.getElementById('tierContainer');
-            if (!container) return;
-            container.innerHTML = '';
-            
-            for (const [key, def] of Object.entries(tierMap)) {
-                const isActive = (currentTier === key);
-                container.innerHTML += `
-                    <div class="tier-card ${isActive ? 'tier-highlight' : ''}">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <strong style="font-size:1.2rem;">${def.name}</strong>
-                            ${def.badge ? `<span class="badge-pro">${def.badge}</span>` : ''}
-                        </div>
-                        <div class="tier-price">${def.price}</div>
-                        <div style="font-size:13px; margin:8px 0;">${def.perks}</div>
-                        <div style="font-size:12px; background:#f4f5f7; padding:5px; border-radius:30px;">Max: ${def.maxProducts} products</div>
-                        <button class="btn-primary subscribe-btn" data-tier="${key}" style="margin-top:18px; width:100%;" ${isActive ? 'disabled' : ''}>
-                            ${isActive ? 'Current Plan' : 'Subscribe'}
-                        </button>
-                    </div>
-                `;
-            }
-
-            document.querySelectorAll('.subscribe-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const tierKey = btn.dataset.tier;
-                    if (tierKey === 'free') {
-                        if (confirm('Switch to Free plan? Max 8 products.')) updateSubscription('free');
-                    } else {
-                        openPaymentModal(tierKey);
-                    }
-                });
-            });
-        }
-
-        async function updateSubscription(tier) {
-            try {
-                await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'apikey': window.SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${currentAccessToken}`,
-                        'Prefer': 'return=minimal'
-                    },
-                    body: JSON.stringify({
-                        seller_id: currentSellerId,
-                        tier: tier,
-                        status: tier === 'free' ? 'cancelled' : 'active',
-                        created_at: new Date().toISOString()
-                    })
-                });
             } catch (e) { console.error(e); }
-            
-            currentTier = tier;
+            currentTier = planType;
             localStorage.setItem(`mbare_tier_${currentSellerId}`, currentTier);
             renderTiers();
             enforceProductLimit();
             updateStatsAndLimits();
-            alert(`Plan changed to ${tierMap[tier].name}`);
+            alert(`Plan changed to ${tierMap[planType].name}`);
         }
 
-        function openPaymentModal(tierKey) {
-            const plan = tierMap[tierKey];
-            const amount = tierKey === 'tier_150' ? '1.50' : '5.00';
-            
-            const modalDiv = document.createElement('div');
-            modalDiv.className = 'payment-modal';
-            modalDiv.innerHTML = `
+        // ==================== PAYNOW PAYMENT ====================
+        function openPaymentModal(planType) {
+            const plan = tierMap[planType];
+            const amount = planType === 'tier_150' ? '1.50' : '5.00';
+            const div = document.createElement('div');
+            div.className = 'payment-modal';
+            div.innerHTML = `
                 <div class="payment-card">
                     <h3>${plan.name}</h3>
                     <p style="font-size:26px;font-weight:800;color:#B12704;">$${amount}<span style="font-size:14px;">/month</span></p>
                     <div style="margin:20px 0;">
-                        <div class="form-group">
-                            <label>EcoCash Number *</label>
-                            <input type="tel" id="ecoPhone" placeholder="0771234567" autocomplete="off">
-                        </div>
+                        <div class="form-group"><label>EcoCash Number *</label><input type="tel" id="ecoPhone" placeholder="0771234567"></div>
                     </div>
                     <button class="btn-primary" id="confirmPayBtn" style="width:100%;">Pay with EcoCash</button>
                     <button class="btn-secondary" id="closePayModal" style="width:100%;margin-top:10px;">Cancel</button>
                     <div id="paymentStatusArea" style="margin-top:18px;"></div>
-                </div>
-            `;
-            document.body.appendChild(modalDiv);
-            
-            document.getElementById('closePayModal').onclick = () => modalDiv.remove();
-            
+                </div>`;
+            document.body.appendChild(div);
+            document.getElementById('closePayModal').onclick = () => div.remove();
             document.getElementById('confirmPayBtn').onclick = async () => {
                 const phone = document.getElementById('ecoPhone').value.trim();
-                if (!phone.match(/^(07|0[78])[0-9]{8}$/)) { alert('Enter valid number (0771234567)'); return; }
-                
-                const payBtn = document.getElementById('confirmPayBtn');
-                payBtn.disabled = true;
-                payBtn.innerText = 'Processing...';
-                document.getElementById('paymentStatusArea').innerHTML = `<div class="text-center"><div class="spinner"></div>Sending...</div>`;
-                
-                const reference = `SUB_${currentSellerId}_${Date.now()}`;
-                const formData = new URLSearchParams();
-                formData.append('result_url', window.location.href);
-                formData.append('return_url', window.location.href);
-                formData.append('reference', reference);
-                formData.append('amount', amount);
-                formData.append('id', PAYNOW_INTEGRATION_ID);
-                formData.append('additionalinfo', `${plan.name} - Mbare Seller`);
-                formData.append('authemail', `${phone}@mbare.co.zw`);
-                formData.append('phonenumber', phone);
-                
+                if (!phone.match(/^(07|0[78])[0-9]{8}$/)) return alert('Enter valid number');
+                const btn = document.getElementById('confirmPayBtn');
+                btn.disabled = true; btn.innerText = 'Processing...';
+                document.getElementById('paymentStatusArea').innerHTML = '<div class="text-center"><div class="spinner"></div>Sending...</div>';
+                const ref = 'SUB_' + currentSellerId + '_' + Date.now();
+                const fd = new URLSearchParams();
+                fd.append('result_url', location.href); fd.append('return_url', location.href);
+                fd.append('reference', ref); fd.append('amount', amount);
+                fd.append('id', PAYNOW_INTEGRATION_ID); fd.append('additionalinfo', plan.name);
+                fd.append('authemail', phone + '@mbare.co.zw'); fd.append('phonenumber', phone);
                 try {
-                    const resp = await fetch('https://www.paynow.co.zw/interface/initiatetransaction', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: formData.toString()
-                    });
-                    const text = await resp.text();
-                    
-                    if (text.startsWith('SUCCESS')) {
-                        document.getElementById('paymentStatusArea').innerHTML = `<div style="background:#d1ecf1;padding:12px;border-radius:8px;">Sent to ${phone}. Check phone for PIN.</div>`;
-                        startPolling(reference, tierKey, modalDiv);
-                    } else {
-                        throw new Error(text.split('|')[1] || 'Failed');
-                    }
+                    const r = await fetch('https://www.paynow.co.zw/interface/initiatetransaction', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: fd.toString() });
+                    const t = await r.text();
+                    if (t.startsWith('SUCCESS')) {
+                        document.getElementById('paymentStatusArea').innerHTML = '<div style="background:#d1ecf1;padding:12px;border-radius:8px;">Sent! Check your phone for PIN.</div><div class="spinner" style="width:32px;height:32px;"></div>';
+                        pollPayment(ref, planType, div, phone);
+                    } else throw new Error(t.split('|')[1] || 'Failed');
                 } catch (err) {
-                    document.getElementById('paymentStatusArea').innerHTML = `<div style="background:#f8d7da;padding:12px;border-radius:8px;">Error: ${err.message}</div>`;
-                    payBtn.disabled = false;
-                    payBtn.innerText = 'Pay with EcoCash';
+                    document.getElementById('paymentStatusArea').innerHTML = '<div style="background:#f8d7da;padding:12px;border-radius:8px;">Error: ' + err.message + '</div>';
+                    btn.disabled = false; btn.innerText = 'Pay with EcoCash';
                 }
             };
         }
-        
-        function startPolling(reference, tierKey, modalElement) {
+
+        function pollPayment(ref, planType, modal, phone) {
             const interval = setInterval(async () => {
                 try {
-                    const resp = await fetch(`https://www.paynow.co.zw/interface/gettransactionstatus/${reference}`);
-                    const text = await resp.text();
-                    if (text.includes('Paid') || text.includes('Completed')) {
+                    const r = await fetch('https://www.paynow.co.zw/interface/gettransactionstatus/' + ref);
+                    const t = await r.text();
+                    if (t.includes('Paid') || t.includes('Completed')) {
                         clearInterval(interval);
-                        await updateSubscription(tierKey);
-                        if (modalElement) modalElement.remove();
-                        renderTiers();
-                        enforceProductLimit();
-                        updateStatsAndLimits();
-                        alert(`✅ Payment successful! ${tierMap[tierKey].name} active.`);
-                    } else if (text.includes('Cancelled') || text.includes('Failed')) {
+                        await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${currentAccessToken}`, 'Prefer': 'return=minimal' },
+                            body: JSON.stringify({ seller_id: String(currentSellerId), plan_type: planType, status: 'active', payment_status: 'completed', paynow_reference: ref, phone_number: phone, created_at: new Date().toISOString() })
+                        });
+                        currentTier = planType;
+                        localStorage.setItem(`mbare_tier_${currentSellerId}`, currentTier);
+                        modal.remove();
+                        renderTiers(); enforceProductLimit(); updateStatsAndLimits();
+                        alert('✅ Payment successful! ' + tierMap[planType].name + ' active.');
+                    } else if (t.includes('Cancelled') || t.includes('Failed')) {
                         clearInterval(interval);
-                        if (modalElement) {
-                            const div = modalElement.querySelector('#paymentStatusArea');
-                            if (div) div.innerHTML = `<div style="background:#f8d7da;padding:12px;border-radius:8px;">Payment cancelled.</div>`;
-                            const btn = modalElement.querySelector('#confirmPayBtn');
-                            if (btn) { btn.disabled = false; btn.innerText = 'Pay with EcoCash'; }
-                        }
+                        const s = modal.querySelector('#paymentStatusArea');
+                        if (s) s.innerHTML = '<div style="background:#f8d7da;padding:12px;border-radius:8px;">Payment cancelled.</div>';
+                        const b = modal.querySelector('#confirmPayBtn');
+                        if (b) { b.disabled = false; b.innerText = 'Pay with EcoCash'; }
                     }
-                } catch(e) {}
+                } catch (e) {}
             }, 5000);
             setTimeout(() => clearInterval(interval), 200000);
         }
-        
+
+        // ==================== SUPABASE PRODUCTS ====================
+        async function loadProductsFromSupabase() {
+            try {
+                const r = await fetch(
+                    `${window.SUPABASE_URL}/rest/v1/products?seller_id=eq.${currentSellerId}&select=*&order=created_at.desc`,
+                    { headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${currentAccessToken}` } }
+                );
+                if (r.ok) { sellerProducts = await r.json(); return true; }
+                return false;
+            } catch (e) { return false; }
+        }
+
+        async function saveProductToSupabase(pd) {
+            const r = await fetch(`${window.SUPABASE_URL}/rest/v1/products`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${currentAccessToken}`, 'Prefer': 'return=representation' },
+                body: JSON.stringify({ seller_id: String(currentSellerId), title: pd.title, description: pd.description || '', price: pd.price, category: pd.category, stock: pd.stock, image_url: pd.image_url, created_at: new Date().toISOString() })
+            });
+            if (r.ok) return await r.json();
+            const err = await r.json();
+            throw new Error(err.message || 'Save failed');
+        }
+
+        async function deleteProductFromSupabase(id) {
+            const r = await fetch(`${window.SUPABASE_URL}/rest/v1/products?id=eq.${id}&seller_id=eq.${currentSellerId}`, {
+                method: 'DELETE',
+                headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${currentAccessToken}` }
+            });
+            return r.ok;
+        }
+
+        // ==================== DASHBOARD UI ====================
+        function loadProducts() {
+            loadProductsFromSupabase().then(ok => {
+                if (!ok) { const s = localStorage.getItem(`mbare_products_${currentSellerId}`); sellerProducts = s ? JSON.parse(s) : []; }
+                renderProducts(); updateStatsAndLimits();
+            });
+        }
+        function saveProductsLocal() { localStorage.setItem(`mbare_products_${currentSellerId}`, JSON.stringify(sellerProducts)); }
+
+        function renderTiers() {
+            const c = document.getElementById('tierContainer');
+            if (!c) return;
+            c.innerHTML = '';
+            for (const [k, d] of Object.entries(tierMap)) {
+                const active = currentTier === k;
+                c.innerHTML += `<div class="tier-card ${active ? 'tier-highlight' : ''}">
+                    <div style="display:flex;justify-content:space-between;align-items:center;"><strong style="font-size:1.2rem;">${d.name}</strong>${d.badge ? `<span class="badge-pro">${d.badge}</span>` : ''}</div>
+                    <div class="tier-price">${d.price}</div><div style="font-size:13px;margin:8px 0;">${d.perks}</div>
+                    <div style="font-size:12px;background:#f4f5f7;padding:5px;border-radius:30px;">Max: ${d.maxProducts} products</div>
+                    <button class="btn-primary subscribe-btn" data-tier="${k}" style="margin-top:18px;width:100%;" ${active ? 'disabled' : ''}>${active ? 'Current Plan' : 'Subscribe'}</button></div>`;
+            }
+            document.querySelectorAll('.subscribe-btn').forEach(b => {
+                b.addEventListener('click', () => {
+                    const t = b.dataset.tier;
+                    t === 'free' ? (confirm('Switch to Free?') && updateSubscription('free')) : openPaymentModal(t);
+                });
+            });
+        }
+
         function enforceProductLimit() {
             const max = currentTier === 'free' ? 8 : (currentTier === 'tier_150' ? 50 : 200);
-            if (sellerProducts.length > max) {
-                sellerProducts = sellerProducts.slice(0, max);
-                renderProducts();
-            }
+            if (sellerProducts.length > max) { sellerProducts = sellerProducts.slice(0, max); renderProducts(); }
             updateStatsAndLimits();
         }
-        
-        function getCurrentLimit() {
-            if (currentTier === 'free') return 8;
-            if (currentTier === 'tier_150') return 50;
-            return 200;
-        }
-        
+        function getCurrentLimit() { return currentTier === 'free' ? 8 : (currentTier === 'tier_150' ? 50 : 200); }
+
         function updateStatsAndLimits() {
-            const total = sellerProducts.length;
-            const limit = getCurrentLimit();
-            const remaining = limit - total;
-            
-            if (currentTier === 'free') {
-                document.getElementById('tierMessage').innerHTML = `<strong>Free Plan:</strong> ${total}/${limit} products. ${remaining > 0 ? `${remaining} slots left.` : 'Limit reached.'} <a href="#" id="upgradeLink" class="inline-link">View Plans</a>`;
-                const link = document.getElementById('upgradeLink');
-                if (link) link.onclick = (e) => { e.preventDefault(); document.getElementById('tierContainer').scrollIntoView({behavior:'smooth'}); };
-            } else {
-                document.getElementById('tierMessage').innerHTML = `<strong>${tierMap[currentTier]?.name}:</strong> ${remaining} slots remaining.`;
-            }
-            
-            document.getElementById('totalProducts').innerText = total;
-            document.getElementById('totalStock').innerText = sellerProducts.reduce((s,p) => s + (p.stock || 0), 0);
-            document.getElementById('totalValue').innerText = '$' + sellerProducts.reduce((s,p) => s + ((p.price || 0) * (p.stock || 0)), 0).toFixed(2);
-            document.getElementById('toggleFormBtn').disabled = (currentTier === 'free' && total >= 8);
+            const t = sellerProducts.length, l = getCurrentLimit(), r = l - t;
+            document.getElementById('tierMessage').innerHTML = currentTier === 'free'
+                ? `<strong>Free Plan:</strong> ${t}/${l} products. ${r > 0 ? r + ' slots left.' : 'Limit reached.'} <a href="#" id="upgradeLink" class="inline-link">View Plans</a>`
+                : `<strong>${tierMap[currentTier]?.name}:</strong> ${r} slots remaining.`;
+            const ul = document.getElementById('upgradeLink');
+            if (ul) ul.onclick = e => { e.preventDefault(); document.getElementById('tierContainer').scrollIntoView({ behavior: 'smooth' }); };
+            document.getElementById('totalProducts').innerText = t;
+            document.getElementById('totalStock').innerText = sellerProducts.reduce((s, p) => s + (p.stock || 0), 0);
+            document.getElementById('totalValue').innerText = '$' + sellerProducts.reduce((s, p) => s + ((p.price || 0) * (p.stock || 0)), 0).toFixed(2);
+            document.getElementById('toggleFormBtn').disabled = (currentTier === 'free' && t >= 8);
         }
-        
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]);
-        }
+
+        function esc(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[m]); }
 
         function renderProducts() {
-            const container = document.getElementById('productsList');
-            if (!sellerProducts.length) {
-                container.innerHTML = '<p class="text-center" style="padding:40px;color:#666;">No products yet. Click "+ Add Product" to start selling.</p>';
-                return;
-            }
-
-            container.innerHTML = sellerProducts.map(prod => `
+            const c = document.getElementById('productsList');
+            if (!sellerProducts.length) { c.innerHTML = '<p class="text-center" style="padding:40px;color:#666;">No products yet. Click "+ Add Product" to start selling.</p>'; return; }
+            c.innerHTML = sellerProducts.map(p => `
                 <div class="product-card">
-                    <img src="${prod.image_url || 'https://placehold.co/400x300?text=No+Image'}" alt="${escapeHtml(prod.title)}" onerror="this.src='https://placehold.co/400x300?text=No+Image'">
+                    <img src="${p.image_url || 'https://placehold.co/400x300?text=No+Image'}" alt="${esc(p.title)}" onerror="this.src='https://placehold.co/400x300?text=No+Image'">
                     <div class="product-info">
-                        <h3 style="margin-bottom:6px;">${escapeHtml(prod.title)}</h3>
-                        <div style="font-size:20px;font-weight:600;color:#B12704;">$${parseFloat(prod.price || 0).toFixed(2)}</div>
-                        <div style="margin:6px 0;">Stock: ${prod.stock || 0} | ${prod.category || 'N/A'}</div>
-                        <button class="whatsapp-btn" onclick="whatsappInquiry('${escapeHtml(prod.title)}')">WhatsApp Inquiry</button>
+                        <h3 style="margin-bottom:6px;">${esc(p.title)}</h3>
+                        <div style="font-size:20px;font-weight:600;color:#B12704;">$${parseFloat(p.price || 0).toFixed(2)}</div>
+                        <div style="margin:6px 0;">Stock: ${p.stock || 0} | ${p.category || 'N/A'}</div>
+                        <button class="whatsapp-btn" onclick="whatsappInquiry('${esc(p.title)}')">WhatsApp Inquiry</button>
                         <div style="display:flex;gap:8px;margin-top:8px;">
-                            <button class="btn-secondary" style="flex:1;" onclick="editProduct('${prod.id}')">Edit</button>
-                            <button class="btn-delete" style="flex:1;" onclick="deleteProduct('${prod.id}')">Delete</button>
+                            <button class="btn-secondary" style="flex:1;" onclick="editProduct('${p.id}')">Edit</button>
+                            <button class="btn-delete" style="flex:1;" onclick="deleteProduct('${p.id}')">Delete</button>
                         </div>
                     </div>
-                </div>
-            `).join('');
+                </div>`).join('');
         }
 
-        window.whatsappInquiry = function(title) {
-            window.open(`https://wa.me/?text=${encodeURIComponent(`Hello, I'm interested in "${title}" on Mbare Marketplace.`)}`, '_blank');
-        };
+        // ==================== GLOBAL ACTIONS ====================
+        window.whatsappInquiry = function(t) { window.open('https://wa.me/?text=' + encodeURIComponent('Hello, I am interested in "' + t + '" on Mbare Marketplace.'), '_blank'); };
 
         window.deleteProduct = async function(id) {
-            if (!confirm('Delete this product permanently?')) return;
-            try {
-                await deleteProductFromSupabase(id);
-                sellerProducts = sellerProducts.filter(p => p.id !== id);
-                saveProducts();
-                renderProducts();
-                updateStatsAndLimits();
-                alert('✅ Product deleted!');
-            } catch (e) {
-                sellerProducts = sellerProducts.filter(p => p.id !== id);
-                saveProducts();
-                renderProducts();
-                updateStatsAndLimits();
-            }
+            if (!confirm('Delete permanently?')) return;
+            try { await deleteProductFromSupabase(id); } catch (e) {}
+            sellerProducts = sellerProducts.filter(p => p.id !== id);
+            saveProductsLocal(); renderProducts(); updateStatsAndLimits();
         };
 
         window.editProduct = function(id) {
-            const product = sellerProducts.find(p => p.id === id);
-            if (!product) return;
-            
-            document.getElementById('prodTitle').value = product.title || '';
-            document.getElementById('prodDescription').value = product.description || '';
-            document.getElementById('prodPrice').value = product.price || '';
-            document.getElementById('prodCategory').value = product.category || '';
-            document.getElementById('prodStock').value = product.stock || '';
-            document.getElementById('prodImage').value = product.image_url || '';
-            
-            if (product.image_url) {
-                document.getElementById('imagePreview').src = product.image_url;
+            const p = sellerProducts.find(x => x.id === id);
+            if (!p) return;
+            document.getElementById('prodTitle').value = p.title || '';
+            document.getElementById('prodDescription').value = p.description || '';
+            document.getElementById('prodPrice').value = p.price || '';
+            document.getElementById('prodCategory').value = p.category || '';
+            document.getElementById('prodStock').value = p.stock || '';
+            document.getElementById('prodImage').value = p.image_url || '';
+            if (p.image_url) {
+                document.getElementById('imagePreview').src = p.image_url;
                 document.getElementById('imagePreviewContainer').style.display = 'block';
                 document.getElementById('uploadPlaceholder').style.display = 'none';
                 document.getElementById('imageStatus').textContent = 'Current image. Upload new to change.';
             }
-            
-            sellerProducts = sellerProducts.filter(p => p.id !== id);
-            saveProducts();
-            renderProducts();
-            updateStatsAndLimits();
-            
+            sellerProducts = sellerProducts.filter(x => x.id !== id);
+            saveProductsLocal(); renderProducts(); updateStatsAndLimits();
             document.getElementById('addProductForm').style.display = 'block';
             document.getElementById('toggleFormBtn').innerText = 'Cancel';
             document.getElementById('submitProductBtn').innerText = 'Update Product';
@@ -823,162 +660,72 @@
         };
 
         window.toggleProductForm = function() {
-            const formDiv = document.getElementById('addProductForm');
-            const btn = document.getElementById('toggleFormBtn');
-            if (formDiv.style.display === 'none' || formDiv.style.display === '') {
-                formDiv.style.display = 'block';
-                btn.innerText = 'Cancel';
-            } else {
-                formDiv.style.display = 'none';
-                btn.innerText = '+ Add Product';
-                document.getElementById('productForm').reset();
-                removeImage();
-                document.getElementById('submitProductBtn').innerText = 'Add Product';
-                document.getElementById('submitProductBtn').removeAttribute('data-editing');
-            }
+            const f = document.getElementById('addProductForm');
+            const b = document.getElementById('toggleFormBtn');
+            if (f.style.display === 'none' || f.style.display === '') { f.style.display = 'block'; b.innerText = 'Cancel'; }
+            else { f.style.display = 'none'; b.innerText = '+ Add Product'; document.getElementById('productForm').reset(); removeImage(); document.getElementById('submitProductBtn').innerText = 'Add Product'; document.getElementById('submitProductBtn').removeAttribute('data-editing'); }
         };
 
         window.handleAddProduct = async function() {
-            const limit = getCurrentLimit();
-            if (sellerProducts.length >= limit && !document.getElementById('submitProductBtn').getAttribute('data-editing')) {
-                alert(`Product limit reached (${limit}). Upgrade to add more.`);
-                return;
-            }
-            
+            const editing = document.getElementById('submitProductBtn').getAttribute('data-editing');
+            if (!editing && sellerProducts.length >= getCurrentLimit()) return alert('Product limit reached. Upgrade to add more.');
             const title = document.getElementById('prodTitle').value.trim();
             const price = parseFloat(document.getElementById('prodPrice').value);
             const stock = parseInt(document.getElementById('prodStock').value);
             const category = document.getElementById('prodCategory').value;
             const description = document.getElementById('prodDescription').value.trim();
             let imageUrl = document.getElementById('prodImage').value.trim();
-            
-            if (!title) { alert('Enter product title'); return; }
-            if (!price && price !== 0) { alert('Enter price'); return; }
-            if (!stock && stock !== 0) { alert('Enter stock'); return; }
-            if (!category) { alert('Select category'); return; }
-            
-            const submitBtn = document.getElementById('submitProductBtn');
-            
-            // Upload image if file selected
-            if (selectedImageFile) {
-                submitBtn.disabled = true;
-                submitBtn.innerText = 'Uploading image...';
-                try {
-                    imageUrl = await uploadImageToImgBB(selectedImageFile);
-                } catch (error) {
-                    alert('Image upload failed: ' + error.message);
-                    submitBtn.disabled = false;
-                    submitBtn.innerText = 'Add Product';
-                    return;
-                }
-            }
-            
-            if (!imageUrl) {
-                alert('Please upload a product image');
-                submitBtn.disabled = false;
-                submitBtn.innerText = 'Add Product';
-                return;
-            }
-            
-            submitBtn.disabled = true;
-            submitBtn.innerText = 'Saving to database...';
-            
-            const productData = {
-                title, description, price, category, stock, image_url: imageUrl
-            };
-            
+            if (!title) return alert('Enter title');
+            if (isNaN(price)) return alert('Enter price');
+            if (isNaN(stock)) return alert('Enter stock');
+            if (!category) return alert('Select category');
+            const btn = document.getElementById('submitProductBtn');
+            if (selectedImageFile) { btn.disabled = true; btn.innerText = 'Uploading...'; try { imageUrl = await uploadImageToImgBB(selectedImageFile); } catch (e) { alert('Upload failed: ' + e.message); btn.disabled = false; btn.innerText = editing ? 'Update Product' : 'Add Product'; return; } }
+            if (!imageUrl) return alert('Upload an image');
+            btn.disabled = true; btn.innerText = 'Saving...';
+            const pd = { title, description, price, category, stock, image_url: imageUrl };
             try {
-                // Save to Supabase
-                const saved = await saveProductToSupabase(productData);
-                
-                // Add to local array
-                const newProduct = {
-                    id: saved?.[0]?.id || Date.now().toString(),
-                    ...productData,
-                    created_at: new Date().toISOString()
-                };
-                
-                sellerProducts.unshift(newProduct);
-                saveProducts();
-                renderProducts();
-                updateStatsAndLimits();
-                toggleProductForm();
-                document.getElementById('productForm').reset();
-                removeImage();
-                selectedImageFile = null;
-                submitBtn.disabled = false;
-                submitBtn.innerText = 'Add Product';
-                document.getElementById('submitProductBtn').removeAttribute('data-editing');
-                alert('✅ Product saved to database!');
-            } catch (error) {
-                console.error('Save error:', error);
-                // Save locally as fallback
-                const newProduct = {
-                    id: Date.now().toString(),
-                    ...productData,
-                    created_at: new Date().toISOString()
-                };
-                sellerProducts.unshift(newProduct);
-                saveProducts();
-                renderProducts();
-                updateStatsAndLimits();
-                toggleProductForm();
-                document.getElementById('productForm').reset();
-                removeImage();
-                selectedImageFile = null;
-                submitBtn.disabled = false;
-                submitBtn.innerText = 'Add Product';
-                document.getElementById('submitProductBtn').removeAttribute('data-editing');
-                alert('⚠️ Saved locally. Will sync when connection is restored.');
+                const saved = await saveProductToSupabase(pd);
+                sellerProducts.unshift({ id: saved?.[0]?.id || Date.now().toString(), ...pd, created_at: new Date().toISOString() });
+            } catch (e) {
+                sellerProducts.unshift({ id: Date.now().toString(), ...pd, created_at: new Date().toISOString() });
             }
+            saveProductsLocal(); renderProducts(); updateStatsAndLimits();
+            toggleProductForm(); document.getElementById('productForm').reset(); removeImage();
+            selectedImageFile = null; btn.disabled = false; btn.innerText = 'Add Product';
+            btn.removeAttribute('data-editing');
         };
 
-        // Analytics button
+        // ==================== ANALYTICS BUTTON ====================
         document.getElementById('analyticsNavBtn').addEventListener('click', () => {
             if (currentTier === 'free') {
-                const modalDiv = document.createElement('div');
-                modalDiv.className = 'payment-modal';
-                modalDiv.innerHTML = `
-                    <div class="payment-card" style="text-align:center;">
-                        <h3>🔒 Unlock Seller Analytics</h3>
-                        <p style="margin:15px 0;">Available for paid subscribers only.</p>
-                        <ul style="text-align:left;margin:10px 20px;color:#555;">
-                            <li>📊 Product performance & stock alerts</li>
-                            <li>📱 WhatsApp inquiry tracking</li>
-                            <li>📂 Category breakdown & trends</li>
-                            <li>💰 Inventory value analytics</li>
-                        </ul>
-                        <p style="margin:15px 0;font-weight:600;">Choose a plan:</p>
-                        <button class="btn-primary upgrade-btn" data-tier="tier_150" style="margin:8px;background:#f90;color:white;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;">Merchant Basic - $1.50/mo</button>
-                        <button class="btn-primary upgrade-btn" data-tier="tier_5" style="margin:8px;background:#ff6b00;color:white;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;">Video Ads - $5/mo</button>
-                        <br>
-                        <button class="btn-secondary" id="closeModal" style="margin-top:10px;width:100%;">Maybe Later</button>
-                    </div>
-                `;
-                document.body.appendChild(modalDiv);
-                document.getElementById('closeModal').onclick = () => modalDiv.remove();
-                modalDiv.querySelectorAll('.upgrade-btn').forEach(btn => {
-                    btn.onclick = () => { modalDiv.remove(); openPaymentModal(btn.dataset.tier); };
-                });
+                const div = document.createElement('div');
+                div.className = 'payment-modal';
+                div.innerHTML = `<div class="payment-card" style="text-align:center;">
+                    <h3>🔒 Unlock Seller Analytics</h3><p style="margin:15px 0;">Available for paid subscribers.</p>
+                    <ul style="text-align:left;margin:10px 20px;color:#555;"><li>📊 Product performance</li><li>📱 WhatsApp tracking</li><li>📂 Category trends</li><li>💰 Inventory analytics</li></ul>
+                    <p style="margin:15px 0;font-weight:600;">Choose a plan:</p>
+                    <button class="btn-primary up-btn" data-tier="tier_150" style="margin:8px;background:#f90;color:#fff;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;">Merchant Basic - $1.50/mo</button>
+                    <button class="btn-primary up-btn" data-tier="tier_5" style="margin:8px;background:#ff6b00;color:#fff;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;">Video Ads - $5/mo</button>
+                    <br><button class="btn-secondary" id="closeAnalyticsModal" style="margin-top:10px;width:100%;">Maybe Later</button></div>`;
+                document.body.appendChild(div);
+                document.getElementById('closeAnalyticsModal').onclick = () => div.remove();
+                div.querySelectorAll('.up-btn').forEach(b => b.onclick = () => { div.remove(); openPaymentModal(b.dataset.tier); });
                 return;
             }
             window.location.href = 'seller-analytics.html';
         });
 
-        // Initialize dashboard
+        // ==================== INIT ====================
         async function init() {
-            const auth = await checkAuth();
-            if (!auth) return;
-            
+            if (!await checkAuth()) return;
             const sub = await fetchSubscription();
             currentTier = sub || localStorage.getItem(`mbare_tier_${currentSellerId}`) || 'free';
             localStorage.setItem(`mbare_tier_${currentSellerId}`, currentTier);
-            
             loadProducts();
             renderTiers();
             document.getElementById('loadingOverlay').style.display = 'none';
         }
-        
         init();
     </script>
 </body>
