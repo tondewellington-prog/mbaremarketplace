@@ -8,216 +8,70 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-        }
-        body {
-            background-color: #EAEDED;
-        }
-        .header {
-            background-color: #131921;
-            color: white;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: #EAEDED; }
+        .header { background-color: #131921; color: white; }
         .header-top .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 10px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 15px;
+            max-width: 1400px; margin: 0 auto; padding: 10px 20px;
+            display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;
         }
-        .logo a {
-            color: white;
-            font-size: 1.5rem;
-            font-weight: 700;
-            text-decoration: none;
-        }
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-        .account-menu, .returns, .basket {
-            color: white;
-            text-decoration: none;
-            font-size: 14px;
-        }
-        .basket {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .basket-count {
-            background: #f08804;
-            border-radius: 20px;
-            padding: 0 6px;
-            font-weight: bold;
-        }
-        .nav-menu {
-            background: #232f3e;
-            padding: 8px 0;
-        }
+        .logo a { color: white; font-size: 1.5rem; font-weight: 700; text-decoration: none; }
+        .header-right { display: flex; align-items: center; gap: 20px; }
+        .account-menu, .returns, .basket { color: white; text-decoration: none; font-size: 14px; }
+        .basket { display: flex; align-items: center; gap: 5px; }
+        .basket-count { background: #f08804; border-radius: 20px; padding: 0 6px; font-weight: bold; }
+        .nav-menu { background: #232f3e; padding: 8px 0; }
         .nav-menu .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 20px;
-            display: flex;
-            gap: 24px;
-            flex-wrap: wrap;
-            align-items: center;
+            max-width: 1400px; margin: 0 auto; padding: 0 20px;
+            display: flex; gap: 24px; flex-wrap: wrap; align-items: center;
         }
-        .nav-item {
-            color: white;
-            text-decoration: none;
-            font-size: 14px;
-        }
-        .footer {
-            margin-top: 50px;
-            background: #232f3e;
-            color: white;
-        }
-        .footer-top {
-            text-align: center;
-            padding: 14px;
-            background: #37475a;
-        }
-        .footer-bottom {
-            background: #131921;
-            text-align: center;
-            padding: 18px;
-            font-size: 0.8rem;
-        }
+        .nav-item { color: white; text-decoration: none; font-size: 14px; }
+        .footer { margin-top: 50px; background: #232f3e; color: white; }
+        .footer-top { text-align: center; padding: 14px; background: #37475a; }
+        .footer-bottom { background: #131921; text-align: center; padding: 18px; font-size: 0.8rem; }
+        .container { max-width: 1300px; margin: 0 auto; padding: 0 20px; }
         .btn-primary {
-            background: #FFD814;
-            border: none;
-            padding: 10px 22px;
-            border-radius: 10px;
-            font-weight: 600;
-            cursor: pointer;
-            color: #111;
-            transition: 0.2s;
+            background: #FFD814; border: none; padding: 10px 22px; border-radius: 10px;
+            font-weight: 600; cursor: pointer; color: #111; transition: 0.2s;
         }
-        .btn-primary:hover {
-            background: #F7CA00;
-        }
-        .btn-primary:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
+        .btn-primary:hover { background: #F7CA00; }
+        .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
         .btn-secondary {
-            background: #e7e9ec;
-            border: none;
-            padding: 10px 22px;
-            border-radius: 10px;
-            font-weight: 500;
-            cursor: pointer;
+            background: #e7e9ec; border: none; padding: 10px 22px; border-radius: 10px;
+            font-weight: 500; cursor: pointer;
         }
         .stats-card {
-            background: white;
-            padding: 24px 16px;
-            border-radius: 16px;
-            border: 1px solid #e2e8f0;
-            text-align: center;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            background: white; padding: 24px 16px; border-radius: 16px;
+            border: 1px solid #e2e8f0; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
-        .stats-number {
-            font-size: 34px;
-            font-weight: 800;
-            color: #B12704;
-        }
+        .stats-number { font-size: 34px; font-weight: 800; color: #B12704; }
         .tier-card {
-            background: white;
-            border-radius: 20px;
-            padding: 24px 20px;
-            text-align: center;
-            border: 1px solid #e2e8f0;
-            transition: all 0.2s;
+            background: white; border-radius: 20px; padding: 24px 20px;
+            text-align: center; border: 1px solid #e2e8f0; transition: all 0.2s;
         }
-        .tier-highlight {
-            border: 2px solid #f90;
-            background: #fffaf2;
-        }
-        .tier-price {
-            font-size: 28px;
-            font-weight: 800;
-            color: #B12704;
-            margin: 12px 0;
-        }
-        .badge-pro {
-            background: #f90;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 40px;
-            font-size: 11px;
-            font-weight: 700;
-        }
+        .tier-highlight { border: 2px solid #f90; background: #fffaf2; }
+        .tier-price { font-size: 28px; font-weight: 800; color: #B12704; margin: 12px 0; }
+        .badge-pro { background: #f90; color: white; padding: 4px 12px; border-radius: 40px; font-size: 11px; font-weight: 700; }
         .product-card {
-            background: white;
-            border-radius: 16px;
-            border: 1px solid #e2e8f0;
-            overflow: hidden;
-            transition: 0.2s;
+            background: white; border-radius: 16px; border: 1px solid #e2e8f0;
+            overflow: hidden; transition: 0.2s;
         }
-        .product-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-        }
-        .product-card img {
-            width: 100%;
-            height: 220px;
-            object-fit: cover;
-        }
+        .product-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+        .product-card img { width: 100%; height: 220px; object-fit: cover; }
         .product-info { padding: 16px; }
         .btn-delete {
-            background: #dc3545;
-            color: white;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 500;
+            background: #dc3545; color: white; border: none; padding: 8px 14px;
+            border-radius: 8px; cursor: pointer; font-weight: 500;
         }
-        .form-group {
-            margin-bottom: 18px;
-        }
-        .form-group label {
-            font-weight: 600;
-            display: block;
-            margin-bottom: 6px;
-        }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { font-weight: 600; display: block; margin-bottom: 6px; }
         .form-group input, .form-group select, .form-group textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 12px;
+            width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 12px;
         }
-        .form-row {
-            display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
-            margin-bottom: 16px;
-        }
+        .form-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
         .form-row .form-group { flex: 1; }
-        .container {
-            max-width: 1300px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-        .grid-3 {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-            gap: 24px;
-        }
-        .products-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 24px;
-        }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 24px; }
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; }
         .mt-30 { margin-top: 30px; }
         .mb-30 { margin-bottom: 30px; }
         .mb-20 { margin-bottom: 20px; }
@@ -225,108 +79,86 @@
         .bg-white { background: white; }
         .rounded-xl { border-radius: 20px; }
         .whatsapp-btn {
-            background: #25D366;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 40px;
-            font-weight: 500;
-            cursor: pointer;
-            font-size: 13px;
-            width: 100%;
-            margin-bottom: 10px;
+            background: #25D366; color: white; border: none; padding: 8px 16px;
+            border-radius: 40px; font-weight: 500; cursor: pointer; font-size: 13px;
+            width: 100%; margin-bottom: 10px;
         }
         .whatsapp-btn:hover { background: #128C7E; }
         .limit-warning {
-            background: #ffecb3;
-            padding: 14px 20px;
-            border-radius: 12px;
-            border-left: 5px solid #f90;
-            margin-top: 20px;
-            font-size: 14px;
+            background: #ffecb3; padding: 14px 20px; border-radius: 12px;
+            border-left: 5px solid #f90; margin-top: 20px; font-size: 14px;
         }
         .payment-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); display: flex; align-items: center;
+            justify-content: center; z-index: 10000;
         }
         .payment-card {
-            background: white;
-            max-width: 460px;
-            width: 90%;
-            border-radius: 28px;
-            padding: 28px;
+            background: white; max-width: 460px; width: 90%;
+            border-radius: 28px; padding: 28px;
         }
         .spinner {
-            width: 48px;
-            height: 48px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #f90;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto 16px;
+            width: 48px; height: 48px; border: 4px solid #f3f3f3;
+            border-top: 4px solid #f90; border-radius: 50%;
+            animation: spin 0.8s linear infinite; margin: 0 auto 16px;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
         .text-center { text-align: center; }
-        .inline-link {
-            color: #B12704;
-            text-decoration: underline;
-            cursor: pointer;
-        }
+        .inline-link { color: #B12704; text-decoration: underline; cursor: pointer; }
         .analytics-btn {
-            background: #2c7da0;
-            color: white;
-            padding: 10px 24px;
-            border-radius: 40px;
-            font-size: 14px;
-            font-weight: 600;
-            text-decoration: none;
-            cursor: pointer;
-            display: inline-block;
-            transition: 0.2s;
-            border: none;
+            background: #2c7da0; color: white; padding: 10px 24px; border-radius: 40px;
+            font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: 0.2s;
         }
-        .analytics-btn:hover {
-            background: #1f5e7a;
-            transform: scale(1.02);
-        }
+        .analytics-btn:hover { background: #1f5e7a; transform: scale(1.02); }
         .banner {
             background: linear-gradient(135deg, #1e2a3a 0%, #0f1724 100%);
-            color: white;
-            padding: 28px;
-            border-radius: 24px;
-            margin-bottom: 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 20px;
+            color: white; padding: 28px; border-radius: 24px; margin-bottom: 30px;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 20px;
         }
         .banner h1 { margin: 0; }
         .banner p { margin-top: 8px; opacity: 0.9; }
         .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255,255,255,0.9);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.9); display: flex;
+            align-items: center; justify-content: center; z-index: 9999;
         }
+        /* Image upload styles */
+        .image-upload-area {
+            border: 2px dashed #ccc; border-radius: 12px; padding: 30px;
+            text-align: center; background: #fafafa; cursor: pointer;
+            transition: all 0.3s; position: relative;
+        }
+        .image-upload-area:hover { border-color: #f90; background: #fff8f0; }
+        .image-upload-area.dragover { border-color: #f90; background: #fff3e0; }
+        .image-preview-container { display: none; position: relative; margin-top: 15px; }
+        .image-preview-container img {
+            width: 100%; max-height: 250px; object-fit: contain;
+            border-radius: 12px; border: 1px solid #ddd;
+        }
+        .remove-image-btn {
+            position: absolute; top: 10px; right: 10px; background: #dc3545;
+            color: white; border: none; width: 30px; height: 30px;
+            border-radius: 50%; cursor: pointer; font-size: 16px;
+        }
+        .upload-progress-bar {
+            width: 100%; height: 6px; background: #e0e0e0; border-radius: 3px;
+            margin-top: 10px; display: none; overflow: hidden;
+        }
+        .upload-progress-fill {
+            height: 100%; background: #f90; width: 0%;
+            transition: width 0.3s; border-radius: 3px;
+        }
+        .camera-btn {
+            background: #232f3e; color: white; border: none; padding: 10px 18px;
+            border-radius: 8px; cursor: pointer; font-size: 13px; margin-top: 10px;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .camera-btn:hover { background: #131921; }
+        .upload-actions { display: flex; gap: 10px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
     </style>
 </head>
 <body>
-    <!-- Loading Overlay -->
     <div id="loadingOverlay" class="loading-overlay">
         <div style="text-align: center;">
             <div class="spinner"></div>
@@ -356,7 +188,6 @@
     </header>
 
     <div class="container mt-30">
-        <!-- Banner with Seller Analytics Button -->
         <div class="banner">
             <div>
                 <h1>Seller Dashboard</h1>
@@ -381,20 +212,67 @@
                 <button class="btn-primary" id="toggleFormBtn" onclick="toggleProductForm()">+ Add Product</button>
             </div>
             <div id="addProductForm" style="display: none; margin-top: 25px;">
-                <form id="productForm">
+                <form id="productForm" onsubmit="return false;">
                     <div class="form-group">
-                        <label>Product Image URL *</label>
-                        <input type="url" id="prodImage" placeholder="https://i.imgur.com/example.jpg" required>
-                        <small style="color:#666;">Use ImgBB or any image hosting (direct link)</small>
+                        <label>Product Image *</label>
+                        <input type="file" id="imageFileInput" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+                        
+                        <div class="image-upload-area" id="uploadArea" onclick="document.getElementById('imageFileInput').click()">
+                            <div id="uploadPlaceholder">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="1.5">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                                    <polyline points="21 15 16 10 5 21"/>
+                                </svg>
+                                <p style="color: #666; margin-top: 10px;">Click to upload or drag & drop</p>
+                                <p style="color: #999; font-size: 12px;">PNG, JPG, GIF up to 10MB</p>
+                                <div class="upload-actions">
+                                    <button type="button" class="camera-btn" onclick="event.stopPropagation(); openCamera()">📷 Take Photo</button>
+                                    <button type="button" class="camera-btn" onclick="event.stopPropagation(); document.getElementById('imageFileInput').click()">🖼️ Choose File</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="image-preview-container" id="imagePreviewContainer">
+                            <img id="imagePreview" src="" alt="Preview">
+                            <button type="button" class="remove-image-btn" onclick="removeImage()">✕</button>
+                        </div>
+                        
+                        <div class="upload-progress-bar" id="uploadProgressBar">
+                            <div class="upload-progress-fill" id="uploadProgressFill"></div>
+                        </div>
+                        
+                        <input type="hidden" id="prodImage" required>
+                        <small style="color:#666; display: block; margin-top: 5px;" id="imageStatus"></small>
                     </div>
+
                     <div class="form-row">
                         <div class="form-group"><label>Product Title *</label><input type="text" id="prodTitle" required></div>
-                        <div class="form-group"><label>Category</label><select id="prodCategory"><option>Electronics</option><option>Clothing</option><option>Books</option><option>Home & Kitchen</option><option>Pet Supplies</option></select></div>
+                        <div class="form-group">
+                            <label>Category *</label>
+                            <select id="prodCategory" required>
+                                <option value="">Select Category</option>
+                                <option value="Electronic Devices">Electronic Devices</option>
+                                <option value="Books">Books</option>
+                                <option value="Clothing">Clothing</option>
+                                <option value="Home & Kitchen">Home & Kitchen</option>
+                                <option value="Pet Supplies">Pet Supplies</option>
+                                <option value="Pets & Livestock">Pets & Livestock</option>
+                                <option value="Vehicle Parts & Accessories">Vehicle Parts & Accessories</option>
+                                <option value="Vehicles & Transportation">Vehicles & Transportation</option>
+                                <option value="Sports & Outdoors">Sports & Outdoors</option>
+                                <option value="Bags & Luggage">Bags & Luggage</option>
+                                <option value="Farm Products">Farm Products</option>
+                                <option value="Beauty & Cosmetics">Beauty & Cosmetics</option>
+                                <option value="Hardware">Hardware</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="form-group"><label>Description</label><textarea id="prodDescription" rows="3"></textarea></div>
                     <div class="form-row">
-                        <div class="form-group"><label>Price ($)</label><input type="number" id="prodPrice" step="0.01" required></div>
-                        <div class="form-group"><label>Stock</label><input type="number" id="prodStock" required></div>
+                        <div class="form-group"><label>Price ($) *</label><input type="number" id="prodPrice" step="0.01" min="0" required></div>
+                        <div class="form-group"><label>Stock Quantity *</label><input type="number" id="prodStock" min="0" required></div>
                     </div>
                     <div style="display: flex; gap: 12px;">
                         <button type="button" class="btn-primary" id="submitProductBtn" onclick="handleAddProduct()">Add Product</button>
@@ -416,17 +294,19 @@
     </footer>
 
     <script>
-        // Supabase configuration
+        // Supabase configuration - from index page
         window.SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
         window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
         
-        // Paynow credentials
+        // ImgBB API Key
+        const IMGBB_API_KEY = '670ea8c38e955ebdfdf84a41489713bf';
         const PAYNOW_INTEGRATION_ID = '24522';
         
         let currentSellerId = null;
         let currentAccessToken = null;
         let currentTier = "free";
         let sellerProducts = [];
+        let selectedImageFile = null;
 
         const tierMap = {
             free: { name: "Starter Plan", price: "Free", maxProducts: 8, perks: "8 active products", badge: "" },
@@ -434,7 +314,112 @@
             tier_5: { name: "Video Ads Plan", price: "$5 / month", maxProducts: 200, perks: "200 products + video ads on social platforms", badge: "VIDEO BOOST" }
         };
 
-        // Check authentication
+        // ============ IMAGE UPLOAD FUNCTIONS ============
+        const uploadArea = document.getElementById('uploadArea');
+        if (uploadArea) {
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.add('dragover');
+            });
+            
+            uploadArea.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.remove('dragover');
+            });
+            
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) handleImageFile(files[0]);
+            });
+        }
+
+        window.handleFileSelect = function(event) {
+            const file = event.target.files[0];
+            if (file) handleImageFile(file);
+        };
+
+        function handleImageFile(file) {
+            if (!file.type.match('image.*')) { alert('Please select an image file (PNG, JPG, GIF)'); return; }
+            if (file.size > 10 * 1024 * 1024) { alert('Image size must be less than 10MB'); return; }
+            
+            selectedImageFile = file;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('imagePreview').src = e.target.result;
+                document.getElementById('imagePreviewContainer').style.display = 'block';
+                document.getElementById('uploadPlaceholder').style.display = 'none';
+                document.getElementById('imageStatus').textContent = 'Image selected. Will upload when you add the product.';
+            };
+            reader.readAsDataURL(file);
+            
+            document.getElementById('prodImage').value = '';
+        }
+
+        window.removeImage = function() {
+            selectedImageFile = null;
+            document.getElementById('imagePreview').src = '';
+            document.getElementById('imagePreviewContainer').style.display = 'none';
+            document.getElementById('uploadPlaceholder').style.display = 'block';
+            document.getElementById('prodImage').value = '';
+            document.getElementById('imageStatus').textContent = '';
+            document.getElementById('imageFileInput').value = '';
+            document.getElementById('uploadProgressBar').style.display = 'none';
+        };
+
+        window.openCamera = function() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.capture = 'environment';
+            input.onchange = function(e) { if (e.target.files[0]) handleImageFile(e.target.files[0]); };
+            input.click();
+        };
+
+        async function uploadImageToImgBB(file) {
+            const progressBar = document.getElementById('uploadProgressBar');
+            const progressFill = document.getElementById('uploadProgressFill');
+            const statusText = document.getElementById('imageStatus');
+            
+            progressBar.style.display = 'block';
+            progressFill.style.width = '30%';
+            statusText.textContent = 'Uploading image...';
+            
+            const formData = new FormData();
+            formData.append('image', file);
+            formData.append('key', IMGBB_API_KEY);
+            
+            try {
+                const response = await fetch('https://api.imgbb.com/1/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                progressFill.style.width = '80%';
+                const data = await response.json();
+                
+                if (data.success) {
+                    progressFill.style.width = '100%';
+                    statusText.textContent = '✓ Image uploaded!';
+                    document.getElementById('prodImage').value = data.data.url;
+                    setTimeout(() => { progressBar.style.display = 'none'; }, 1000);
+                    return data.data.url;
+                } else {
+                    throw new Error(data.error?.message || 'Upload failed');
+                }
+            } catch (error) {
+                statusText.textContent = '✗ Upload failed: ' + error.message;
+                progressBar.style.display = 'none';
+                throw error;
+            }
+        }
+
+        // ============ AUTH & SUBSCRIPTION ============
         async function checkAuth() {
             const sessionData = localStorage.getItem('supabase_session');
             const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
@@ -449,24 +434,16 @@
                 const session = JSON.parse(sessionData);
                 currentSellerId = session.user?.id;
                 currentAccessToken = session.access_token;
-                
-                if (!currentSellerId) {
-                    throw new Error('No seller ID found');
-                }
-                
-                const userEmail = session.user?.email || 'Seller';
-                document.querySelector('.account-menu').textContent = `Hello, ${userEmail.split('@')[0]}`;
-                
+                if (!currentSellerId) throw new Error('No seller ID');
+                document.querySelector('.account-menu').textContent = `Hello, ${(session.user?.email || 'Seller').split('@')[0]}`;
                 return true;
             } catch (error) {
-                console.error('Session error:', error);
                 alert('Session expired. Please login again.');
                 window.location.href = 'login.html';
                 return false;
             }
         }
 
-        // Fetch subscription from Supabase
         async function fetchSubscription() {
             try {
                 const response = await fetch(
@@ -479,65 +456,101 @@
                     }
                 );
                 
-                if (!response.ok) {
-                    console.warn('Could not fetch subscription, using free tier');
-                    return null;
-                }
-                
-                const subscriptions = await response.json();
-                
-                if (subscriptions && subscriptions.length > 0) {
-                    const activeSub = subscriptions[0];
-                    if (activeSub.tier === 'tier_5' || activeSub.plan_id === 'tier_5') {
-                        return 'tier_5';
-                    } else if (activeSub.tier === 'tier_150' || activeSub.plan_id === 'tier_150') {
-                        return 'tier_150';
+                if (response.ok) {
+                    const subscriptions = await response.json();
+                    if (subscriptions && subscriptions.length > 0) {
+                        const sub = subscriptions[0];
+                        if (sub.tier === 'tier_5' || sub.plan_id === 'tier_5') return 'tier_5';
+                        if (sub.tier === 'tier_150' || sub.plan_id === 'tier_150') return 'tier_150';
                     }
                 }
+                return null;
+            } catch (error) { return null; }
+        }
+
+        // ============ SUPABASE PRODUCT OPERATIONS ============
+        async function loadProductsFromSupabase() {
+            try {
+                const response = await fetch(
+                    `${window.SUPABASE_URL}/rest/v1/products?seller_id=eq.${currentSellerId}&select=*&order=created_at.desc`,
+                    {
+                        headers: {
+                            'apikey': window.SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${currentAccessToken}`
+                        }
+                    }
+                );
                 
-                return null;
+                if (response.ok) {
+                    const products = await response.json();
+                    sellerProducts = products || [];
+                    return true;
+                }
+                return false;
             } catch (error) {
-                console.error('Error fetching subscription:', error);
-                return null;
+                console.error('Error loading from Supabase:', error);
+                return false;
             }
         }
 
-        // Initialize dashboard
-        async function initializeDashboard() {
-            const isAuthenticated = await checkAuth();
-            if (!isAuthenticated) return;
+        async function saveProductToSupabase(productData) {
+            const response = await fetch(`${window.SUPABASE_URL}/rest/v1/products`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': window.SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${currentAccessToken}`,
+                    'Prefer': 'return=representation'
+                },
+                body: JSON.stringify({
+                    seller_id: currentSellerId,
+                    title: productData.title,
+                    description: productData.description || '',
+                    price: productData.price,
+                    category: productData.category,
+                    stock: productData.stock,
+                    image_url: productData.image_url,
+                    created_at: new Date().toISOString()
+                })
+            });
             
-            const subscriptionTier = await fetchSubscription();
-            
-            if (subscriptionTier) {
-                currentTier = subscriptionTier;
-                localStorage.setItem(`mbare_tier_${currentSellerId}`, currentTier);
+            if (response.ok) {
+                const saved = await response.json();
+                return saved;
             } else {
-                const savedTier = localStorage.getItem(`mbare_tier_${currentSellerId}`);
-                currentTier = (savedTier && tierMap[savedTier]) ? savedTier : 'free';
+                const error = await response.json();
+                throw new Error(error.message || 'Failed to save product');
             }
-            
-            loadProducts();
-            renderTiers();
-            
-            document.getElementById('loadingOverlay').style.display = 'none';
         }
 
+        async function deleteProductFromSupabase(productId) {
+            const response = await fetch(
+                `${window.SUPABASE_URL}/rest/v1/products?id=eq.${productId}&seller_id=eq.${currentSellerId}`,
+                {
+                    method: 'DELETE',
+                    headers: {
+                        'apikey': window.SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${currentAccessToken}`
+                    }
+                }
+            );
+            return response.ok;
+        }
+
+        // ============ DASHBOARD FUNCTIONS ============
         function loadProducts() {
-            const stored = localStorage.getItem(`mbare_products_${currentSellerId}`);
-            sellerProducts = stored ? JSON.parse(stored) : [];
-            renderProducts();
-            updateStatsAndLimits();
+            loadProductsFromSupabase().then(success => {
+                if (!success) {
+                    const stored = localStorage.getItem(`mbare_products_${currentSellerId}`);
+                    sellerProducts = stored ? JSON.parse(stored) : [];
+                }
+                renderProducts();
+                updateStatsAndLimits();
+            });
         }
 
         function saveProducts() {
             localStorage.setItem(`mbare_products_${currentSellerId}`, JSON.stringify(sellerProducts));
-        }
-
-        function recordWhatsAppClick(productTitle) {
-            let clicks = JSON.parse(localStorage.getItem('mbare_whatsapp_clicks') || '[]');
-            clicks.push({ productTitle, sellerId: currentSellerId, tier: currentTier, timestamp: new Date().toISOString() });
-            localStorage.setItem('mbare_whatsapp_clicks', JSON.stringify(clicks));
         }
 
         function renderTiers() {
@@ -547,9 +560,8 @@
             
             for (const [key, def] of Object.entries(tierMap)) {
                 const isActive = (currentTier === key);
-                const activeClass = isActive ? 'tier-highlight' : '';
                 container.innerHTML += `
-                    <div class="tier-card ${activeClass}">
+                    <div class="tier-card ${isActive ? 'tier-highlight' : ''}">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             <strong style="font-size:1.2rem;">${def.name}</strong>
                             ${def.badge ? `<span class="badge-pro">${def.badge}</span>` : ''}
@@ -568,9 +580,7 @@
                 btn.addEventListener('click', () => {
                     const tierKey = btn.dataset.tier;
                     if (tierKey === 'free') {
-                        if (confirm('Switch to Free plan? Max 8 products.')) {
-                            updateSubscription('free');
-                        }
+                        if (confirm('Switch to Free plan? Max 8 products.')) updateSubscription('free');
                     } else {
                         openPaymentModal(tierKey);
                     }
@@ -580,73 +590,29 @@
 
         async function updateSubscription(tier) {
             try {
-                const subscriptionData = {
-                    seller_id: currentSellerId,
-                    tier: tier,
-                    status: tier === 'free' ? 'cancelled' : 'active',
-                    updated_at: new Date().toISOString()
-                };
-                
-                const checkResponse = await fetch(
-                    `${window.SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${currentSellerId}&select=id`,
-                    {
-                        headers: {
-                            'apikey': window.SUPABASE_ANON_KEY,
-                            'Authorization': `Bearer ${currentAccessToken}`
-                        }
-                    }
-                );
-                
-                if (checkResponse.ok) {
-                    const existing = await checkResponse.json();
-                    if (existing && existing.length > 0) {
-                        await fetch(
-                            `${window.SUPABASE_URL}/rest/v1/seller_subscriptions?id=eq.${existing[0].id}`,
-                            {
-                                method: 'PATCH',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'apikey': window.SUPABASE_ANON_KEY,
-                                    'Authorization': `Bearer ${currentAccessToken}`,
-                                    'Prefer': 'return=minimal'
-                                },
-                                body: JSON.stringify(subscriptionData)
-                            }
-                        );
-                    } else {
-                        await fetch(
-                            `${window.SUPABASE_URL}/rest/v1/seller_subscriptions`,
-                            {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'apikey': window.SUPABASE_ANON_KEY,
-                                    'Authorization': `Bearer ${currentAccessToken}`,
-                                    'Prefer': 'return=minimal'
-                                },
-                                body: JSON.stringify({
-                                    ...subscriptionData,
-                                    created_at: new Date().toISOString()
-                                })
-                            }
-                        );
-                    }
-                }
-                
-                currentTier = tier;
-                localStorage.setItem(`mbare_tier_${currentSellerId}`, currentTier);
-                renderTiers();
-                enforceProductLimit();
-                updateStatsAndLimits();
-                alert(`Plan changed to ${tierMap[tier].name}`);
-            } catch (error) {
-                console.error('Error updating subscription:', error);
-                currentTier = tier;
-                localStorage.setItem(`mbare_tier_${currentSellerId}`, currentTier);
-                renderTiers();
-                enforceProductLimit();
-                updateStatsAndLimits();
-            }
+                await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': window.SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${currentAccessToken}`,
+                        'Prefer': 'return=minimal'
+                    },
+                    body: JSON.stringify({
+                        seller_id: currentSellerId,
+                        tier: tier,
+                        status: tier === 'free' ? 'cancelled' : 'active',
+                        created_at: new Date().toISOString()
+                    })
+                });
+            } catch (e) { console.error(e); }
+            
+            currentTier = tier;
+            localStorage.setItem(`mbare_tier_${currentSellerId}`, currentTier);
+            renderTiers();
+            enforceProductLimit();
+            updateStatsAndLimits();
+            alert(`Plan changed to ${tierMap[tier].name}`);
         }
 
         function openPaymentModal(tierKey) {
@@ -657,18 +623,17 @@
             modalDiv.className = 'payment-modal';
             modalDiv.innerHTML = `
                 <div class="payment-card">
-                    <h3 style="margin-bottom: 8px;">${plan.name}</h3>
-                    <p style="font-size: 26px; font-weight: 800; color:#B12704;">$${amount}<span style="font-size: 14px;">/month</span></p>
-                    <div style="margin: 20px 0;">
+                    <h3>${plan.name}</h3>
+                    <p style="font-size:26px;font-weight:800;color:#B12704;">$${amount}<span style="font-size:14px;">/month</span></p>
+                    <div style="margin:20px 0;">
                         <div class="form-group">
                             <label>EcoCash Number *</label>
                             <input type="tel" id="ecoPhone" placeholder="0771234567" autocomplete="off">
-                            <small>Enter your registered EcoCash number (077... or 078...)</small>
                         </div>
                     </div>
                     <button class="btn-primary" id="confirmPayBtn" style="width:100%;">Pay with EcoCash</button>
-                    <button class="btn-secondary" id="closePayModal" style="width:100%; margin-top: 10px;">Cancel</button>
-                    <div id="paymentStatusArea" style="margin-top: 18px;"></div>
+                    <button class="btn-secondary" id="closePayModal" style="width:100%;margin-top:10px;">Cancel</button>
+                    <div id="paymentStatusArea" style="margin-top:18px;"></div>
                 </div>
             `;
             document.body.appendChild(modalDiv);
@@ -677,17 +642,14 @@
             
             document.getElementById('confirmPayBtn').onclick = async () => {
                 const phone = document.getElementById('ecoPhone').value.trim();
-                if (!phone.match(/^(07|0[78])[0-9]{8}$/)) {
-                    alert('Please enter a valid Zimbabwe number (e.g., 0771234567)');
-                    return;
-                }
+                if (!phone.match(/^(07|0[78])[0-9]{8}$/)) { alert('Enter valid number (0771234567)'); return; }
                 
                 const payBtn = document.getElementById('confirmPayBtn');
                 payBtn.disabled = true;
                 payBtn.innerText = 'Processing...';
-                document.getElementById('paymentStatusArea').innerHTML = `<div class="text-center"><div class="spinner"></div>Sending request...</div>`;
+                document.getElementById('paymentStatusArea').innerHTML = `<div class="text-center"><div class="spinner"></div>Sending...</div>`;
                 
-                const reference = `SUB_${currentSellerId}_${Date.now()}_${Math.floor(Math.random()*10000)}`;
+                const reference = `SUB_${currentSellerId}_${Date.now()}`;
                 const formData = new URLSearchParams();
                 formData.append('result_url', window.location.href);
                 formData.append('return_url', window.location.href);
@@ -699,66 +661,58 @@
                 formData.append('phonenumber', phone);
                 
                 try {
-                    const response = await fetch('https://www.paynow.co.zw/interface/initiatetransaction', {
+                    const resp = await fetch('https://www.paynow.co.zw/interface/initiatetransaction', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                         body: formData.toString()
                     });
-                    const text = await response.text();
+                    const text = await resp.text();
                     
                     if (text.startsWith('SUCCESS')) {
-                        document.getElementById('paymentStatusArea').innerHTML = `<div style="background:#d1ecf1; padding:12px; border-radius:8px;">Request sent to ${phone}. Check your phone and enter PIN.<br>Waiting for confirmation...</div><div class="spinner" style="width:32px;height:32px;"></div>`;
-                        startPaymentPolling(reference, tierKey, modalDiv);
+                        document.getElementById('paymentStatusArea').innerHTML = `<div style="background:#d1ecf1;padding:12px;border-radius:8px;">Sent to ${phone}. Check phone for PIN.</div>`;
+                        startPolling(reference, tierKey, modalDiv);
                     } else {
-                        throw new Error(text.split('|')[1] || 'Transaction failed');
+                        throw new Error(text.split('|')[1] || 'Failed');
                     }
                 } catch (err) {
-                    document.getElementById('paymentStatusArea').innerHTML = `<div style="background:#f8d7da; padding:12px; border-radius:8px;">Error: ${err.message}</div>`;
+                    document.getElementById('paymentStatusArea').innerHTML = `<div style="background:#f8d7da;padding:12px;border-radius:8px;">Error: ${err.message}</div>`;
                     payBtn.disabled = false;
                     payBtn.innerText = 'Pay with EcoCash';
                 }
             };
         }
         
-        async function startPaymentPolling(reference, tierKey, modalElement) {
-            let attempts = 0;
-            const maxAttempts = 40;
+        function startPolling(reference, tierKey, modalElement) {
             const interval = setInterval(async () => {
-                attempts++;
                 try {
-                    const statusResp = await fetch(`https://www.paynow.co.zw/interface/gettransactionstatus/${reference}`);
-                    const statusText = await statusResp.text();
-                    if (statusText.includes('Paid') || statusText.includes('Completed')) {
+                    const resp = await fetch(`https://www.paynow.co.zw/interface/gettransactionstatus/${reference}`);
+                    const text = await resp.text();
+                    if (text.includes('Paid') || text.includes('Completed')) {
                         clearInterval(interval);
                         await updateSubscription(tierKey);
                         if (modalElement) modalElement.remove();
                         renderTiers();
                         enforceProductLimit();
                         updateStatsAndLimits();
-                        alert(`Payment successful! Your ${tierMap[tierKey].name} is now active.`);
-                    } else if (statusText.includes('Cancelled') || statusText.includes('Failed')) {
+                        alert(`✅ Payment successful! ${tierMap[tierKey].name} active.`);
+                    } else if (text.includes('Cancelled') || text.includes('Failed')) {
                         clearInterval(interval);
                         if (modalElement) {
-                            const statusDiv = modalElement.querySelector('#paymentStatusArea');
-                            if (statusDiv) statusDiv.innerHTML = `<div style="background:#f8d7da; padding:12px; border-radius:8px;">Payment cancelled. You can retry.</div>`;
+                            const div = modalElement.querySelector('#paymentStatusArea');
+                            if (div) div.innerHTML = `<div style="background:#f8d7da;padding:12px;border-radius:8px;">Payment cancelled.</div>`;
                             const btn = modalElement.querySelector('#confirmPayBtn');
                             if (btn) { btn.disabled = false; btn.innerText = 'Pay with EcoCash'; }
                         }
                     }
-                    if (attempts >= maxAttempts) {
-                        clearInterval(interval);
-                    }
-                } catch(e) {
-                    console.warn(e);
-                }
+                } catch(e) {}
             }, 5000);
+            setTimeout(() => clearInterval(interval), 200000);
         }
         
         function enforceProductLimit() {
-            const maxLimit = currentTier === 'free' ? 8 : (currentTier === 'tier_150' ? 50 : 200);
-            if (sellerProducts.length > maxLimit) {
-                sellerProducts = sellerProducts.slice(0, maxLimit);
-                saveProducts();
+            const max = currentTier === 'free' ? 8 : (currentTier === 'tier_150' ? 50 : 200);
+            if (sellerProducts.length > max) {
+                sellerProducts = sellerProducts.slice(0, max);
                 renderProducts();
             }
             updateStatsAndLimits();
@@ -774,74 +728,64 @@
             const total = sellerProducts.length;
             const limit = getCurrentLimit();
             const remaining = limit - total;
-            const warningDiv = document.getElementById('tierMessage');
             
             if (currentTier === 'free') {
-                warningDiv.innerHTML = `<strong>Free Plan Limit:</strong> ${total} of ${limit} products used. ${remaining > 0 ? `You can add ${remaining} more.` : 'Maximum limit reached. Upgrade to add more products.'} <a href="#" id="upgradeLink" class="inline-link">View Plans</a>`;
+                document.getElementById('tierMessage').innerHTML = `<strong>Free Plan:</strong> ${total}/${limit} products. ${remaining > 0 ? `${remaining} slots left.` : 'Limit reached.'} <a href="#" id="upgradeLink" class="inline-link">View Plans</a>`;
                 const link = document.getElementById('upgradeLink');
-                if (link) {
-                    link.onclick = (e) => {
-                        e.preventDefault();
-                        document.getElementById('tierContainer').scrollIntoView({ behavior: 'smooth' });
-                    };
-                }
+                if (link) link.onclick = (e) => { e.preventDefault(); document.getElementById('tierContainer').scrollIntoView({behavior:'smooth'}); };
             } else {
-                warningDiv.innerHTML = `<strong>${tierMap[currentTier]?.name} Active:</strong> ${remaining} product slots remaining. ${currentTier === 'tier_5' ? 'Video ads included.' : ''}`;
+                document.getElementById('tierMessage').innerHTML = `<strong>${tierMap[currentTier]?.name}:</strong> ${remaining} slots remaining.`;
             }
             
             document.getElementById('totalProducts').innerText = total;
-            const totalStock = sellerProducts.reduce((s,p) => s + (p.stock || 0), 0);
-            const totalVal = sellerProducts.reduce((s,p) => s + (p.price * (p.stock || 0)), 0);
-            document.getElementById('totalStock').innerText = totalStock;
-            document.getElementById('totalValue').innerText = '$' + totalVal.toFixed(2);
-            
-            const addBtn = document.getElementById('toggleFormBtn');
-            addBtn.disabled = (currentTier === 'free' && total >= 8);
+            document.getElementById('totalStock').innerText = sellerProducts.reduce((s,p) => s + (p.stock || 0), 0);
+            document.getElementById('totalValue').innerText = '$' + sellerProducts.reduce((s,p) => s + ((p.price || 0) * (p.stock || 0)), 0).toFixed(2);
+            document.getElementById('toggleFormBtn').disabled = (currentTier === 'free' && total >= 8);
         }
         
         function escapeHtml(str) {
             if (!str) return '';
-            return str.replace(/[&<>]/g, function(m) {
-                return m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;';
-            });
+            return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]);
         }
 
         function renderProducts() {
             const container = document.getElementById('productsList');
             if (!sellerProducts.length) {
-                container.innerHTML = '<p class="text-center" style="padding:40px; color:#666;">No products yet. Click "+ Add Product" to start selling.</p>';
+                container.innerHTML = '<p class="text-center" style="padding:40px;color:#666;">No products yet. Click "+ Add Product" to start selling.</p>';
                 return;
             }
 
-            container.innerHTML = sellerProducts.map(prod => {
-                const imgUrl = prod.image_url || 'https://placehold.co/400x300?text=No+Image';
-                return `
-                    <div class="product-card">
-                        <img src="${imgUrl}" alt="${escapeHtml(prod.title)}" onerror="this.src='https://placehold.co/400x300?text=No+Image'">
-                        <div class="product-info">
-                            <h3 style="margin-bottom: 6px;">${escapeHtml(prod.title)}</h3>
-                            <div style="font-size: 20px; font-weight: 600; color: #B12704;">$${parseFloat(prod.price).toFixed(2)}</div>
-                            <div style="margin: 6px 0;">Stock: ${prod.stock || 0}</div>
-                            <button class="whatsapp-btn" onclick="whatsappInquiry('${escapeHtml(prod.title)}')">WhatsApp Inquiry</button>
-                            <div style="display: flex; gap: 8px; margin-top: 8px;">
-                                <button class="btn-secondary" style="flex:1;" onclick="editProduct('${prod.id}')">Edit</button>
-                                <button class="btn-delete" style="flex:1;" onclick="deleteProduct('${prod.id}')">Delete</button>
-                            </div>
+            container.innerHTML = sellerProducts.map(prod => `
+                <div class="product-card">
+                    <img src="${prod.image_url || 'https://placehold.co/400x300?text=No+Image'}" alt="${escapeHtml(prod.title)}" onerror="this.src='https://placehold.co/400x300?text=No+Image'">
+                    <div class="product-info">
+                        <h3 style="margin-bottom:6px;">${escapeHtml(prod.title)}</h3>
+                        <div style="font-size:20px;font-weight:600;color:#B12704;">$${parseFloat(prod.price || 0).toFixed(2)}</div>
+                        <div style="margin:6px 0;">Stock: ${prod.stock || 0} | ${prod.category || 'N/A'}</div>
+                        <button class="whatsapp-btn" onclick="whatsappInquiry('${escapeHtml(prod.title)}')">WhatsApp Inquiry</button>
+                        <div style="display:flex;gap:8px;margin-top:8px;">
+                            <button class="btn-secondary" style="flex:1;" onclick="editProduct('${prod.id}')">Edit</button>
+                            <button class="btn-delete" style="flex:1;" onclick="deleteProduct('${prod.id}')">Delete</button>
                         </div>
                     </div>
-                `;
-            }).join('');
+                </div>
+            `).join('');
         }
 
-        // Global functions
         window.whatsappInquiry = function(title) {
-            const msg = encodeURIComponent(`Hello, I am interested in "${title}" on Mbare Marketplace.`);
-            window.open(`https://wa.me/?text=${msg}`, '_blank');
-            recordWhatsAppClick(title);
+            window.open(`https://wa.me/?text=${encodeURIComponent(`Hello, I'm interested in "${title}" on Mbare Marketplace.`)}`, '_blank');
         };
 
-        window.deleteProduct = function(id) {
-            if (confirm('Delete this product permanently?')) {
+        window.deleteProduct = async function(id) {
+            if (!confirm('Delete this product permanently?')) return;
+            try {
+                await deleteProductFromSupabase(id);
+                sellerProducts = sellerProducts.filter(p => p.id !== id);
+                saveProducts();
+                renderProducts();
+                updateStatsAndLimits();
+                alert('✅ Product deleted!');
+            } catch (e) {
                 sellerProducts = sellerProducts.filter(p => p.id !== id);
                 saveProducts();
                 renderProducts();
@@ -853,25 +797,29 @@
             const product = sellerProducts.find(p => p.id === id);
             if (!product) return;
             
-            document.getElementById('prodTitle').value = product.title;
+            document.getElementById('prodTitle').value = product.title || '';
             document.getElementById('prodDescription').value = product.description || '';
-            document.getElementById('prodPrice').value = product.price;
-            document.getElementById('prodCategory').value = product.category || 'Electronics';
-            document.getElementById('prodStock').value = product.stock;
+            document.getElementById('prodPrice').value = product.price || '';
+            document.getElementById('prodCategory').value = product.category || '';
+            document.getElementById('prodStock').value = product.stock || '';
             document.getElementById('prodImage').value = product.image_url || '';
             
-            // Remove the old product so it doesn't duplicate
+            if (product.image_url) {
+                document.getElementById('imagePreview').src = product.image_url;
+                document.getElementById('imagePreviewContainer').style.display = 'block';
+                document.getElementById('uploadPlaceholder').style.display = 'none';
+                document.getElementById('imageStatus').textContent = 'Current image. Upload new to change.';
+            }
+            
             sellerProducts = sellerProducts.filter(p => p.id !== id);
             saveProducts();
             renderProducts();
             updateStatsAndLimits();
             
-            // Show the form
             document.getElementById('addProductForm').style.display = 'block';
             document.getElementById('toggleFormBtn').innerText = 'Cancel';
-            document.getElementById('toggleFormBtn').onclick = toggleProductForm;
-            
-            alert('Edit mode: Update the details above and click "Add Product" to save changes.');
+            document.getElementById('submitProductBtn').innerText = 'Update Product';
+            document.getElementById('submitProductBtn').setAttribute('data-editing', 'true');
         };
 
         window.toggleProductForm = function() {
@@ -880,50 +828,109 @@
             if (formDiv.style.display === 'none' || formDiv.style.display === '') {
                 formDiv.style.display = 'block';
                 btn.innerText = 'Cancel';
-                btn.onclick = toggleProductForm;
             } else {
                 formDiv.style.display = 'none';
                 btn.innerText = '+ Add Product';
-                btn.onclick = toggleProductForm;
                 document.getElementById('productForm').reset();
+                removeImage();
+                document.getElementById('submitProductBtn').innerText = 'Add Product';
+                document.getElementById('submitProductBtn').removeAttribute('data-editing');
             }
         };
 
-        window.handleAddProduct = function() {
+        window.handleAddProduct = async function() {
             const limit = getCurrentLimit();
-            if (sellerProducts.length >= limit) {
-                alert(`Product limit reached (${limit}). ${currentTier === 'free' ? 'Upgrade to a paid plan to add more products.' : ''}`);
+            if (sellerProducts.length >= limit && !document.getElementById('submitProductBtn').getAttribute('data-editing')) {
+                alert(`Product limit reached (${limit}). Upgrade to add more.`);
                 return;
             }
             
-            const imageUrl = document.getElementById('prodImage').value.trim();
             const title = document.getElementById('prodTitle').value.trim();
-            const price = document.getElementById('prodPrice').value;
-            const stock = document.getElementById('prodStock').value;
+            const price = parseFloat(document.getElementById('prodPrice').value);
+            const stock = parseInt(document.getElementById('prodStock').value);
+            const category = document.getElementById('prodCategory').value;
+            const description = document.getElementById('prodDescription').value.trim();
+            let imageUrl = document.getElementById('prodImage').value.trim();
             
-            if (!imageUrl) { alert('Please enter a product image URL'); return; }
-            if (!title) { alert('Please enter a product title'); return; }
-            if (!price) { alert('Please enter a price'); return; }
-            if (!stock) { alert('Please enter stock quantity'); return; }
+            if (!title) { alert('Enter product title'); return; }
+            if (!price && price !== 0) { alert('Enter price'); return; }
+            if (!stock && stock !== 0) { alert('Enter stock'); return; }
+            if (!category) { alert('Select category'); return; }
             
-            const newProduct = {
-                id: Date.now().toString(),
-                title: title,
-                description: document.getElementById('prodDescription').value,
-                price: parseFloat(price),
-                category: document.getElementById('prodCategory').value,
-                stock: parseInt(stock),
-                image_url: imageUrl,
-                created_at: new Date().toISOString()
+            const submitBtn = document.getElementById('submitProductBtn');
+            
+            // Upload image if file selected
+            if (selectedImageFile) {
+                submitBtn.disabled = true;
+                submitBtn.innerText = 'Uploading image...';
+                try {
+                    imageUrl = await uploadImageToImgBB(selectedImageFile);
+                } catch (error) {
+                    alert('Image upload failed: ' + error.message);
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = 'Add Product';
+                    return;
+                }
+            }
+            
+            if (!imageUrl) {
+                alert('Please upload a product image');
+                submitBtn.disabled = false;
+                submitBtn.innerText = 'Add Product';
+                return;
+            }
+            
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Saving to database...';
+            
+            const productData = {
+                title, description, price, category, stock, image_url: imageUrl
             };
             
-            sellerProducts.push(newProduct);
-            saveProducts();
-            renderProducts();
-            updateStatsAndLimits();
-            toggleProductForm();
-            document.getElementById('productForm').reset();
-            alert('Product added successfully!');
+            try {
+                // Save to Supabase
+                const saved = await saveProductToSupabase(productData);
+                
+                // Add to local array
+                const newProduct = {
+                    id: saved?.[0]?.id || Date.now().toString(),
+                    ...productData,
+                    created_at: new Date().toISOString()
+                };
+                
+                sellerProducts.unshift(newProduct);
+                saveProducts();
+                renderProducts();
+                updateStatsAndLimits();
+                toggleProductForm();
+                document.getElementById('productForm').reset();
+                removeImage();
+                selectedImageFile = null;
+                submitBtn.disabled = false;
+                submitBtn.innerText = 'Add Product';
+                document.getElementById('submitProductBtn').removeAttribute('data-editing');
+                alert('✅ Product saved to database!');
+            } catch (error) {
+                console.error('Save error:', error);
+                // Save locally as fallback
+                const newProduct = {
+                    id: Date.now().toString(),
+                    ...productData,
+                    created_at: new Date().toISOString()
+                };
+                sellerProducts.unshift(newProduct);
+                saveProducts();
+                renderProducts();
+                updateStatsAndLimits();
+                toggleProductForm();
+                document.getElementById('productForm').reset();
+                removeImage();
+                selectedImageFile = null;
+                submitBtn.disabled = false;
+                submitBtn.innerText = 'Add Product';
+                document.getElementById('submitProductBtn').removeAttribute('data-editing');
+                alert('⚠️ Saved locally. Will sync when connection is restored.');
+            }
         };
 
         // Analytics button
@@ -932,48 +939,47 @@
                 const modalDiv = document.createElement('div');
                 modalDiv.className = 'payment-modal';
                 modalDiv.innerHTML = `
-                    <div class="payment-card" style="text-align: center;">
+                    <div class="payment-card" style="text-align:center;">
                         <h3>🔒 Unlock Seller Analytics</h3>
-                        <p style="margin: 15px 0;">Seller Analytics is available exclusively for paid subscribers.</p>
-                        <p style="margin: 10px 0; font-size: 14px; color: #666;">Get insights on:</p>
-                        <ul style="text-align: left; margin: 10px 20px; color: #555;">
+                        <p style="margin:15px 0;">Available for paid subscribers only.</p>
+                        <ul style="text-align:left;margin:10px 20px;color:#555;">
                             <li>📊 Product performance & stock alerts</li>
                             <li>📱 WhatsApp inquiry tracking</li>
                             <li>📂 Category breakdown & trends</li>
                             <li>💰 Inventory value analytics</li>
                         </ul>
-                        <p style="margin: 15px 0; font-size: 14px; font-weight: 600;">Choose a plan to unlock analytics:</p>
-                        <button class="btn-primary upgrade-plan-btn" data-tier="tier_150" style="margin: 8px; background: #f90; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer;">
-                            Merchant Basic - $1.50/month
-                        </button>
-                        <button class="btn-primary upgrade-plan-btn" data-tier="tier_5" style="margin: 8px; background: #ff6b00; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer;">
-                            Video Ads Plan - $5/month
-                        </button>
+                        <p style="margin:15px 0;font-weight:600;">Choose a plan:</p>
+                        <button class="btn-primary upgrade-btn" data-tier="tier_150" style="margin:8px;background:#f90;color:white;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;">Merchant Basic - $1.50/mo</button>
+                        <button class="btn-primary upgrade-btn" data-tier="tier_5" style="margin:8px;background:#ff6b00;color:white;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;">Video Ads - $5/mo</button>
                         <br>
-                        <button class="btn-secondary" id="closeAnalyticsModal" style="margin-top: 10px; width: 100%;">Maybe Later</button>
+                        <button class="btn-secondary" id="closeModal" style="margin-top:10px;width:100%;">Maybe Later</button>
                     </div>
                 `;
                 document.body.appendChild(modalDiv);
-                
-                document.getElementById('closeAnalyticsModal').onclick = () => modalDiv.remove();
-                
-                modalDiv.querySelectorAll('.upgrade-plan-btn').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const tier = btn.dataset.tier;
-                        modalDiv.remove();
-                        openPaymentModal(tier);
-                    });
+                document.getElementById('closeModal').onclick = () => modalDiv.remove();
+                modalDiv.querySelectorAll('.upgrade-btn').forEach(btn => {
+                    btn.onclick = () => { modalDiv.remove(); openPaymentModal(btn.dataset.tier); };
                 });
-                
                 return;
             }
-            
-            // Paid user - redirect to analytics page
             window.location.href = 'seller-analytics.html';
         });
 
-        // Initialize dashboard on page load
-        initializeDashboard();
+        // Initialize dashboard
+        async function init() {
+            const auth = await checkAuth();
+            if (!auth) return;
+            
+            const sub = await fetchSubscription();
+            currentTier = sub || localStorage.getItem(`mbare_tier_${currentSellerId}`) || 'free';
+            localStorage.setItem(`mbare_tier_${currentSellerId}`, currentTier);
+            
+            loadProducts();
+            renderTiers();
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+        
+        init();
     </script>
 </body>
 </html>
