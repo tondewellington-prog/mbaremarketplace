@@ -86,29 +86,6 @@
             padding: 14px;
             background: #37475a;
         }
-        .footer-content {
-            padding: 40px 20px;
-        }
-        .footer-columns {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 30px;
-        }
-        .footer-column h3 {
-            font-size: 1rem;
-            margin-bottom: 12px;
-        }
-        .footer-column ul {
-            list-style: none;
-        }
-        .footer-column a {
-            color: #ddd;
-            text-decoration: none;
-            line-height: 1.8;
-            font-size: 0.85rem;
-        }
         .footer-bottom {
             background: #131921;
             text-align: center;
@@ -190,53 +167,11 @@
             transform: translateY(-2px);
             box-shadow: 0 8px 20px rgba(0,0,0,0.1);
         }
-        .slideshow-container {
-            position: relative;
+        .product-card img {
             width: 100%;
             height: 220px;
-            background: #f5f5f5;
-            overflow: hidden;
-        }
-        .slide-image {
-            width: 100%;
-            height: 100%;
             object-fit: cover;
         }
-        .slide-btn {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(0,0,0,0.6);
-            color: white;
-            border: none;
-            cursor: pointer;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-        }
-        .slide-prev { left: 8px; }
-        .slide-next { right: 8px; }
-        .slide-dots {
-            position: absolute;
-            bottom: 8px;
-            left: 0;
-            right: 0;
-            display: flex;
-            justify-content: center;
-            gap: 6px;
-        }
-        .dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.5);
-            cursor: pointer;
-        }
-        .dot.active { background: #FFD814; }
         .product-info { padding: 16px; }
         .btn-delete {
             background: #dc3545;
@@ -382,7 +317,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(255,255,255,0.8);
+            background: rgba(255,255,255,0.9);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -443,7 +378,7 @@
         <div class="bg-white rounded-xl p-30 mb-30">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
                 <h2>Add New Product</h2>
-                <button class="btn-primary" id="toggleFormBtn">+ Add Product</button>
+                <button class="btn-primary" id="toggleFormBtn" onclick="toggleProductForm()">+ Add Product</button>
             </div>
             <div id="addProductForm" style="display: none; margin-top: 25px;">
                 <form id="productForm">
@@ -462,7 +397,7 @@
                         <div class="form-group"><label>Stock</label><input type="number" id="prodStock" required></div>
                     </div>
                     <div style="display: flex; gap: 12px;">
-                        <button type="submit" class="btn-primary">Add Product</button>
+                        <button type="button" class="btn-primary" id="submitProductBtn" onclick="handleAddProduct()">Add Product</button>
                         <button type="button" class="btn-secondary" onclick="toggleProductForm()">Cancel</button>
                     </div>
                 </form>
@@ -477,12 +412,11 @@
 
     <footer class="footer">
         <div class="footer-top"><a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="color:white;">Back to top</a></div>
-        <div class="footer-content"><div class="container"><div class="footer-columns"><div class="footer-column"><h3>Get to Know Us</h3><ul><li><a href="#">About Mbare</a></li></ul></div><div class="footer-column"><h3>Make Money</h3><ul><li><a href="#">Sell on Mbare</a></li></ul></div></div></div></div>
         <div class="footer-bottom"><div class="container">© 2026 Mbare Marketplace</div></div>
     </footer>
 
     <script>
-        // Supabase configuration - same as index page
+        // Supabase configuration
         window.SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
         window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
         
@@ -500,7 +434,7 @@
             tier_5: { name: "Video Ads Plan", price: "$5 / month", maxProducts: 200, perks: "200 products + video ads on social platforms", badge: "VIDEO BOOST" }
         };
 
-        // Check authentication first
+        // Check authentication
         async function checkAuth() {
             const sessionData = localStorage.getItem('supabase_session');
             const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
@@ -520,7 +454,6 @@
                     throw new Error('No seller ID found');
                 }
                 
-                // Update header
                 const userEmail = session.user?.email || 'Seller';
                 document.querySelector('.account-menu').textContent = `Hello, ${userEmail.split('@')[0]}`;
                 
@@ -537,7 +470,7 @@
         async function fetchSubscription() {
             try {
                 const response = await fetch(
-                    `${window.SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${currentSellerId}&select=*&order=created_at.desc&limit=1`,
+                    `${window.SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${currentSellerId}&status=eq.active&select=*&order=created_at.desc&limit=1`,
                     {
                         headers: {
                             'apikey': window.SUPABASE_ANON_KEY,
@@ -555,19 +488,14 @@
                 
                 if (subscriptions && subscriptions.length > 0) {
                     const activeSub = subscriptions[0];
-                    
-                    // Check if subscription is active (not expired)
-                    if (activeSub.status === 'active' || activeSub.status === 'paid') {
-                        // Map subscription tier
-                        if (activeSub.tier === 'tier_5' || activeSub.plan_id === 'tier_5' || activeSub.amount >= 4.99) {
-                            return 'tier_5';
-                        } else if (activeSub.tier === 'tier_150' || activeSub.plan_id === 'tier_150' || activeSub.amount >= 1.49) {
-                            return 'tier_150';
-                        }
+                    if (activeSub.tier === 'tier_5' || activeSub.plan_id === 'tier_5') {
+                        return 'tier_5';
+                    } else if (activeSub.tier === 'tier_150' || activeSub.plan_id === 'tier_150') {
+                        return 'tier_150';
                     }
                 }
                 
-                return null; // No active subscription found
+                return null;
             } catch (error) {
                 console.error('Error fetching subscription:', error);
                 return null;
@@ -579,35 +507,26 @@
             const isAuthenticated = await checkAuth();
             if (!isAuthenticated) return;
             
-            // Fetch subscription from Supabase
             const subscriptionTier = await fetchSubscription();
             
             if (subscriptionTier) {
                 currentTier = subscriptionTier;
-                // Also save to localStorage for quick access
                 localStorage.setItem(`mbare_tier_${currentSellerId}`, currentTier);
             } else {
-                // Check localStorage fallback
                 const savedTier = localStorage.getItem(`mbare_tier_${currentSellerId}`);
-                if (savedTier && tierMap[savedTier]) {
-                    currentTier = savedTier;
-                } else {
-                    currentTier = 'free';
-                }
+                currentTier = (savedTier && tierMap[savedTier]) ? savedTier : 'free';
             }
             
-            // Load products from localStorage (or Supabase in future)
             loadProducts();
             renderTiers();
             
-            // Hide loading overlay
             document.getElementById('loadingOverlay').style.display = 'none';
         }
 
         function loadProducts() {
             const stored = localStorage.getItem(`mbare_products_${currentSellerId}`);
             sellerProducts = stored ? JSON.parse(stored) : [];
-            renderProductsWithSlideshow();
+            renderProducts();
             updateStatsAndLimits();
         }
 
@@ -646,11 +565,11 @@
             }
 
             document.querySelectorAll('.subscribe-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
+                btn.addEventListener('click', () => {
                     const tierKey = btn.dataset.tier;
                     if (tierKey === 'free') {
                         if (confirm('Switch to Free plan? Max 8 products.')) {
-                            updateSubscriptionInSupabase('free');
+                            updateSubscription('free');
                         }
                     } else {
                         openPaymentModal(tierKey);
@@ -659,9 +578,8 @@
             });
         }
 
-        async function updateSubscriptionInSupabase(tier) {
+        async function updateSubscription(tier) {
             try {
-                // Update or insert subscription record
                 const subscriptionData = {
                     seller_id: currentSellerId,
                     tier: tier,
@@ -669,7 +587,6 @@
                     updated_at: new Date().toISOString()
                 };
                 
-                // Check if subscription exists
                 const checkResponse = await fetch(
                     `${window.SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${currentSellerId}&select=id`,
                     {
@@ -683,7 +600,6 @@
                 if (checkResponse.ok) {
                     const existing = await checkResponse.json();
                     if (existing && existing.length > 0) {
-                        // Update existing
                         await fetch(
                             `${window.SUPABASE_URL}/rest/v1/seller_subscriptions?id=eq.${existing[0].id}`,
                             {
@@ -698,7 +614,6 @@
                             }
                         );
                     } else {
-                        // Insert new
                         await fetch(
                             `${window.SUPABASE_URL}/rest/v1/seller_subscriptions`,
                             {
@@ -726,7 +641,6 @@
                 alert(`Plan changed to ${tierMap[tier].name}`);
             } catch (error) {
                 console.error('Error updating subscription:', error);
-                // Fallback to localStorage only
                 currentTier = tier;
                 localStorage.setItem(`mbare_tier_${currentSellerId}`, currentTier);
                 renderTiers();
@@ -816,10 +730,7 @@
                     const statusText = await statusResp.text();
                     if (statusText.includes('Paid') || statusText.includes('Completed')) {
                         clearInterval(interval);
-                        
-                        // Update subscription in Supabase
-                        await updateSubscriptionInSupabase(tierKey);
-                        
+                        await updateSubscription(tierKey);
                         if (modalElement) modalElement.remove();
                         renderTiers();
                         enforceProductLimit();
@@ -848,7 +759,7 @@
             if (sellerProducts.length > maxLimit) {
                 sellerProducts = sellerProducts.slice(0, maxLimit);
                 saveProducts();
-                renderProductsWithSlideshow();
+                renderProducts();
             }
             updateStatsAndLimits();
         }
@@ -871,7 +782,6 @@
                 if (link) {
                     link.onclick = (e) => {
                         e.preventDefault();
-                        // Scroll to plans section
                         document.getElementById('tierContainer').scrollIntoView({ behavior: 'smooth' });
                     };
                 }
@@ -886,39 +796,33 @@
             document.getElementById('totalValue').innerText = '$' + totalVal.toFixed(2);
             
             const addBtn = document.getElementById('toggleFormBtn');
-            if (currentTier === 'free' && total >= 8) {
-                addBtn.disabled = true;
-            } else {
-                addBtn.disabled = false;
-            }
+            addBtn.disabled = (currentTier === 'free' && total >= 8);
         }
         
-        function renderProductsWithSlideshow() {
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                return m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;';
+            });
+        }
+
+        function renderProducts() {
             const container = document.getElementById('productsList');
             if (!sellerProducts.length) {
-                container.innerHTML = '<p class="text-center" style="padding:40px; color:#666;">No products yet. Click "Add Product" to start selling.</p>';
+                container.innerHTML = '<p class="text-center" style="padding:40px; color:#666;">No products yet. Click "+ Add Product" to start selling.</p>';
                 return;
             }
 
             container.innerHTML = sellerProducts.map(prod => {
-                const images = prod.images || (prod.image_url ? [prod.image_url] : ['https://placehold.co/400x300?text=No+Image']);
+                const imgUrl = prod.image_url || 'https://placehold.co/400x300?text=No+Image';
                 return `
-                    <div class="product-card" data-product-id="${prod.id}">
-                        <div class="slideshow-container" id="slideshow-${prod.id}">
-                            <div style="position: relative; width: 100%; height: 100%;">
-                                <img class="slide-image" id="slide-img-${prod.id}" src="${images[0]}" alt="${escapeHtml(prod.title)}">
-                                ${images.length > 1 ? `
-                                    <button class="slide-btn slide-prev" onclick="changeSlide('${prod.id}', -1, event)">‹</button>
-                                    <button class="slide-btn slide-next" onclick="changeSlide('${prod.id}', 1, event)">›</button>
-                                    <div class="slide-dots" id="dots-${prod.id}"></div>
-                                ` : ''}
-                            </div>
-                        </div>
+                    <div class="product-card">
+                        <img src="${imgUrl}" alt="${escapeHtml(prod.title)}" onerror="this.src='https://placehold.co/400x300?text=No+Image'">
                         <div class="product-info">
                             <h3 style="margin-bottom: 6px;">${escapeHtml(prod.title)}</h3>
                             <div style="font-size: 20px; font-weight: 600; color: #B12704;">$${parseFloat(prod.price).toFixed(2)}</div>
                             <div style="margin: 6px 0;">Stock: ${prod.stock || 0}</div>
-                            <button class="whatsapp-btn" data-title="${escapeHtml(prod.title)}">WhatsApp Inquiry</button>
+                            <button class="whatsapp-btn" onclick="whatsappInquiry('${escapeHtml(prod.title)}')">WhatsApp Inquiry</button>
                             <div style="display: flex; gap: 8px; margin-top: 8px;">
                                 <button class="btn-secondary" style="flex:1;" onclick="editProduct('${prod.id}')">Edit</button>
                                 <button class="btn-delete" style="flex:1;" onclick="deleteProduct('${prod.id}')">Delete</button>
@@ -927,136 +831,104 @@
                     </div>
                 `;
             }).join('');
-
-            sellerProducts.forEach(prod => {
-                const images = prod.images || [prod.image_url || 'https://placehold.co/400x300?text=No+Image'];
-                if (!window.slideIndexes) window.slideIndexes = {};
-                window.slideIndexes[prod.id] = 0;
-                prod.slideImages = images;
-                if (images.length > 1) {
-                    const dotsContainer = document.getElementById(`dots-${prod.id}`);
-                    if (dotsContainer) {
-                        dotsContainer.innerHTML = '';
-                        for (let i = 0; i < images.length; i++) {
-                            const dot = document.createElement('div');
-                            dot.className = 'dot' + (i === 0 ? ' active' : '');
-                            dot.onclick = (function(idx) { return () => goToSlide(prod.id, idx); })(i);
-                            dotsContainer.appendChild(dot);
-                        }
-                    }
-                }
-            });
-
-            document.querySelectorAll('.whatsapp-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const title = btn.getAttribute('data-title');
-                    const msg = encodeURIComponent(`Hello, I am interested in "${title}" on Mbare Marketplace.`);
-                    window.open(`https://wa.me/?text=${msg}`, '_blank');
-                    recordWhatsAppClick(title);
-                });
-            });
         }
 
-        window.changeSlide = function(productId, direction, event) {
-            if (event) event.stopPropagation();
-            const product = sellerProducts.find(p => p.id === productId);
-            if (!product) return;
-            const images = product.slideImages || [product.image_url];
-            if (images.length <= 1) return;
-            let idx = window.slideIndexes[productId] || 0;
-            idx = (idx + direction + images.length) % images.length;
-            window.slideIndexes[productId] = idx;
-            document.getElementById(`slide-img-${productId}`).src = images[idx];
-            const dots = document.querySelectorAll(`#dots-${productId} .dot`);
-            dots.forEach((dot, i) => dot.className = i === idx ? 'dot active' : 'dot');
+        // Global functions
+        window.whatsappInquiry = function(title) {
+            const msg = encodeURIComponent(`Hello, I am interested in "${title}" on Mbare Marketplace.`);
+            window.open(`https://wa.me/?text=${msg}`, '_blank');
+            recordWhatsAppClick(title);
         };
-
-        function goToSlide(productId, index) {
-            const product = sellerProducts.find(p => p.id === productId);
-            if (!product) return;
-            const images = product.slideImages || [product.image_url];
-            if (index >= images.length) return;
-            window.slideIndexes[productId] = index;
-            document.getElementById(`slide-img-${productId}`).src = images[index];
-            const dots = document.querySelectorAll(`#dots-${productId} .dot`);
-            dots.forEach((dot, i) => dot.className = i === index ? 'dot active' : 'dot');
-        }
-
-        function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, function(m) { return m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'; }); }
 
         window.deleteProduct = function(id) {
             if (confirm('Delete this product permanently?')) {
                 sellerProducts = sellerProducts.filter(p => p.id !== id);
                 saveProducts();
-                renderProductsWithSlideshow();
+                renderProducts();
                 updateStatsAndLimits();
             }
         };
 
         window.editProduct = function(id) {
             const product = sellerProducts.find(p => p.id === id);
-            if (product) {
-                document.getElementById('prodTitle').value = product.title;
-                document.getElementById('prodDescription').value = product.description || '';
-                document.getElementById('prodPrice').value = product.price;
-                document.getElementById('prodCategory').value = product.category || 'Electronics';
-                document.getElementById('prodStock').value = product.stock;
-                document.getElementById('prodImage').value = product.image_url || '';
-                toggleProductForm();
-                sellerProducts = sellerProducts.filter(p => p.id !== id);
-                saveProducts();
-                renderProductsWithSlideshow();
-                updateStatsAndLimits();
-                alert('Edit mode: Update details and click Add Product.');
-            }
+            if (!product) return;
+            
+            document.getElementById('prodTitle').value = product.title;
+            document.getElementById('prodDescription').value = product.description || '';
+            document.getElementById('prodPrice').value = product.price;
+            document.getElementById('prodCategory').value = product.category || 'Electronics';
+            document.getElementById('prodStock').value = product.stock;
+            document.getElementById('prodImage').value = product.image_url || '';
+            
+            // Remove the old product so it doesn't duplicate
+            sellerProducts = sellerProducts.filter(p => p.id !== id);
+            saveProducts();
+            renderProducts();
+            updateStatsAndLimits();
+            
+            // Show the form
+            document.getElementById('addProductForm').style.display = 'block';
+            document.getElementById('toggleFormBtn').innerText = 'Cancel';
+            document.getElementById('toggleFormBtn').onclick = toggleProductForm;
+            
+            alert('Edit mode: Update the details above and click "Add Product" to save changes.');
         };
 
         window.toggleProductForm = function() {
             const formDiv = document.getElementById('addProductForm');
             const btn = document.getElementById('toggleFormBtn');
-            if (formDiv.style.display === 'none') {
+            if (formDiv.style.display === 'none' || formDiv.style.display === '') {
                 formDiv.style.display = 'block';
                 btn.innerText = 'Cancel';
+                btn.onclick = toggleProductForm;
             } else {
                 formDiv.style.display = 'none';
                 btn.innerText = '+ Add Product';
+                btn.onclick = toggleProductForm;
                 document.getElementById('productForm').reset();
             }
         };
 
-        window.handleAddProduct = function(e) {
-            e.preventDefault();
+        window.handleAddProduct = function() {
             const limit = getCurrentLimit();
             if (sellerProducts.length >= limit) {
                 alert(`Product limit reached (${limit}). ${currentTier === 'free' ? 'Upgrade to a paid plan to add more products.' : ''}`);
                 return;
             }
+            
             const imageUrl = document.getElementById('prodImage').value.trim();
+            const title = document.getElementById('prodTitle').value.trim();
+            const price = document.getElementById('prodPrice').value;
+            const stock = document.getElementById('prodStock').value;
+            
             if (!imageUrl) { alert('Please enter a product image URL'); return; }
+            if (!title) { alert('Please enter a product title'); return; }
+            if (!price) { alert('Please enter a price'); return; }
+            if (!stock) { alert('Please enter stock quantity'); return; }
+            
             const newProduct = {
                 id: Date.now().toString(),
-                title: document.getElementById('prodTitle').value,
+                title: title,
                 description: document.getElementById('prodDescription').value,
-                price: parseFloat(document.getElementById('prodPrice').value),
+                price: parseFloat(price),
                 category: document.getElementById('prodCategory').value,
-                stock: parseInt(document.getElementById('prodStock').value),
+                stock: parseInt(stock),
                 image_url: imageUrl,
-                images: [imageUrl],
                 created_at: new Date().toISOString()
             };
+            
             sellerProducts.push(newProduct);
             saveProducts();
-            renderProductsWithSlideshow();
+            renderProducts();
             updateStatsAndLimits();
             toggleProductForm();
             document.getElementById('productForm').reset();
             alert('Product added successfully!');
         };
 
-        // Analytics button - redirects to seller-analytics.html after checking subscription
-        document.getElementById('analyticsNavBtn').addEventListener('click', async (e) => {
+        // Analytics button
+        document.getElementById('analyticsNavBtn').addEventListener('click', () => {
             if (currentTier === 'free') {
-                // Encourage free users to subscribe - show ALL plans
                 const modalDiv = document.createElement('div');
                 modalDiv.className = 'payment-modal';
                 modalDiv.innerHTML = `
@@ -1069,15 +941,15 @@
                             <li>📱 WhatsApp inquiry tracking</li>
                             <li>📂 Category breakdown & trends</li>
                             <li>💰 Inventory value analytics</li>
-                            <li>👥 Customer engagement metrics</li>
                         </ul>
-                        <p style="margin: 15px 0; font-size: 14px; font-weight: 600; color: #232f3e;">Choose a plan to unlock analytics:</p>
-                        <button class="btn-primary upgrade-plan-btn" data-tier="tier_150" style="margin: 8px 0; width: 100%; background: #f90; color: white;">
+                        <p style="margin: 15px 0; font-size: 14px; font-weight: 600;">Choose a plan to unlock analytics:</p>
+                        <button class="btn-primary upgrade-plan-btn" data-tier="tier_150" style="margin: 8px; background: #f90; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer;">
                             Merchant Basic - $1.50/month
                         </button>
-                        <button class="btn-primary upgrade-plan-btn" data-tier="tier_5" style="margin: 8px 0; width: 100%; background: #ff6b00; color: white;">
+                        <button class="btn-primary upgrade-plan-btn" data-tier="tier_5" style="margin: 8px; background: #ff6b00; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer;">
                             Video Ads Plan - $5/month
                         </button>
+                        <br>
                         <button class="btn-secondary" id="closeAnalyticsModal" style="margin-top: 10px; width: 100%;">Maybe Later</button>
                     </div>
                 `;
@@ -1085,7 +957,6 @@
                 
                 document.getElementById('closeAnalyticsModal').onclick = () => modalDiv.remove();
                 
-                // Handle upgrade button clicks
                 modalDiv.querySelectorAll('.upgrade-plan-btn').forEach(btn => {
                     btn.addEventListener('click', () => {
                         const tier = btn.dataset.tier;
@@ -1101,9 +972,7 @@
             window.location.href = 'seller-analytics.html';
         });
 
-        document.getElementById('productForm').addEventListener('submit', handleAddProduct);
-        
-        // Initialize dashboard
+        // Initialize dashboard on page load
         initializeDashboard();
     </script>
 </body>
