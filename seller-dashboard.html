@@ -100,7 +100,7 @@
         <div id="subscriptionControls" class="subscription-controls text-center" style="display:none;"></div>
         <div id="tierMessage" class="limit-warning"></div>
         <div class="grid-3 mb-30">
-            <div class="stats-card"><div class="stats-number" id="totalProducts">0</div><div>Total Products</div></div>
+            <div class="stats-card"><div class="stats-number" id="totalProducts">0</div><div>Active Products</div></div>
             <div class="stats-card"><div class="stats-number" id="totalStock">0</div><div>Items in Stock</div></div>
             <div class="stats-card"><div class="stats-number" id="totalValue">$0</div><div>Inventory Value</div></div>
         </div>
@@ -129,7 +129,6 @@
         window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
         const IMGBB_API_KEY = '670ea8c38e955ebdfdf84a41489713bf';
         const PAYNOW_INTEGRATION_ID = '24522';
-        const CORS_PROXY = 'https://corsproxy.io/?';
 
         // ==================== GLOBAL STATE ====================
         let currentSellerId = null;
@@ -164,22 +163,16 @@
             try{
                 const resp=await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${currentSellerId}&select=*&order=created_at.desc&limit=1`,{headers:{'apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`}});
                 if(resp.ok){const subs=await resp.json();if(subs?.length>0){const s=subs[0];
-                    subscriptionStatus=s.status||'inactive';
-                    autoRenew=s.auto_renew!==false;
+                    subscriptionStatus=s.status||'inactive';autoRenew=s.auto_renew!==false;
                     if(s.current_period_end){subscriptionExpiry=s.current_period_end;const expiry=new Date(s.current_period_end);const now=new Date();
                         if(expiry<now&&s.status==='active'){await updateSubscriptionStatus(s.id,'expired');subscriptionStatus='expired';handleExpiredSubscription();return null;}
                     }
-                    if(s.status==='active'||s.status==='paused'){
-                        if(s.plan_type==='tier_5')return'tier_5';
-                        if(s.plan_type==='tier_150')return'tier_150';
-                    }
+                    if(s.status==='active'||s.status==='paused'){if(s.plan_type==='tier_5')return'tier_5';if(s.plan_type==='tier_150')return'tier_150';}
                 }}return null;
             }catch(e){console.error('Fetch sub error:',e);return null;}
         }
 
-        async function updateSubscriptionStatus(subId,newStatus){
-            try{await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?id=eq.${subId}`,{method:'PATCH',headers:{'Content-Type':'application/json','apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`,'Prefer':'return=minimal'},body:JSON.stringify({status:newStatus})});}catch(e){}
-        }
+        async function updateSubscriptionStatus(subId,newStatus){try{await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?id=eq.${subId}`,{method:'PATCH',headers:{'Content-Type':'application/json','apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`,'Prefer':'return=minimal'},body:JSON.stringify({status:newStatus})});}catch(e){}}
 
         function handleExpiredSubscription(){
             sellerProducts.forEach((p,i)=>{p.status=i<8?'active':'paused';});
@@ -188,127 +181,73 @@
             saveProductsLocal();renderTiers();renderProducts();updateStatsAndLimits();updateExpiryBanner();updateSubscriptionControls();
         }
 
-        async function reactivateProducts(){
-            sellerProducts.forEach(p=>p.status='active');
-            saveProductsLocal();renderProducts();updateStatsAndLimits();
-        }
+        async function reactivateProducts(){sellerProducts.forEach(p=>p.status='active');saveProductsLocal();renderProducts();updateStatsAndLimits();}
 
         async function pauseSubscription(){
             if(!confirm('Pause your subscription? You will stay on your current plan until the period ends, then downgrade to Free.'))return;
-            try{
-                const resp=await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${currentSellerId}&select=id`,{headers:{'apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`}});
-                const subs=resp.ok?await resp.json():[];
-                if(subs?.length>0){await updateSubscriptionStatus(subs[0].id,'paused');}
-                subscriptionStatus='paused';autoRenew=false;
-                updateExpiryBanner();updateSubscriptionControls();
-                alert('Subscription paused. It will not renew at the end of the period.');
-            }catch(e){alert('Error pausing subscription.');}
+            try{const resp=await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${currentSellerId}&select=id`,{headers:{'apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`}});const subs=resp.ok?await resp.json():[];if(subs?.length>0){await updateSubscriptionStatus(subs[0].id,'paused');}subscriptionStatus='paused';autoRenew=false;updateExpiryBanner();updateSubscriptionControls();alert('Subscription paused. It will not renew at the end of the period.');}catch(e){alert('Error pausing subscription.');}
         }
 
         async function resumeSubscription(){
             if(!confirm('Resume auto-renewal?'))return;
-            try{
-                const resp=await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${currentSellerId}&select=id`,{headers:{'apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`}});
-                const subs=resp.ok?await resp.json():[];
-                if(subs?.length>0){await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?id=eq.${subs[0].id}`,{method:'PATCH',headers:{'Content-Type':'application/json','apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`,'Prefer':'return=minimal'},body:JSON.stringify({status:'active',auto_renew:true})});}
-                subscriptionStatus='active';autoRenew=true;
-                updateExpiryBanner();updateSubscriptionControls();
-                alert('Auto-renewal resumed!');
-            }catch(e){alert('Error resuming subscription.');}
+            try{const resp=await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${currentSellerId}&select=id`,{headers:{'apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`}});const subs=resp.ok?await resp.json():[];if(subs?.length>0){await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?id=eq.${subs[0].id}`,{method:'PATCH',headers:{'Content-Type':'application/json','apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`,'Prefer':'return=minimal'},body:JSON.stringify({status:'active',auto_renew:true})});}subscriptionStatus='active';autoRenew=true;updateExpiryBanner();updateSubscriptionControls();alert('Auto-renewal resumed!');}catch(e){alert('Error resuming subscription.');}
         }
 
         function updateExpiryBanner(){
             const banner=document.getElementById('expiryBanner');
-            if(!subscriptionExpiry||currentTier==='free'){
-                if(subscriptionStatus==='expired'){banner.className='expiry-banner expired';banner.innerHTML='⚠️ Your subscription has expired. Products beyond 8 are paused. <a href="#" id="renewLink" class="inline-link">Renew now</a>';banner.style.display='block';const lnk=document.getElementById('renewLink');if(lnk)lnk.onclick=e=>{e.preventDefault();openPaymentModal('tier_150');};}
-                else{banner.style.display='none';}
-                return;
-            }
+            if(!subscriptionExpiry||currentTier==='free'){if(subscriptionStatus==='expired'){banner.className='expiry-banner expired';banner.innerHTML='⚠️ Your subscription has expired. Products beyond 8 are paused. <a href="#" id="renewLink" class="inline-link">Renew now</a>';banner.style.display='block';const lnk=document.getElementById('renewLink');if(lnk)lnk.onclick=e=>{e.preventDefault();openPaymentModal('tier_150');};}else{banner.style.display='none';}return;}
             const expiry=new Date(subscriptionExpiry);const now=new Date();const daysLeft=Math.ceil((expiry-now)/(1000*60*60*24));
-            if(daysLeft<=0){banner.className='expiry-banner expired';banner.innerHTML='⚠️ Your subscription has expired! Products beyond 8 are paused. <a href="#" id="renewLink" class="inline-link">Renew now</a>';banner.style.display='block';const lnk=document.getElementById('renewLink');if(lnk)lnk.onclick=e=>{e.preventDefault();openPaymentModal(currentTier);};}
+            if(daysLeft<=0){banner.className='expiry-banner expired';banner.innerHTML='⚠️ Expired! Products beyond 8 paused. <a href="#" id="renewLink" class="inline-link">Renew now</a>';banner.style.display='block';const lnk=document.getElementById('renewLink');if(lnk)lnk.onclick=e=>{e.preventDefault();openPaymentModal(currentTier);};}
             else if(daysLeft<=5){banner.className='expiry-banner warning';banner.innerHTML=`⚠️ Expires in <strong>${daysLeft} day${daysLeft===1?'':'s'}</strong>! ${autoRenew?'Auto-renewal ON.':''} ${subscriptionStatus==='paused'?'(Paused)':''}`;banner.style.display='block';}
-            else{banner.className='expiry-banner info';banner.innerHTML=`✅ ${tierMap[currentTier]?.name} · ${daysLeft} days left (${expiry.toLocaleDateString()})${autoRenew?' · Auto-renew ON':''}${subscriptionStatus==='paused'?' · PAUSED':''}`;banner.style.display='block';}
+            else{banner.className='expiry-banner info';banner.innerHTML=`✅ ${tierMap[currentTier]?.name} · ${daysLeft} days left · ${autoRenew?'Auto-renew ON':'Manual renew'}${subscriptionStatus==='paused'?' · PAUSED':''}`;banner.style.display='block';}
         }
 
         function updateSubscriptionControls(){
-            const controls=document.getElementById('subscriptionControls');
-            if(currentTier==='free'){controls.style.display='none';return;}
-            controls.style.display='block';
+            const controls=document.getElementById('subscriptionControls');if(currentTier==='free'){controls.style.display='none';return;}controls.style.display='block';
             if(subscriptionStatus==='paused'){controls.innerHTML=`<button class="btn-primary" onclick="resumeSubscription()">▶️ Resume Auto-Renewal</button>`;}
             else if(subscriptionStatus==='expired'){controls.innerHTML=`<button class="btn-primary" onclick="openPaymentModal('${currentTier}')">🔄 Renew Subscription</button>`;}
-            else{controls.innerHTML=`<button class="btn-danger" onclick="pauseSubscription()">⏸️ Pause Subscription</button><br><small style="color:#666;">Pausing means no auto-renewal. Current period remains active until expiry.</small>`;}
+            else{controls.innerHTML=`<button class="btn-danger" onclick="pauseSubscription()">⏸️ Pause Subscription</button><br><small style="color:#666;">Current period remains active until expiry.</small>`;}
         }
 
         async function updateSubscription(planType){
-            const currentLevel=tierMap[currentTier]?.level||0;
-            const newLevel=tierMap[planType]?.level||0;
-            if(currentTier!=='free'&&planType!=='free'&&newLevel<currentLevel){alert('You cannot downgrade while subscription is active. Wait for expiry or pause first.');return;}
-            try{
-                const cr=await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${currentSellerId}&select=id`,{headers:{'apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`}});
-                const existing=cr.ok?await cr.json():[];
-                const subData={seller_id:String(currentSellerId),plan_type:planType,status:planType==='free'?'cancelled':'active',payment_status:planType==='free'?'cancelled':'completed',auto_renew:planType!=='free',current_period_start:new Date().toISOString(),current_period_end:new Date(Date.now()+30*24*60*60*1000).toISOString()};
-                if(existing?.length>0){await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?id=eq.${existing[0].id}`,{method:'PATCH',headers:{'Content-Type':'application/json','apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`,'Prefer':'return=minimal'},body:JSON.stringify(subData)});}
-                else{await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions`,{method:'POST',headers:{'Content-Type':'application/json','apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`,'Prefer':'return=minimal'},body:JSON.stringify({...subData,created_at:new Date().toISOString()})});}
-            }catch(e){console.error(e);}
-            currentTier=planType;subscriptionStatus=planType==='free'?'cancelled':'active';autoRenew=planType!=='free';subscriptionExpiry=planType==='free'?null:new Date(Date.now()+30*24*60*60*1000).toISOString();
-            localStorage.setItem(`mbare_tier_${currentSellerId}`,currentTier);
-            if(planType!=='free')await reactivateProducts();
-            renderTiers();enforceProductLimit();updateStatsAndLimits();updateExpiryBanner();updateSubscriptionControls();
-            alert(`Plan changed to ${tierMap[planType].name}`);
+            const currentLevel=tierMap[currentTier]?.level||0;const newLevel=tierMap[planType]?.level||0;
+            if(currentTier!=='free'&&planType!=='free'&&newLevel<currentLevel){alert('Cannot downgrade while active. Wait for expiry.');return;}
+            try{const cr=await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${currentSellerId}&select=id`,{headers:{'apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`}});const existing=cr.ok?await cr.json():[];const subData={seller_id:String(currentSellerId),plan_type:planType,status:planType==='free'?'cancelled':'active',payment_status:planType==='free'?'cancelled':'completed',auto_renew:planType!=='free',current_period_start:new Date().toISOString(),current_period_end:new Date(Date.now()+30*24*60*60*1000).toISOString()};if(existing?.length>0){await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?id=eq.${existing[0].id}`,{method:'PATCH',headers:{'Content-Type':'application/json','apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`,'Prefer':'return=minimal'},body:JSON.stringify(subData)});}else{await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions`,{method:'POST',headers:{'Content-Type':'application/json','apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`,'Prefer':'return=minimal'},body:JSON.stringify({...subData,created_at:new Date().toISOString()})});}}catch(e){console.error(e);}
+            currentTier=planType;subscriptionStatus=planType==='free'?'cancelled':'active';autoRenew=planType!=='free';subscriptionExpiry=planType==='free'?null:new Date(Date.now()+30*24*60*60*1000).toISOString();localStorage.setItem(`mbare_tier_${currentSellerId}`,currentTier);if(planType!=='free')await reactivateProducts();renderTiers();enforceProductLimit();updateStatsAndLimits();updateExpiryBanner();updateSubscriptionControls();alert(`Plan changed to ${tierMap[planType].name}`);
         }
 
-        // ==================== PAYNOW PAYMENT (CORS PROXY) ====================
+        // ==================== PAYNOW PAYMENT (REDIRECT METHOD) ====================
         function openPaymentModal(planType){
             const plan=tierMap[planType];const amount=planType==='tier_150'?'1.50':'5.00';
             const div=document.createElement('div');div.className='payment-modal';
-            div.innerHTML=`<div class="payment-card"><h3>${plan.name}</h3><p style="font-size:26px;font-weight:800;color:#B12704;">$${amount}<span style="font-size:14px;">/month</span></p><p style="color:#666;font-size:13px;">Auto-renews every 30 days</p><div style="margin:20px 0;"><div class="form-group"><label>EcoCash Number *</label><input type="tel" id="ecoPhone" placeholder="0771234567"></div><small style="color:#666;">Enter your registered EcoCash number</small></div><button class="btn-primary" id="confirmPayBtn" style="width:100%;">Pay with EcoCash</button><button class="btn-secondary" id="closePayModal" style="width:100%;margin-top:10px;">Cancel</button><div id="paymentStatusArea" style="margin-top:18px;"></div></div>`;
+            div.innerHTML=`<div class="payment-card" style="text-align:center;"><h3>${plan.name}</h3><p style="font-size:26px;font-weight:800;color:#B12704;">$${amount}<span style="font-size:14px;">/month</span></p><p style="color:#666;font-size:13px;">You will be redirected to PayNow to complete payment</p><div style="margin:20px 0;"><p style="font-size:14px;color:#232f3e;">Click below to proceed to PayNow's secure payment page.</p><p style="font-size:12px;color:#666;">After payment, you'll return here and your subscription will activate automatically.</p></div><button class="btn-primary" id="confirmPayBtn" style="width:100%;">Proceed to PayNow</button><button class="btn-secondary" id="closePayModal" style="width:100%;margin-top:10px;">Cancel</button></div>`;
             document.body.appendChild(div);
             document.getElementById('closePayModal').onclick=()=>div.remove();
-            document.getElementById('confirmPayBtn').onclick=async()=>{
-                const phone=document.getElementById('ecoPhone').value.trim();
-                if(!phone.match(/^(07|078)[0-9]{7}$/))return alert('Enter valid EcoCash number (e.g., 0771234567)');
-                const btn=document.getElementById('confirmPayBtn');btn.disabled=true;btn.innerText='Processing...';
-                document.getElementById('paymentStatusArea').innerHTML='<div class="text-center"><div class="spinner"></div><p>Connecting to PayNow...</p></div>';
+            document.getElementById('confirmPayBtn').onclick=()=>{
                 const ref='MBARE_'+Date.now()+'_'+Math.random().toString(36).substr(2,5);
-                const params=new URLSearchParams();params.append('id',PAYNOW_INTEGRATION_ID);params.append('reference',ref);params.append('amount',amount);params.append('additionalinfo',plan.name+' - Mbare');params.append('authemail',phone+'@mbare.co.zw');params.append('resulturl',location.href);params.append('returnurl',location.href);params.append('status','Message');
-                try{
-                    const proxyUrl=CORS_PROXY+encodeURIComponent('https://www.paynow.co.zw/interface/initiatetransaction');
-                    const r=await fetch(proxyUrl,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:params.toString()});
-                    const t=await r.text();console.log('PayNow:',t);
-                    const rp=new URLSearchParams(t);const status=rp.get('status')?.toLowerCase();const pollUrl=rp.get('pollurl');
-                    if(status==='ok'&&pollUrl){
-                        document.getElementById('paymentStatusArea').innerHTML='<div style="background:#d1ecf1;padding:12px;border-radius:8px;"><strong>✅ Sent to '+phone+'</strong><br>Check your phone and enter PIN.<br>Waiting for confirmation...</div><div class="spinner" style="width:32px;height:32px;"></div>';
-                        pollPayment(pollUrl,ref,planType,div,phone);
-                    }else{throw new Error(rp.get('error')||'Initiation failed');}
-                }catch(err){
-                    document.getElementById('paymentStatusArea').innerHTML='<div style="background:#f8d7da;padding:12px;border-radius:8px;"><strong>Error:</strong> '+err.message+'<br><small>Check PayNow ID or try again.</small></div>';
-                    btn.disabled=false;btn.innerText='Pay with EcoCash';
-                }
+                localStorage.setItem('pending_payment',JSON.stringify({reference:ref,planType:planType,amount:amount,timestamp:Date.now()}));
+                const params=new URLSearchParams();params.append('id',PAYNOW_INTEGRATION_ID);params.append('reference',ref);params.append('amount',amount);params.append('additionalinfo',plan.name+' - Mbare Marketplace');params.append('authemail','seller@mbare.co.zw');params.append('resulturl',window.location.href);params.append('returnurl',window.location.href);params.append('status','Message');
+                const paynowUrl='https://www.paynow.co.zw/Payment/Link?'+params.toString();
+                window.location.href=paynowUrl;
             };
         }
 
-        function pollPayment(pollUrl,ref,planType,modal,phone){
-            let attempts=0;const maxAttempts=60;
-            const interval=setInterval(async()=>{
-                attempts++;
-                try{
-                    const proxyUrl=CORS_PROXY+encodeURIComponent(pollUrl);
-                    const r=await fetch(proxyUrl);const t=await r.text();
-                    const params=new URLSearchParams(t);const status=params.get('status')?.toLowerCase();
-                    if(status==='paid'||status==='awaiting delivery'||status==='delivered'){
-                        clearInterval(interval);
-                        await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions`,{method:'POST',headers:{'Content-Type':'application/json','apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`,'Prefer':'return=minimal'},body:JSON.stringify({seller_id:String(currentSellerId),plan_type:planType,status:'active',payment_status:'completed',paynow_reference:ref,phone_number:phone,auto_renew:true,current_period_start:new Date().toISOString(),current_period_end:new Date(Date.now()+30*24*60*60*1000).toISOString(),created_at:new Date().toISOString()})});
-                        currentTier=planType;subscriptionStatus='active';autoRenew=true;subscriptionExpiry=new Date(Date.now()+30*24*60*60*1000).toISOString();
-                        localStorage.setItem(`mbare_tier_${currentSellerId}`,currentTier);
-                        modal.remove();await reactivateProducts();renderTiers();enforceProductLimit();updateStatsAndLimits();updateExpiryBanner();updateSubscriptionControls();
-                        alert('✅ Payment successful! '+tierMap[planType].name+' active. Auto-renews every 30 days.');
-                    }else if(status==='cancelled'||status==='failed'||status==='error'){
-                        clearInterval(interval);const s=modal.querySelector('#paymentStatusArea');if(s)s.innerHTML='<div style="background:#f8d7da;padding:12px;border-radius:8px;"><strong>Payment '+status+'</strong><br>Please try again.</div>';const b=modal.querySelector('#confirmPayBtn');if(b){b.disabled=false;b.innerText='Pay with EcoCash';}
-                    }if(attempts>=maxAttempts){clearInterval(interval);const s=modal.querySelector('#paymentStatusArea');if(s)s.innerHTML='<div style="background:#fff3cd;padding:12px;border-radius:8px;">Taking longer than expected. Check your phone.</div>';}
-                }catch(e){console.error('Poll error:',e);}
-            },5000);
-            setTimeout(()=>clearInterval(interval),maxAttempts*5000+10000);
+        // ==================== CHECK RETURNING PAYMENT ====================
+        async function checkReturningPayment(){
+            const urlParams=new URLSearchParams(window.location.search);
+            const paynowStatus=urlParams.get('status');const paynowRef=urlParams.get('reference');
+            if(!paynowStatus&&!paynowRef)return;
+            console.log('Returning from PayNow:',paynowStatus,paynowRef);
+            const pendingData=JSON.parse(localStorage.getItem('pending_payment')||'{}');
+            if(paynowStatus==='paid'||paynowStatus==='Ok'||paynowStatus==='ok'||paynowStatus==='awaiting delivery'||paynowStatus==='delivered'){
+                const planType=pendingData.planType||'tier_150';
+                try{await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions`,{method:'POST',headers:{'Content-Type':'application/json','apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`,'Prefer':'return=minimal'},body:JSON.stringify({seller_id:String(currentSellerId),plan_type:planType,status:'active',payment_status:'completed',paynow_reference:paynowRef||pendingData.reference||'N/A',auto_renew:true,current_period_start:new Date().toISOString(),current_period_end:new Date(Date.now()+30*24*60*60*1000).toISOString(),created_at:new Date().toISOString()})});
+                currentTier=planType;subscriptionStatus='active';autoRenew=true;subscriptionExpiry=new Date(Date.now()+30*24*60*60*1000).toISOString();localStorage.setItem(`mbare_tier_${currentSellerId}`,currentTier);localStorage.removeItem('pending_payment');await reactivateProducts();renderTiers();enforceProductLimit();updateStatsAndLimits();updateExpiryBanner();updateSubscriptionControls();showSuccessBanner(planType);}catch(e){console.error('Save sub error:',e);}
+                window.history.replaceState({},document.title,window.location.pathname);
+            }else if(paynowStatus==='Cancelled'||paynowStatus==='cancelled'){localStorage.removeItem('pending_payment');window.history.replaceState({},document.title,window.location.pathname);}
         }
+
+        function showSuccessBanner(planType){const b=document.createElement('div');b.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#28a745;color:white;padding:16px 24px;border-radius:12px;z-index:10000;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.3);';b.innerHTML='✅ Payment Successful! '+tierMap[planType].name+' is now active.';document.body.appendChild(b);setTimeout(()=>b.remove(),5000);}
 
         // ==================== SUPABASE PRODUCTS ====================
         async function loadProductsFromSupabase(){try{const r=await fetch(`${window.SUPABASE_URL}/rest/v1/products?seller_id=eq.${currentSellerId}&select=*&order=created_at.desc`,{headers:{'apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`}});if(r.ok){sellerProducts=await r.json();return true;}return false;}catch(e){return false;}}
@@ -318,28 +257,12 @@
         // ==================== DASHBOARD UI ====================
         function loadProducts(){loadProductsFromSupabase().then(ok=>{if(!ok){const s=localStorage.getItem(`mbare_products_${currentSellerId}`);sellerProducts=s?JSON.parse(s):[];}enforceProductLimit();renderProducts();updateStatsAndLimits();});}
         function saveProductsLocal(){localStorage.setItem(`mbare_products_${currentSellerId}`,JSON.stringify(sellerProducts));}
-        function renderTiers(){
-            const c=document.getElementById('tierContainer');if(!c)return;c.innerHTML='';
-            for(const[k,d]of Object.entries(tierMap)){const active=currentTier===k;const isDowngrade=currentTier!=='free'&&k!=='free'&&d.level<tierMap[currentTier]?.level;
-                c.innerHTML+=`<div class="tier-card ${active?'tier-highlight':''}"><div style="display:flex;justify-content:space-between;align-items:center;"><strong style="font-size:1.2rem;">${d.name}</strong>${d.badge?`<span class="badge-pro">${d.badge}</span>`:''}${active&&subscriptionStatus==='paused'?`<span class="badge-paused">PAUSED</span>`:''}</div><div class="tier-price">${d.price}</div><div style="font-size:13px;margin:8px 0;">${d.perks}</div><div style="font-size:12px;background:#f4f5f7;padding:5px;border-radius:30px;">Max: ${d.maxProducts} products</div><button class="btn-primary subscribe-btn" data-tier="${k}" style="margin-top:18px;width:100%;" ${active?'disabled':''} ${isDowngrade?'disabled':''}>${active?(subscriptionStatus==='paused'?'Paused':'Current Plan'):(isDowngrade?'Cannot Downgrade':'Subscribe')}</button></div>`;}
-            document.querySelectorAll('.subscribe-btn').forEach(b=>{b.addEventListener('click',()=>{const t=b.dataset.tier;if(t==='free'){if(currentTier!=='free'&&subscriptionStatus!=='expired')return alert('Wait for subscription to expire before switching to Free.');if(confirm('Switch to Free plan? Max 8 products.'))updateSubscription('free');}else{openPaymentModal(t);}});});
-        }
+        function renderTiers(){const c=document.getElementById('tierContainer');if(!c)return;c.innerHTML='';for(const[k,d]of Object.entries(tierMap)){const active=currentTier===k;const isDowngrade=currentTier!=='free'&&k!=='free'&&d.level<tierMap[currentTier]?.level;c.innerHTML+=`<div class="tier-card ${active?'tier-highlight':''}"><div style="display:flex;justify-content:space-between;align-items:center;"><strong style="font-size:1.2rem;">${d.name}</strong>${d.badge?`<span class="badge-pro">${d.badge}</span>`:''}${active&&subscriptionStatus==='paused'?`<span class="badge-paused">PAUSED</span>`:''}</div><div class="tier-price">${d.price}</div><div style="font-size:13px;margin:8px 0;">${d.perks}</div><div style="font-size:12px;background:#f4f5f7;padding:5px;border-radius:30px;">Max: ${d.maxProducts} products</div><button class="btn-primary subscribe-btn" data-tier="${k}" style="margin-top:18px;width:100%;" ${active?'disabled':''} ${isDowngrade?'disabled':''}>${active?(subscriptionStatus==='paused'?'Paused':'Current Plan'):(isDowngrade?'Cannot Downgrade':'Subscribe')}</button></div>`;}document.querySelectorAll('.subscribe-btn').forEach(b=>{b.addEventListener('click',()=>{const t=b.dataset.tier;if(t==='free'){if(currentTier!=='free'&&subscriptionStatus!=='expired')return alert('Wait for subscription to expire before switching to Free.');if(confirm('Switch to Free plan? Max 8 products.'))updateSubscription('free');}else{openPaymentModal(t);}});});}
         function enforceProductLimit(){const max=currentTier==='free'?8:(currentTier==='tier_150'?50:200);sellerProducts.forEach((p,i)=>{if(i>=max)p.status='paused';else if(p.status==='paused'&&subscriptionStatus!=='expired')p.status='active';});updateStatsAndLimits();}
         function getCurrentLimit(){return currentTier==='free'?8:(currentTier==='tier_150'?50:200);}
-        function updateStatsAndLimits(){
-            const t=sellerProducts.length,l=getCurrentLimit(),active=sellerProducts.filter(p=>p.status!=='paused').length,paused=sellerProducts.filter(p=>p.status==='paused').length;
-            document.getElementById('tierMessage').innerHTML=currentTier==='free'?`<strong>Free Plan:</strong> ${active}/${l} active. ${paused>0?paused+' paused. ':''}${active<l?(l-active)+' slots left.':'Limit reached.'} <a href="#" id="upgradeLink" class="inline-link">View Plans</a>`:`<strong>${tierMap[currentTier]?.name}:</strong> ${active} active, ${l-active} slots. ${paused>0?paused+' paused.':''}`;
-            const ul=document.getElementById('upgradeLink');if(ul)ul.onclick=e=>{e.preventDefault();document.getElementById('tierContainer').scrollIntoView({behavior:'smooth'});};
-            document.getElementById('totalProducts').innerText=active;
-            document.getElementById('totalStock').innerText=sellerProducts.filter(p=>p.status!=='paused').reduce((s,p)=>s+(p.stock||0),0);
-            document.getElementById('totalValue').innerText='$'+sellerProducts.filter(p=>p.status!=='paused').reduce((s,p)=>s+((p.price||0)*(p.stock||0)),0).toFixed(2);
-            document.getElementById('toggleFormBtn').disabled=(currentTier==='free'&&active>=8)||subscriptionStatus==='expired';
-        }
+        function updateStatsAndLimits(){const t=sellerProducts.length,l=getCurrentLimit(),active=sellerProducts.filter(p=>p.status!=='paused').length,paused=sellerProducts.filter(p=>p.status==='paused').length;document.getElementById('tierMessage').innerHTML=currentTier==='free'?`<strong>Free Plan:</strong> ${active}/${l} active. ${paused>0?paused+' paused. ':''}${active<l?(l-active)+' slots left.':'Limit reached.'} <a href="#" id="upgradeLink" class="inline-link">View Plans</a>`:`<strong>${tierMap[currentTier]?.name}:</strong> ${active} active, ${l-active} slots. ${paused>0?paused+' paused.':''}`;const ul=document.getElementById('upgradeLink');if(ul)ul.onclick=e=>{e.preventDefault();document.getElementById('tierContainer').scrollIntoView({behavior:'smooth'});};document.getElementById('totalProducts').innerText=active;document.getElementById('totalStock').innerText=sellerProducts.filter(p=>p.status!=='paused').reduce((s,p)=>s+(p.stock||0),0);document.getElementById('totalValue').innerText='$'+sellerProducts.filter(p=>p.status!=='paused').reduce((s,p)=>s+((p.price||0)*(p.stock||0)),0).toFixed(2);document.getElementById('toggleFormBtn').disabled=(currentTier==='free'&&active>=8)||subscriptionStatus==='expired';}
         function esc(str){if(!str)return'';return str.replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]);}
-        function renderProducts(){
-            const c=document.getElementById('productsList');if(!sellerProducts.length){c.innerHTML='<p class="text-center" style="padding:40px;color:#666;">No products yet. Click "+ Add Product" to start selling.</p>';return;}
-            c.innerHTML=sellerProducts.map(p=>`<div class="product-card ${p.status==='paused'?'paused':''}"><img src="${p.image_url||'https://placehold.co/400x300?text=No+Image'}" alt="${esc(p.title)}" onerror="this.src=\'https://placehold.co/400x300?text=No+Image\'"><div class="product-info"><h3 style="margin-bottom:6px;">${esc(p.title)}</h3><div style="font-size:20px;font-weight:600;color:#B12704;">$${parseFloat(p.price||0).toFixed(2)}</div><div style="margin:6px 0;">Stock: ${p.stock||0} | ${p.category||'N/A'} ${p.status==='paused'?'| <span style="color:#dc3545;">PAUSED</span>':''}</div>${p.status!=='paused'?`<button class="whatsapp-btn" onclick="whatsappInquiry('${esc(p.title)}')">WhatsApp Inquiry</button>`:'<div style="color:#dc3545;font-size:12px;">Paused - renew subscription to activate</div>'}<div style="display:flex;gap:8px;margin-top:8px;"><button class="btn-secondary" style="flex:1;" onclick="editProduct('${p.id}')">Edit</button><button class="btn-delete" style="flex:1;" onclick="deleteProduct('${p.id}')">Delete</button></div></div></div>`).join('');
-        }
+        function renderProducts(){const c=document.getElementById('productsList');if(!sellerProducts.length){c.innerHTML='<p class="text-center" style="padding:40px;color:#666;">No products yet. Click "+ Add Product" to start selling.</p>';return;}c.innerHTML=sellerProducts.map(p=>`<div class="product-card ${p.status==='paused'?'paused':''}"><img src="${p.image_url||'https://placehold.co/400x300?text=No+Image'}" alt="${esc(p.title)}" onerror="this.src=\'https://placehold.co/400x300?text=No+Image\'"><div class="product-info"><h3 style="margin-bottom:6px;">${esc(p.title)}</h3><div style="font-size:20px;font-weight:600;color:#B12704;">$${parseFloat(p.price||0).toFixed(2)}</div><div style="margin:6px 0;">Stock: ${p.stock||0} | ${p.category||'N/A'} ${p.status==='paused'?'| <span style="color:#dc3545;">PAUSED</span>':''}</div>${p.status!=='paused'?`<button class="whatsapp-btn" onclick="whatsappInquiry('${esc(p.title)}')">WhatsApp Inquiry</button>`:'<div style="color:#dc3545;font-size:12px;">Paused - renew to activate</div>'}<div style="display:flex;gap:8px;margin-top:8px;"><button class="btn-secondary" style="flex:1;" onclick="editProduct('${p.id}')">Edit</button><button class="btn-delete" style="flex:1;" onclick="deleteProduct('${p.id}')">Delete</button></div></div></div>`).join('');}
 
         // ==================== GLOBAL ACTIONS ====================
         window.whatsappInquiry=function(t){window.open('https://wa.me/?text='+encodeURIComponent('Hello, I am interested in "'+t+'" on Mbare Marketplace.'),'_blank');};
@@ -355,7 +278,7 @@
         function startExpiryChecker(){if(renewalCheckInterval)clearInterval(renewalCheckInterval);renewalCheckInterval=setInterval(async()=>{if(currentTier==='free'||!subscriptionExpiry)return;const expiry=new Date(subscriptionExpiry);const now=new Date();if(expiry<now&&subscriptionStatus==='active'){console.log('Subscription expired!');handleExpiredSubscription();}},60000);}
 
         // ==================== INIT ====================
-        async function init(){if(!await checkAuth())return;const sub=await fetchSubscription();currentTier=sub||localStorage.getItem(`mbare_tier_${currentSellerId}`)||'free';localStorage.setItem(`mbare_tier_${currentSellerId}`,currentTier);loadProducts();renderTiers();updateExpiryBanner();updateSubscriptionControls();startExpiryChecker();document.getElementById('loadingOverlay').style.display='none';}
+        async function init(){if(!await checkAuth())return;const sub=await fetchSubscription();currentTier=sub||localStorage.getItem(`mbare_tier_${currentSellerId}`)||'free';localStorage.setItem(`mbare_tier_${currentSellerId}`,currentTier);loadProducts();renderTiers();updateExpiryBanner();updateSubscriptionControls();startExpiryChecker();await checkReturningPayment();document.getElementById('loadingOverlay').style.display='none';}
         init();
     </script>
 </body>
