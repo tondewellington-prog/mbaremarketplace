@@ -247,9 +247,9 @@
             const expiry=new Date(subscriptionExpiry);
             const now=new Date();
             const daysLeft=Math.ceil((expiry-now)/(1000*60*60*24));
-            if(daysLeft<=0){banner.className='expiry-banner expired';banner.innerHTML='⚠️ Your subscription has expired! <a href="#" id="renewLink" class="inline-link">Renew now</a>';banner.style.display='block';const lnk=document.getElementById('renewLink');if(lnk)lnk.onclick=e=>{e.preventDefault();openPaymentModal(currentTier);};}
-            else if(daysLeft<=5){banner.className='expiry-banner';banner.innerHTML=`⚠️ Your subscription expires in <strong>${daysLeft} day${daysLeft===1?'':'s'}</strong>! <a href="#" id="renewLink" class="inline-link">Renew now</a>`;banner.style.display='block';const lnk=document.getElementById('renewLink');if(lnk)lnk.onclick=e=>{e.preventDefault();openPaymentModal(currentTier);};}
-            else{banner.className='expiry-banner';banner.innerHTML=`✅ Subscription active · Expires in ${daysLeft} days (${expiry.toLocaleDateString()})`;banner.style.display='block';}
+            if(daysLeft<=0){banner.className='expiry-banner expired';banner.innerHTML=' Your subscription has expired! <a href="#" id="renewLink" class="inline-link">Renew now</a>';banner.style.display='block';const lnk=document.getElementById('renewLink');if(lnk)lnk.onclick=e=>{e.preventDefault();openPaymentModal(currentTier);};}
+            else if(daysLeft<=5){banner.className='expiry-banner';banner.innerHTML=` Your subscription expires in <strong>${daysLeft} day${daysLeft===1?'':'s'}</strong>! <a href="#" id="renewLink" class="inline-link">Renew now</a>`;banner.style.display='block';const lnk=document.getElementById('renewLink');if(lnk)lnk.onclick=e=>{e.preventDefault();openPaymentModal(currentTier);};}
+            else{banner.className='expiry-banner';banner.innerHTML=` Subscription active · Expires in ${daysLeft} days (${expiry.toLocaleDateString()})`;banner.style.display='block';}
         }
 
         async function updateSubscription(planType){
