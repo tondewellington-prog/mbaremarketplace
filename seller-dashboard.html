@@ -129,7 +129,7 @@
         window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
         const IMGBB_API_KEY = '670ea8c38e955ebdfdf84a41489713bf';
         const PAYNOW_INTEGRATION_ID = '24522';
-        const CORS_PROXY = 'https://corsproxy.io/?';
+        const PAYNOW_PROXY = 'https://fnncerdxfhwlrdopswpx.supabase.co/functions/v1/paynow-proxy';
 
         // ==================== GLOBAL STATE ====================
         let currentSellerId = null;
@@ -258,34 +258,61 @@
         }
 
         // ==================== PAYNOW PAYMENT (CORS PROXY) ====================
-        function openPaymentModal(planType){
-            const plan=tierMap[planType];const amount=planType==='tier_150'?'1.50':'5.00';
-            const div=document.createElement('div');div.className='payment-modal';
-            div.innerHTML=`<div class="payment-card"><h3>${plan.name}</h3><p style="font-size:26px;font-weight:800;color:#B12704;">$${amount}<span style="font-size:14px;">/month</span></p><p style="color:#666;font-size:13px;">Auto-renews every 30 days</p><div style="margin:20px 0;"><div class="form-group"><label>EcoCash Number *</label><input type="tel" id="ecoPhone" placeholder="0771234567"></div><small style="color:#666;">Enter your registered EcoCash number</small></div><button class="btn-primary" id="confirmPayBtn" style="width:100%;">Pay with EcoCash</button><button class="btn-secondary" id="closePayModal" style="width:100%;margin-top:10px;">Cancel</button><div id="paymentStatusArea" style="margin-top:18px;"></div></div>`;
-            document.body.appendChild(div);
-            document.getElementById('closePayModal').onclick=()=>div.remove();
-            document.getElementById('confirmPayBtn').onclick=async()=>{
-                const phone=document.getElementById('ecoPhone').value.trim();
-                if(!phone.match(/^(07|078)[0-9]{7}$/))return alert('Enter valid EcoCash number (e.g., 0771234567)');
-                const btn=document.getElementById('confirmPayBtn');btn.disabled=true;btn.innerText='Processing...';
-                document.getElementById('paymentStatusArea').innerHTML='<div class="text-center"><div class="spinner"></div><p>Connecting to PayNow...</p></div>';
-                const ref='MBARE_'+Date.now()+'_'+Math.random().toString(36).substr(2,5);
-                const params=new URLSearchParams();params.append('id',PAYNOW_INTEGRATION_ID);params.append('reference',ref);params.append('amount',amount);params.append('additionalinfo',plan.name+' - Mbare');params.append('authemail',phone+'@mbare.co.zw');params.append('resulturl',location.href);params.append('returnurl',location.href);params.append('status','Message');
-                try{
-                    const proxyUrl=CORS_PROXY+encodeURIComponent('https://www.paynow.co.zw/interface/initiatetransaction');
-                    const r=await fetch(proxyUrl,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:params.toString()});
-                    const t=await r.text();console.log('PayNow:',t);
-                    const rp=new URLSearchParams(t);const status=rp.get('status')?.toLowerCase();const pollUrl=rp.get('pollurl');
-                    if(status==='ok'&&pollUrl){
-                        document.getElementById('paymentStatusArea').innerHTML='<div style="background:#d1ecf1;padding:12px;border-radius:8px;"><strong> Sent to '+phone+'</strong><br>Check your phone and enter PIN.<br>Waiting for confirmation...</div><div class="spinner" style="width:32px;height:32px;"></div>';
-                        pollPayment(pollUrl,ref,planType,div,phone);
-                    }else{throw new Error(rp.get('error')||'Initiation failed');}
-                }catch(err){
-                    document.getElementById('paymentStatusArea').innerHTML='<div style="background:#f8d7da;padding:12px;border-radius:8px;"><strong>Error:</strong> '+err.message+'<br><small>Check PayNow ID or try again.</small></div>';
-                    btn.disabled=false;btn.innerText='Pay with EcoCash';
+        function openPaymentModal(planType) {
+    const plan = tierMap[planType];
+    const amount = planType === 'tier_150' ? '1.50' : '5.00';
+    const div = document.createElement('div');
+    div.className = 'payment-modal';
+    div.innerHTML = `<div class="payment-card"><h3>${plan.name}</h3><p style="font-size:26px;font-weight:800;color:#B12704;">$${amount}<span style="font-size:14px;">/month</span></p><p style="color:#666;font-size:13px;">Auto-renews every 30 days</p><div style="margin:20px 0;"><div class="form-group"><label>EcoCash Number *</label><input type="tel" id="ecoPhone" placeholder="0771234567"></div><small style="color:#666;">Enter your registered EcoCash number</small></div><button class="btn-primary" id="confirmPayBtn" style="width:100%;">Pay with EcoCash</button><button class="btn-secondary" id="closePayModal" style="width:100%;margin-top:10px;">Cancel</button><div id="paymentStatusArea" style="margin-top:18px;"></div></div>`;
+    document.body.appendChild(div);
+    document.getElementById('closePayModal').onclick = () => div.remove();
+    document.getElementById('confirmPayBtn').onclick = async () => {
+        const phone = document.getElementById('ecoPhone').value.trim();
+        if (!phone.match(/^(07|078)[0-9]{7}$/)) return alert('Enter valid EcoCash number (e.g., 0771234567)');
+        const btn = document.getElementById('confirmPayBtn'); 
+        btn.disabled = true; 
+        btn.innerText = 'Processing...';
+        document.getElementById('paymentStatusArea').innerHTML = '<div class="text-center"><div class="spinner"></div><p>Connecting to PayNow...</p></div>';
+        const ref = 'MBARE_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+        try {
+            const r = await fetch(PAYNOW_PROXY, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'initiate',
+                    id: PAYNOW_INTEGRATION_ID,
+                    reference: ref,
+                    amount: amount,
+                    additionalinfo: plan.name + ' - Mbare',
+                    authemail: phone + '@mbare.co.zw',
+                    resulturl: location.href,
+                    returnurl: location.href,
+                    status: 'Message'
+                })
+            });
+            const result = await r.json();
+            console.log('PayNow initiate:', result);
+            if (result.success) {
+                const rp = new URLSearchParams(result.data);
+                const status = rp.get('status')?.toLowerCase();
+                const pollUrl = rp.get('pollurl');
+                if (status === 'ok' && pollUrl) {
+                    document.getElementById('paymentStatusArea').innerHTML = '<div style="background:#d1ecf1;padding:12px;border-radius:8px;"><strong>✅ Sent to ' + phone + '</strong><br>Check your phone and enter PIN.<br>Waiting for confirmation...</div><div class="spinner" style="width:32px;height:32px;"></div>';
+                    pollPayment(pollUrl, ref, planType, div, phone);
+                } else {
+                    throw new Error(rp.get('error') || 'Payment initiation failed');
                 }
-            };
+            } else {
+                throw new Error(result.error || 'Proxy error');
+            }
+        } catch (err) {
+            console.error('Payment error:', err);
+            document.getElementById('paymentStatusArea').innerHTML = '<div style="background:#f8d7da;padding:12px;border-radius:8px;"><strong>Error:</strong> ' + err.message + '<br><small>Please try again.</small></div>';
+            btn.disabled = false;
+            btn.innerText = 'Pay with EcoCash';
         }
+    };
+}
 
         function pollPayment(pollUrl,ref,planType,modal,phone){
             let attempts=0;const maxAttempts=60;
