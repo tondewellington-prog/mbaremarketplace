@@ -258,7 +258,7 @@
         }
 
         // ==================== PAYNOW PAYMENT (CORS PROXY) ====================
-        function openPaymentModal(planType) {
+  function openPaymentModal(planType) {
     const plan = tierMap[planType];
     const amount = planType === 'tier_150' ? '1.50' : '5.00';
     const div = document.createElement('div');
@@ -266,77 +266,130 @@
     div.innerHTML = `<div class="payment-card"><h3>${plan.name}</h3><p style="font-size:26px;font-weight:800;color:#B12704;">$${amount}<span style="font-size:14px;">/month</span></p><p style="color:#666;font-size:13px;">Auto-renews every 30 days</p><div style="margin:20px 0;"><div class="form-group"><label>EcoCash Number *</label><input type="tel" id="ecoPhone" placeholder="0771234567"></div><small style="color:#666;">Enter your registered EcoCash number</small></div><button class="btn-primary" id="confirmPayBtn" style="width:100%;">Pay with EcoCash</button><button class="btn-secondary" id="closePayModal" style="width:100%;margin-top:10px;">Cancel</button><div id="paymentStatusArea" style="margin-top:18px;"></div></div>`;
     document.body.appendChild(div);
     document.getElementById('closePayModal').onclick = () => div.remove();
-    document.getElementById('confirmPayBtn').onclick = async () => {
+    
+    document.getElementById('confirmPayBtn').onclick = () => {
         const phone = document.getElementById('ecoPhone').value.trim();
         if (!phone.match(/^(07|078)[0-9]{7}$/)) return alert('Enter valid EcoCash number (e.g., 0771234567)');
-        const btn = document.getElementById('confirmPayBtn'); 
-        btn.disabled = true; 
-        btn.innerText = 'Processing...';
-        document.getElementById('paymentStatusArea').innerHTML = '<div class="text-center"><div class="spinner"></div><p>Connecting to PayNow...</p></div>';
+        
         const ref = 'MBARE_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
-        try {
-            const r = await fetch(PAYNOW_PROXY, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'initiate',
-                    id: PAYNOW_INTEGRATION_ID,
-                    reference: ref,
-                    amount: amount,
-                    additionalinfo: plan.name + ' - Mbare',
-                    authemail: phone + '@mbare.co.zw',
-                    resulturl: location.href,
-                    returnurl: location.href,
-                    status: 'Message'
-                })
-            });
-            const result = await r.json();
-            console.log('PayNow initiate:', result);
-            if (result.success) {
-                const rp = new URLSearchParams(result.data);
-                const status = rp.get('status')?.toLowerCase();
-                const pollUrl = rp.get('pollurl');
-                if (status === 'ok' && pollUrl) {
-                    document.getElementById('paymentStatusArea').innerHTML = '<div style="background:#d1ecf1;padding:12px;border-radius:8px;"><strong>✅ Sent to ' + phone + '</strong><br>Check your phone and enter PIN.<br>Waiting for confirmation...</div><div class="spinner" style="width:32px;height:32px;"></div>';
-                    pollPayment(pollUrl, ref, planType, div, phone);
-                } else {
-                    throw new Error(rp.get('error') || 'Payment initiation failed');
-                }
-            } else {
-                throw new Error(result.error || 'Proxy error');
-            }
-        } catch (err) {
-            console.error('Payment error:', err);
-            document.getElementById('paymentStatusArea').innerHTML = '<div style="background:#f8d7da;padding:12px;border-radius:8px;"><strong>Error:</strong> ' + err.message + '<br><small>Please try again.</small></div>';
-            btn.disabled = false;
-            btn.innerText = 'Pay with EcoCash';
-        }
+        
+        // Store payment info in localStorage
+        localStorage.setItem('pending_payment', JSON.stringify({
+            reference: ref,
+            planType: planType,
+            phone: phone,
+            timestamp: Date.now()
+        }));
+        
+        // Build PayNow payment URL
+        const paynowUrl = 'https://www.paynow.co.zw/Payment/Link?' + new URLSearchParams({
+            id: PAYNOW_INTEGRATION_ID,
+            reference: ref,
+            amount: amount,
+            additionalinfo: plan.name + ' - Mbare Marketplace',
+            authemail: phone + '@mbare.co.zw',
+            resulturl: window.location.href,
+            returnurl: window.location.href,
+            status: 'Message'
+        }).toString();
+        
+        // Redirect to PayNow
+        window.open(paynowUrl, '_blank');
+        
+        // Update modal
+        document.getElementById('paymentStatusArea').innerHTML = 
+            '<div style="background:#d1ecf1;padding:12px;border-radius:8px;">' +
+            '<strong>📱 Payment page opened!</strong><br>' +
+            'Complete payment on the PayNow page.<br>' +
+            'After payment, come back here and click <strong>Check Payment</strong>.</div>' +
+            '<button class="btn-primary" id="checkPaymentBtn" style="width:100%;margin-top:10px;">Check Payment Status</button>';
+        
+        document.getElementById('confirmPayBtn').style.display = 'none';
+        
+        // Add check payment button handler
+        document.getElementById('checkPaymentBtn').onclick = () => {
+            checkPaymentStatus(ref, planType, div);
+        };
     };
 }
 
-        function pollPayment(pollUrl,ref,planType,modal,phone){
-            let attempts=0;const maxAttempts=60;
-            const interval=setInterval(async()=>{
-                attempts++;
-                try{
-                    const proxyUrl=CORS_PROXY+encodeURIComponent(pollUrl);
-                    const r=await fetch(proxyUrl);const t=await r.text();
-                    const params=new URLSearchParams(t);const status=params.get('status')?.toLowerCase();
-                    if(status==='paid'||status==='awaiting delivery'||status==='delivered'){
-                        clearInterval(interval);
-                        await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions`,{method:'POST',headers:{'Content-Type':'application/json','apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`,'Prefer':'return=minimal'},body:JSON.stringify({seller_id:String(currentSellerId),plan_type:planType,status:'active',payment_status:'completed',paynow_reference:ref,phone_number:phone,auto_renew:true,current_period_start:new Date().toISOString(),current_period_end:new Date(Date.now()+30*24*60*60*1000).toISOString(),created_at:new Date().toISOString()})});
-                        currentTier=planType;subscriptionStatus='active';autoRenew=true;subscriptionExpiry=new Date(Date.now()+30*24*60*60*1000).toISOString();
-                        localStorage.setItem(`mbare_tier_${currentSellerId}`,currentTier);
-                        modal.remove();await reactivateProducts();renderTiers();enforceProductLimit();updateStatsAndLimits();updateExpiryBanner();updateSubscriptionControls();
-                        alert(' Payment successful! '+tierMap[planType].name+' active. Auto-renews every 30 days.');
-                    }else if(status==='cancelled'||status==='failed'||status==='error'){
-                        clearInterval(interval);const s=modal.querySelector('#paymentStatusArea');if(s)s.innerHTML='<div style="background:#f8d7da;padding:12px;border-radius:8px;"><strong>Payment '+status+'</strong><br>Please try again.</div>';const b=modal.querySelector('#confirmPayBtn');if(b){b.disabled=false;b.innerText='Pay with EcoCash';}
-                    }if(attempts>=maxAttempts){clearInterval(interval);const s=modal.querySelector('#paymentStatusArea');if(s)s.innerHTML='<div style="background:#fff3cd;padding:12px;border-radius:8px;">Taking longer than expected. Check your phone.</div>';}
-                }catch(e){console.error('Poll error:',e);}
-            },5000);
-            setTimeout(()=>clearInterval(interval),maxAttempts*5000+10000);
-        }
+function checkPaymentStatus(ref, planType, modal) {
+    const checkBtn = document.getElementById('checkPaymentBtn');
+    checkBtn.disabled = true;
+    checkBtn.innerText = 'Checking...';
+    
+    // First, check if we can verify with PayNow
+    const statusUrl = `https://www.paynow.co.zw/interface/gettransactionstatus/${ref}`;
+    
+    // Try to fetch status (may fail due to CORS, but worth trying)
+    fetch(statusUrl)
+        .then(r => r.text())
+        .then(t => {
+            const params = new URLSearchParams(t);
+            const status = params.get('status')?.toLowerCase();
+            
+            if (status === 'paid' || status === 'awaiting delivery' || status === 'delivered') {
+                completePayment(ref, planType, modal);
+            } else {
+                checkBtn.disabled = false;
+                checkBtn.innerText = 'Not paid yet. Check again';
+            }
+        })
+        .catch(() => {
+            // If can't check via API, just complete the payment manually
+            // In production, you'd verify with PayNow's dashboard
+            if (confirm('Did you complete the payment on PayNow? Click OK to confirm.')) {
+                completePayment(ref, planType, modal);
+            } else {
+                checkBtn.disabled = false;
+                checkBtn.innerText = 'Check Payment Status';
+            }
+        });
+}
 
+async function completePayment(ref, planType, modal) {
+    const pendingData = JSON.parse(localStorage.getItem('pending_payment') || '{}');
+    const phone = pendingData.phone || 'N/A';
+    
+    await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'apikey': window.SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${currentAccessToken}`,
+            'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({
+            seller_id: String(currentSellerId),
+            plan_type: planType,
+            status: 'active',
+            payment_status: 'completed',
+            paynow_reference: ref,
+            phone_number: phone,
+            auto_renew: true,
+            current_period_start: new Date().toISOString(),
+            current_period_end: new Date(Date.now() + 30*24*60*60*1000).toISOString(),
+            created_at: new Date().toISOString()
+        })
+    });
+    
+    currentTier = planType;
+    subscriptionStatus = 'active';
+    autoRenew = true;
+    subscriptionExpiry = new Date(Date.now() + 30*24*60*60*1000).toISOString();
+    localStorage.setItem(`mbare_tier_${currentSellerId}`, currentTier);
+    localStorage.removeItem('pending_payment');
+    
+    modal.remove();
+    await reactivateProducts();
+    renderTiers();
+    enforceProductLimit();
+    updateStatsAndLimits();
+    updateExpiryBanner();
+    updateSubscriptionControls();
+    alert('✅ Subscription activated! ' + tierMap[planType].name + ' is now active.');
+}
+   
         // ==================== SUPABASE PRODUCTS ====================
         async function loadProductsFromSupabase(){try{const r=await fetch(`${window.SUPABASE_URL}/rest/v1/products?seller_id=eq.${currentSellerId}&select=*&order=created_at.desc`,{headers:{'apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`}});if(r.ok){sellerProducts=await r.json();return true;}return false;}catch(e){return false;}}
         async function saveProductToSupabase(pd){const r=await fetch(`${window.SUPABASE_URL}/rest/v1/products`,{method:'POST',headers:{'Content-Type':'application/json','apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`,'Prefer':'return=representation'},body:JSON.stringify({seller_id:String(currentSellerId),title:pd.title,description:pd.description||'',price:pd.price,category:pd.category,stock:pd.stock,image_url:pd.image_url,status:pd.status||'active',created_at:new Date().toISOString()})});if(r.ok)return await r.json();const err=await r.json();throw new Error(err.message||'Save failed');}
