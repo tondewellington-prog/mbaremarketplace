@@ -217,21 +217,41 @@
         }
 
         // ==================== PAYNOW PAYMENT (REDIRECT METHOD) ====================
-        function openPaymentModal(planType){
-            const plan=tierMap[planType];const amount=planType==='tier_150'?'1.50':'5.00';
-            const div=document.createElement('div');div.className='payment-modal';
-            div.innerHTML=`<div class="payment-card" style="text-align:center;"><h3>${plan.name}</h3><p style="font-size:26px;font-weight:800;color:#B12704;">$${amount}<span style="font-size:14px;">/month</span></p><p style="color:#666;font-size:13px;">You will be redirected to PayNow to complete payment</p><div style="margin:20px 0;"><p style="font-size:14px;color:#232f3e;">Click below to proceed to PayNow's secure payment page.</p><p style="font-size:12px;color:#666;">After payment, you'll return here and your subscription will activate automatically.</p></div><button class="btn-primary" id="confirmPayBtn" style="width:100%;">Proceed to PayNow</button><button class="btn-secondary" id="closePayModal" style="width:100%;margin-top:10px;">Cancel</button></div>`;
-            document.body.appendChild(div);
-            document.getElementById('closePayModal').onclick=()=>div.remove();
-            document.getElementById('confirmPayBtn').onclick=()=>{
-                const ref='MBARE_'+Date.now()+'_'+Math.random().toString(36).substr(2,5);
-                localStorage.setItem('pending_payment',JSON.stringify({reference:ref,planType:planType,amount:amount,timestamp:Date.now()}));
-                const params=new URLSearchParams();params.append('id',PAYNOW_INTEGRATION_ID);params.append('reference',ref);params.append('amount',amount);params.append('additionalinfo',plan.name+' - Mbare Marketplace');params.append('authemail','seller@mbare.co.zw');params.append('resulturl',window.location.href);params.append('returnurl',window.location.href);params.append('status','Message');
-                const paynowUrl='https://www.paynow.co.zw/Payment/Link?'+params.toString();
-                window.location.href=paynowUrl;
-            };
-        }
-
+        // ==================== PAYNOW PAYMENT (REDIRECT METHOD - FIXED) ====================
+function openPaymentModal(planType){
+    const plan=tierMap[planType];const amount=planType==='tier_150'?'1.50':'5.00';
+    const div=document.createElement('div');div.className='payment-modal';
+    div.innerHTML=`<div class="payment-card" style="text-align:center;"><h3>${plan.name}</h3><p style="font-size:26px;font-weight:800;color:#B12704;">$${amount}<span style="font-size:14px;">/month</span></p><p style="color:#666;font-size:13px;">You will be redirected to PayNow to complete payment</p><div style="margin:20px 0;"><div class="form-group"><label>EcoCash Number *</label><input type="tel" id="ecoPhone" placeholder="0771234567"></div><small style="color:#666;">Enter your EcoCash number to receive payment prompt</small></div><button class="btn-primary" id="confirmPayBtn" style="width:100%;">Pay with EcoCash</button><button class="btn-secondary" id="closePayModal" style="width:100%;margin-top:10px;">Cancel</button><div id="paymentStatusArea" style="margin-top:18px;"></div></div>`;
+    document.body.appendChild(div);
+    document.getElementById('closePayModal').onclick=()=>div.remove();
+    document.getElementById('confirmPayBtn').onclick=()=>{
+        const phone=document.getElementById('ecoPhone').value.trim();
+        if(!phone.match(/^(07|078)[0-9]{7}$/))return alert('Enter valid EcoCash number (e.g., 0771234567)');
+        
+        const ref='MBARE_'+Date.now()+'_'+Math.random().toString(36).substr(2,5);
+        localStorage.setItem('pending_payment',JSON.stringify({reference:ref,planType:planType,amount:amount,phone:phone,timestamp:Date.now()}));
+        
+        // Use the correct PayNow initiate URL in a form POST
+        const formHtml=`
+            <form id="paynowForm" action="https://www.paynow.co.zw/interface/initiatetransaction" method="POST">
+                <input type="hidden" name="id" value="${PAYNOW_INTEGRATION_ID}">
+                <input type="hidden" name="reference" value="${ref}">
+                <input type="hidden" name="amount" value="${amount}">
+                <input type="hidden" name="additionalinfo" value="${plan.name} - Mbare Marketplace">
+                <input type="hidden" name="authemail" value="${phone}@mbare.co.zw">
+                <input type="hidden" name="resulturl" value="${window.location.href}">
+                <input type="hidden" name="returnurl" value="${window.location.href}">
+                <input type="hidden" name="status" value="Message">
+            </form>
+        `;
+        
+        document.getElementById('paymentStatusArea').innerHTML='<div style="background:#d1ecf1;padding:12px;border-radius:8px;"><strong>Redirecting to PayNow...</strong><br>Complete payment on PayNow\'s page.</div>';
+        
+        // Submit the form to redirect to PayNow
+        document.body.insertAdjacentHTML('beforeend',formHtml);
+        setTimeout(()=>document.getElementById('paynowForm').submit(),500);
+    };
+}
         // ==================== CHECK RETURNING PAYMENT ====================
         async function checkReturningPayment(){
             const urlParams=new URLSearchParams(window.location.search);
