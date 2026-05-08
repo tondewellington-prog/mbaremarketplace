@@ -271,7 +271,7 @@
             document.getElementById('closePayModal').onclick=()=>div.remove();
             document.getElementById('confirmPayBtn').onclick=()=>{
                 const phone=document.getElementById('ecoPhone').value.trim();
-                if(!phone.match(/^(07|078)[0-9]{7}$/))return alert('Enter valid EcoCash number');
+                if(!phone.match(/^(07[0-9]{8})$/))return alert('Enter valid EcoCash number (e.g., 0771234567)');
                 const ref='MBARE_'+Date.now()+'_'+Math.random().toString(36).substr(2,5);
                 localStorage.setItem('pending_payment',JSON.stringify({reference:ref,planType:planType,amount:amount,phone:phone,timestamp:Date.now()}));
                 const form=document.createElement('form');
