@@ -134,6 +134,7 @@
         const PAYNOW_INTEGRATION_ID = '24522';
         const MERCHANT_EMAIL = 'tondewellington@gmail.com';
         const IS_TEST_MODE = true; // Set to false when PayNow goes live
+        const PAYNOW_HASH_PROXY = 'https://fnncerdxfhwlrdopswpx.supabase.co/functions/v1/paynow-hash';
 
         // ==================== GLOBAL STATE ====================
         let currentSellerId = null;
@@ -262,32 +263,68 @@
         }
 
         // ==================== PAYNOW TEST MODE PAYMENT ====================
+      
         function openPaymentModal(planType){
-            const plan=tierMap[planType];const amount=planType==='tier_150'?'1.50':'5.00';
-            const testModeText=IS_TEST_MODE?'<span class="badge-test">TEST MODE</span><br><small style="color:#f90;">Use <strong>0771111111</strong> for successful test</small>':'';
-            const div=document.createElement('div');div.className='payment-modal';
-            div.innerHTML=`<div class="payment-card" style="text-align:center;"><h3>${plan.name}</h3><p style="font-size:26px;font-weight:800;color:#B12704;">$${amount}<span style="font-size:14px;">/month</span></p>${testModeText}<div style="margin:20px 0;"><div class="form-group"><label>EcoCash Number *</label><input type="tel" id="ecoPhone" placeholder="0771111111" value="${IS_TEST_MODE?'0771111111':''}"></div></div><button class="btn-primary" id="confirmPayBtn" style="width:100%;">&#128179; Pay with EcoCash${IS_TEST_MODE?' (Test)':''}</button><button class="btn-secondary" id="closePayModal" style="width:100%;margin-top:10px;">Cancel</button><div id="paymentStatusArea" style="margin-top:18px;"></div></div>`;
-            document.body.appendChild(div);
-            document.getElementById('closePayModal').onclick=()=>div.remove();
-            document.getElementById('confirmPayBtn').onclick=()=>{
-                const phone=document.getElementById('ecoPhone').value.trim();
-                if(!phone.match(/^(07[0-9]{8})$/))return alert('Enter valid EcoCash number (e.g., 0771234567)');
-                const ref='MBARE_'+Date.now()+'_'+Math.random().toString(36).substr(2,5);
-                localStorage.setItem('pending_payment',JSON.stringify({reference:ref,planType:planType,amount:amount,phone:phone,timestamp:Date.now()}));
-                const form=document.createElement('form');
-                form.method='POST';
-                form.action='https://www.paynow.co.zw/interface/initiatetransaction';
-                form.target='_blank';
-                const fields={id:PAYNOW_INTEGRATION_ID,reference:ref,amount:amount,additionalinfo:plan.name+' - Mbare Marketplace',authemail:MERCHANT_EMAIL,resulturl:location.href,returnurl:location.href,status:'Message'};
-                for(const[k,v]of Object.entries(fields)){const i=document.createElement('input');i.type='hidden';i.name=k;i.value=String(v);form.appendChild(i);}
-                document.body.appendChild(form);
-                form.submit();
-                document.body.removeChild(form);
-                document.getElementById('paymentStatusArea').innerHTML='<div style="background:#d1ecf1;padding:12px;border-radius:8px;"><strong>&#10003; Payment page opened!</strong><br>On PayNow, select <strong>[TESTING: Faked Success]</strong> and click Make Payment.<br>Then come back and click below.</div><button class="btn-success" id="activateBtn" style="width:100%;margin-top:10px;">&#10003; I Completed Payment - Activate Subscription</button>';
-                document.getElementById('confirmPayBtn').style.display='none';
-                document.getElementById('activateBtn').onclick=()=>{activateSubscription(ref,planType,div);};
-            };
+    const plan=tierMap[planType];const amount=planType==='tier_150'?'1.50':'5.00';
+    const testModeText=IS_TEST_MODE?'<span class="badge-test">TEST MODE</span><br><small style="color:#f90;">Use <strong>0771111111</strong> for successful test</small>':'';
+    const div=document.createElement('div');div.className='payment-modal';
+    div.innerHTML=`<div class="payment-card" style="text-align:center;"><h3>${plan.name}</h3><p style="font-size:26px;font-weight:800;color:#B12704;">$${amount}<span style="font-size:14px;">/month</span></p>${testModeText}<div style="margin:20px 0;"><div class="form-group"><label>EcoCash Number *</label><input type="tel" id="ecoPhone" placeholder="0771111111" value="${IS_TEST_MODE?'0771111111':''}"></div></div><button class="btn-primary" id="confirmPayBtn" style="width:100%;">&#128179; Pay with EcoCash${IS_TEST_MODE?' (Test)':''}</button><button class="btn-secondary" id="closePayModal" style="width:100%;margin-top:10px;">Cancel</button><div id="paymentStatusArea" style="margin-top:18px;"></div></div>`;
+    document.body.appendChild(div);
+    document.getElementById('closePayModal').onclick=()=>div.remove();
+    document.getElementById('confirmPayBtn').onclick=async()=>{
+        const phone=document.getElementById('ecoPhone').value.trim();
+        if(!phone.match(/^07[0-9]{8}$/))return alert('Enter a valid 10-digit EcoCash number starting with 07');
+        const btn=document.getElementById('confirmPayBtn');btn.disabled=true;btn.innerText='Processing...';
+        document.getElementById('paymentStatusArea').innerHTML='<div class="text-center"><div class="spinner"></div><p>Initiating payment...</p></div>';
+        const ref='MBARE_'+Date.now()+'_'+Math.random().toString(36).substr(2,5);
+        
+        try{
+            const r=await fetch(PAYNOW_HASH_PROXY,{
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({
+                    action:'initiate',
+                    id:PAYNOW_INTEGRATION_ID,
+                    reference:ref,
+                    amount:amount,
+                    additionalinfo:plan.name+' - Mbare Marketplace',
+                    authemail:MERCHANT_EMAIL,
+                    resulturl:location.href,
+                    returnurl:location.href,
+                    status:'Message'
+                })
+            });
+            const result=await r.json();
+            console.log('Hash proxy result:',result);
+            
+            if(result.success){
+                const rp=new URLSearchParams(result.data);
+                const status=rp.get('status')?.toLowerCase();
+                const pollUrl=rp.get('pollurl');
+                const browserUrl=rp.get('browserurl');
+                
+                if(status==='ok'){
+                    localStorage.setItem('pending_payment',JSON.stringify({reference:ref,planType:planType,amount:amount,phone:phone,pollUrl:pollUrl,timestamp:Date.now()}));
+                    
+                    if(browserUrl){
+                        window.open(browserUrl,'_blank');
+                        document.getElementById('paymentStatusArea').innerHTML='<div style="background:#d1ecf1;padding:12px;border-radius:8px;"><strong>&#10003; Payment page opened!</strong><br>Complete payment on PayNow.<br>Select <strong>[TESTING: Faked Success]</strong> and click Make Payment.</div><button class="btn-success" id="activateBtn" style="width:100%;margin-top:10px;">&#10003; I Completed Payment - Activate Subscription</button>';
+                        document.getElementById('confirmPayBtn').style.display='none';
+                        document.getElementById('activateBtn').onclick=()=>{activateSubscription(ref,planType,div);};
+                    }
+                }else{
+                    throw new Error(rp.get('error')||'Payment initiation failed');
+                }
+            }else{
+                throw new Error(result.error||'Server error');
+            }
+        }catch(err){
+            console.error('Payment error:',err);
+            document.getElementById('paymentStatusArea').innerHTML='<div style="background:#f8d7da;padding:12px;border-radius:8px;"><strong>Error:</strong> '+err.message+'</div>';
+            btn.disabled=false;btn.innerText='&#128179; Pay with EcoCash';
         }
+    };
+}
 
         async function activateSubscription(ref,planType,modal){
             const btn=document.getElementById('activateBtn');btn.disabled=true;btn.innerText='Activating...';
