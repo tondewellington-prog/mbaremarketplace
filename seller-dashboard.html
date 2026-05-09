@@ -166,164 +166,129 @@
         async function updateSubscription(pt){const cl=tierMap[currentTier]?.level||0,nl=tierMap[pt]?.level||0;if(currentTier!=='free'&&pt!=='free'&&nl<cl)return alert('Cannot downgrade while active. Pause or wait for expiry.');try{const cr=await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${currentSellerId}&select=id`,{headers:{'apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`}});const ex=cr.ok?await cr.json():[];const sd={seller_id:String(currentSellerId),plan_type:pt,status:pt==='free'?'cancelled':'active',payment_status:pt==='free'?'cancelled':'completed',auto_renew:pt!=='free',current_period_start:new Date().toISOString(),current_period_end:new Date(Date.now()+2592000000).toISOString()};if(ex?.length>0){await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?id=eq.${ex[0].id}`,{method:'PATCH',headers:{'Content-Type':'application/json','apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`,'Prefer':'return=minimal'},body:JSON.stringify(sd)});}else{await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions`,{method:'POST',headers:{'Content-Type':'application/json','apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`,'Prefer':'return=minimal'},body:JSON.stringify({...sd,created_at:new Date().toISOString()})});}}catch(e){}currentTier=pt;subscriptionStatus=pt==='free'?'cancelled':'active';autoRenew=pt!=='free';subscriptionExpiry=pt==='free'?null:new Date(Date.now()+2592000000).toISOString();localStorage.setItem(`mbare_tier_${currentSellerId}`,currentTier);if(pt!=='free')await reactivateProducts();renderTiers();enforceProductLimit();updateStatsAndLimits();updateExpiryBanner();updateSubscriptionControls();}
 
         // ==================== PAYNOW PAYMENT (FORM POST + BACKGROUND POLL) ====================
-function openPaymentModal(planType){
-    const plan=tierMap[planType];const amount=planType==='tier_150'?'1.50':'5.00';
-    const div=document.createElement('div');div.className='payment-modal';
-    div.innerHTML='<div class="payment-card" style="text-align:center;"><h3>'+plan.name+'</h3><p style="font-size:26px;font-weight:800;color:#B12704;">$'+amount+'<span style="font-size:14px;">/month</span></p><p style="color:#666;font-size:13px;">Auto-renews every 30 days</p><div style="margin:20px 0;"><div class="form-group"><label>EcoCash Number *</label><input type="tel" id="ecoPhone" placeholder="0771234567"></div><small style="color:#666;">Enter your EcoCash number to receive a payment prompt</small></div><button class="btn-primary" id="confirmPayBtn" style="width:100%;">&#128179; Pay with EcoCash</button><button class="btn-secondary" id="closePayModal" style="width:100%;margin-top:10px;">Cancel</button><div id="paymentStatusArea" style="margin-top:18px;"></div></div>';
-    document.body.appendChild(div);
-    document.getElementById('closePayModal').onclick=()=>div.remove();
-    document.getElementById('confirmPayBtn').onclick=async()=>{
-        const phone=document.getElementById('ecoPhone').value.trim();
-        if(!phone.match(/^07[0-9]{8}$/))return alert('Enter valid EcoCash number starting with 07 (e.g., 0771234567)');
-        const btn=document.getElementById('confirmPayBtn');btn.disabled=true;btn.innerText='Processing...';
-        document.getElementById('paymentStatusArea').innerHTML='<div class="text-center"><div class="spinner"></div><p>Sending payment request to your phone...</p></div>';
-        const ref='MBARE_'+Date.now()+'_'+Math.random().toString(36).substr(2,5);
-        
-        try{
-            const vals=[PAYNOW_INTEGRATION_ID,ref,amount,plan.name+' - Mbare Marketplace',MERCHANT_EMAIL,location.href,location.href,'Message'];
-            const hash=await sha512(vals.join('')+PAYNOW_INTEGRATION_KEY);
-            
-            // Create a hidden iframe to submit the form without leaving the page
-            const iframe=document.createElement('iframe');
-            iframe.name='paynow_frame_'+Date.now();
-            iframe.style.display='none';
-            document.body.appendChild(iframe);
-            
-            const form=document.createElement('form');
-            form.method='POST';
-            form.action='https://www.paynow.co.zw/interface/initiatetransaction';
-            form.target=iframe.name;
-            
-            const fields={id:PAYNOW_INTEGRATION_ID,reference:ref,amount:amount,additionalinfo:plan.name+' - Mbare Marketplace',authemail:MERCHANT_EMAIL,resulturl:location.href,returnurl:location.href,status:'Message',hash:hash};
-            for(const[k,v]of Object.entries(fields)){const i=document.createElement('input');i.type='hidden';i.name=k;i.value=String(v);form.appendChild(i);}
-            
-            document.body.appendChild(form);
-            form.submit();
-            
-            // Clean up after a short delay
-            setTimeout(()=>{document.body.removeChild(form);document.body.removeChild(iframe);},2000);
-            
-            // Start polling PayNow to check payment status
-            document.getElementById('paymentStatusArea').innerHTML='<div style="background:#d1ecf1;padding:12px;border-radius:8px;"><strong>&#128276; Payment request sent!</strong><br>Check your phone and enter your EcoCash PIN.<br>Verifying payment automatically...</div><div class="spinner" style="width:32px;height:32px;"></div>';
-            
-            // Wait a moment then start polling
-            await new Promise(r=>setTimeout(r,3000));
-            pollPaymentStatus(ref,planType,div,phone);
-            
-        }catch(err){
-            console.error('Payment error:',err);
-            document.getElementById('paymentStatusArea').innerHTML='<div style="background:#f8d7da;padding:12px;border-radius:8px;"><strong>Error:</strong> '+err.message+'<br><small>Please try again.</small></div>';
-            btn.disabled=false;btn.innerText='&#128179; Pay with EcoCash';
-        }
-    };
-}
-
-function pollPaymentStatus(ref,planType,modal,phone){
-    let attempts=0;const maxAttempts=60;
-    
-    // Update the status area to show we're polling
-    const statusArea=document.getElementById('paymentStatusArea');
-    
-    const interval=setInterval(async()=>{
-        attempts++;
-        try{
-            // Poll PayNow using their status check URL
-            const pollUrl='https://www.paynow.co.zw/Interface/CheckPayment/?guid='+ref;
-            
-            // Use a simple fetch - if it fails due to CORS, we'll know
-            let status='unknown';
-            
-            try{
-                const resp=await fetch(pollUrl,{mode:'no-cors'});
-                // With no-cors, we can't read the response but the request was sent
-                // So we check via our own method - try with a proxy
-            }catch(e){}
-            
-            // Try alternative: use the paynow reference format
-            const altPollUrl='https://www.paynow.co.zw/interface/gettransactionstatus/'+ref;
-            
-            try{
-                const resp=await fetch(altPollUrl);
-                const txt=await resp.text();
-                console.log('Poll response:',txt);
-                const rp=new URLSearchParams(txt);
-                status=rp.get('status')?.toLowerCase()||'unknown';
-            }catch(e){
-                console.log('Direct poll failed, trying with form...');
-                // If direct fetch fails, use form submission to iframe
+        // ==================== PAYNOW PAYMENT (IFRAME FORM - NO CORS) ====================
+        function openPaymentModal(planType){
+            const plan=tierMap[planType];const amount=planType==='tier_150'?'1.50':'5.00';
+            const div=document.createElement('div');div.className='payment-modal';
+            div.innerHTML='<div class="payment-card" style="text-align:center;"><h3>'+plan.name+'</h3><p style="font-size:26px;font-weight:800;color:#B12704;">$'+amount+'<span style="font-size:14px;">/month</span></p><p style="color:#666;font-size:13px;">Auto-renews every 30 days</p><div style="margin:20px 0;"><div class="form-group"><label>EcoCash Number *</label><input type="tel" id="ecoPhone" placeholder="0771234567"></div><small style="color:#666;">Enter your EcoCash number to receive a payment prompt</small></div><button class="btn-primary" id="confirmPayBtn" style="width:100%;">&#128179; Pay with EcoCash</button><button class="btn-secondary" id="closePayModal" style="width:100%;margin-top:10px;">Cancel</button><div id="paymentStatusArea" style="margin-top:18px;"></div></div>';
+            document.body.appendChild(div);
+            document.getElementById('closePayModal').onclick=()=>div.remove();
+            document.getElementById('confirmPayBtn').onclick=async()=>{
+                const phone=document.getElementById('ecoPhone').value.trim();
+                if(!phone.match(/^07[0-9]{8}$/))return alert('Enter valid EcoCash number starting with 07 (e.g., 0771234567)');
+                const btn=document.getElementById('confirmPayBtn');btn.disabled=true;btn.innerText='Processing...';
+                document.getElementById('paymentStatusArea').innerHTML='<div class="text-center"><div class="spinner"></div><p>Connecting to PayNow...</p></div>';
+                const ref='MBARE_'+Date.now()+'_'+Math.random().toString(36).substr(2,5);
+                
                 try{
+                    const vals=[PAYNOW_INTEGRATION_ID,ref,amount,plan.name+' - Mbare Marketplace',MERCHANT_EMAIL,location.href,location.href,'Message'];
+                    const hash=await sha512(vals.join('')+PAYNOW_INTEGRATION_KEY);
+                    
+                    // Create hidden iframe for form submission
+                    const iframeId='paynow_iframe_'+Date.now();
                     const iframe=document.createElement('iframe');
-                    iframe.name='poll_frame_'+Date.now();
-                    iframe.style.display='none';
+                    iframe.name=iframeId;
+                    iframe.id=iframeId;
+                    iframe.style.cssText='display:none;width:0;height:0;border:0;';
                     document.body.appendChild(iframe);
                     
+                    // Create form that submits to PayNow
                     const form=document.createElement('form');
-                    form.method='GET';
-                    form.action=altPollUrl;
-                    form.target=iframe.name;
+                    form.method='POST';
+                    form.action='https://www.paynow.co.zw/interface/initiatetransaction';
+                    form.target=iframeId;
+                    form.style.display='none';
+                    
+                    const fields={id:PAYNOW_INTEGRATION_ID,reference:ref,amount:amount,additionalinfo:plan.name+' - Mbare Marketplace',authemail:MERCHANT_EMAIL,resulturl:location.href,returnurl:location.href,status:'Message',hash:hash};
+                    for(const[k,v]of Object.entries(fields)){const input=document.createElement('input');input.type='hidden';input.name=k;input.value=String(v);form.appendChild(input);}
+                    
                     document.body.appendChild(form);
                     form.submit();
                     
+                    // Clean up form and iframe after submission
                     setTimeout(()=>{
-                        document.body.removeChild(form);
-                        document.body.removeChild(iframe);
-                    },3000);
+                        if(document.body.contains(form))document.body.removeChild(form);
+                        if(document.body.contains(iframe))document.body.removeChild(iframe);
+                    },5000);
                     
-                    // After this we can't read the response easily
-                    // But if it's been 30+ seconds, payment likely went through
-                    if(attempts>6){
-                        status='likely_paid';
-                    }
-                }catch(e2){}
+                    // Store payment info
+                    localStorage.setItem('pending_payment',JSON.stringify({reference:ref,planType:planType,amount:amount,phone:phone,timestamp:Date.now()}));
+                    
+                    // Show waiting message
+                    document.getElementById('paymentStatusArea').innerHTML='<div style="background:#d1ecf1;padding:12px;border-radius:8px;"><strong>&#128276; Payment request sent to '+phone+'!</strong><br>Check your phone and enter your EcoCash PIN.<br><small>After entering PIN, wait for confirmation...</small></div><button class="btn-success" id="checkPayBtn" style="width:100%;margin-top:10px;">&#10003; I\'ve Entered My PIN - Check Payment</button>';
+                    document.getElementById('confirmPayBtn').style.display='none';
+                    
+                    document.getElementById('checkPayBtn').onclick=()=>{
+                        document.getElementById('checkPayBtn').disabled=true;
+                        document.getElementById('checkPayBtn').innerText='Checking...';
+                        document.getElementById('paymentStatusArea').innerHTML+='<div class="spinner" style="width:24px;height:24px;margin-top:10px;"></div>';
+                        verifyPaymentAndActivate(ref,planType,div,phone);
+                    };
+                    
+                }catch(err){
+                    console.error('Payment error:',err);
+                    document.getElementById('paymentStatusArea').innerHTML='<div style="background:#f8d7da;padding:12px;border-radius:8px;"><strong>Error:</strong> '+err.message+'<br><small>Please try again.</small></div>';
+                    btn.disabled=false;btn.innerText='&#128179; Pay with EcoCash';
+                }
+            };
+        }
+
+        async function verifyPaymentAndActivate(ref,planType,modal,phone){
+            // Try to verify payment via PayNow poll URL
+            const pollUrl='https://www.paynow.co.zw/Interface/CheckPayment/?guid='+ref;
+            let paymentVerified=false;
+            
+            try{
+                // Try fetching poll status
+                const resp=await fetch(pollUrl);
+                const txt=await resp.text();
+                const rp=new URLSearchParams(txt);
+                const status=rp.get('status')?.toLowerCase();
+                console.log('Payment status:',status);
+                
+                if(status==='paid'||status==='awaiting delivery'||status==='delivered'){
+                    paymentVerified=true;
+                }else if(status==='created'||status==='sent'){
+                    alert('Payment is still pending. Please enter your EcoCash PIN on your phone first, then try again.');
+                    document.getElementById('checkPayBtn').disabled=false;
+                    document.getElementById('checkPayBtn').innerText='&#10003; I\'ve Entered My PIN - Check Payment';
+                    return;
+                }
+            }catch(e){
+                console.log('Could not verify via poll, asking user to confirm');
+                // If we can't verify automatically, ask the user
+                paymentVerified=confirm('Did you enter your EcoCash PIN and complete the payment? Click OK to activate your subscription.');
             }
             
-            console.log('Poll status ('+attempts+'):',status);
-            
-            if(status==='paid'||status==='awaiting delivery'||status==='delivered'||status==='likely_paid'){
-                clearInterval(interval);
-                statusArea.innerHTML='<div style="background:#d4edda;padding:12px;border-radius:8px;"><strong>&#10003; Payment confirmed!</strong><br>Activating your subscription...</div><div class="spinner" style="width:32px;height:32px;"></div>';
-                
-                await saveSubscriptionToSupabase(ref,planType,phone,'completed');
-                currentTier=planType;subscriptionStatus='active';autoRenew=true;
-                subscriptionExpiry=new Date(Date.now()+2592000000).toISOString();
-                localStorage.setItem(`mbare_tier_${currentSellerId}`,currentTier);
-                localStorage.removeItem('pending_payment');
-                await reactivateProducts();renderTiers();enforceProductLimit();
-                updateStatsAndLimits();updateExpiryBanner();updateSubscriptionControls();
-                
-                setTimeout(()=>{modal.remove();showSuccess(planType);},1500);
-                
-            }else if(status==='cancelled'||status==='failed'||status==='error'){
-                clearInterval(interval);
-                statusArea.innerHTML='<div style="background:#f8d7da;padding:12px;border-radius:8px;"><strong>&#10060; Payment '+status+'</strong><br>Please try again.</div>';
-                const btn=document.getElementById('confirmPayBtn');
-                if(btn){btn.disabled=false;btn.innerText='&#128179; Pay with EcoCash';btn.style.display='block';}
-            }
-            
-            if(attempts>=maxAttempts){
-                clearInterval(interval);
-                statusArea.innerHTML='<div style="background:#fff3cd;padding:12px;border-radius:8px;"><strong>&#9200; Still waiting for confirmation</strong><br>If you entered your PIN, your subscription will activate soon. Refresh if needed.</div>';
-                const btn=document.getElementById('confirmPayBtn');
-                if(btn){btn.disabled=false;btn.innerText='&#128260; Check Status';btn.style.display='block';
-                    btn.onclick=()=>{btn.disabled=true;btn.innerText='Checking...';attempts=0;pollPaymentStatus(ref,planType,modal,phone);};
+            if(paymentVerified){
+                // Activate subscription
+                try{
+                    await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions`,{
+                        method:'POST',
+                        headers:{'Content-Type':'application/json','apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`,'Prefer':'return=minimal'},
+                        body:JSON.stringify({seller_id:String(currentSellerId),plan_type:planType,status:'active',payment_status:'completed',paynow_reference:ref,phone_number:phone,auto_renew:true,current_period_start:new Date().toISOString(),current_period_end:new Date(Date.now()+2592000000).toISOString(),created_at:new Date().toISOString()})
+                    });
+                    
+                    currentTier=planType;subscriptionStatus='active';autoRenew=true;
+                    subscriptionExpiry=new Date(Date.now()+2592000000).toISOString();
+                    localStorage.setItem(`mbare_tier_${currentSellerId}`,currentTier);
+                    localStorage.removeItem('pending_payment');
+                    
+                    await reactivateProducts();renderTiers();enforceProductLimit();
+                    updateStatsAndLimits();updateExpiryBanner();updateSubscriptionControls();
+                    
+                    modal.remove();
+                    const b=document.createElement('div');
+                    b.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#28a745;color:white;padding:16px 24px;border-radius:12px;z-index:10000;font-weight:600;';
+                    b.innerHTML='&#10003; '+tierMap[planType].name+' activated!';
+                    document.body.appendChild(b);
+                    setTimeout(()=>b.remove(),5000);
+                    
+                }catch(e){
+                    alert('Error activating subscription: '+e.message);
                 }
             }
-        }catch(e){console.error('Poll error:',e);}
-    },5000);
-    
-    // Safety timeout
-    setTimeout(()=>{clearInterval(interval);},maxAttempts*5000+10000);
-}
-
-async function saveSubscriptionToSupabase(ref,planType,phone,payStatus){
-    try{
-        await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions`,{
-            method:'POST',
-            headers:{'Content-Type':'application/json','apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`,'Prefer':'return=minimal'},
-            body:JSON.stringify({seller_id:String(currentSellerId),plan_type:planType,status:'active',payment_status:'completed',paynow_reference:ref,phone_number:phone,auto_renew:true,current_period_start:new Date().toISOString(),current_period_end:new Date(Date.now()+2592000000).toISOString(),created_at:new Date().toISOString()})
-        });
-    }catch(e){console.error('Save sub error:',e);}
-}
+        }
         function showSuccess(pt){const b=document.createElement('div');b.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#28a745;color:white;padding:16px 24px;border-radius:12px;z-index:10000;font-weight:600;';b.innerHTML='&#10003; '+tierMap[pt].name+' activated!';document.body.appendChild(b);setTimeout(()=>b.remove(),5000);}
 
         // ==================== PRODUCTS ====================
