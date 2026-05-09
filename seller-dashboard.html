@@ -134,7 +134,6 @@
         const MERCHANT_EMAIL = 'tondewellington@gmail.com';
         const IS_TEST_MODE = false;
 
-        // ==================== GLOBAL STATE ====================
         let currentSellerId = null, currentAccessToken = null;
         let currentTier = 'free', subscriptionStatus = 'inactive', subscriptionExpiry = null, autoRenew = true;
         let sellerProducts = [], selectedImageFile = null, renewalCheckInterval = null;
@@ -145,15 +144,8 @@
             tier_5: { name: 'Video Ads Plan', price: '$5 / month', maxProducts: 200, perks: '200 products + video ads on social platforms', badge: 'VIDEO BOOST', level: 2 }
         };
 
-        // ==================== SHA512 HASH FUNCTION ====================
-        async function sha512(message) {
-            const msgBuffer = new TextEncoder().encode(message);
-            const hashBuffer = await crypto.subtle.digest('SHA-512', msgBuffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
-        }
+        async function sha512(message){const msgBuffer=new TextEncoder().encode(message);const hashBuffer=await crypto.subtle.digest('SHA-512',msgBuffer);const hashArray=Array.from(new Uint8Array(hashBuffer));return hashArray.map(b=>b.toString(16).padStart(2,'0')).join('').toUpperCase();}
 
-        // ==================== IMAGE UPLOAD ====================
         (function(){const a=document.getElementById('uploadArea');if(!a)return;a.addEventListener('dragover',e=>{e.preventDefault();a.classList.add('dragover');});a.addEventListener('dragleave',()=>a.classList.remove('dragover'));a.addEventListener('drop',e=>{e.preventDefault();a.classList.remove('dragover');if(e.dataTransfer.files.length>0)handleImageFile(e.dataTransfer.files[0]);});})();
         window.handleFileSelect=function(e){if(e.target.files[0])handleImageFile(e.target.files[0]);};
         function handleImageFile(file){if(!file.type.match('image.*'))return alert('Please select an image file');if(file.size>10*1024*1024)return alert('Image must be under 10MB');selectedImageFile=file;const r=new FileReader();r.onload=function(e){document.getElementById('imagePreview').src=e.target.result;document.getElementById('imagePreviewContainer').style.display='block';document.getElementById('uploadPlaceholder').style.display='none';document.getElementById('imageStatus').textContent='Image ready.';};r.readAsDataURL(file);document.getElementById('prodImage').value='';}
@@ -161,10 +153,8 @@
         window.openCamera=function(){const i=document.createElement('input');i.type='file';i.accept='image/*';i.capture='environment';i.onchange=function(e){if(e.target.files[0])handleImageFile(e.target.files[0]);};i.click();};
         async function uploadImageToImgBB(file){const bar=document.getElementById('uploadProgressBar'),fill=document.getElementById('uploadProgressFill');bar.style.display='block';fill.style.width='30%';const fd=new FormData();fd.append('image',file);fd.append('key',IMGBB_API_KEY);const resp=await fetch('https://api.imgbb.com/1/upload',{method:'POST',body:fd});fill.style.width='80%';const data=await resp.json();if(data.success){fill.style.width='100%';setTimeout(()=>bar.style.display='none',1000);return data.data.url;}throw new Error(data.error?.message||'Upload failed');}
 
-        // ==================== AUTH ====================
         async function checkAuth(){const s=localStorage.getItem('supabase_session');const l=localStorage.getItem('isLoggedIn')==='true';if(!l||!s){alert('Please login first.');window.location.href='login.html?redirect=seller-dashboard.html';return false;}try{const session=JSON.parse(s);currentSellerId=session.user?.id;currentAccessToken=session.access_token;if(!currentSellerId)throw new Error('No ID');document.querySelector('.account-menu').textContent='Hello, '+(session.user?.email||'Seller').split('@')[0];return true;}catch(e){window.location.href='login.html';return false;}}
 
-        // ==================== SUBSCRIPTION MANAGEMENT ====================
         async function fetchSubscription(){try{const resp=await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${currentSellerId}&select=*&order=created_at.desc&limit=1`,{headers:{'apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`}});if(resp.ok){const subs=await resp.json();if(subs?.length>0){const s=subs[0];subscriptionStatus=s.status||'inactive';autoRenew=s.auto_renew!==false;if(s.current_period_end){subscriptionExpiry=s.current_period_end;const expiry=new Date(s.current_period_end);const now=new Date();if(expiry<now&&s.status==='active'){await updateSubscriptionStatus(s.id,'expired');subscriptionStatus='expired';handleExpiredSubscription();return null;}}if(s.status==='active'||s.status==='paused'){if(s.plan_type==='tier_5')return'tier_5';if(s.plan_type==='tier_150')return'tier_150';}}}return null;}catch(e){return null;}}
         async function updateSubscriptionStatus(sid,st){try{await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?id=eq.${sid}`,{method:'PATCH',headers:{'Content-Type':'application/json','apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`,'Prefer':'return=minimal'},body:JSON.stringify({status:st})});}catch(e){}}
         function handleExpiredSubscription(){sellerProducts.forEach((p,i)=>{p.status=i<8?'active':'paused';});currentTier='free';subscriptionStatus='expired';localStorage.setItem(`mbare_tier_${currentSellerId}`,'free');saveProductsLocal();renderTiers();renderProducts();updateStatsAndLimits();updateExpiryBanner();updateSubscriptionControls();}
@@ -175,42 +165,82 @@
         function updateSubscriptionControls(){const c=document.getElementById('subscriptionControls');if(currentTier==='free'){c.style.display='none';return;}c.style.display='block';if(subscriptionStatus==='paused'){c.innerHTML='<button class="btn-primary" onclick="resumeSubscription()">&#9654; Resume Auto-Renewal</button>';}else if(subscriptionStatus==='expired'){c.innerHTML='<button class="btn-primary" onclick="openPaymentModal(\''+currentTier+'\')">&#128260; Renew Subscription</button>';}else{c.innerHTML='<button class="btn-danger" onclick="pauseSubscription()">&#9208; Pause Subscription</button><br><small style="color:#666;">Current period remains active until expiry.</small>';}}
         async function updateSubscription(pt){const cl=tierMap[currentTier]?.level||0,nl=tierMap[pt]?.level||0;if(currentTier!=='free'&&pt!=='free'&&nl<cl)return alert('Cannot downgrade while active. Pause or wait for expiry.');try{const cr=await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${currentSellerId}&select=id`,{headers:{'apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`}});const ex=cr.ok?await cr.json():[];const sd={seller_id:String(currentSellerId),plan_type:pt,status:pt==='free'?'cancelled':'active',payment_status:pt==='free'?'cancelled':'completed',auto_renew:pt!=='free',current_period_start:new Date().toISOString(),current_period_end:new Date(Date.now()+2592000000).toISOString()};if(ex?.length>0){await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?id=eq.${ex[0].id}`,{method:'PATCH',headers:{'Content-Type':'application/json','apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`,'Prefer':'return=minimal'},body:JSON.stringify(sd)});}else{await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions`,{method:'POST',headers:{'Content-Type':'application/json','apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`,'Prefer':'return=minimal'},body:JSON.stringify({...sd,created_at:new Date().toISOString()})});}}catch(e){}currentTier=pt;subscriptionStatus=pt==='free'?'cancelled':'active';autoRenew=pt!=='free';subscriptionExpiry=pt==='free'?null:new Date(Date.now()+2592000000).toISOString();localStorage.setItem(`mbare_tier_${currentSellerId}`,currentTier);if(pt!=='free')await reactivateProducts();renderTiers();enforceProductLimit();updateStatsAndLimits();updateExpiryBanner();updateSubscriptionControls();}
 
-        // ==================== PAYNOW LIVE PAYMENT ====================
+        // ==================== PAYNOW PAYMENT (BACKGROUND - NO REDIRECT) ====================
         function openPaymentModal(planType){
             const plan=tierMap[planType];const amount=planType==='tier_150'?'1.50':'5.00';
             const div=document.createElement('div');div.className='payment-modal';
-            div.innerHTML='<div class="payment-card" style="text-align:center;"><h3>'+plan.name+'</h3><p style="font-size:26px;font-weight:800;color:#B12704;">$'+amount+'<span style="font-size:14px;">/month</span></p><p style="color:#666;font-size:13px;">Auto-renews every 30 days</p><div style="margin:20px 0;"><div class="form-group"><label>EcoCash Number *</label><input type="tel" id="ecoPhone" placeholder="0771234567"></div><small style="color:#666;">Enter your EcoCash number to receive payment prompt</small></div><button class="btn-primary" id="confirmPayBtn" style="width:100%;">&#128179; Pay with EcoCash</button><button class="btn-secondary" id="closePayModal" style="width:100%;margin-top:10px;">Cancel</button><div id="paymentStatusArea" style="margin-top:18px;"></div></div>';
+            div.innerHTML='<div class="payment-card" style="text-align:center;"><h3>'+plan.name+'</h3><p style="font-size:26px;font-weight:800;color:#B12704;">$'+amount+'<span style="font-size:14px;">/month</span></p><p style="color:#666;font-size:13px;">Auto-renews every 30 days</p><div style="margin:20px 0;"><div class="form-group"><label>EcoCash Number *</label><input type="tel" id="ecoPhone" placeholder="0771234567"></div><small style="color:#666;">Enter your EcoCash number to receive a payment prompt</small></div><button class="btn-primary" id="confirmPayBtn" style="width:100%;">&#128179; Pay with EcoCash</button><button class="btn-secondary" id="closePayModal" style="width:100%;margin-top:10px;">Cancel</button><div id="paymentStatusArea" style="margin-top:18px;"></div></div>';
             document.body.appendChild(div);
             document.getElementById('closePayModal').onclick=()=>div.remove();
             document.getElementById('confirmPayBtn').onclick=async()=>{
                 const phone=document.getElementById('ecoPhone').value.trim();
                 if(!phone.match(/^07[0-9]{8}$/))return alert('Enter valid EcoCash number starting with 07 (e.g., 0771234567)');
                 const btn=document.getElementById('confirmPayBtn');btn.disabled=true;btn.innerText='Processing...';
-                document.getElementById('paymentStatusArea').innerHTML='<div class="text-center"><div class="spinner"></div><p>Connecting to PayNow...</p></div>';
+                document.getElementById('paymentStatusArea').innerHTML='<div class="text-center"><div class="spinner"></div><p>Sending payment request to your phone...</p></div>';
                 const ref='MBARE_'+Date.now()+'_'+Math.random().toString(36).substr(2,5);
                 try{
                     const vals=[PAYNOW_INTEGRATION_ID,ref,amount,plan.name+' - Mbare Marketplace',MERCHANT_EMAIL,location.href,location.href,'Message'];
                     const hash=await sha512(vals.join('')+PAYNOW_INTEGRATION_KEY);
-                    const form=document.createElement('form');form.method='POST';form.action='https://www.paynow.co.zw/interface/initiatetransaction';form.target='_blank';
-                    const fields={id:PAYNOW_INTEGRATION_ID,reference:ref,amount:amount,additionalinfo:plan.name+' - Mbare Marketplace',authemail:MERCHANT_EMAIL,resulturl:location.href,returnurl:location.href,status:'Message',hash:hash};
-                    for(const[k,v]of Object.entries(fields)){const i=document.createElement('input');i.type='hidden';i.name=k;i.value=String(v);form.appendChild(i);}
-                    localStorage.setItem('pending_payment',JSON.stringify({reference:ref,planType:planType,amount:amount,phone:phone,timestamp:Date.now()}));
-                    document.body.appendChild(form);form.submit();document.body.removeChild(form);
-                    document.getElementById('paymentStatusArea').innerHTML='<div style="background:#d1ecf1;padding:12px;border-radius:8px;"><strong>&#10003; Payment page opened!</strong><br>Enter your EcoCash PIN on your phone when prompted.<br>After payment, click below to activate.</div><button class="btn-success" id="activateBtn" style="width:100%;margin-top:10px;">&#10003; I Completed Payment - Activate Subscription</button>';
-                    document.getElementById('confirmPayBtn').style.display='none';
-                    document.getElementById('activateBtn').onclick=()=>{activateSubscription(ref,planType,div);};
-                }catch(err){document.getElementById('paymentStatusArea').innerHTML='<div style="background:#f8d7da;padding:12px;border-radius:8px;">Error: '+err.message+'</div>';btn.disabled=false;btn.innerText='&#128179; Pay with EcoCash';}
+                    const fd=new URLSearchParams();
+                    fd.append('id',PAYNOW_INTEGRATION_ID);fd.append('reference',ref);fd.append('amount',amount);
+                    fd.append('additionalinfo',plan.name+' - Mbare Marketplace');fd.append('authemail',MERCHANT_EMAIL);
+                    fd.append('resulturl',location.href);fd.append('returnurl',location.href);fd.append('status','Message');fd.append('hash',hash);
+
+                    const resp=await fetch('https://www.paynow.co.zw/interface/initiatetransaction',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:fd.toString()});
+                    const txt=await resp.text();
+                    console.log('PayNow response:',txt);
+                    const rp=new URLSearchParams(txt);const status=rp.get('status')?.toLowerCase();const pollUrl=rp.get('pollurl');
+
+                    if(status==='ok'&&pollUrl){
+                        document.getElementById('paymentStatusArea').innerHTML='<div style="background:#d1ecf1;padding:12px;border-radius:8px;"><strong>&#128276; Payment request sent!</strong><br>Check your phone and enter your EcoCash PIN to complete payment.<br>Verifying payment...</div><div class="spinner" style="width:32px;height:32px;"></div>';
+                        pollPaymentStatus(pollUrl,ref,planType,div,phone);
+                    }else{throw new Error(rp.get('error')||'Failed to initiate payment');}
+                }catch(err){
+                    console.error('Payment error:',err);
+                    document.getElementById('paymentStatusArea').innerHTML='<div style="background:#f8d7da;padding:12px;border-radius:8px;"><strong>Error:</strong> '+err.message+'<br><small>Please try again.</small></div>';
+                    btn.disabled=false;btn.innerText='&#128179; Pay with EcoCash';
+                }
             };
         }
 
-        async function activateSubscription(ref,planType,modal){
-            const btn=document.getElementById('activateBtn');btn.disabled=true;btn.innerText='Activating...';
-            const pd=JSON.parse(localStorage.getItem('pending_payment')||'{}');
-            try{
-                await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions`,{method:'POST',headers:{'Content-Type':'application/json','apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`,'Prefer':'return=minimal'},body:JSON.stringify({seller_id:String(currentSellerId),plan_type:planType,status:'active',payment_status:'completed',paynow_reference:ref,phone_number:pd.phone||'N/A',auto_renew:true,current_period_start:new Date().toISOString(),current_period_end:new Date(Date.now()+2592000000).toISOString(),created_at:new Date().toISOString()})});
-                currentTier=planType;subscriptionStatus='active';autoRenew=true;subscriptionExpiry=new Date(Date.now()+2592000000).toISOString();localStorage.setItem(`mbare_tier_${currentSellerId}`,currentTier);localStorage.removeItem('pending_payment');await reactivateProducts();renderTiers();enforceProductLimit();updateStatsAndLimits();updateExpiryBanner();updateSubscriptionControls();modal.remove();showSuccess(planType);
-            }catch(e){alert('Error: '+e.message);btn.disabled=false;btn.innerText='&#10003; Activate';}
+        function pollPaymentStatus(pollUrl,ref,planType,modal,phone){
+            let attempts=0;const maxAttempts=60;
+            const interval=setInterval(async()=>{
+                attempts++;
+                try{
+                    const resp=await fetch(pollUrl);const txt=await resp.text();
+                    const rp=new URLSearchParams(txt);const status=rp.get('status')?.toLowerCase();
+                    console.log('Poll status ('+attempts+'):',status);
+                    if(status==='paid'||status==='awaiting delivery'||status==='delivered'){
+                        clearInterval(interval);
+                        document.getElementById('paymentStatusArea').innerHTML='<div style="background:#d4edda;padding:12px;border-radius:8px;"><strong>&#10003; Payment confirmed!</strong><br>Activating your subscription...</div><div class="spinner" style="width:32px;height:32px;"></div>';
+                        await saveSubscriptionToSupabase(ref,planType,phone,status);
+                        currentTier=planType;subscriptionStatus='active';autoRenew=true;subscriptionExpiry=new Date(Date.now()+2592000000).toISOString();
+                        localStorage.setItem(`mbare_tier_${currentSellerId}`,currentTier);localStorage.removeItem('pending_payment');
+                        await reactivateProducts();renderTiers();enforceProductLimit();updateStatsAndLimits();updateExpiryBanner();updateSubscriptionControls();
+                        modal.remove();showSuccess(planType);
+                    }else if(status==='cancelled'||status==='failed'||status==='error'){
+                        clearInterval(interval);
+                        document.getElementById('paymentStatusArea').innerHTML='<div style="background:#f8d7da;padding:12px;border-radius:8px;"><strong>&#10060; Payment '+status+'</strong><br>Please try again.</div>';
+                        document.getElementById('confirmPayBtn').disabled=false;document.getElementById('confirmPayBtn').innerText='&#128179; Pay with EcoCash';
+                        document.getElementById('confirmPayBtn').style.display='block';
+                    }
+                    if(attempts>=maxAttempts){clearInterval(interval);
+                        document.getElementById('paymentStatusArea').innerHTML='<div style="background:#fff3cd;padding:12px;border-radius:8px;"><strong>&#9200; Taking longer than expected</strong><br>Check your phone for PIN prompt. If payment completed, refresh.</div>';
+                        document.getElementById('confirmPayBtn').disabled=false;document.getElementById('confirmPayBtn').innerText='&#128260; Try Again';
+                        document.getElementById('confirmPayBtn').style.display='block';
+                    }
+                }catch(e){console.error('Poll error:',e);}
+            },5000);
+            setTimeout(()=>{clearInterval(interval);},maxAttempts*5000+10000);
         }
+
+        async function saveSubscriptionToSupabase(ref,planType,phone,payStatus){
+            try{
+                await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions`,{method:'POST',headers:{'Content-Type':'application/json','apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`,'Prefer':'return=minimal'},body:JSON.stringify({seller_id:String(currentSellerId),plan_type:planType,status:'active',payment_status:payStatus==='paid'?'completed':'completed',paynow_reference:ref,phone_number:phone,auto_renew:true,current_period_start:new Date().toISOString(),current_period_end:new Date(Date.now()+2592000000).toISOString(),created_at:new Date().toISOString()})});
+            }catch(e){console.error('Save sub error:',e);}
+        }
+
         function showSuccess(pt){const b=document.createElement('div');b.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#28a745;color:white;padding:16px 24px;border-radius:12px;z-index:10000;font-weight:600;';b.innerHTML='&#10003; '+tierMap[pt].name+' activated!';document.body.appendChild(b);setTimeout(()=>b.remove(),5000);}
 
         // ==================== PRODUCTS ====================
@@ -232,7 +262,6 @@
         window.toggleProductForm=function(){const f=document.getElementById('addProductForm'),b=document.getElementById('toggleFormBtn');if(f.style.display==='none'||f.style.display===''){f.style.display='block';b.innerText='Cancel';}else{f.style.display='none';b.innerText='+ Add Product';document.getElementById('productForm').reset();removeImage();document.getElementById('submitProductBtn').innerText='Add Product';document.getElementById('submitProductBtn').removeAttribute('data-editing');}};
         window.handleAddProduct=async function(){const ed=document.getElementById('submitProductBtn').getAttribute('data-editing'),ac=sellerProducts.filter(p=>p.status!=='paused').length;if(!ed&&ac>=getCurrentLimit())return alert('Limit reached.');const t=document.getElementById('prodTitle').value.trim(),pr=parseFloat(document.getElementById('prodPrice').value),st=parseInt(document.getElementById('prodStock').value),cat=document.getElementById('prodCategory').value,desc=document.getElementById('prodDescription').value.trim();let img=document.getElementById('prodImage').value.trim();if(!t||isNaN(pr)||isNaN(st)||!cat)return alert('Fill all fields');const btn=document.getElementById('submitProductBtn');if(selectedImageFile){btn.disabled=true;btn.innerText='Uploading...';try{img=await uploadImageToImgBB(selectedImageFile);}catch(e){alert('Upload failed');btn.disabled=false;btn.innerText=ed?'Update':'Add Product';return;}}if(!img)return alert('Upload image');btn.disabled=true;btn.innerText='Saving...';const pd={title:t,description:desc,price:pr,category:cat,stock:st,image_url:img,status:(subscriptionStatus==='expired'&&ac>=8)?'paused':'active'};try{const sv=await saveProductToSupabase(pd);sellerProducts.unshift({id:sv?.[0]?.id||Date.now().toString(),...pd});}catch(e){sellerProducts.unshift({id:Date.now().toString(),...pd});}saveProductsLocal();renderProducts();updateStatsAndLimits();toggleProductForm();document.getElementById('productForm').reset();removeImage();selectedImageFile=null;btn.disabled=false;btn.innerText='Add Product';btn.removeAttribute('data-editing');};
 
-        // ==================== ANALYTICS ====================
         document.getElementById('analyticsNavBtn').addEventListener('click',()=>{if(currentTier==='free'||subscriptionStatus==='expired'){const div=document.createElement('div');div.className='payment-modal';div.innerHTML='<div class="payment-card" style="text-align:center;"><h3>&#128274; Unlock Analytics</h3><p>Available for paid subscribers.</p><ul style="text-align:left;margin:10px 20px;color:#555;"><li>&#128202; Product performance</li><li>&#128241; WhatsApp tracking</li><li>&#128194; Category trends</li><li>&#128176; Inventory analytics</li></ul><p>Choose a plan:</p><button class="btn-primary up-btn" data-tier="tier_150" style="margin:8px;background:#f90;color:#fff;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;">Merchant Basic - $1.50/mo</button><button class="btn-primary up-btn" data-tier="tier_5" style="margin:8px;background:#ff6b00;color:#fff;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;">Video Ads - $5/mo</button><br><button class="btn-secondary" id="closeAnalyticsModal" style="margin-top:10px;width:100%;">Maybe Later</button></div>';document.body.appendChild(div);document.getElementById('closeAnalyticsModal').onclick=()=>div.remove();div.querySelectorAll('.up-btn').forEach(b=>b.onclick=()=>{div.remove();openPaymentModal(b.dataset.tier);});return;}window.location.href='seller-analytics.html';});
 
         function startExpiryChecker(){if(renewalCheckInterval)clearInterval(renewalCheckInterval);renewalCheckInterval=setInterval(async()=>{if(currentTier==='free'||!subscriptionExpiry)return;if(new Date(subscriptionExpiry)<new Date()&&subscriptionStatus==='active'){handleExpiredSubscription();}},60000);}
