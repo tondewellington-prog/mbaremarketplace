@@ -96,7 +96,7 @@
     <div class="container mt-30">
         <div class="banner"><div><h1>Seller Dashboard</h1><p>Manage products, track sales and subscription</p></div><button id="analyticsNavBtn" class="analytics-btn">Seller Analytics</button></div>
         <div id="expiryBanner" class="expiry-banner info" style="display:none;"></div>
-        <h2 class="mb-20">Subscription Plans <span id="liveBadge" class="badge-live">LIVE</span></h2>
+        <h2 class="mb-20">Subscription Plans <span class="badge-live">LIVE</span></h2>
         <div id="tierContainer" class="grid-3 mb-30"></div>
         <div id="subscriptionControls" class="subscription-controls text-center" style="display:none;"></div>
         <div id="tierMessage" class="limit-warning"></div>
@@ -129,8 +129,7 @@
         const PAYNOW_INTEGRATION_ID = '24522';
         const PAYNOW_INTEGRATION_KEY = '71a4e5e6-5ddf-45ee-b8e9-b9600fb967bf';
         const MERCHANT_EMAIL = 'tondewellington@gmail.com';
-        const CALLBACK_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co/functions/v1/ecocash-callback';
-    const PAYNOW_PROXY = 'https://strain-fairfield-merchants-barcelona.trycloudflare.com'; 
+        const TUNNEL_URL_FILE = 'https://strain-fairfield-merchants-barcelona.trycloudflare.com'; // Update this once
 
         let currentSellerId = null, currentAccessToken = null;
         let currentTier = 'free', subscriptionStatus = 'inactive', subscriptionExpiry = null, autoRenew = true;
@@ -138,8 +137,8 @@
 
         const tierMap = {
             free: { name: 'Starter Plan', price: 'Free', maxProducts: 8, perks: '8 active products', badge: '', level: 0 },
-            tier_150: { name: 'Merchant Basic', price: '$1.50 / month', maxProducts: 50, perks: '50 products priority support', badge: 'POPULAR', level: 1 },
-            tier_5: { name: 'Video Ads Plan', price: '$5 / month', maxProducts: 200, perks: '200 products + video ads on social platforms', badge: 'VIDEO BOOST', level: 2 }
+            tier_150: { name: 'Merchant Basic', price: '$1.50 / month', maxProducts: 50, perks: '50 products', badge: 'POPULAR', level: 1 },
+            tier_5: { name: 'Video Ads Plan', price: '$5 / month', maxProducts: 200, perks: '200 products + video ads', badge: 'VIDEO BOOST', level: 2 }
         };
 
         async function sha512(message){const msgBuffer=new TextEncoder().encode(message);const hashBuffer=await crypto.subtle.digest('SHA-512',msgBuffer);const hashArray=Array.from(new Uint8Array(hashBuffer));return hashArray.map(b=>b.toString(16).padStart(2,'0')).join('').toUpperCase();}
@@ -163,31 +162,38 @@
         function updateSubscriptionControls(){const c=document.getElementById('subscriptionControls');if(currentTier==='free'){c.style.display='none';return;}c.style.display='block';if(subscriptionStatus==='paused'){c.innerHTML='<button class="btn-primary" onclick="resumeSubscription()">Resume Auto-Renewal</button>';}else if(subscriptionStatus==='expired'){c.innerHTML='<button class="btn-primary" onclick="openPaymentModal(\''+currentTier+'\')">Renew Subscription</button>';}else{c.innerHTML='<button class="btn-danger" onclick="pauseSubscription()">Pause Subscription</button><br><small style="color:#666;">Current period remains active until expiry.</small>';}}
         async function updateSubscription(pt){if(currentTier!=='free'&&pt!=='free'&&tierMap[pt].level<tierMap[currentTier].level)return alert('Cannot downgrade.');try{const cr=await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${currentSellerId}&select=id`,{headers:{'apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`}});const ex=cr.ok?await cr.json():[];const sd={seller_id:String(currentSellerId),plan_type:pt,status:pt==='free'?'cancelled':'active',payment_status:pt==='free'?'cancelled':'completed',auto_renew:pt!=='free',current_period_start:new Date().toISOString(),current_period_end:new Date(Date.now()+2592000000).toISOString()};if(ex?.length>0){await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?id=eq.${ex[0].id}`,{method:'PATCH',headers:{'Content-Type':'application/json','apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`,'Prefer':'return=minimal'},body:JSON.stringify(sd)});}else{await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions`,{method:'POST',headers:{'Content-Type':'application/json','apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`,'Prefer':'return=minimal'},body:JSON.stringify({...sd,created_at:new Date().toISOString()})});}}catch(e){}currentTier=pt;subscriptionStatus=pt==='free'?'cancelled':'active';autoRenew=pt!=='free';subscriptionExpiry=pt==='free'?null:new Date(Date.now()+2592000000).toISOString();localStorage.setItem(`mbare_tier_${currentSellerId}`,currentTier);if(pt!=='free')await reactivateProducts();renderTiers();enforceProductLimit();updateStatsAndLimits();updateExpiryBanner();updateSubscriptionControls();}
 
-        // ==================== PAYNOW PAYMENT (DIRECT TO PAYNOW) ====================
+        // ==================== PAYNOW PAYMENT (AUTO-VERIFY - NO BUTTON) ====================
         function openPaymentModal(planType){
             const plan=tierMap[planType];const amount=planType==='tier_150'?'1.50':'5.00';
             const div=document.createElement('div');div.className='payment-modal';
-            div.innerHTML='<div class="payment-card" style="text-align:center;"><h3>'+plan.name+'</h3><p style="font-size:26px;font-weight:800;color:#B12704;">$'+amount+'<span style="font-size:14px;">/month</span></p><p style="color:#666;font-size:13px;">Auto-renews every 30 days</p><div style="margin:20px 0;"><div class="form-group"><label>EcoCash Number *</label><input type="tel" id="ecoPhone" placeholder="0771234567"></div><small style="color:#666;">Enter your EcoCash number to receive PIN prompt</small></div><button class="btn-primary" id="confirmPayBtn" style="width:100%;">&#128179; Pay with EcoCash</button><button class="btn-secondary" id="closePayModal" style="width:100%;margin-top:10px;">Cancel</button><div id="paymentStatusArea" style="margin-top:18px;"></div></div>';
+            div.innerHTML='<div class="payment-card" style="text-align:center;"><h3>'+plan.name+'</h3><p style="font-size:26px;font-weight:800;color:#B12704;">$'+amount+'<span style="font-size:14px;">/month</span></p><p style="color:#666;font-size:13px;">Auto-renews every 30 days</p><div style="margin:20px 0;"><div class="form-group"><label>EcoCash Number *</label><input type="tel" id="ecoPhone" placeholder="0771234567"></div><small style="color:#666;">Enter your EcoCash number to receive PIN prompt</small></div><button class="btn-primary" id="confirmPayBtn" style="width:100%;">Pay with EcoCash</button><button class="btn-secondary" id="closePayModal" style="width:100%;margin-top:10px;">Cancel</button><div id="paymentStatusArea" style="margin-top:18px;"></div></div>';
             document.body.appendChild(div);
             document.getElementById('closePayModal').onclick=()=>div.remove();
             document.getElementById('confirmPayBtn').onclick=async()=>{
                 const phone=document.getElementById('ecoPhone').value.trim();
                 if(!phone.match(/^07[0-9]{8}$/))return alert('Enter valid EcoCash number starting with 07');
-                const btn=document.getElementById('confirmPayBtn');btn.disabled=true;btn.innerText='Opening PayNow...';
-                document.getElementById('paymentStatusArea').innerHTML='<div class="text-center"><div class="spinner"></div><p>Redirecting to PayNow payment page...</p></div>';
+                const btn=document.getElementById('confirmPayBtn');btn.disabled=true;btn.innerText='Processing...';
+                document.getElementById('paymentStatusArea').innerHTML='<div class="text-center"><div class="spinner"></div><p>Sending payment request...</p></div>';
                 const ref='MBARE_'+Date.now()+'_'+Math.random().toString(36).substr(2,5);
                 
                 try{
-                    const vals=[PAYNOW_INTEGRATION_ID,ref,amount,plan.name+' - Mbare Marketplace',MERCHANT_EMAIL,CALLBACK_URL,location.href,'Message'];
+                    const vals=[PAYNOW_INTEGRATION_ID,ref,amount,plan.name+' - Mbare Marketplace',MERCHANT_EMAIL,TUNNEL_URL_FILE+'/callback',location.href,'Message'];
                     const hash=await sha512(vals.join('')+PAYNOW_INTEGRATION_KEY);
                     
-                    // Submit DIRECTLY to PayNow so user lands on PayNow's payment page
+                    // Save pending subscription
+                    await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions`,{
+                        method:'POST',
+                        headers:{'Content-Type':'application/json','apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`,'Prefer':'return=minimal'},
+                        body:JSON.stringify({seller_id:String(currentSellerId),plan_type:planType,status:'pending',payment_status:'pending',paynow_reference:ref,phone_number:phone,auto_renew:true,created_at:new Date().toISOString()})
+                    });
+                    
+                    // Submit via proxy
                     const form=document.createElement('form');
                     form.method='POST';
-                    form.action=PAYNOW_PROXY+'/interface/initiatetransaction';
+                    form.action=TUNNEL_URL_FILE+'/interface/initiatetransaction';
                     form.target='_blank';
                     
-                    const fields={id:PAYNOW_INTEGRATION_ID,reference:ref,amount:amount,additionalinfo:plan.name+' - Mbare Marketplace',authemail:MERCHANT_EMAIL,resulturl:CALLBACK_URL,returnurl:location.href,status:'Message',hash:hash};
+                    const fields={id:PAYNOW_INTEGRATION_ID,reference:ref,amount:amount,additionalinfo:plan.name+' - Mbare Marketplace',authemail:MERCHANT_EMAIL,resulturl:TUNNEL_URL_FILE+'/callback',returnurl:location.href,status:'Message',hash:hash};
                     for(const[k,v]of Object.entries(fields)){const i=document.createElement('input');i.type='hidden';i.name=k;i.value=String(v);form.appendChild(i);}
                     
                     document.body.appendChild(form);
@@ -196,14 +202,11 @@
                     
                     localStorage.setItem('pending_payment',JSON.stringify({reference:ref,planType:planType,amount:amount,phone:phone,timestamp:Date.now()}));
                     
-                    document.getElementById('paymentStatusArea').innerHTML='<div style="background:#d1ecf1;padding:12px;border-radius:8px;"><strong>Payment page opened!</strong><br>Check your phone for EcoCash PIN prompt.<br>Enter your PIN on your phone, then click below.</div><button class="btn-success" id="checkPayBtn" style="width:100%;margin-top:10px;">I\'ve Paid - Activate My Subscription</button>';
+                    document.getElementById('paymentStatusArea').innerHTML='<div style="background:#d1ecf1;padding:12px;border-radius:8px;"><strong>Payment request sent!</strong><br>Check your phone for EcoCash PIN prompt.<br>Verifying payment automatically...</div><div class="spinner" style="width:32px;height:32px;"></div>';
                     document.getElementById('confirmPayBtn').style.display='none';
                     
-                    document.getElementById('checkPayBtn').onclick=()=>{
-                        document.getElementById('checkPayBtn').disabled=true;
-                        document.getElementById('checkPayBtn').innerText='Activating...';
-                        activateSubscriptionDirect(ref,planType,div,phone);
-                    };
+                    // Auto-poll Supabase for payment confirmation
+                    autoCheckPayment(ref,planType,div,phone);
                     
                 }catch(err){
                     document.getElementById('paymentStatusArea').innerHTML='<div style="background:#f8d7da;padding:12px;border-radius:8px;">Error: '+err.message+'</div>';
@@ -212,29 +215,32 @@
             };
         }
 
-        async function activateSubscriptionDirect(ref,planType,modal,phone){
-            try{
-                await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions`,{
-                    method:'POST',
-                    headers:{'Content-Type':'application/json','apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`,'Prefer':'return=minimal'},
-                    body:JSON.stringify({seller_id:String(currentSellerId),plan_type:planType,status:'active',payment_status:'completed',paynow_reference:ref,phone_number:phone,auto_renew:true,current_period_start:new Date().toISOString(),current_period_end:new Date(Date.now()+2592000000).toISOString(),created_at:new Date().toISOString()})
-                });
-                currentTier=planType;subscriptionStatus='active';autoRenew=true;
-                subscriptionExpiry=new Date(Date.now()+2592000000).toISOString();
-                localStorage.setItem(`mbare_tier_${currentSellerId}`,currentTier);
-                localStorage.removeItem('pending_payment');
-                await reactivateProducts();renderTiers();enforceProductLimit();
-                updateStatsAndLimits();updateExpiryBanner();updateSubscriptionControls();
-                modal.remove();
-                const b=document.createElement('div');
-                b.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#28a745;color:white;padding:16px 24px;border-radius:12px;z-index:10000;font-weight:600;';
-                b.innerHTML=tierMap[planType].name+' activated!';
-                document.body.appendChild(b);setTimeout(()=>b.remove(),5000);
-            }catch(e){
-                alert('Error: '+e.message);
-                document.getElementById('checkPayBtn').disabled=false;
-                document.getElementById('checkPayBtn').innerText='I\'ve Paid - Activate My Subscription';
-            }
+        async function autoCheckPayment(ref,planType,modal,phone){
+            let attempts=0;
+            const interval=setInterval(async()=>{
+                attempts++;
+                try{
+                    const resp=await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?paynow_reference=eq.${ref}&select=status`,{headers:{'apikey':window.SUPABASE_ANON_KEY,'Authorization':`Bearer ${currentAccessToken}`}});
+                    const data=await resp.json();
+                    
+                    if(data?.length>0&&data[0].status==='active'){
+                        clearInterval(interval);
+                        currentTier=planType;subscriptionStatus='active';autoRenew=true;
+                        subscriptionExpiry=new Date(Date.now()+2592000000).toISOString();
+                        localStorage.setItem(`mbare_tier_${currentSellerId}`,currentTier);
+                        localStorage.removeItem('pending_payment');
+                        await reactivateProducts();renderTiers();enforceProductLimit();
+                        updateStatsAndLimits();updateExpiryBanner();updateSubscriptionControls();
+                        modal.remove();
+                        const b=document.createElement('div');
+                        b.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#28a745;color:white;padding:16px 24px;border-radius:12px;z-index:10000;font-weight:600;';
+                        b.innerHTML='Payment confirmed! '+tierMap[planType].name+' activated!';
+                        document.body.appendChild(b);setTimeout(()=>b.remove(),5000);
+                    }
+                }catch(e){}
+                if(attempts>=120){clearInterval(interval);} // Stop after 10 minutes
+            },5000);
+            setTimeout(()=>clearInterval(interval),600000);
         }
 
         // ==================== PRODUCTS ====================
