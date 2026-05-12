@@ -130,6 +130,7 @@
         const PAYNOW_INTEGRATION_KEY = '71a4e5e6-5ddf-45ee-b8e9-b9600fb967bf';
         const MERCHANT_EMAIL = 'tondewellington@gmail.com';
         const CALLBACK_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co/functions/v1/ecocash-callback';
+    const PAYNOW_PROXY = 'https://strain-fairfield-merchants-barcelona.trycloudflare.com'; 
 
         let currentSellerId = null, currentAccessToken = null;
         let currentTier = 'free', subscriptionStatus = 'inactive', subscriptionExpiry = null, autoRenew = true;
@@ -183,7 +184,7 @@
                     // Submit DIRECTLY to PayNow so user lands on PayNow's payment page
                     const form=document.createElement('form');
                     form.method='POST';
-                    form.action='https://www.paynow.co.zw/interface/initiatetransaction';
+                    form.action=PAYNOW_PROXY+'/interface/initiatetransaction';
                     form.target='_blank';
                     
                     const fields={id:PAYNOW_INTEGRATION_ID,reference:ref,amount:amount,additionalinfo:plan.name+' - Mbare Marketplace',authemail:MERCHANT_EMAIL,resulturl:CALLBACK_URL,returnurl:location.href,status:'Message',hash:hash};
