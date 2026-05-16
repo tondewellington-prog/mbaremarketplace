@@ -86,9 +86,10 @@
         .subscription-controls { margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2e8f0; }
         .toast-notification { position: fixed; bottom: 20px; right: 20px; background: #28a745; color: white; padding: 16px 24px; border-radius: 12px; z-index: 10001; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.2); animation: slideIn 0.3s ease; }
         .toast-notification.error { background: #dc3545; }
-        .toast-notification.warning { background: #ffc107; color: #333; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        .payment-status-banner { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); z-index: 10002; min-width: 300px; max-width: 500px; text-align: center; }
+        .paynow-button-img { cursor: pointer; transition: transform 0.2s; border-radius: 8px; }
+        .paynow-button-img:hover { transform: scale(1.05); }
+        .auto-redirect-message { font-size: 12px; color: #666; margin-top: 15px; padding: 10px; background: #f0f9ff; border-radius: 8px; }
     </style>
 </head>
 <body>
@@ -132,10 +133,9 @@
         window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
         const IMGBB_API_KEY = '670ea8c38e955ebdfdf84a41489713bf';
         
-        // PayNow Configuration
-        const PAYNOW_INTEGRATION_ID = '24522';  // Your PayNow Integration ID
-        const PAYNOW_INTEGRATION_KEY = '71a4e5e6-5ddf-45ee-b8e9-b9600fb967bf';  // Your PayNow Integration Key
-        const MERCHANT_EMAIL = 'tondewellington@gmail.com';
+        // PayNow Bill Payment Links (Your provided links - NO LOGIN REQUIRED)
+        const PAYNOW_LINK_150 = 'https://www.paynow.co.zw/Payment/BillPaymentLink/?q=aWQ9MjQ2NzImYW1vdW50PTEuNTAmYW1vdW50X3F1YW50aXR5PTAuMDAmbD0x';
+        const PAYNOW_LINK_500 = 'https://www.paynow.co.zw/Payment/BillPaymentLink/?q=aWQ9MjQ2NzkmYW1vdW50PTUuMDAmYW1vdW50X3F1YW50aXR5PTAuMDAmbD0x';
         
         let currentSellerId = null, currentAccessToken = null;
         let currentTier = 'free', subscriptionStatus = 'inactive', subscriptionExpiry = null, autoRenew = true;
@@ -147,259 +147,105 @@
             tier_5: { name: 'Video Ads Plan', price: '$5 / month', maxProducts: 200, perks: '200 products + video ads', badge: 'VIDEO BOOST', level: 2, amount: '5.00' }
         };
 
-        function showToast(message, isError = false, isWarning = false) {
+        function showToast(message, isError = false) {
             const toast = document.createElement('div');
-            if (isError) toast.className = 'toast-notification error';
-            else if (isWarning) toast.className = 'toast-notification warning';
-            else toast.className = 'toast-notification';
+            toast.className = 'toast-notification' + (isError ? ' error' : '');
             toast.innerHTML = message;
             document.body.appendChild(toast);
             setTimeout(() => toast.remove(), 5000);
         }
 
-        // SHA512 function for PayNow hash
-        async function sha512(message) {
-            const msgBuffer = new TextEncoder().encode(message);
-            const hashBuffer = await crypto.subtle.digest('SHA-512', msgBuffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
-        }
-
-        // Initialize PayNow transaction - redirects to PayNow and returns automatically
-        async function initPayNowTransaction(planType) {
-            const plan = tierMap[planType];
-            const amount = plan.amount;
-            const reference = 'MBARE_' + currentSellerId + '_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6).toUpperCase();
-            
-            // Store pending payment info
-            localStorage.setItem('pending_payment', JSON.stringify({
-                planType: planType,
-                amount: amount,
-                reference: reference,
-                timestamp: Date.now()
-            }));
-            
-            // Save pending subscription to Supabase
-            try {
-                await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'apikey': window.SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${currentAccessToken}`,
-                        'Prefer': 'return=minimal'
-                    },
-                    body: JSON.stringify({
-                        seller_id: String(currentSellerId),
-                        plan_type: planType,
-                        status: 'pending',
-                        payment_status: 'pending',
-                        paynow_reference: reference,
-                        auto_renew: true,
-                        created_at: new Date().toISOString()
-                    })
-                });
-            } catch(e) { console.log('Pending save error:', e); }
-            
-            // Get current page URL for return
-            const returnUrl = window.location.href.split('?')[0];
-            
-            // Prepare PayNow hash
-            const hashString = PAYNOW_INTEGRATION_ID + reference + amount + plan.name + ' - Mbare Marketplace' + MERCHANT_EMAIL + returnUrl + returnUrl + 'Payment for ' + plan.name;
-            const hash = await sha512(hashString + PAYNOW_INTEGRATION_KEY);
-            
-            // Create and submit form to PayNow
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = 'https://www.paynow.co.zw/interface/initiatetransaction';
-            form.target = '_self';
-            
-            const fields = {
-                id: PAYNOW_INTEGRATION_ID,
-                reference: reference,
-                amount: amount,
-                additionalinfo: plan.name + ' - Mbare Marketplace',
-                authemail: MERCHANT_EMAIL,
-                resulturl: returnUrl,
-                returnurl: returnUrl,
-                cancelurl: returnUrl,
-                status: 'Payment for ' + plan.name,
-                hash: hash
-            };
-            
-            for (const [key, value] of Object.entries(fields)) {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = key;
-                input.value = String(value);
-                form.appendChild(input);
-            }
-            
-            document.body.appendChild(form);
-            form.submit();
-        }
-
-        // Check payment status on page load (when returning from PayNow)
-        async function checkPaymentStatusOnReturn() {
+        // Check URL parameters for payment status from PayNow redirect
+        function checkPaymentStatusFromURL() {
             const urlParams = new URLSearchParams(window.location.search);
-            const paynowStatus = urlParams.get('status');
-            const paynowReference = urlParams.get('reference');
             
-            // If no PayNow return parameters, check localStorage for pending
-            if (!paynowStatus && !paynowReference) {
-                // Check if we have a pending payment that might have been completed
-                const pending = localStorage.getItem('pending_payment');
-                if (pending) {
-                    const pendingData = JSON.parse(pending);
-                    // If pending is older than 10 minutes, clear it
-                    if (Date.now() - pendingData.timestamp > 600000) {
-                        localStorage.removeItem('pending_payment');
-                    }
-                }
-                return;
-            }
+            // Log all URL parameters for debugging
+            console.log('=== PayNow Redirect Detected ===');
+            console.log('Full URL:', window.location.href);
+            console.log('URL Parameters:', Object.fromEntries(urlParams));
             
-            console.log('PayNow Return - Status:', paynowStatus, 'Reference:', paynowReference);
+            // Check for common PayNow return parameter names
+            const status = urlParams.get('status') || urlParams.get('PaymentStatus') || urlParams.get('result') || urlParams.get('State');
+            const reference = urlParams.get('reference') || urlParams.get('paynow_reference') || urlParams.get('ref') || urlParams.get('transaction');
+            const amount = urlParams.get('amount');
+            const planFromUrl = urlParams.get('plan');
             
-            // Show processing indicator
-            showToast('Processing payment confirmation...', false);
-            
-            // Payment successful
-            if (paynowStatus === 'Ok' || paynowStatus === 'ok' || paynowStatus === 'Paid' || paynowStatus === 'paid') {
-                // Get the pending payment info
-                const pending = localStorage.getItem('pending_payment');
-                let planType = 'tier_150'; // default
-                let amount = '1.50';
+            if (status) {
+                console.log('Payment Status found:', status);
+                console.log('Reference:', reference);
                 
-                if (pending) {
-                    const pendingData = JSON.parse(pending);
-                    planType = pendingData.planType;
-                    amount = pendingData.amount;
-                }
-                
-                // Update subscription in Supabase
-                try {
-                    // Check for existing subscription
-                    const checkResp = await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${currentSellerId}&paynow_reference=eq.${paynowReference}`, {
-                        headers: {
-                            'apikey': window.SUPABASE_ANON_KEY,
-                            'Authorization': `Bearer ${currentAccessToken}`
-                        }
-                    });
-                    const existing = checkResp.ok ? await checkResp.json() : [];
+                // Payment successful - PayNow returns "Ok" or "Paid" or "Success"
+                if (status.toLowerCase() === 'ok' || status.toLowerCase() === 'paid' || status.toLowerCase() === 'success' || status === 'Ok') {
+                    showToast('✅ Payment successful! Activating your subscription...', false);
                     
-                    const subData = {
-                        status: 'active',
-                        payment_status: 'completed',
-                        current_period_start: new Date().toISOString(),
-                        current_period_end: new Date(Date.now() + 2592000000).toISOString()
-                    };
+                    // Determine which plan was paid for
+                    let planType = planFromUrl || localStorage.getItem('pending_payment_plan');
                     
-                    if (existing && existing.length > 0) {
-                        await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?id=eq.${existing[0].id}`, {
-                            method: 'PATCH',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'apikey': window.SUPABASE_ANON_KEY,
-                                'Authorization': `Bearer ${currentAccessToken}`,
-                                'Prefer': 'return=minimal'
-                            },
-                            body: JSON.stringify(subData)
-                        });
-                    } else {
-                        // Create new subscription
-                        await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'apikey': window.SUPABASE_ANON_KEY,
-                                'Authorization': `Bearer ${currentAccessToken}`,
-                                'Prefer': 'return=minimal'
-                            },
-                            body: JSON.stringify({
-                                seller_id: String(currentSellerId),
-                                plan_type: planType,
-                                status: 'active',
-                                payment_status: 'completed',
-                                paynow_reference: paynowReference,
-                                auto_renew: true,
-                                current_period_start: new Date().toISOString(),
-                                current_period_end: new Date(Date.now() + 2592000000).toISOString(),
-                                created_at: new Date().toISOString()
-                            })
-                        });
+                    // If amount is in URL, determine plan by amount
+                    if (amount) {
+                        if (amount === '1.50' || amount === '1.5') planType = 'tier_150';
+                        else if (amount === '5.00' || amount === '5') planType = 'tier_5';
                     }
                     
-                    // Update local state
-                    currentTier = planType;
-                    subscriptionStatus = 'active';
-                    autoRenew = true;
-                    subscriptionExpiry = new Date(Date.now() + 2592000000).toISOString();
-                    localStorage.setItem(`mbare_tier_${currentSellerId}`, currentTier);
-                    localStorage.removeItem('pending_payment');
+                    // Default to tier_150 if still unknown
+                    if (!planType) planType = 'tier_150';
                     
-                    // Reactivate all products
-                    sellerProducts.forEach(p => p.status = 'active');
-                    saveProductsLocal();
+                    // Activate subscription
+                    activateSubscription(planType, reference || 'paynow_' + Date.now());
                     
-                    // Refresh UI
-                    renderTiers();
-                    enforceProductLimit();
-                    updateStatsAndLimits();
-                    updateExpiryBanner();
-                    updateSubscriptionControls();
-                    renderProducts();
-                    
-                    // Show success message
-                    showToast(`✅ PAYMENT SUCCESSFUL! ${tierMap[planType].name} activated. Thank you!`, false);
-                    
-                    // Also show a banner-style notification
-                    const successBanner = document.createElement('div');
-                    successBanner.style.cssText = 'position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#28a745;color:white;padding:15px 30px;border-radius:12px;z-index:10002;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.2);';
-                    successBanner.innerHTML = '🎉 Payment Successful! Your subscription is now active. 🎉';
-                    document.body.appendChild(successBanner);
-                    setTimeout(() => successBanner.remove(), 8000);
-                    
-                } catch (error) {
-                    console.error('Activation error:', error);
-                    showToast('Payment received but activation failed. Please contact support.', true);
+                    // Clean URL (remove query parameters)
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    return true;
                 }
-            } 
-            // Payment cancelled
-            else if (paynowStatus === 'Cancelled' || paynowStatus === 'cancelled') {
-                showToast('❌ Payment was cancelled. No charges were made. You can try again.', true);
-                localStorage.removeItem('pending_payment');
-                
-                // Update pending subscription to cancelled
-                try {
-                    await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?paynow_reference=eq.${paynowReference}`, {
-                        method: 'PATCH',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'apikey': window.SUPABASE_ANON_KEY,
-                            'Authorization': `Bearer ${currentAccessToken}`,
-                            'Prefer': 'return=minimal'
-                        },
-                        body: JSON.stringify({ status: 'cancelled', payment_status: 'failed' })
-                    });
-                } catch(e) {}
-            }
-            // Payment error
-            else {
-                showToast('⚠️ Payment status unknown. Please check if payment was completed.', false, true);
+                // Payment cancelled
+                else if (status.toLowerCase() === 'cancelled' || status.toLowerCase() === 'cancel') {
+                    showToast('❌ Payment was cancelled. No charges were made.', true);
+                    localStorage.removeItem('pending_payment_plan');
+                    
+                    // Clean URL
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    return false;
+                }
+                // Payment error
+                else if (status.toLowerCase() === 'error' || status.toLowerCase() === 'failed') {
+                    showToast('❌ Payment failed. Please try again.', true);
+                    localStorage.removeItem('pending_payment_plan');
+                    
+                    // Clean URL
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    return false;
+                }
             }
             
-            // Clean URL (remove query parameters)
-            window.history.replaceState({}, document.title, window.location.pathname);
+            // If no status parameter but we have a reference, check for pending payment
+            if (reference && !status) {
+                console.log('Reference found without status, checking pending payment...');
+                const pendingPlan = localStorage.getItem('pending_payment_plan');
+                if (pendingPlan) {
+                    // Assume payment was successful if redirected back with reference
+                    showToast('✅ Payment detected! Activating subscription...', false);
+                    activateSubscription(pendingPlan, reference);
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    return true;
+                }
+            }
+            
+            // If no payment parameters, just return
+            return null;
         }
 
-        // Open payment modal (redirects to PayNow directly)
-        function openPaymentModal(planType) {
+        // Open PayNow payment - just opens the link, no confirmation buttons
+        function openPayNowPayment(planType) {
             const plan = tierMap[planType];
+            const paynowLink = planType === 'tier_150' ? PAYNOW_LINK_150 : PAYNOW_LINK_500;
+            
+            // Store pending plan in localStorage so we know which plan to activate on return
+            localStorage.setItem('pending_payment_plan', planType);
+            
             const modalHtml = `
-                <div class="payment-modal" id="paymentModal">
+                <div class="payment-modal" id="paynowModal">
                     <div class="payment-card" style="text-align:center;">
-                        <button style="float:right;background:none;border:none;font-size:24px;cursor:pointer;" onclick="document.getElementById('paymentModal').remove()">&times;</button>
+                        <button style="float:right;background:none;border:none;font-size:24px;cursor:pointer;" onclick="closePaymentModal()">&times;</button>
                         <h3 style="margin-bottom:10px;">${plan.name}</h3>
                         <p style="font-size:26px;font-weight:800;color:#B12704;">$${plan.amount}<span style="font-size:14px;">/month</span></p>
                         <p style="color:#666; margin:10px 0;">${plan.perks}</p>
@@ -407,45 +253,52 @@
                         <div style="margin:20px 0; padding:20px; background:#f0f9ff; border-radius:12px;">
                             <p style="margin-bottom:10px;"><strong>📱 Payment Instructions:</strong></p>
                             <ol style="text-align:left; margin-left:20px; line-height:1.8;">
-                                <li>Click "Pay Now" below</li>
-                                <li>You will be redirected to PayNow</li>
+                                <li>Click the PayNow button below</li>
                                 <li>Enter your EcoCash/InnBucks number</li>
                                 <li>Enter your PIN when prompted on your phone</li>
-                                <li>After payment, you will be automatically redirected back</li>
+                                <li>After payment, you will be redirected back automatically</li>
                             </ol>
                         </div>
                         
                         <div class="paynow-btn-container" style="margin:20px 0;">
-                            <button id="payNowInitiateBtn" class="btn-primary" style="width:100%; padding:14px; font-size:16px;">
-                                💰 Pay $${plan.amount} with EcoCash
-                            </button>
+                            <a href="${paynowLink}" target="_blank" id="paynowRedirectLink">
+                                <img src='https://www.paynow.co.zw/Content/Buttons/Medium_buttons/button_pay-now_medium.png' class="paynow-button-img" />
+                            </a>
                         </div>
                         
-                        <button class="btn-secondary" id="closePayModal" style="width:100%; margin-top:10px; padding:14px;">Cancel</button>
-                        <div id="paymentStatusArea" style="margin-top:15px;"></div>
+                        <div class="auto-redirect-message">
+                            🔄 You will be automatically redirected back after payment
+                        </div>
+                        
+                        <button class="btn-secondary" id="closePayModal" style="width:100%; margin-top:15px; padding:14px;">Cancel</button>
                     </div>
                 </div>
             `;
             
             document.body.insertAdjacentHTML('beforeend', modalHtml);
-            const modal = document.getElementById('paymentModal');
             
-            document.getElementById('payNowInitiateBtn').onclick = async () => {
-                const statusDiv = document.getElementById('paymentStatusArea');
-                statusDiv.innerHTML = '<div class="spinner" style="width:30px;height:30px;"></div><p>Redirecting to PayNow secure payment page...</p>';
-                
-                // Disable button
-                document.getElementById('payNowInitiateBtn').disabled = true;
-                
-                // Initiate PayNow transaction (this will redirect the page)
-                await initPayNowTransaction(planType);
+            window.closePaymentModal = function() {
+                document.getElementById('paynowModal').remove();
+                localStorage.removeItem('pending_payment_plan');
             };
             
-            document.getElementById('closePayModal').onclick = () => modal.remove();
+            document.getElementById('closePayModal').onclick = () => {
+                window.closePaymentModal();
+            };
+            
+            // Open PayNow in new tab when link is clicked
+            const paynowLinkElem = document.getElementById('paynowRedirectLink');
+            paynowLinkElem.onclick = (e) => {
+                e.preventDefault();
+                window.open(paynowLink, '_blank');
+                // Don't close modal - user will be redirected back automatically
+            };
         }
 
         async function activateSubscription(planType, reference) {
             try {
+                const plan = tierMap[planType];
+                
                 const subData = {
                     seller_id: String(currentSellerId),
                     plan_type: planType,
@@ -482,10 +335,13 @@
                 autoRenew = true;
                 subscriptionExpiry = new Date(Date.now() + 2592000000).toISOString();
                 localStorage.setItem(`mbare_tier_${currentSellerId}`, currentTier);
+                localStorage.removeItem('pending_payment_plan');
                 
+                // Reactivate all products
                 sellerProducts.forEach(p => p.status = 'active');
                 saveProductsLocal();
                 
+                // Refresh UI
                 renderTiers();
                 enforceProductLimit();
                 updateStatsAndLimits();
@@ -493,8 +349,18 @@
                 updateSubscriptionControls();
                 renderProducts();
                 
+                showToast(`🎉 SUCCESS! ${plan.name} activated! Thank you for subscribing.`, false);
+                
+                // Show success banner
+                const successBanner = document.createElement('div');
+                successBanner.style.cssText = 'position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#28a745;color:white;padding:15px 30px;border-radius:12px;z-index:10002;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.2);';
+                successBanner.innerHTML = `🎉 ${plan.name} Activated! 🎉`;
+                document.body.appendChild(successBanner);
+                setTimeout(() => successBanner.remove(), 5000);
+                
             } catch (error) {
                 console.error('Activation error:', error);
+                showToast('Activation failed. Please contact support.', true);
             }
         }
 
@@ -503,7 +369,7 @@
                 <div class="payment-modal" id="upgradeModal">
                     <div class="payment-card">
                         <h3 style="margin-bottom:20px; text-align:center;">Choose Your Plan</h3>
-                        <p style="text-align:center; margin-bottom:15px; color:#666; font-size:13px;">Pay via EcoCash - Secure payment with PayNow</p>
+                        <p style="text-align:center; margin-bottom:15px; color:#666; font-size:13px;">Pay via EcoCash - No Login Required!</p>
                         <div style="display:grid; gap:15px;">
                             <div class="tier-card" style="padding:20px; text-align:center;">
                                 <strong>Merchant Basic</strong>
@@ -530,7 +396,7 @@
         
         window.closeModalAndPay = function(planType) {
             document.getElementById('upgradeModal')?.remove();
-            openPaymentModal(planType);
+            openPayNowPayment(planType);
         };
 
         // ==================== REST OF YOUR ORIGINAL FUNCTIONS ====================
@@ -775,7 +641,7 @@
                             updateSubscriptionControls();
                         }
                     } else {
-                        openPaymentModal(t);
+                        openPayNowPayment(t);
                     }
                 });
             });
@@ -941,8 +807,8 @@
         async function init() {
             if (!await checkAuth()) return;
             
-            // FIRST check for payment return status
-            await checkPaymentStatusOnReturn();
+            // First check URL for payment status (PayNow redirect)
+            checkPaymentStatusFromURL();
             
             // Then load subscription and products
             const sub = await fetchSubscription();
