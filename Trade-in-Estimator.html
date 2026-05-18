@@ -340,9 +340,26 @@
                     <label class="form-label">Battery Health Condition</label>
                     <span class="form-hint">Check settings level reported inside the native iOS Battery Health parameter panel.</span>
                     <div class="slider-container">
-                        <div class="slider-header">
-                            <span id="batteryStatusLabel" style="font-size: 14px; font-weight: 500;">Status Level</span>
-                            <span id="batteryPercentBadge" class="slider-value-chip">100%</span>
+                     <div class="slider-container">
+    <div class="slider-header">
+        <span id="batteryStatusLabel" style="font-size: 14px; font-weight: 500;">Status Level</span>
+        <span id="batteryPercentBadge" class="slider-value-chip">100%</span>
+    </div>
+    <input type="range" id="batteryHealth" class="range-slider" min="65" max="100" value="100" oninput="runEvaluationEngine()">
+    
+    <div style="margin-top: 15px; border-top: 1px dashed var(--color-border); padding-top: 12px;">
+        <details style="cursor: pointer; font-size: 13px; color: var(--color-text-muted);">
+            <summary style="font-weight: 600; color: var(--color-primary); outline: none; user-select: none;">
+                Where to find your battery health percentage?
+            </summary>
+            <div style="margin-top: 8px; padding-left: 12px; line-height: 1.4; border-left: 2px solid var(--color-accent);">
+                Open your iPhone and go to: <br>
+                <strong>Settings &#8250; Battery &#8250; Battery Health &amp; Charging</strong> <br>
+                Look for the number next to <strong>Maximum Capacity</strong>.
+            </div>
+        </details>
+    </div>
+</div>
                         </div>
                         <input type="range" id="batteryHealth" class="range-slider" min="65" max="100" value="100" oninput="runEvaluationEngine()">
                     </div>
