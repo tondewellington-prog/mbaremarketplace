@@ -37,8 +37,6 @@
             color: var(--color-text);
             line-height: 1.5;
             -webkit-font-smoothing: antialiased;
-            /* Hide body content until auth validation clears check */
-            display: none;
         }
 
         .container {
@@ -281,7 +279,7 @@
             height: 100%;
             background: rgba(0,0,0,0.7);
             z-index: 9999;
-            display: flex;
+            display: none; /* Controlled dynamically via JS script engine */
             justify-content: center;
             align-items: center;
         }
@@ -357,7 +355,7 @@
 </head>
 <body>
 
-    <div id="loginPromptModal" class="login-prompt-overlay" style="display: none;">
+    <div id="loginPromptModal" class="login-prompt-overlay">
         <div class="login-prompt-box">
             <h2>Login Required</h2>
             <p>You need to be logged in to view product trade-in details.</p>
@@ -542,18 +540,13 @@
     </footer>
 
     <script>
-        (function() {
+        document.addEventListener("DOMContentLoaded", function() {
             const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
             if (!isLoggedIn) {
-                // If unauthenticated, immediately display access screen shield modal
-                document.addEventListener("DOMContentLoaded", function() {
-                    document.getElementById('loginPromptModal').style.display = 'flex';
-                });
-            } else {
-                // If user validation clears successfully, open document frame block layout instantly
-                document.body.style.display = 'block';
+                // Keep the page layout view open, but explicitly prompt with the login box overlay
+                document.getElementById('loginPromptModal').style.display = 'flex';
             }
-        })();
+        });
     </script>
 
     <script>
@@ -596,9 +589,6 @@
 
         // Initialize Selection Dropdowns Matrix View Nodes on Load
         document.addEventListener("DOMContentLoaded", function() {
-            // Short-circuit initializing setup mechanics if verification failed
-            if (localStorage.getItem('isLoggedIn') !== 'true') return;
-
             const selectElement = document.getElementById("deviceModel");
             deviceMatrix.forEach(device => {
                 let opt = document.createElement("option");
