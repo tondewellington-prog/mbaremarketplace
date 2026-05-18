@@ -88,6 +88,33 @@
             gap: 15px;
         }
         
+        /* New Custom Trade-In Estimator Navigation Container */
+        .estimator-link-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .estimator-nav-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background-color: #ffffff;
+            color: #232f3e;
+            border: 1px solid #232f3e;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .estimator-nav-btn:hover {
+            background-color: #232f3e;
+            color: #ffffff;
+            border-color: #232f3e;
+        }
+
         .category-breadcrumb { padding: 12px 0; background: #f8f9fa; font-size: 14px; }
         .category-breadcrumb a { color: #232f3e; text-decoration: none; }
         .category-breadcrumb a:hover { color: #f90; }
@@ -241,12 +268,22 @@
             .contact-btn {
                 width: 100%;
             }
+            .filter-bar .container {
+                gap: 10px;
+            }
+            .estimator-link-container {
+                width: 100%;
+                order: -1; /* Pushes the button to the top on mobile views */
+            }
+            .estimator-nav-btn {
+                width: 100%;
+                justify-content: center;
+            }
         }
     </style>
 </head>
 <body>
 
-    <!-- Seller Contact Modal -->
     <div id="sellerContactModal" class="contact-modal">
         <div class="contact-modal-content">
             <span class="close-contact-modal" onclick="document.getElementById('sellerContactModal').style.display='none'">&times;</span>
@@ -313,6 +350,17 @@
     <div class="filter-bar">
         <div class="container">
             <div class="results-count" id="resultsCount">Loading products...</div>
+            
+            <div class="estimator-link-container">
+                <a href="Trade-in-Estimator.html" class="estimator-nav-btn">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                        <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                    </svg>
+                    iPhone Trade-In Estimator &#8250;
+                </a>
+            </div>
+
             <select id="sortSelect" class="sort-select" onchange="sortProducts()">
                 <option value="newest">Newest First</option>
                 <option value="price_low">Price: Low to High</option>
