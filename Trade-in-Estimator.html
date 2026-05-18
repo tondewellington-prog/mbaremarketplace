@@ -37,6 +37,8 @@
             color: var(--color-text);
             line-height: 1.5;
             -webkit-font-smoothing: antialiased;
+            /* Hide body content until auth validation clears check */
+            display: none;
         }
 
         .container {
@@ -270,27 +272,67 @@
             color: var(--color-primary);
         }
 
-        .submit-btn {
+        /* Authentication Forced Prompt Overlay */
+        .login-prompt-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            background-color: var(--color-accent);
-            color: var(--color-primary);
-            border: none;
-            padding: 16px;
-            font-size: 16px;
-            font-weight: 700;
-            border-radius: 6px;
-            cursor: pointer;
-            margin-top: 25px;
-            display: inline-flex;
-            align-items: center;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 9999;
+            display: flex;
             justify-content: center;
-            gap: 10px;
-            text-decoration: none;
-            transition: background-color 0.2s;
+            align-items: center;
         }
-
-        .submit-btn:hover {
-            background-color: var(--color-accent-hover);
+        
+        .login-prompt-box {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            text-align: center;
+            max-width: 400px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            font-family: var(--font-stack);
+        }
+        
+        .login-prompt-box h2 {
+            margin-bottom: 15px;
+            color: var(--color-primary);
+            font-size: 22px;
+        }
+        
+        .login-prompt-box p {
+            margin-bottom: 25px;
+            color: var(--color-text-muted);
+            font-size: 14px;
+        }
+        
+        .login-prompt-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .login-prompt-btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .login-btn {
+            background: var(--color-accent);
+            color: white;
+        }
+        
+        .cancel-btn {
+            background: var(--color-bg-light);
+            color: var(--color-text-muted);
         }
 
         /* Footer Architecture */
@@ -315,11 +357,22 @@
 </head>
 <body>
 
+    <div id="loginPromptModal" class="login-prompt-overlay" style="display: none;">
+        <div class="login-prompt-box">
+            <h2>Login Required</h2>
+            <p>You need to be logged in to view product trade-in details.</p>
+            <div class="login-prompt-buttons">
+                <a href="login.html" class="login-prompt-btn login-btn">Login</a>
+                <a href="index.html" class="login-prompt-btn cancel-btn">Cancel</a>
+            </div>
+        </div>
+    </div>
+
     <header class="header">
         <div class="header-top">
             <div class="container">
                 <div class="logo">
-                    <a href="#">Mbare Marketplace</a>
+                    <a href="index.html">Mbare Marketplace</a>
                 </div>
             </div>
         </div>
@@ -333,35 +386,31 @@
                     <label class="form-label" for="deviceModel">Select Device Model</label>
                     <span class="form-hint">Choose your current running iPhone variant model hardware baseline.</span>
                     <select id="deviceModel" class="select-input" onchange="runEvaluationEngine()">
-                        </select>
+                    </select>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Battery Health Condition</label>
                     <span class="form-hint">Check settings level reported inside the native iOS Battery Health parameter panel.</span>
                     <div class="slider-container">
-                     <div class="slider-container">
-    <div class="slider-header">
-        <span id="batteryStatusLabel" style="font-size: 14px; font-weight: 500;">Status Level</span>
-        <span id="batteryPercentBadge" class="slider-value-chip">100%</span>
-    </div>
-    <input type="range" id="batteryHealth" class="range-slider" min="65" max="100" value="100" oninput="runEvaluationEngine()">
-    
-    <div style="margin-top: 15px; border-top: 1px dashed var(--color-border); padding-top: 12px;">
-        <details style="cursor: pointer; font-size: 13px; color: var(--color-text-muted);">
-            <summary style="font-weight: 600; color: var(--color-primary); outline: none; user-select: none;">
-                Where to find your battery health percentage?
-            </summary>
-            <div style="margin-top: 8px; padding-left: 12px; line-height: 1.4; border-left: 2px solid var(--color-accent);">
-                Open your iPhone and go to: <br>
-                <strong>Settings &#8250; Battery &#8250; Battery Health &amp; Charging</strong> <br>
-                Look for the number next to <strong>Maximum Capacity</strong>.
-            </div>
-        </details>
-    </div>
-</div>
+                        <div class="slider-header">
+                            <span id="batteryStatusLabel" style="font-size: 14px; font-weight: 500;">Status Level</span>
+                            <span id="batteryPercentBadge" class="slider-value-chip">100%</span>
                         </div>
                         <input type="range" id="batteryHealth" class="range-slider" min="65" max="100" value="100" oninput="runEvaluationEngine()">
+                        
+                        <div style="margin-top: 15px; border-top: 1px dashed var(--color-border); padding-top: 12px;">
+                            <details style="cursor: pointer; font-size: 13px; color: var(--color-text-muted);">
+                                <summary style="font-weight: 600; color: var(--color-primary); outline: none; user-select: none;">
+                                    Where to find your battery health percentage?
+                                </summary>
+                                <div style="margin-top: 8px; padding-left: 12px; line-height: 1.4; border-left: 2px solid var(--color-accent);">
+                                    Open your iPhone and go to: <br>
+                                    <strong>Settings &#8250; Battery &#8250; Battery Health &amp; Charging</strong> <br>
+                                    Look for the number next to <strong>Maximum Capacity</strong>.
+                                </div>
+                            </details>
+                        </div>
                     </div>
                 </div>
 
@@ -493,6 +542,21 @@
     </footer>
 
     <script>
+        (function() {
+            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+            if (!isLoggedIn) {
+                // If unauthenticated, immediately display access screen shield modal
+                document.addEventListener("DOMContentLoaded", function() {
+                    document.getElementById('loginPromptModal').style.display = 'flex';
+                });
+            } else {
+                // If user validation clears successfully, open document frame block layout instantly
+                document.body.style.display = 'block';
+            }
+        })();
+    </script>
+
+    <script>
         // Production Analytical Dataset Matrix Object
         const deviceMatrix = [
             { id: "iphone-11", name: "iPhone 11", maxTradeInValue: 150, screenDeductions: { excellent: 0, scratched: 0, cracked: 35 } },
@@ -532,6 +596,9 @@
 
         // Initialize Selection Dropdowns Matrix View Nodes on Load
         document.addEventListener("DOMContentLoaded", function() {
+            // Short-circuit initializing setup mechanics if verification failed
+            if (localStorage.getItem('isLoggedIn') !== 'true') return;
+
             const selectElement = document.getElementById("deviceModel");
             deviceMatrix.forEach(device => {
                 let opt = document.createElement("option");
@@ -566,6 +633,7 @@
         function runEvaluationEngine() {
             const currentModelId = document.getElementById("deviceModel").value;
             const targetDevice = deviceMatrix.find(d => d.id === currentModelId);
+            if (!targetDevice) return;
             
             // 1. Resolve Current Battery State Multipliers
             const batteryPct = parseInt(document.getElementById("batteryHealth").value, 10);
@@ -629,15 +697,6 @@
             document.getElementById("rowFaceIdDeduction").style.display = faceIdPenalty === 0 ? "none" : "flex";
 
             document.getElementById("summaryFinalTotal").textContent = "$" + finalPWAValue;
-
-            // 6. Build Direct URL Dispatch Link Parameter String
-            const textString = `Hi Mbare Marketplace, I want to trade in my ${targetDevice.name}. ` +
-                               `Condition Check: Battery: ${batteryPct}%, Screen: ${activeSelections.screen}, ` +
-                               `Rear Enclosure: ${activeSelections.backGlass}, Camera: ${activeSelections.camera}, ` +
-                               `Face ID: ${(activeSelections.faceId === 'true' ? 'Working' : 'Fails')}. ` +
-                               `Estimated upfront trade-in value quote is $${finalPWAValue}.`;
-
-           
         }
     </script>
 </body>
