@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Affiliate Program - Mbare Marketplace</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" rel="preload" as="script">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        body {
+            background-color: #EAEDED;
+        }
+        
+        /* Header Styles - Matching your index.html */
+        .header {
+            background-color: #131921;
+            color: white;
+        }
+        
+        .header-top .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .logo a {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-decoration: none;
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .account-menu, .returns, .basket {
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        
+        .basket {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .basket-count {
+            background: #f08804;
+            border-radius: 20px;
+            padding: 0 6px;
+            font-weight: bold;
+        }
+        
+        .nav-menu {
+            background: #232f3e;
+            padding: 8px 0;
+        }
+        
+        .nav-menu .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .nav-item {
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        
+        /* Footer Styles */
+        .footer {
+            margin-top: 50px;
+            background: #232f3e;
+            color: white;
+        }
+        
+        .footer-top {
+            text-align: center;
+            padding: 14px;
+            background: #37475a;
+        }
+        
+        .footer-bottom {
+            background: #131921;
+            text-align: center;
+            padding: 18px;
+            font-size: 0.8rem;
+        }
+        
+        /* Affiliate Specific Styles */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .mt-30 {
+            margin-top: 30px;
+        }
+        
+        .mb-30 {
+            margin-bottom: 30px;
+        }
+        
+        .mb-20 {
+            margin-bottom: 20px;
+        }
+        
+        .bg-white {
+            background: white;
+        }
+        
+        .rounded-xl {
+            border-radius: 20px;
+        }
+        
+        .p-30 {
+            padding: 30px;
+        }
+        
+        .btn-primary {
+            background: #FFD814;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            color: #111;
+            transition: 0.2s;
+        }
+        
+        .btn-primary:hover {
+            background: #F7CA00;
+        }
+        
+        .btn-secondary {
+            background: #e7e9ec;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 10px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .stats-card {
+            background: white;
+            padding: 24px 16px;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        
+        .stats-number {
+            font-size: 34px;
+            font-weight: 800;
+            color: #B12704;
+        }
+        
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+        
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 24px;
+        }
+        
+        .tier-card {
+            background: white;
+            border-radius: 20px;
+            padding: 24px 20px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s;
+        }
+        
+        .tier-highlight {
+            border: 2px solid #f90;
+            background: #fffaf2;
+        }
+        
+        .badge-bronze {
+            background: #cd7f32;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        
+        .badge-silver {
+            background: #c0c0c0;
+            color: #333;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        
+        .badge-gold {
+            background: #ffd700;
+            color: #333;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        
+        .referral-link-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 12px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .referral-link-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+        }
+        
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .leaderboard-table th,
+        .leaderboard-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .leaderboard-table th {
+            background: #f5f5f5;
+            font-weight: 600;
+            color: #232f3e;
+        }
+        
+        .leaderboard-table tr:hover {
+            background: #fafafa;
+        }
+        
+        .rank-1 {
+            background: linear-gradient(135deg, #ffd70020, #ffd70008);
+        }
+        
+        .rank-2 {
+            background: linear-gradient(135deg, #c0c0c020, #c0c0c008);
+        }
+        
+        .rank-3 {
+            background: linear-gradient(135deg, #cd7f3220, #cd7f3208);
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            flex-direction: column;
+        }
+        
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #f90;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Welcome Tour Styles */
+        .tour-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 20000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+        
+        .tour-card {
+            background: white;
+            max-width: 500px;
+            width: 90%;
+            border-radius: 24px;
+            padding: 0;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            animation: slideUp 0.4s ease;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .tour-header {
+            background: linear-gradient(135deg, #232f3e 0%, #131921 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .tour-header h2 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .tour-body {
+            padding: 30px;
+        }
+        
+        .tour-step {
+            display: none;
+        }
+        
+        .tour-step.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .tour-step h3 {
+            color: #232f3e;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        
+        .tour-step p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        
+        .tour-step ul {
+            margin-left: 20px;
+            color: #666;
+            line-height: 1.8;
+        }
+        
+        .tour-progress {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 20px 0;
+        }
+        
+        .tour-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ddd;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        
+        .tour-dot.active {
+            background: #f90;
+            width: 25px;
+            border-radius: 10px;
+        }
+        
+        .tour-buttons {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .tour-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+        
+        .tour-btn-next {
+            background: #f90;
+            color: white;
+        }
+        
+        .tour-btn-skip {
+            background: #e7e9ec;
+            color: #666;
+        }
+        
+        .tour-btn-finish {
+            background: #28a745;
+            color: white;
+        }
+        
+        .commission-rate {
+            font-size: 36px;
+            font-weight: 800;
+            color: #B12704;
+        }
+        
+        .chart-container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        canvas {
+            max-width: 100%;
+            height: auto;
+        }
+        
+        .notification-badge {
+            background: #dc3545;
+            color: white;
+            border-radius: 20px;
+            padding: 2px 8px;
+            font-size: 11px;
+            margin-left: 8px;
+        }
+        
+        @media (max-width: 768px) {
+            .grid-3, .grid-4 {
+                grid-template-columns: 1fr;
+            }
+            
+            .leaderboard-table {
+                font-size: 12px;
+            }
+            
+            .leaderboard-table th,
+            .leaderboard-table td {
+                padding: 8px;
+            }
+            
+            .p-30 {
+                padding: 20px;
+            }
+            
+            .tour-header h2 {
+                font-size: 22px;
+            }
+            
+            .tour-body {
+                padding: 20px;
+            }
+            
+            .referral-link-box {
+                flex-direction: column;
+            }
+            
+            .referral-link-input {
+                width: 100%;
+            }
+        }
+        
+        .copy-success {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #28a745;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            z-index: 10001;
+            font-weight: 500;
+            animation: fadeInOut 2s ease;
+        }
+        
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            85% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(20px); }
+        }
+    </style>
+</head>
+<body>
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <p style="margin-top: 16px; color: #666;">Loading affiliate dashboard...</p>
+    </div>
+    
+    <!-- Welcome Tour Overlay -->
+    <div id="tourOverlay" class="tour-overlay" style="display: none;">
+        <div class="tour-card">
+            <div class="tour-header">
+                <h2>Affiliate Program</h2>
+                <p>Earn commission by referring sellers</p>
+            </div>
+            <div class="tour-body">
+                <div id="tourStep1" class="tour-step active">
+                    <h3> Welcome to Mbare Affiliate Program</h3>
+                    <p>Earn money by inviting sellers to join Mbare Marketplace! When a seller you refer subscribes to a paid plan, you earn commission.</p>
+                    <ul>
+                        <li>20% commission on every referral</li>
+                        <li>Lifetime recurring earnings</li>
+                        <li>Unlock higher tiers with more referrals</li>
+                    </ul>
+                </div>
+                <div id="tourStep2" class="tour-step">
+                    <h3> How It Works</h3>
+                    <ul>
+                        <li>Share your unique referral link</li>
+                        <li>Sellers click your link and sign up</li>
+                        <li>When they subscribe, you earn commission</li>
+                        <li>Earnings are paid monthly via PayNow</li>
+                    </ul>
+                </div>
+                <div id="tourStep3" class="tour-step">
+                    <h3> Affiliate Tiers</h3>
+                    <ul>
+                        <li><strong>Bronze:</strong> 100-500 referrals - 20% commission</li>
+                        <li><strong>Silver:</strong> 501-1000 referrals + 10 x $5 tier - 25% commission</li>
+                        <li><strong>Gold:</strong> 1000+ referrals + 100 x $5 tier - 30% commission</li>
+                    </ul>
+                </div>
+                <div id="tourStep4" class="tour-step">
+                    <h3> Leaderboard &amp; Rewards</h3>
+                    <p>Top affiliates are featured on our leaderboard. Higher tiers unlock better commission rates and exclusive bonuses.</p>
+                    <p>Track your performance, clicks, and earnings in real-time.</p>
+                </div>
+                
+                <div class="tour-progress" id="tourProgress">
+                    <span class="tour-dot active" data-step="0"></span>
+                    <span class="tour-dot" data-step="1"></span>
+                    <span class="tour-dot" data-step="2"></span>
+                    <span class="tour-dot" data-step="3"></span>
+                </div>
+                
+                <div class="tour-buttons">
+                    <button class="tour-btn tour-btn-skip" id="tourSkipBtn">Skip Tour</button>
+                    <button class="tour-btn tour-btn-next" id="tourNextBtn">Next</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <header class="header">
+        <div class="header-top">
+            <div class="container">
+                <div class="logo">
+                    <a href="index.html">Mbare Marketplace</a>
+                </div>
+                <div class="header-right">
+                    <div class="account-menu" id="accountMenu">
+                        <span class="account-label">Hello, Affiliate</span>
+                    </div>
+                    <div class="returns">Returns &amp; Orders</div>
+                    <a href="Basket.html" class="basket">Basket<span class="basket-count">0</span></a>
+                </div>
+            </div>
+        </div>
+        <nav class="nav-menu">
+            <div class="container">
+                <a href="index.html" class="nav-item">Home</a>
+                <a href="seller-register.html" class="nav-item">Become a Seller</a>
+                <a href="analytics.html" class="nav-item">Analytics</a>
+                <a href="#" class="nav-item">Help</a>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container mt-30">
+        <!-- Stats Overview -->
+        <div class="grid-4 mb-30">
+            <div class="stats-card">
+                <div class="stats-number" id="totalClicks">0</div>
+                <div>Total Clicks</div>
+                <small style="color: #666;">on your referral links</small>
+            </div>
+            <div class="stats-card">
+                <div class="stats-number" id="totalReferrals">0</div>
+                <div>Successful Referrals</div>
+                <small style="color: #666;">sellers who subscribed</small>
+            </div>
+            <div class="stats-card">
+                <div class="stats-number" id="totalEarnings">$0</div>
+                <div>Total Earnings</div>
+                <small style="color: #666;">lifetime commission</small>
+            </div>
+            <div class="stats-card">
+                <div class="stats-number" id="unpaidEarnings">$0</div>
+                <div>Unpaid Earnings</div>
+                <small style="color: #666;">ready for payout</small>
+            </div>
+        </div>
+
+        <!-- Affiliate Tier Info -->
+        <div class="bg-white rounded-xl p-30 mb-30">
+            <h2 class="mb-20">Your Affiliate Tier</h2>
+            <div class="grid-3" id="tierContainer"></div>
+        </div>
+
+        <!-- Referral Link -->
+        <div class="bg-white rounded-xl p-30 mb-30">
+            <h2 class="mb-20">Your Referral Link</h2>
+            <div class="referral-link-box">
+                <input type="text" id="referralLink" class="referral-link-input" readonly>
+                <button class="btn-primary" onclick="copyReferralLink()">Copy Link</button>
+            </div>
+            <p class="mt-20" style="color: #666; font-size: 13px;">
+                Share this link with potential sellers. When they sign up and subscribe to a paid plan, you earn commission!
+            </p>
+        </div>
+
+        <!-- Performance Charts -->
+        <div class="grid-2" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 24px; margin-bottom: 30px;">
+            <div class="bg-white rounded-xl p-30">
+                <h3 class="mb-20">Clicks vs Conversions</h3>
+                <div class="chart-container">
+                    <canvas id="clicksChart" width="400" height="300"></canvas>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl p-30">
+                <h3 class="mb-20">Earnings Breakdown</h3>
+                <div class="chart-container">
+                    <canvas id="earningsChart" width="400" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Referrals -->
+        <div class="bg-white rounded-xl p-30 mb-30">
+            <h2 class="mb-20">Recent Referrals</h2>
+            <div style="overflow-x: auto;">
+                <table class="leaderboard-table">
+                    <thead>
+                        <tr><th>Date</th><th>Referred Seller</th><th>Plan</th><th>Commission</th><th>Status</th></tr>
+                    </thead>
+                    <tbody id="recentReferrals"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Leaderboard -->
+        <div class="bg-white rounded-xl p-30 mb-30">
+            <h2 class="mb-20">Affiliate Leaderboard</h2>
+            <p style="color: #666; margin-bottom: 20px; font-size: 13px;">Top affiliates based on successful referrals</p>
+            <div style="overflow-x: auto;">
+                <table class="leaderboard-table">
+                    <thead>
+                        <tr><th>Rank</th><th>Affiliate Code</th><th>Tier</th><th>Referrals</th><th>Total Earnings</th><th>Clicks (30d)</th><th>Conv. Rate</th></tr>
+                    </thead>
+                    <tbody id="leaderboardBody"></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Payout Info -->
+        <div class="bg-white rounded-xl p-30 mb-30">
+            <h2 class="mb-20">Payout Information</h2>
+            <p style="color: #666; margin-bottom: 15px;">Payouts are processed monthly via PayNow. Minimum payout threshold is $10.</p>
+            <div class="grid-3">
+                <div class="stats-card">
+                    <div class="stats-number" id="pendingPayout">$0</div>
+                    <div>Pending Payout</div>
+                </div>
+                <div class="stats-card">
+                    <div class="stats-number" id="nextPayoutDate">-</div>
+                    <div>Next Payout Date</div>
+                </div>
+                <div class="stats-card">
+                    <div class="stats-number" id="totalPaid">$0</div>
+                    <div>Total Paid</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-top">
+            <a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="color:white;">Back to top</a>
+        </div>
+        <div class="footer-bottom">
+            <div class="container">
+                &copy; 2026 Mbare Marketplace - Affiliate Program
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        // Supabase Configuration
+        window.SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
+        window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
+        
+        let currentAffiliateId = null;
+        let currentSellerId = null;
+        let currentAccessToken = null;
+        let clicksChart = null;
+        let earningsChart = null;
+        
+        // Tier definitions
+        const tiers = {
+            bronze: { 
+                name: 'Bronze', 
+                commission: '20%', 
+                requirements: '100-500 referrals',
+                badge: 'badge-bronze',
+                minReferrals: 100,
+                maxReferrals: 500,
+                minFiveTier: 0,
+                color: '#cd7f32'
+            },
+            silver: { 
+                name: 'Silver', 
+                commission: '25%', 
+                requirements: '501-1000 referrals + 10 x $5 tier',
+                badge: 'badge-silver',
+                minReferrals: 501,
+                maxReferrals: 1000,
+                minFiveTier: 10,
+                color: '#c0c0c0'
+            },
+            gold: { 
+                name: 'Gold', 
+                commission: '30%', 
+                requirements: '1000+ referrals + 100 x $5 tier',
+                badge: 'badge-gold',
+                minReferrals: 1001,
+                maxReferrals: Infinity,
+                minFiveTier: 100,
+                color: '#ffd700'
+            }
+        };
+        
+        // Check authentication
+        async function checkAuth() {
+            const sessionData = localStorage.getItem('supabase_session');
+            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+            
+            if (!isLoggedIn || !sessionData) {
+                // Not logged in, redirect to login
+                window.location.href = 'login.html?redirect=affiliates.html';
+                return false;
+            }
+            
+            try {
+                const session = JSON.parse(sessionData);
+                currentSellerId = session.user?.id;
+                currentAccessToken = session.access_token;
+                
+                if (!currentSellerId) throw new Error('No seller ID');
+                
+                // Check if seller is already an affiliate, if not create affiliate record
+                await ensureAffiliateRecord();
+                
+                document.querySelector('.account-label').textContent = `Hello, ${session.user?.email?.split('@')[0] || 'Affiliate'}`;
+                return true;
+            } catch (e) {
+                console.error('Auth error:', e);
+                window.location.href = 'login.html?redirect=affiliates.html';
+                return false;
+            }
+        }
+        
+        // Ensure affiliate record exists
+        async function ensureAffiliateRecord() {
+            try {
+                const response = await fetch(`${window.SUPABASE_URL}/rest/v1/affiliates?seller_id=eq.${currentSellerId}&select=*`, {
+                    headers: {
+                        'apikey': window.SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${currentAccessToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (!data || data.length === 0) {
+                    // Create new affiliate record
+                    const affiliateCode = 'AFF_' + currentSellerId.substring(0, 8) + '_' + Math.random().toString(36).substr(2, 6).toUpperCase();
+                    
+                    const createResponse = await fetch(`${window.SUPABASE_URL}/rest/v1/affiliates`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': window.SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${currentAccessToken}`,
+                            'Prefer': 'return=representation'
+                        },
+                        body: JSON.stringify({
+                            seller_id: currentSellerId,
+                            affiliate_code: affiliateCode,
+                            tier: 'bronze',
+                            total_referrals: 0,
+                            total_earnings: 0,
+                            unpaid_earnings: 0,
+                            paid_earnings: 0,
+                            status: 'active',
+                            joined_date: new Date().toISOString()
+                        })
+                    });
+                    
+                    const newAffiliate = await createResponse.json();
+                    currentAffiliateId = newAffiliate[0]?.id;
+                } else {
+                    currentAffiliateId = data[0].id;
+                }
+                
+                return currentAffiliateId;
+            } catch (e) {
+                console.error('Error ensuring affiliate record:', e);
+                return null;
+            }
+        }
+        
+        // Get affiliate data
+        async function getAffiliateData() {
+            try {
+                const response = await fetch(`${window.SUPABASE_URL}/rest/v1/affiliates?seller_id=eq.${currentSellerId}&select=*`, {
+                    headers: {
+                        'apikey': window.SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${currentAccessToken}`
+                    }
+                });
+                const data = await response.json();
+                return data[0] || null;
+            } catch (e) {
+                console.error('Error fetching affiliate data:', e);
+                return null;
+            }
+        }
+        
+        // Get referral stats
+        async function getReferralStats() {
+            try {
+                const response = await fetch(`${window.SUPABASE_URL}/rest/v1/referrals?affiliate_id=eq.${currentAffiliateId}&select=*`, {
+                    headers: {
+                        'apikey': window.SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${currentAccessToken}`
+                    }
+                });
+                const data = await response.json();
+                
+                const completed = data.filter(r => r.status === 'completed');
+                const pending = data.filter(r => r.status === 'pending');
+                const fiveTierCount = completed.filter(r => r.referred_plan === 'tier_5').length;
+                const oneFiftyTierCount = completed.filter(r => r.referred_plan === 'tier_150').length;
+                
+                return {
+                    totalReferrals: data.length,
+                    completedReferrals: completed.length,
+                    pendingReferrals: pending.length,
+                    fiveTierCount: fiveTierCount,
+                    oneFiftyTierCount: oneFiftyTierCount,
+                    totalEarnings: completed.reduce((sum, r) => sum + (r.commission_earned || 0), 0),
+                    allReferrals: data
+                };
+            } catch (e) {
+                console.error('Error fetching referral stats:', e);
+                return { totalReferrals: 0, completedReferrals: 0, pendingReferrals: 0, fiveTierCount: 0, oneFiftyTierCount: 0, totalEarnings: 0, allReferrals: [] };
+            }
+        }
+        
+        // Get click stats
+        async function getClickStats() {
+            try {
+                const response = await fetch(`${window.SUPABASE_URL}/rest/v1/affiliate_clicks?affiliate_id=eq.${currentAffiliateId}&select=*`, {
+                    headers: {
+                        'apikey': window.SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${currentAccessToken}`
+                    }
+                });
+                const data = await response.json();
+                
+                const totalClicks = data.length;
+                const convertedClicks = data.filter(c => c.converted === true).length;
+                
+                // Last 30 days clicks
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                const recentClicks = data.filter(c => new Date(c.click_date) > thirtyDaysAgo).length;
+                
+                return {
+                    totalClicks: totalClicks,
+                    convertedClicks: convertedClicks,
+                    recentClicks: recentClicks,
+                    conversionRate: totalClicks > 0 ? ((convertedClicks / totalClicks) * 100).toFixed(1) : 0,
+                    allClicks: data
+                };
+            } catch (e) {
+                console.error('Error fetching click stats:', e);
+                return { totalClicks: 0, convertedClicks: 0, recentClicks: 0, conversionRate: 0, allClicks: [] };
+            }
+        }
+        
+        // Get earnings data
+        async function getEarningsData() {
+            try {
+                const response = await fetch(`${window.SUPABASE_URL}/rest/v1/affiliate_earnings?affiliate_id=eq.${currentAffiliateId}&select=*`, {
+                    headers: {
+                        'apikey': window.SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${currentAccessToken}`
+                    }
+                });
+                const data = await response.json();
+                
+                const pending = data.filter(e => e.status === 'pending').reduce((sum, e) => sum + e.amount, 0);
+                const paid = data.filter(e => e.status === 'paid').reduce((sum, e) => sum + e.amount, 0);
+                const total = pending + paid;
+                
+                return {
+                    pending: pending,
+                    paid: paid,
+                    total: total,
+                    allEarnings: data
+                };
+            } catch (e) {
+                console.error('Error fetching earnings:', e);
+                return { pending: 0, paid: 0, total: 0, allEarnings: [] };
+            }
+        }
+        
+        // Get leaderboard data
+        async function getLeaderboardData() {
+            try {
+                const response = await fetch(`${window.SUPABASE_URL}/rest/v1/affiliate_leaderboard?limit=20`, {
+                    headers: {
+                        'apikey': window.SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${currentAccessToken}`
+                    }
+                });
+                const data = await response.json();
+                return data;
+            } catch (e) {
+                console.error('Error fetching leaderboard:', e);
+                return [];
+            }
+        }
+        
+        // Calculate tier based on referrals and $5 tier count
+        function calculateTier(totalReferrals, fiveTierCount) {
+            if (totalReferrals >= tiers.gold.minReferrals && fiveTierCount >= tiers.gold.minFiveTier) {
+                return 'gold';
+            } else if (totalReferrals >= tiers.silver.minReferrals && totalReferrals <= tiers.silver.maxReferrals && fiveTierCount >= tiers.silver.minFiveTier) {
+                return 'silver';
+            } else {
+                return 'bronze';
+            }
+        }
+        
+        // Update affiliate tier
+        async function updateAffiliateTier(tier) {
+            try {
+                await fetch(`${window.SUPABASE_URL}/rest/v1/affiliates?id=eq.${currentAffiliateId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': window.SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${currentAccessToken}`,
+                        'Prefer': 'return=minimal'
+                    },
+                    body: JSON.stringify({ tier: tier })
+                });
+            } catch (e) {
+                console.error('Error updating tier:', e);
+            }
+        }
+        
+        // Render affiliate tiers display
+        function renderTiers(currentTier, referralStats) {
+            const container = document.getElementById('tierContainer');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            for (const [key, tier] of Object.entries(tiers)) {
+                const isCurrent = currentTier === key;
+                const requirementsMet = key === 'bronze' ? true : 
+                    (key === 'silver' ? 
+                        (referralStats.completedReferrals >= tier.minReferrals && referralStats.fiveTierCount >= tier.minFiveTier) :
+                        (referralStats.completedReferrals >= tier.minReferrals && referralStats.fiveTierCount >= tier.minFiveTier));
+                
+                container.innerHTML += `
+                    <div class="tier-card ${isCurrent ? 'tier-highlight' : ''}">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <strong style="font-size: 1.2rem;">${tier.name}</strong>
+                            <span class="${tier.badge}">${tier.commission} Commission</span>
+                        </div>
+                        <div style="font-size: 14px; color: #666; margin: 10px 0;">Requirements: ${tier.requirements}</div>
+                        <div style="font-size: 12px; background: #f4f5f7; padding: 8px; border-radius: 30px;">
+                            Your progress: ${referralStats.completedReferrals} referrals | ${referralStats.fiveTierCount} x $5 tiers
+                        </div>
+                        ${isCurrent ? '<div style="margin-top: 15px; color: #f90; font-weight: 600;">Current Tier</div>' : 
+                          (requirementsMet ? '<div style="margin-top: 15px; color: #28a745; font-weight: 600;">Requirements Met - Upgrade Available</div>' : '')}
+                    </div>
+                `;
+            }
+        }
+        
+        // Update dashboard stats
+        async function updateDashboard() {
+            const affiliate = await getAffiliateData();
+            const referralStats = await getReferralStats();
+            const clickStats = await getClickStats();
+            const earnings = await getEarningsData();
+            
+            // Calculate current tier
+            const currentTierName = affiliate?.tier || 'bronze';
+            const calculatedTier = calculateTier(referralStats.completedReferrals, referralStats.fiveTierCount);
+            
+            // Update tier if needed
+            if (calculatedTier !== currentTierName) {
+                await updateAffiliateTier(calculatedTier);
+            }
+            
+            // Update UI
+            document.getElementById('totalClicks').innerText = clickStats.totalClicks;
+            document.getElementById('totalReferrals').innerText = referralStats.completedReferrals;
+            document.getElementById('totalEarnings').innerHTML = `$${earnings.total.toFixed(2)}`;
+            document.getElementById('unpaidEarnings').innerHTML = `$${earnings.pending.toFixed(2)}`;
+            document.getElementById('pendingPayout').innerHTML = `$${earnings.pending.toFixed(2)}`;
+            document.getElementById('totalPaid').innerHTML = `$${earnings.paid.toFixed(2)}`;
+            
+            // Next payout date (1st of next month)
+            const nextMonth = new Date();
+            nextMonth.setMonth(nextMonth.getMonth() + 1);
+            nextMonth.setDate(1);
+            document.getElementById('nextPayoutDate').innerText = nextMonth.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            
+            // Set referral link
+            const domain = window.location.origin;
+            const affiliateCode = affiliate?.affiliate_code || 'AFF_' + currentSellerId?.substring(0, 8);
+            document.getElementById('referralLink').value = `${domain}/seller-register.html?ref=${affiliateCode}`;
+            
+            // Render tiers
+            renderTiers(calculatedTier, referralStats);
+            
+            // Render recent referrals
+            const recentReferralsBody = document.getElementById('recentReferrals');
+            const recentReferrals = referralStats.allReferrals.slice(0, 10);
+            recentReferralsBody.innerHTML = recentReferrals.map(r => `
+                <tr>
+                    <td>${new Date(r.referral_date).toLocaleDateString()}</td>
+                    <td>${r.referred_email || 'Anonymous'}</td>
+                    <td>${r.referred_plan === 'tier_5' ? '$5 Plan' : '$1.50 Plan'}</td>
+                    <td>$${(r.commission_earned || 0).toFixed(2)}</td>
+                    <td><span style="color: ${r.status === 'completed' ? '#28a745' : '#f90'}">${r.status}</span></td>
+                </tr>
+            `).join('');
+            
+            if (recentReferrals.length === 0) {
+                recentReferralsBody.innerHTML = '<tr><td colspan="5" class="text-center">No referrals yet</td></tr>';
+            }
+            
+            // Update charts
+            updateCharts(clickStats, earnings);
+            
+            // Load leaderboard
+            await loadLeaderboard();
+        }
+        
+        // Update charts
+        async function updateCharts(clickStats, earnings) {
+            const ctx1 = document.getElementById('clicksChart')?.getContext('2d');
+            const ctx2 = document.getElementById('earningsChart')?.getContext('2d');
+            
+            if (!ctx1 || !ctx2) return;
+            
+            // Destroy existing charts
+            if (clicksChart) clicksChart.destroy();
+            if (earningsChart) earningsChart.destroy();
+            
+            // Clicks vs Conversions chart
+            clicksChart = new Chart(ctx1, {
+                type: 'pie',
+                data: {
+                    labels: ['Clicks (Not Converted)', 'Converted to Referrals'],
+                    datasets: [{
+                        data: [clickStats.totalClicks - clickStats.convertedClicks, clickStats.convertedClicks],
+                        backgroundColor: ['#e7e9ec', '#28a745'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+            
+            // Earnings breakdown chart
+            earningsChart = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Paid Out', 'Pending Payout'],
+                    datasets: [{
+                        data: [earnings.paid, earnings.pending],
+                        backgroundColor: ['#28a745', '#f90'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Load leaderboard
+        async function loadLeaderboard() {
+            const leaderboard = await getLeaderboardData();
+            const leaderboardBody = document.getElementById('leaderboardBody');
+            
+            if (!leaderboard || leaderboard.length === 0) {
+                leaderboardBody.innerHTML = '<tr><td colspan="7" class="text-center">No affiliates yet</td></tr>';
+                return;
+            }
+            
+            leaderboardBody.innerHTML = leaderboard.map((aff, index) => {
+                let rankClass = '';
+                if (index === 0) rankClass = 'rank-1';
+                else if (index === 1) rankClass = 'rank-2';
+                else if (index === 2) rankClass = 'rank-3';
+                
+                const convRate = aff.last_30_days_clicks > 0 ? ((aff.last_30_days_conversions / aff.last_30_days_clicks) * 100).toFixed(1) : 0;
+                
+                return `
+                    <tr class="${rankClass}">
+                        <td><strong>${index + 1}</strong></td>
+                        <td>${aff.affiliate_code || 'N/A'}</td>
+                        <td><span class="${tiers[aff.tier]?.badge || 'badge-bronze'}">${aff.tier || 'Bronze'}</span></td>
+                        <td>${aff.total_referrals || 0}</td>
+                        <td>$${(aff.total_earnings || 0).toFixed(2)}</td>
+                        <td>${aff.last_30_days_clicks || 0}</td>
+                        <td>${convRate}%</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        // Copy referral link
+        window.copyReferralLink = function() {
+            const linkInput = document.getElementById('referralLink');
+            linkInput.select();
+            document.execCommand('copy');
+            
+            // Show success message
+            const successMsg = document.createElement('div');
+            successMsg.className = 'copy-success';
+            successMsg.innerHTML = 'Referral link copied to clipboard';
+            document.body.appendChild(successMsg);
+            setTimeout(() => successMsg.remove(), 2000);
+        };
+        
+        // Track click when someone uses referral link
+        async function trackReferralClick(affiliateCode, referrerUrl) {
+            try {
+                // Get affiliate ID from code
+                const response = await fetch(`${window.SUPABASE_URL}/rest/v1/affiliates?affiliate_code=eq.${affiliateCode}&select=id`, {
+                    headers: {
+                        'apikey': window.SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}`
+                    }
+                });
+                const data = await response.json();
+                
+                if (data && data.length > 0) {
+                    await fetch(`${window.SUPABASE_URL}/rest/v1/affiliate_clicks`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': window.SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}`,
+                            'Prefer': 'return=minimal'
+                        },
+                        body: JSON.stringify({
+                            affiliate_id: data[0].id,
+                            affiliate_code: affiliateCode,
+                            ip_address: '',
+                            user_agent: navigator.userAgent,
+                            referrer_url: referrerUrl,
+                            converted: false,
+                            click_date: new Date().toISOString()
+                        })
+                    });
+                }
+            } catch (e) {
+                console.error('Error tracking click:', e);
+            }
+        }
+        
+        // Check URL for referral parameter
+        function checkForReferral() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const refCode = urlParams.get('ref');
+            
+            if (refCode && !localStorage.getItem('affiliate_click_tracked_' + refCode)) {
+                trackReferralClick(refCode, document.referrer);
+                localStorage.setItem('affiliate_click_tracked_' + refCode, 'true');
+            }
+        }
+        
+        // Welcome Tour functions
+        let currentStep = 0;
+        const totalSteps = 4;
+        
+        function showWelcomeTour() {
+            const tourShown = localStorage.getItem('affiliate_tour_shown');
+            if (!tourShown) {
+                document.getElementById('tourOverlay').style.display = 'flex';
+            }
+        }
+        
+        function updateTourSteps() {
+            for (let i = 0; i < totalSteps; i++) {
+                const step = document.getElementById(`tourStep${i + 1}`);
+                if (step) {
+                    if (i === currentStep) {
+                        step.classList.add('active');
+                    } else {
+                        step.classList.remove('active');
+                    }
+                }
+            }
+            
+            const dots = document.querySelectorAll('.tour-dot');
+            dots.forEach((dot, idx) => {
+                if (idx === currentStep) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+            
+            const nextBtn = document.getElementById('tourNextBtn');
+            if (currentStep === totalSteps - 1) {
+                nextBtn.textContent = 'Finish';
+                nextBtn.classList.add('tour-btn-finish');
+                nextBtn.classList.remove('tour-btn-next');
+            } else {
+                nextBtn.textContent = 'Next';
+                nextBtn.classList.remove('tour-btn-finish');
+                nextBtn.classList.add('tour-btn-next');
+            }
+        }
+        
+        function nextTourStep() {
+            if (currentStep < totalSteps - 1) {
+                currentStep++;
+                updateTourSteps();
+            } else {
+                closeTour();
+            }
+        }
+        
+        function closeTour() {
+            document.getElementById('tourOverlay').style.display = 'none';
+            localStorage.setItem('affiliate_tour_shown', 'true');
+        }
+        
+        function skipTour() {
+            closeTour();
+        }
+        
+        // Initialize page
+        async function init() {
+            if (!await checkAuth()) return;
+            
+            await updateDashboard();
+            checkForReferral();
+            showWelcomeTour();
+            
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+        
+        // Event listeners for tour
+        document.getElementById('tourNextBtn')?.addEventListener('click', nextTourStep);
+        document.getElementById('tourSkipBtn')?.addEventListener('click', skipTour);
+        
+        // Add dot click handlers
+        document.querySelectorAll('.tour-dot').forEach((dot, idx) => {
+            dot.addEventListener('click', () => {
+                currentStep = idx;
+                updateTourSteps();
+            });
+        });
+        
+        // Start
+        init();
+    </script>
+</body>
+</html>
