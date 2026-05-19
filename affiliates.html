@@ -7,6 +7,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js - using stable version -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
     <style>
         * {
             margin: 0;
@@ -185,6 +187,12 @@
         .grid-4 {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 24px;
+        }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
             gap: 24px;
         }
         
@@ -454,11 +462,13 @@
         .chart-container {
             max-width: 400px;
             margin: 0 auto;
+            position: relative;
+            height: 300px;
         }
         
         canvas {
             max-width: 100%;
-            height: auto;
+            max-height: 100%;
         }
         
         .copy-success {
@@ -492,7 +502,7 @@
         }
         
         @media (max-width: 768px) {
-            .grid-3, .grid-4 {
+            .grid-3, .grid-4, .grid-2 {
                 grid-template-columns: 1fr;
             }
             .leaderboard-table {
@@ -510,6 +520,9 @@
             }
             .referral-link-input {
                 width: 100%;
+            }
+            .chart-container {
+                height: 250px;
             }
         }
     </style>
@@ -645,6 +658,22 @@
             </p>
         </div>
 
+        <!-- Performance Charts -->
+        <div class="grid-2 mb-30">
+            <div class="bg-white rounded-xl p-30">
+                <h3 class="mb-20 text-center">Clicks vs Conversions</h3>
+                <div class="chart-container">
+                    <canvas id="clicksChart" width="400" height="300"></canvas>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl p-30">
+                <h3 class="mb-20 text-center">Earnings Breakdown</h3>
+                <div class="chart-container">
+                    <canvas id="earningsChart" width="400" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
         <!-- Recent Referrals -->
         <div class="bg-white rounded-xl p-30 mb-30">
             <h2 class="mb-20">Recent Referrals</h2>
@@ -712,6 +741,8 @@
         let currentAffiliateId = null;
         let currentSellerId = null;
         let currentAccessToken = null;
+        let clicksChart = null;
+        let earningsChart = null;
         
         // Tier definitions
         const tiers = {
@@ -816,13 +847,11 @@
                 
                 const data = await response.json();
                 
-                // Check if data is an array
                 if (data && Array.isArray(data) && data.length > 0) {
                     currentAffiliateId = data[0].id;
                     return data[0];
                 }
                 
-                // Create new affiliate record
                 const affiliateCode = 'AFF_' + currentSellerId.substring(0, 8) + '_' + Math.random().toString(36).substr(2, 6).toUpperCase();
                 
                 const createResponse = await fetch(`${SUPABASE_URL}/rest/v1/affiliates`, {
@@ -891,13 +920,11 @@
                 });
                 
                 if (!response.ok) {
-                    console.error('Failed to fetch referrals:', response.status);
                     return { totalReferrals: 0, completedReferrals: 0, pendingReferrals: 0, fiveTierCount: 0, oneFiftyTierCount: 0, totalEarnings: 0, allReferrals: [] };
                 }
                 
                 const data = await response.json();
                 
-                // Ensure data is an array
                 if (!Array.isArray(data)) {
                     return { totalReferrals: 0, completedReferrals: 0, pendingReferrals: 0, fiveTierCount: 0, oneFiftyTierCount: 0, totalEarnings: 0, allReferrals: [] };
                 }
@@ -1015,7 +1042,7 @@
             }
         }
         
-        // Calculate tier based on referrals and $5 tier count
+        // Calculate tier
         function calculateTier(totalReferrals, fiveTierCount) {
             if (totalReferrals >= tiers.gold.minReferrals && fiveTierCount >= tiers.gold.minFiveTier) {
                 return 'gold';
@@ -1026,7 +1053,7 @@
             }
         }
         
-        // Render affiliate tiers display
+        // Render tiers
         function renderTiers(currentTier, referralStats) {
             const container = document.getElementById('tierContainer');
             if (!container) return;
@@ -1056,7 +1083,92 @@
             }
         }
         
-        // Update dashboard stats
+        // Update charts
+        function updateCharts(clickStats, earnings) {
+            const ctx1 = document.getElementById('clicksChart')?.getContext('2d');
+            const ctx2 = document.getElementById('earningsChart')?.getContext('2d');
+            
+            if (!ctx1 || !ctx2) return;
+            
+            // Destroy existing charts
+            if (clicksChart) {
+                clicksChart.destroy();
+            }
+            if (earningsChart) {
+                earningsChart.destroy();
+            }
+            
+            // Create clicks vs conversions pie chart
+            const nonConverted = Math.max(0, clickStats.totalClicks - clickStats.convertedClicks);
+            clicksChart = new Chart(ctx1, {
+                type: 'pie',
+                data: {
+                    labels: ['Clicks (Not Converted)', 'Converted to Referrals'],
+                    datasets: [{
+                        data: [nonConverted, clickStats.convertedClicks],
+                        backgroundColor: ['#e7e9ec', '#28a745'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { font: { size: 12 } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Create earnings breakdown pie chart
+            earningsChart = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Paid Out', 'Pending Payout'],
+                    datasets: [{
+                        data: [earnings.paid, earnings.pending],
+                        backgroundColor: ['#28a745', '#f90'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { font: { size: 12 } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                    return `${label}: $${value.toFixed(2)} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Update dashboard
         async function updateDashboard() {
             try {
                 const affiliate = await getAffiliateData();
@@ -1064,11 +1176,9 @@
                 const clickStats = await getClickStats();
                 const earnings = await getEarningsData();
                 
-                // Calculate current tier
                 const currentTierName = affiliate?.tier || 'bronze';
                 const calculatedTier = calculateTier(referralStats.completedReferrals, referralStats.fiveTierCount);
                 
-                // Update UI
                 document.getElementById('totalClicks').innerText = clickStats.totalClicks;
                 document.getElementById('totalReferrals').innerText = referralStats.completedReferrals;
                 document.getElementById('totalEarnings').innerHTML = `$${earnings.total.toFixed(2)}`;
@@ -1076,13 +1186,11 @@
                 document.getElementById('pendingPayout').innerHTML = `$${earnings.pending.toFixed(2)}`;
                 document.getElementById('totalPaid').innerHTML = `$${earnings.paid.toFixed(2)}`;
                 
-                // Next payout date (1st of next month)
                 const nextMonth = new Date();
                 nextMonth.setMonth(nextMonth.getMonth() + 1);
                 nextMonth.setDate(1);
                 document.getElementById('nextPayoutDate').innerText = nextMonth.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                 
-                // Set referral link
                 const domain = window.location.origin;
                 const affiliateCode = affiliate?.affiliate_code || 'AFF_' + currentSellerId?.substring(0, 8);
                 const linkInput = document.getElementById('referralLink');
@@ -1090,8 +1198,10 @@
                     linkInput.value = `${domain}/seller-register.html?ref=${affiliateCode}`;
                 }
                 
-                // Render tiers
                 renderTiers(calculatedTier, referralStats);
+                
+                // Update charts
+                updateCharts(clickStats, earnings);
                 
                 // Render recent referrals
                 const recentReferralsBody = document.getElementById('recentReferrals');
@@ -1112,7 +1222,6 @@
                     }
                 }
                 
-                // Load leaderboard
                 await loadLeaderboard();
                 
             } catch (e) {
@@ -1174,7 +1283,7 @@
             setTimeout(() => successMsg.remove(), 2000);
         };
         
-        // Welcome Tour functions
+        // Welcome Tour
         let currentStep = 0;
         const totalSteps = 4;
         
@@ -1238,7 +1347,7 @@
             }
         }
         
-        // Initialize page
+        // Initialize
         async function init() {
             const loadingOverlay = document.getElementById('loadingOverlay');
             
@@ -1258,14 +1367,13 @@
             if (loadingOverlay) loadingOverlay.style.display = 'none';
         }
         
-        // Event listeners for tour
+        // Event listeners
         const nextBtn = document.getElementById('tourNextBtn');
         const skipBtn = document.getElementById('tourSkipBtn');
         
         if (nextBtn) nextBtn.addEventListener('click', nextTourStep);
         if (skipBtn) skipBtn.addEventListener('click', skipTour);
         
-        // Add dot click handlers
         document.querySelectorAll('.tour-dot').forEach((dot, idx) => {
             dot.addEventListener('click', () => {
                 currentStep = idx;
@@ -1273,10 +1381,7 @@
             });
         });
         
-        // Start
         init();
     </script>
-</body>
-</html>
 </body>
 </html>
