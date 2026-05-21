@@ -41,7 +41,7 @@
             const userId = session.user?.id;
             if (!userId) return null;
             
-            // Check if this user is already a seller
+            // FIXED: Changed from user_id to seller_id
             const response = await fetch(`${SUPABASE_URL}/rest/v1/sellers?seller_id=eq.${userId}&select=id`, {
                 headers: {
                     'apikey': SUPABASE_SERVICE_KEY,
@@ -433,40 +433,40 @@
                     <input type="text" id="businessName" placeholder="e.g., John's Electronics" required style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
                 </div>
 
-                <!-- Phone Number with Country Code - UPDATED -->
+                <!-- Phone Number with Country Code -->
                 <div class="form-group" style="margin-bottom: 20px;">
                     <label>Phone Number *</label>
                     <div style="display: flex; gap: 10px;">
                         <select id="sellerCountryCode" style="width: 120px; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
-                            <option value="263">🇿🇼 Zimbabwe (+263)</option>
-                            <option value="27">🇿🇦 South Africa (+27)</option>
-                            <option value="44">🇬🇧 United Kingdom (+44)</option>
-                            <option value="1">🇺🇸 United States (+1)</option>
-                            <option value="61">🇦🇺 Australia (+61)</option>
-                            <option value="91">🇮🇳 India (+91)</option>
-                            <option value="86">🇨🇳 China (+86)</option>
-                            <option value="81">🇯🇵 Japan (+81)</option>
-                            <option value="49">🇩🇪 Germany (+49)</option>
-                            <option value="33">🇫🇷 France (+33)</option>
-                            <option value="34">🇪🇸 Spain (+34)</option>
-                            <option value="39">🇮🇹 Italy (+39)</option>
-                            <option value="55">🇧🇷 Brazil (+55)</option>
-                            <option value="52">🇲🇽 Mexico (+52)</option>
-                            <option value="82">🇰🇷 South Korea (+82)</option>
-                            <option value="65">🇸🇬 Singapore (+65)</option>
-                            <option value="60">🇲🇾 Malaysia (+60)</option>
-                            <option value="66">🇹🇭 Thailand (+66)</option>
-                            <option value="84">🇻🇳 Vietnam (+84)</option>
-                            <option value="63">🇵🇭 Philippines (+63)</option>
-                            <option value="62">🇮🇩 Indonesia (+62)</option>
-                            <option value="971">🇦🇪 UAE (+971)</option>
-                            <option value="966">🇸🇦 Saudi Arabia (+966)</option>
-                            <option value="20">🇪🇬 Egypt (+20)</option>
-                            <option value="234">🇳🇬 Nigeria (+234)</option>
-                            <option value="254">🇰🇪 Kenya (+254)</option>
-                            <option value="255">🇹🇿 Tanzania (+255)</option>
-                            <option value="256">🇺🇬 Uganda (+256)</option>
-                            <option value="260">🇿🇲 Zambia (+260)</option>
+                            <option value="263">&#127475;&#127462; Zimbabwe (+263)</option>
+                            <option value="27">&#127475;&#127462; South Africa (+27)</option>
+                            <option value="44">&#127468;&#127463; United Kingdom (+44)</option>
+                            <option value="1">&#127482;&#127480; United States (+1)</option>
+                            <option value="61">&#127462;&#127470; Australia (+61)</option>
+                            <option value="91">&#127470;&#127475; India (+91)</option>
+                            <option value="86">&#127464;&#127475; China (+86)</option>
+                            <option value="81">&#127471;&#127477; Japan (+81)</option>
+                            <option value="49">&#127465;&#127466; Germany (+49)</option>
+                            <option value="33">&#127467;&#127479; France (+33)</option>
+                            <option value="34">&#127466;&#127480; Spain (+34)</option>
+                            <option value="39">&#127470;&#127481; Italy (+39)</option>
+                            <option value="55">&#127463;&#127479; Brazil (+55)</option>
+                            <option value="52">&#127474;&#127482; Mexico (+52)</option>
+                            <option value="82">&#127472;&#127479; South Korea (+82)</option>
+                            <option value="65">&#127478;&#127477; Singapore (+65)</option>
+                            <option value="60">&#127474;&#127486; Malaysia (+60)</option>
+                            <option value="66">&#127481;&#127477; Thailand (+66)</option>
+                            <option value="84">&#127483;&#127481; Vietnam (+84)</option>
+                            <option value="63">&#127477;&#127480; Philippines (+63)</option>
+                            <option value="62">&#127470;&#127481; Indonesia (+62)</option>
+                            <option value="971">&#127482;&#127477; UAE (+971)</option>
+                            <option value="966">&#127480;&#127462; Saudi Arabia (+966)</option>
+                            <option value="20">&#127466;&#127468; Egypt (+20)</option>
+                            <option value="234">&#127467;&#127472; Nigeria (+234)</option>
+                            <option value="254">&#127472;&#127468; Kenya (+254)</option>
+                            <option value="255">&#127481;&#127479; Tanzania (+255)</option>
+                            <option value="256">&#127468;&#127466; Uganda (+256)</option>
+                            <option value="260">&#127483;&#127482; Zambia (+260)</option>
                         </select>
                         <input type="tel" id="businessPhone" placeholder="Phone number (e.g., 712345678)" required style="flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
                     </div>
@@ -659,7 +659,8 @@
             const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
 
             try {
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/sellers?user_id=eq.${userId}&select=*`, {
+                // FIXED: Changed from user_id to seller_id
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/sellers?seller_id=eq.${userId}&select=*`, {
                     headers: {
                         'apikey': SUPABASE_ANON_KEY,
                         'Authorization': `Bearer ${accessToken}`
@@ -672,7 +673,8 @@
                     
                     if (refreshResult.success) {
                         const newSession = refreshResult.session;
-                        const retryResponse = await fetch(`${SUPABASE_URL}/rest/v1/sellers?user_id=eq.${userId}&select=*`, {
+                        // FIXED: Changed from user_id to seller_id
+                        const retryResponse = await fetch(`${SUPABASE_URL}/rest/v1/sellers?seller_id=eq.${userId}&select=*`, {
                             headers: {
                                 'apikey': SUPABASE_ANON_KEY,
                                 'Authorization': `Bearer ${newSession.access_token}`
@@ -737,7 +739,8 @@
             let refreshToken = session.refresh_token;
 
             try {
-                let checkResponse = await fetch(`${SUPABASE_URL}/rest/v1/sellers?user_id=eq.${userId}&select=id`, {
+                // FIXED: Changed from user_id to seller_id
+                let checkResponse = await fetch(`${SUPABASE_URL}/rest/v1/sellers?seller_id=eq.${userId}&select=id`, {
                     headers: {
                         'apikey': SUPABASE_ANON_KEY,
                         'Authorization': `Bearer ${accessToken}`
@@ -753,7 +756,8 @@
                         accessToken = session.access_token;
                         refreshToken = session.refresh_token;
                         
-                        checkResponse = await fetch(`${SUPABASE_URL}/rest/v1/sellers?user_id=eq.${userId}&select=id`, {
+                        // FIXED: Changed from user_id to seller_id
+                        checkResponse = await fetch(`${SUPABASE_URL}/rest/v1/sellers?seller_id=eq.${userId}&select=id`, {
                             headers: {
                                 'apikey': SUPABASE_ANON_KEY,
                                 'Authorization': `Bearer ${accessToken}`
@@ -786,9 +790,9 @@
 
                 // Use the correct column names from your database
                 const sellerData = {
-                    user_id: userId,
+                    seller_id: userId,  // This matches your database column name
                     business_name: businessName,
-                    business_phone: formattedPhone,  // Formatted phone with country code
+                    business_phone: formattedPhone,
                     business_email: businessEmail,
                     business_address: businessAddress,
                     business_description: businessDescription,
@@ -824,7 +828,7 @@
                     messageDiv.style.display = 'block';
                     messageDiv.style.backgroundColor = '#d4edda';
                     messageDiv.style.color = '#155724';
-                    messageDiv.innerHTML = ' Registration successful! Redirecting to your dashboard...';
+                    messageDiv.innerHTML = 'Registration successful! Redirecting to your dashboard...';
                     
                     localStorage.setItem('isSeller', 'true');
                     
