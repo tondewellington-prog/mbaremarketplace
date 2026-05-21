@@ -17,6 +17,303 @@
     </style>
 </head>
 <body>
+    <script>
+    // ============================================
+    // AFFILIATE TRACKING CODE - WITH DUPLICATION PREVENTION
+    // ============================================
+    
+    const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZubmNlcmR4Zmh3bHJkb3Bzd3B4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NzEwMTgwOSwiZXhwIjoyMDgyNjc3ODA5fQ.gS45zReH5gtMeTY74tjb6ECfdjENglLejU4kTFNnIh0';
+    const SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
+    
+    // Get affiliate parameters from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const affiliateCode = urlParams.get('ref');
+    const utmSource = urlParams.get('utm_source') || urlParams.get('source') || 'direct';
+    
+    // Check if current user is logged in or already a seller
+    async function checkExistingUser() {
+        const sessionData = localStorage.getItem('supabase_session');
+        if (!sessionData) return null;
+        
+        try {
+            const session = JSON.parse(sessionData);
+            const userId = session.user?.id;
+            if (!userId) return null;
+            
+            // FIXED: Use 'user_id' column (matches your database)
+            const response = await fetch(`${SUPABASE_URL}/rest/v1/sellers?user_id=eq.${encodeURIComponent(userId)}&select=id`, {
+                headers: {
+                    'apikey': SUPABASE_SERVICE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                }
+            });
+            const sellers = await response.json();
+            return sellers && sellers.length > 0 ? sellers[0] : null;
+        } catch(e) {
+            console.error('Error checking existing user:', e);
+            return null;
+        }
+    }
+    
+    // Check if this email is already registered as a seller
+    async function checkEmailExists(email) {
+        if (!email) return false;
+        
+        try {
+            const response = await fetch(`${SUPABASE_URL}/rest/v1/sellers?email=eq.${encodeURIComponent(email)}&select=id`, {
+                headers: {
+                    'apikey': SUPABASE_SERVICE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                }
+            });
+            const sellers = await response.json();
+            return sellers && sellers.length > 0;
+        } catch(e) {
+            console.error('Error checking email:', e);
+            return false;
+        }
+    }
+    
+    // Check if this email was already referred by this affiliate (prevent double counting)
+    async function checkAlreadyReferred(email, affiliateId) {
+        if (!email || !affiliateId) return false;
+        
+        try {
+            const sellerRes = await fetch(`${SUPABASE_URL}/rest/v1/sellers?email=eq.${encodeURIComponent(email)}&select=id`, {
+                headers: { 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}` }
+            });
+            const sellers = await sellerRes.json();
+            if (!sellers || sellers.length === 0) return false;
+            
+            const sellerId = sellers[0].id;
+            
+            const referralRes = await fetch(`${SUPABASE_URL}/rest/v1/referrals?affiliate_id=eq.${affiliateId}&referred_seller_id=eq.${sellerId}&select=id`, {
+                headers: { 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}` }
+            });
+            const referrals = await referralRes.json();
+            return referrals && referrals.length > 0;
+        } catch(e) {
+            console.error('Error checking existing referral:', e);
+            return false;
+        }
+    }
+    
+    // Store affiliate info for later use
+    if (affiliateCode) {
+        console.log('Affiliate link detected:', affiliateCode, 'Source:', utmSource);
+        
+        fetch(`${SUPABASE_URL}/rest/v1/affiliates?affiliate_code=eq.${affiliateCode}&select=id,seller_id`, {
+            method: 'GET',
+            headers: {
+                'apikey': SUPABASE_SERVICE_KEY,
+                'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(async (affiliates) => {
+            if (affiliates && affiliates.length > 0) {
+                const affiliateId = affiliates[0].id;
+                const affiliateSellerId = affiliates[0].seller_id;
+                
+                const sessionData = localStorage.getItem('supabase_session');
+                let currentUserId = null;
+                if (sessionData) {
+                    try {
+                        const session = JSON.parse(sessionData);
+                        currentUserId = session.user?.id;
+                    } catch(e) {}
+                }
+                
+                if (currentUserId && currentUserId === affiliateSellerId) {
+                    console.log('Self-referral detected - not tracking');
+                    localStorage.setItem('affiliate_blocked_reason', 'self_referral');
+                    return;
+                }
+                
+                localStorage.setItem('affiliate_ref_code', affiliateCode);
+                localStorage.setItem('affiliate_id', affiliateId);
+                localStorage.setItem('affiliate_utm_source', utmSource);
+                localStorage.setItem('affiliate_timestamp', new Date().toISOString());
+                
+                await fetch(`${SUPABASE_URL}/rest/v1/affiliate_clicks`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_SERVICE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        affiliate_id: affiliateId,
+                        click_date: new Date().toISOString(),
+                        source_domain: window.location.hostname,
+                        utm_source: utmSource,
+                        user_agent: navigator.userAgent,
+                        converted: false,
+                        converted_to_seller_id: null
+                    })
+                });
+                
+                console.log('Affiliate click tracked successfully');
+            }
+        })
+        .catch(err => console.error('Affiliate tracking error:', err));
+    }
+    
+    // Function to call when user successfully registers as a seller
+    window.markAffiliateConversion = async function(newSellerId, newSellerEmail, selectedPlan) {
+        const affiliateCode = localStorage.getItem('affiliate_ref_code');
+        const affiliateId = localStorage.getItem('affiliate_id');
+        
+        if (!affiliateCode || !affiliateId) {
+            console.log('No affiliate data found - not tracking conversion');
+            return false;
+        }
+        
+        const sessionData = localStorage.getItem('supabase_session');
+        let currentUserId = null;
+        if (sessionData) {
+            try {
+                const session = JSON.parse(sessionData);
+                currentUserId = session.user?.id;
+            } catch(e) {}
+        }
+        
+        try {
+            const affRes = await fetch(`${SUPABASE_URL}/rest/v1/affiliates?id=eq.${affiliateId}&select=seller_id`, {
+                headers: { 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}` }
+            });
+            const affData = await affRes.json();
+            if (affData && affData.length > 0 && currentUserId === affData[0].seller_id) {
+                console.log('Self-referral blocked');
+                localStorage.removeItem('affiliate_ref_code');
+                localStorage.removeItem('affiliate_id');
+                return false;
+            }
+        } catch(e) {
+            console.error('Self-referral check error:', e);
+        }
+        
+        const emailExists = await checkEmailExists(newSellerEmail);
+        if (emailExists) {
+            console.log('Email already registered');
+            localStorage.removeItem('affiliate_ref_code');
+            localStorage.removeItem('affiliate_id');
+            return false;
+        }
+        
+        const alreadyReferred = await checkAlreadyReferred(newSellerEmail, affiliateId);
+        if (alreadyReferred) {
+            console.log('Already referred by this affiliate');
+            localStorage.removeItem('affiliate_ref_code');
+            localStorage.removeItem('affiliate_id');
+            return false;
+        }
+        
+        try {
+            const clickRes = await fetch(`${SUPABASE_URL}/rest/v1/affiliate_clicks?affiliate_id=eq.${affiliateId}&converted=eq.false&order=click_date.desc&limit=1`, {
+                headers: { 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}` }
+            });
+            const clicks = await clickRes.json();
+            if (clicks && clicks.length > 0) {
+                await fetch(`${SUPABASE_URL}/rest/v1/affiliate_clicks?id=eq.${clicks[0].id}`, {
+                    method: 'PATCH',
+                    headers: { 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ converted: true, converted_to_seller_id: newSellerId })
+                });
+            }
+            
+            let commission = 0;
+            if (selectedPlan === 'tier_5') {
+                commission = 1.00;
+            } else if (selectedPlan === 'tier_1_50') {
+                commission = 0.30;
+            } else if (selectedPlan === 'tier_10') {
+                commission = 2.00;
+            }
+            
+            const existingRefRes = await fetch(`${SUPABASE_URL}/rest/v1/referrals?affiliate_id=eq.${affiliateId}&referred_seller_id=eq.${newSellerId}&select=id`, {
+                headers: { 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}` }
+            });
+            const existingRefs = await existingRefRes.json();
+            
+            if (existingRefs && existingRefs.length === 0) {
+                await fetch(`${SUPABASE_URL}/rest/v1/referrals`, {
+                    method: 'POST',
+                    headers: { 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        affiliate_id: affiliateId,
+                        referred_seller_id: newSellerId,
+                        referral_date: new Date().toISOString(),
+                        completion_date: new Date().toISOString(),
+                        referred_plan: selectedPlan,
+                        commission_earned: commission,
+                        status: 'completed'
+                    })
+                });
+                
+                const affUpdateRes = await fetch(`${SUPABASE_URL}/rest/v1/affiliates?id=eq.${affiliateId}`, {
+                    method: 'GET',
+                    headers: { 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}` }
+                });
+                const affData = await affUpdateRes.json();
+                if (affData && affData.length > 0) {
+                    const newTotal = (affData[0].total_referrals || 0) + 1;
+                    await fetch(`${SUPABASE_URL}/rest/v1/affiliates?id=eq.${affiliateId}`, {
+                        method: 'PATCH',
+                        headers: { 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ total_referrals: newTotal })
+                    });
+                }
+                
+                console.log('Affiliate conversion tracked successfully!');
+            }
+            
+            localStorage.removeItem('affiliate_ref_code');
+            localStorage.removeItem('affiliate_id');
+            localStorage.removeItem('affiliate_utm_source');
+            localStorage.removeItem('affiliate_timestamp');
+            
+            return true;
+            
+        } catch(err) {
+            console.error('Conversion tracking error:', err);
+            return false;
+        }
+    };
+    
+    window.canBeReferred = async function(email) {
+        const emailExists = await checkEmailExists(email);
+        if (emailExists) {
+            return { allowed: false, reason: 'Email already registered' };
+        }
+        
+        const affiliateId = localStorage.getItem('affiliate_id');
+        if (affiliateId) {
+            const alreadyReferred = await checkAlreadyReferred(email, affiliateId);
+            if (alreadyReferred) {
+                return { allowed: false, reason: 'This email has already been referred' };
+            }
+        }
+        
+        const sessionData = localStorage.getItem('supabase_session');
+        if (sessionData && affiliateId) {
+            try {
+                const session = JSON.parse(sessionData);
+                const currentUserId = session.user?.id;
+                const affRes = await fetch(`${SUPABASE_URL}/rest/v1/affiliates?id=eq.${affiliateId}&select=seller_id`, {
+                    headers: { 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}` }
+                });
+                const affData = await affRes.json();
+                if (affData && affData.length > 0 && currentUserId === affData[0].seller_id) {
+                    return { allowed: false, reason: 'You cannot refer yourself' };
+                }
+            } catch(e) {}
+        }
+        
+        return { allowed: true, reason: '' };
+    };
+    </script>
     <!-- Header -->
     <header class="header">
         <div class="header-top">
@@ -112,40 +409,39 @@
                     <input type="text" id="businessName" placeholder="e.g., John's Electronics" required style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
                 </div>
 
-                <!-- Phone Number with Country Code - UPDATED -->
                 <div class="form-group" style="margin-bottom: 20px;">
                     <label>Phone Number *</label>
                     <div style="display: flex; gap: 10px;">
                         <select id="sellerCountryCode" style="width: 120px; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
-                            <option value="263">🇿🇼 Zimbabwe (+263)</option>
-                            <option value="27">🇿🇦 South Africa (+27)</option>
-                            <option value="44">🇬🇧 United Kingdom (+44)</option>
-                            <option value="1">🇺🇸 United States (+1)</option>
-                            <option value="61">🇦🇺 Australia (+61)</option>
-                            <option value="91">🇮🇳 India (+91)</option>
-                            <option value="86">🇨🇳 China (+86)</option>
-                            <option value="81">🇯🇵 Japan (+81)</option>
-                            <option value="49">🇩🇪 Germany (+49)</option>
-                            <option value="33">🇫🇷 France (+33)</option>
-                            <option value="34">🇪🇸 Spain (+34)</option>
-                            <option value="39">🇮🇹 Italy (+39)</option>
-                            <option value="55">🇧🇷 Brazil (+55)</option>
-                            <option value="52">🇲🇽 Mexico (+52)</option>
-                            <option value="82">🇰🇷 South Korea (+82)</option>
-                            <option value="65">🇸🇬 Singapore (+65)</option>
-                            <option value="60">🇲🇾 Malaysia (+60)</option>
-                            <option value="66">🇹🇭 Thailand (+66)</option>
-                            <option value="84">🇻🇳 Vietnam (+84)</option>
-                            <option value="63">🇵🇭 Philippines (+63)</option>
-                            <option value="62">🇮🇩 Indonesia (+62)</option>
-                            <option value="971">🇦🇪 UAE (+971)</option>
-                            <option value="966">🇸🇦 Saudi Arabia (+966)</option>
-                            <option value="20">🇪🇬 Egypt (+20)</option>
-                            <option value="234">🇳🇬 Nigeria (+234)</option>
-                            <option value="254">🇰🇪 Kenya (+254)</option>
-                            <option value="255">🇹🇿 Tanzania (+255)</option>
-                            <option value="256">🇺🇬 Uganda (+256)</option>
-                            <option value="260">🇿🇲 Zambia (+260)</option>
+                            <option value="263">Zimbabwe (+263)</option>
+                            <option value="27">South Africa (+27)</option>
+                            <option value="44">United Kingdom (+44)</option>
+                            <option value="1">United States (+1)</option>
+                            <option value="61">Australia (+61)</option>
+                            <option value="91">India (+91)</option>
+                            <option value="86">China (+86)</option>
+                            <option value="81">Japan (+81)</option>
+                            <option value="49">Germany (+49)</option>
+                            <option value="33">France (+33)</option>
+                            <option value="34">Spain (+34)</option>
+                            <option value="39">Italy (+39)</option>
+                            <option value="55">Brazil (+55)</option>
+                            <option value="52">Mexico (+52)</option>
+                            <option value="82">South Korea (+82)</option>
+                            <option value="65">Singapore (+65)</option>
+                            <option value="60">Malaysia (+60)</option>
+                            <option value="66">Thailand (+66)</option>
+                            <option value="84">Vietnam (+84)</option>
+                            <option value="63">Philippines (+63)</option>
+                            <option value="62">Indonesia (+62)</option>
+                            <option value="971">UAE (+971)</option>
+                            <option value="966">Saudi Arabia (+966)</option>
+                            <option value="20">Egypt (+20)</option>
+                            <option value="234">Nigeria (+234)</option>
+                            <option value="254">Kenya (+254)</option>
+                            <option value="255">Tanzania (+255)</option>
+                            <option value="256">Uganda (+256)</option>
+                            <option value="260">Zambia (+260)</option>
                         </select>
                         <input type="tel" id="businessPhone" placeholder="Phone number (e.g., 712345678)" required style="flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
                     </div>
@@ -175,7 +471,7 @@
                         <option value="Books">Books</option>
                         <option value="Clothing">Clothing</option>
                         <option value="Home & Kitchen">Home & Kitchen</option>
-                        <option value="Pet Supplies">Pet Suppies</option>
+                        <option value="Pet Supplies">Pet Supplies</option>
                         <option value="Pets & Livestock">Pets & Livestock</option>
                         <option value="Vehicle Parts & Accessories">Vehicle Parts & Accessories</option>
                         <option value="Vehicles & Transportation">Vehicles & Transportation</option>
@@ -267,29 +563,19 @@
     <script src="script.js"></script>
     <script src="auth-check.js"></script>
     <script>
-        // Helper function to format phone number
         function formatSellerPhone() {
             const countryCode = document.getElementById('sellerCountryCode').value;
             let phoneLocal = document.getElementById('businessPhone').value;
-            
-            // Remove all non-numeric characters
             let cleanedLocal = phoneLocal.replace(/\D/g, '');
-            
-            // Remove leading zero if present
             if (cleanedLocal.startsWith('0')) {
                 cleanedLocal = cleanedLocal.substring(1);
             }
-            
-            // Check if user already entered country code
             if (cleanedLocal.startsWith(countryCode)) {
                 return cleanedLocal;
             }
-            
-            // Add country code
             return countryCode + cleanedLocal;
         }
 
-        // Function to refresh the token
         async function refreshAccessToken(refreshToken) {
             const SUPABASE_URL = window.SUPABASE_URL;
             const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
@@ -301,27 +587,22 @@
                         'Content-Type': 'application/json',
                         'apikey': SUPABASE_ANON_KEY
                     },
-                    body: JSON.stringify({
-                        refresh_token: refreshToken
-                    })
+                    body: JSON.stringify({ refresh_token: refreshToken })
                 });
-
                 const data = await response.json();
-                
                 if (response.ok) {
                     localStorage.setItem('supabase_session', JSON.stringify(data));
                     localStorage.setItem('isLoggedIn', 'true');
                     return { success: true, session: data };
-                } else {
-                    return { success: false, error: data };
                 }
+                return { success: false, error: data };
             } catch (error) {
                 console.error('Token refresh error:', error);
                 return { success: false, error };
             }
         }
 
-        // Check seller status immediately when page loads
+        // FIXED: Check seller status - using 'user_id' column (matches your database)
         document.addEventListener('DOMContentLoaded', async function() {
             const sessionData = localStorage.getItem('supabase_session');
             const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
@@ -332,60 +613,42 @@
 
             const session = JSON.parse(sessionData);
             const userId = session.user?.id;
-            const accessToken = session.access_token;
             
-            const SUPABASE_URL = window.SUPABASE_URL;
-            const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
+            const SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZubmNlcmR4Zmh3bHJkb3Bzd3B4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NzEwMTgwOSwiZXhwIjoyMDgyNjc3ODA5fQ.gS45zReH5gtMeTY74tjb6ECfdjENglLejU4kTFNnIh0';
 
             try {
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/sellers?user_id=eq.${userId}&select=*`, {
+                // FIXED: Use 'user_id' instead of 'seller_id'
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/sellers?user_id=eq.${encodeURIComponent(userId)}&select=id`, {
                     headers: {
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${accessToken}`
+                        'apikey': SERVICE_KEY,
+                        'Authorization': `Bearer ${SERVICE_KEY}`
                     }
                 });
                 
                 if (response.status === 401) {
-                    console.log('Token expired, attempting refresh...');
                     const refreshResult = await refreshAccessToken(session.refresh_token);
-                    
                     if (refreshResult.success) {
-                        const newSession = refreshResult.session;
-                        const retryResponse = await fetch(`${SUPABASE_URL}/rest/v1/sellers?user_id=eq.${userId}&select=*`, {
+                        const retryResponse = await fetch(`${SUPABASE_URL}/rest/v1/sellers?user_id=eq.${encodeURIComponent(userId)}&select=id`, {
                             headers: {
-                                'apikey': SUPABASE_ANON_KEY,
-                                'Authorization': `Bearer ${newSession.access_token}`
+                                'apikey': SERVICE_KEY,
+                                'Authorization': `Bearer ${SERVICE_KEY}`
                             }
                         });
-                        
                         const sellers = await retryResponse.json();
-                        
                         if (sellers && sellers.length > 0) {
                             document.getElementById('alreadyRegisteredMessage').style.display = 'block';
                             document.getElementById('sellerForm').style.display = 'none';
-                            
-                            setTimeout(() => {
-                                window.location.href = 'seller-dashboard.html';
-                            }, 3000);
+                            setTimeout(() => { window.location.href = 'seller-dashboard.html'; }, 3000);
                         }
-                    } else {
-                        alert('Your session has expired. Please login again.');
-                        localStorage.removeItem('supabase_session');
-                        localStorage.removeItem('isLoggedIn');
-                        window.location.href = 'login.html?redirect=seller-register.html';
                     }
                     return;
                 }
                 
                 const sellers = await response.json();
-                
                 if (sellers && sellers.length > 0) {
                     document.getElementById('alreadyRegisteredMessage').style.display = 'block';
                     document.getElementById('sellerForm').style.display = 'none';
-                    
-                    setTimeout(() => {
-                        window.location.href = 'seller-dashboard.html';
-                    }, 3000);
+                    setTimeout(() => { window.location.href = 'seller-dashboard.html'; }, 3000);
                 }
             } catch (error) {
                 console.error('Error checking seller status:', error);
@@ -394,11 +657,7 @@
 
         async function handleSellerRegistration(event) {
             event.preventDefault();
-            
             document.getElementById('loadingSpinner').style.display = 'block';
-            
-            const SUPABASE_URL = window.SUPABASE_URL;
-            const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
             
             const sessionData = localStorage.getItem('supabase_session');
             const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
@@ -412,62 +671,37 @@
 
             let session = JSON.parse(sessionData);
             let userId = session.user?.id;
-            let accessToken = session.access_token;
-            let refreshToken = session.refresh_token;
+            
+            const SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZubmNlcmR4Zmh3bHJkb3Bzd3B4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NzEwMTgwOSwiZXhwIjoyMDgyNjc3ODA5fQ.gS45zReH5gtMeTY74tjb6ECfdjENglLejU4kTFNnIh0';
 
             try {
-                let checkResponse = await fetch(`${SUPABASE_URL}/rest/v1/sellers?user_id=eq.${userId}&select=id`, {
+                // FIXED: Use 'user_id' instead of 'seller_id'
+                let checkResponse = await fetch(`${SUPABASE_URL}/rest/v1/sellers?user_id=eq.${encodeURIComponent(userId)}&select=id`, {
                     headers: {
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${accessToken}`
+                        'apikey': SERVICE_KEY,
+                        'Authorization': `Bearer ${SERVICE_KEY}`
                     }
                 });
                 
-                if (checkResponse.status === 401) {
-                    console.log('Token expired during registration, refreshing...');
-                    const refreshResult = await refreshAccessToken(refreshToken);
-                    
-                    if (refreshResult.success) {
-                        session = refreshResult.session;
-                        accessToken = session.access_token;
-                        refreshToken = session.refresh_token;
-                        
-                        checkResponse = await fetch(`${SUPABASE_URL}/rest/v1/sellers?user_id=eq.${userId}&select=id`, {
-                            headers: {
-                                'apikey': SUPABASE_ANON_KEY,
-                                'Authorization': `Bearer ${accessToken}`
-                            }
-                        });
-                    } else {
-                        throw new Error('Session expired. Please login again.');
-                    }
-                }
-                
                 const existing = await checkResponse.json();
-                
                 if (existing && existing.length > 0) {
                     document.getElementById('loadingSpinner').style.display = 'none';
                     window.location.href = 'seller-dashboard.html';
                     return;
                 }
 
-                // Get form values
                 const businessName = document.getElementById('businessName').value;
                 const businessAddress = document.getElementById('businessAddress').value;
                 const businessDescription = document.getElementById('businessDescription').value;
                 const businessType = document.getElementById('businessType').value;
                 const businessEmail = document.getElementById('businessEmail').value;
-                
-                // Format phone with country code
                 const formattedPhone = formatSellerPhone();
-                
-                console.log('Phone saved as:', formattedPhone);
 
-                // Use the correct column names from your database
+                // FIXED: Use 'user_id' column (matches your database)
                 const sellerData = {
                     user_id: userId,
                     business_name: businessName,
-                    business_phone: formattedPhone,  // Formatted phone with country code
+                    business_phone: formattedPhone,
                     business_email: businessEmail,
                     business_address: businessAddress,
                     business_description: businessDescription,
@@ -479,8 +713,9 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${accessToken}`
+                        'apikey': SERVICE_KEY,
+                        'Authorization': `Bearer ${SERVICE_KEY}`,
+                        'Prefer': 'return=representation'
                     },
                     body: JSON.stringify(sellerData)
                 });
@@ -488,22 +723,11 @@
                 document.getElementById('loadingSpinner').style.display = 'none';
 
                 if (response.ok) {
-                    // TRACK SELLER REGISTRATION
-                    if (window.trackActivity) {
-                        window.trackActivity('seller_register', { 
-                            business_name: businessName,
-                            business_type: businessType,
-                            email: businessEmail,
-                            phone: formattedPhone
-                        });
-                        console.log('Seller registration tracked');
-                    }
-
                     const messageDiv = document.getElementById('message');
                     messageDiv.style.display = 'block';
                     messageDiv.style.backgroundColor = '#d4edda';
                     messageDiv.style.color = '#155724';
-                    messageDiv.innerHTML = '✅ Registration successful! Redirecting to your dashboard...';
+                    messageDiv.innerHTML = 'Registration successful! Redirecting to your dashboard...';
                     
                     localStorage.setItem('isSeller', 'true');
                     
@@ -513,34 +737,21 @@
                 } else {
                     const error = await response.json();
                     console.error('Registration failed:', error);
-                    
-                    if (response.status === 401 || (error.message && error.message.includes('JWT'))) {
-                        alert('Your session has expired. Please login again.');
-                        localStorage.removeItem('supabase_session');
-                        localStorage.removeItem('isLoggedIn');
-                        window.location.href = 'login.html?redirect=seller-register.html';
-                    } else if (error.message && error.message.includes('duplicate')) {
-                        window.location.href = 'seller-dashboard.html';
-                    } else {
-                        alert('Failed to register: ' + (error.message || 'Please try again'));
-                    }
+                    alert('Failed to register: ' + (error.message || 'Please try again'));
                 }
             } catch (error) {
                 document.getElementById('loadingSpinner').style.display = 'none';
                 console.error('Error:', error);
-                
-                if (error.message.includes('Session expired')) {
-                    alert('Your session has expired. Please login again.');
-                    localStorage.removeItem('supabase_session');
-                    localStorage.removeItem('isLoggedIn');
-                    window.location.href = 'login.html?redirect=seller-register.html';
-                } else {
-                    alert('Error submitting registration: ' + error.message);
-                }
+                alert('Error submitting registration: ' + error.message);
             }
         }
 
         window.handleSellerRegistration = handleSellerRegistration;
+        
+        window.handleSearch = function() {
+            const query = document.getElementById('searchInput')?.value;
+            if(query) window.location.href = `search-results.html?q=${encodeURIComponent(query)}`;
+        };
     </script>
 </body>
 </html>
