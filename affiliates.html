@@ -776,39 +776,29 @@
 
         function getNextPayoutDate() { const today = new Date(); return new Date(today.getFullYear(), today.getMonth() + 1, 5); }
 
-        // ============================================
-        // FIXED: Check subscription using AUTH UUID directly
-        // Looks for: seller_id = auth UUID in seller_subscriptions table
-        // ============================================
-        
+        // Check subscription using AUTH UUID directly from seller_subscriptions table
         async function isUserActiveSubscribedSeller(authUserId) {
             if (!authUserId) return false;
             try {
                 const headers = getAuthHeaders();
                 const today = new Date().toISOString();
+                console.log('Checking subscription for user:', authUserId);
+                
                 const response = await fetch(
                     `${SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${authUserId}&status=eq.active&end_date>gt.${today}&select=id,plan_type`,
                     { headers }
                 );
-                if (!response.ok) return false;
+                
+                if (!response.ok) {
+                    console.error('Subscription fetch failed:', response.status);
+                    return false;
+                }
+                
                 const subscriptions = await response.json();
+                console.log('Subscriptions found:', subscriptions);
                 return subscriptions && subscriptions.length > 0;
             } catch (error) {
                 console.error('Error checking subscription:', error);
-                return false;
-            }
-        }
-
-        async function isUserRegisteredAsSeller(authUserId) {
-            if (!authUserId) return false;
-            try {
-                const headers = getAuthHeaders();
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/sellers?seller_id=eq.${authUserId}&select=id`, { headers });
-                if (!response.ok) return false;
-                const sellers = await response.json();
-                return sellers && sellers.length > 0;
-            } catch (error) {
-                console.error('Error checking seller status:', error);
                 return false;
             }
         }
@@ -824,23 +814,6 @@
                         <div class="btn-group">
                             <a href="seller-register.html" class="btn-primary">Register as Seller</a>
                             <a href="subscription.html" class="btn-outline">View Subscription Plans</a>
-                        </div>
-                    </div>
-                `;
-            }
-            const loading = document.getElementById('loadingOverlay');
-            if (loading) loading.style.display = 'none';
-        }
-
-        function showNotASeller() {
-            const mainContent = document.getElementById('mainContent');
-            if (mainContent) {
-                mainContent.innerHTML = `
-                    <div class="access-message">
-                        <h2>Seller Account Required</h2>
-                        <p>You need to register as a seller before you can join the affiliate program.</p>
-                        <div class="btn-group">
-                            <a href="seller-register.html" class="btn-primary">Register as Seller</a>
                         </div>
                     </div>
                 `;
@@ -978,7 +951,11 @@
             const sessionData = localStorage.getItem('supabase_session');
             const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
             
+            console.log('Checking auth - isLoggedIn:', isLoggedIn);
+            console.log('sessionData exists:', !!sessionData);
+            
             if (!isLoggedIn || !sessionData) { 
+                console.log('Not logged in, redirecting to login');
                 window.location.href = 'login.html?redirect=affiliates.html'; 
                 return false; 
             }
@@ -986,19 +963,16 @@
             try {
                 const session = JSON.parse(sessionData);
                 currentSellerId = session.user?.id;
+                console.log('Current user ID from session:', currentSellerId);
+                
                 if (!currentSellerId) return false;
                 
                 document.querySelector('.account-label').textContent = `Hello, ${session.user?.email?.split('@')[0] || 'Affiliate'}`;
                 
-                // STEP 1: Check if user is registered as a seller (using auth UUID)
-                const isSeller = await isUserRegisteredAsSeller(currentSellerId);
-                if (!isSeller) {
-                    showNotASeller();
-                    return false;
-                }
-                
-                // STEP 2: Check if user has an ACTIVE subscription (using auth UUID directly)
+                // Check if user has an ACTIVE subscription (NO sellers table check needed)
                 const hasActiveSubscription = await isUserActiveSubscribedSeller(currentSellerId);
+                console.log('Has active subscription:', hasActiveSubscription);
+                
                 if (!hasActiveSubscription) {
                     showSubscriptionRequired();
                     return false;
