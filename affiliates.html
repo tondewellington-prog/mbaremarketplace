@@ -687,7 +687,7 @@
                 </div>
                 <div id="tourStep2" class="tour-step">
                     <h3>How It Works</h3>
-                    <ul><li>Generate your unique referral link below</li><li>Share on Instagram, Facebook, TikTok, WhatsApp, X and more</li><li>When a seller subscribes through your link → you earn</li><li>Payments sent monthly via PayNow</li></ul>
+                    <ul><li>Generate your unique referral link below</li><li>Share on Instagram, Facebook, TikTok, WhatsApp, X and more</li><li>When a seller subscribes through your link &rarr; you earn</li><li>Payments sent monthly via PayNow</li></ul>
                 </div>
                 <div id="tourStep3" class="tour-step">
                     <h3>Affiliate Tiers</h3>
@@ -698,7 +698,7 @@
                 <div id="tourStep4" class="tour-step">
                     <h3>Your Dashboard</h3>
                     <p>Track everything in one place:</p>
-                    <ul><li>Total clicks & conversions by platform</li><li>Your leaderboard position</li><li>Pending earnings & next payout</li><li>Best performing sources with pie charts</li></ul>
+                    <ul><li>Total clicks &amp; conversions by platform</li><li>Your leaderboard position</li><li>Pending earnings &amp; next payout</li><li>Best performing sources with pie charts</li></ul>
                 </div>
                 <div class="tour-progress" id="tourProgress">
                     <span class="tour-dot active" data-step="0"></span>
@@ -721,7 +721,7 @@
                 <div class="search-bar">
                     <select class="search-category"><option>All</option><option>Electronics</option><option>Books</option><option>Clothing</option></select>
                     <input type="text" id="searchInput" placeholder="Search On Mbare Marketplace" class="search-input">
-                    <button class="search-btn" onclick="handleSearch()">🔍</button>
+                    <button class="search-btn" onclick="handleSearch()">&#128269;</button>
                 </div>
                 <div class="header-right">
                     <div class="account-menu" id="accountMenu"><span class="account-label">Hello, Affiliate</span></div>
@@ -758,7 +758,7 @@
             <div class="container">
                 <div class="footer-logo">Mbare Marketplace</div>
                 <div class="footer-links"><a href="#">Conditions of Use</a><a href="#">Privacy Notice</a><a href="#">Interest-Based Ads</a></div>
-                <div class="footer-copyright">© 2026, Mbaremarketplace.com, Inc. or its affiliates</div>
+                <div class="footer-copyright">&copy; 2026, Mbaremarketplace.com, Inc. or its affiliates</div>
             </div>
         </div>
     </footer>
@@ -766,7 +766,7 @@
     <script>
         const SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
         const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZubmNlcmR4Zmh3bHJkb3Bzd3B4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NzEwMTgwOSwiZXhwIjoyMDgyNjc3ODA5fQ.gS45zReH5gtMeTY74tjb6ECfdjENglLejU4kTFNnIh0';
-        let currentAffiliateId = null, currentSellerId = null;
+        let currentAffiliateId = null, currentSellerId = null, currentSellerInternalId = null;
         let clicksChart = null, earningsChart = null, clicksPieChart = null, conversionsPieChart = null;
 
         function getAuthHeaders() {
@@ -780,15 +780,36 @@
         function getNextPayoutDate() { const today = new Date(); return new Date(today.getFullYear(), today.getMonth() + 1, 5); }
 
         // ============================================
-        // NEW: Check if user is an ACTIVE SUBSCRIBED SELLER
+        // FIXED: Check if user is an ACTIVE SUBSCRIBED SELLER
+        // Flow: auth.user.id -> sellers table (get internal id) -> seller_subscriptions
         // ============================================
-        async function isUserActiveSubscribedSeller(userId) {
-            if (!userId) return false;
+        
+        // Step 1: Get the seller's internal ID from the sellers table using auth user ID
+        async function getSellerInternalId(authUserId) {
+            if (!authUserId) return null;
+            try {
+                const headers = getAuthHeaders();
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/sellers?seller_id=eq.${authUserId}&select=id`, { headers });
+                if (!response.ok) return null;
+                const sellers = await response.json();
+                if (sellers && sellers.length > 0) {
+                    return sellers[0].id;
+                }
+                return null;
+            } catch (error) {
+                console.error('Error getting seller internal ID:', error);
+                return null;
+            }
+        }
+        
+        // Step 2: Check if this seller has an active subscription using the internal ID
+        async function isUserActiveSubscribedSeller(sellerInternalId) {
+            if (!sellerInternalId) return false;
             try {
                 const headers = getAuthHeaders();
                 const today = new Date().toISOString();
                 const response = await fetch(
-                    `${SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${userId}&status=eq.active&end_date>gt.${today}&select=id,plan_type`,
+                    `${SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${sellerInternalId}&status=eq.active&end_date>gt.${today}&select=id,plan_type`,
                     { headers }
                 );
                 if (!response.ok) return false;
@@ -800,11 +821,12 @@
             }
         }
 
-        async function isUserRegisteredAsSeller(userId) {
-            if (!userId) return false;
+        // Check if user exists in sellers table (by auth user ID)
+        async function isUserRegisteredAsSeller(authUserId) {
+            if (!authUserId) return false;
             try {
                 const headers = getAuthHeaders();
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/sellers?seller_id=eq.${userId}&select=id`, { headers });
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/sellers?seller_id=eq.${authUserId}&select=id`, { headers });
                 if (!response.ok) return false;
                 const sellers = await response.json();
                 return sellers && sellers.length > 0;
@@ -820,7 +842,7 @@
             if (mainContent) {
                 mainContent.innerHTML = `
                     <div class="access-message">
-                        <h2>🔒 Active Subscription Required</h2>
+                        <h2>Active Subscription Required</h2>
                         <p>You need an active seller subscription to participate in the affiliate program and earn commissions.</p>
                         <p>Subscribe now to start earning $0.10 per month for every new seller you refer!</p>
                         <div class="btn-group">
@@ -840,7 +862,7 @@
             if (mainContent) {
                 mainContent.innerHTML = `
                     <div class="access-message">
-                        <h2>📝 Seller Account Required</h2>
+                        <h2>Seller Account Required</h2>
                         <p>You need to register as a seller before you can join the affiliate program.</p>
                         <div class="btn-group">
                             <a href="seller-register.html" class="btn-primary">Register as Seller</a>
@@ -863,6 +885,7 @@
             if (!currentSellerId) return null;
             const headers = getAuthHeaders();
             try {
+                // Use the auth user ID (currentSellerId) to find affiliate
                 const resp = await fetch(`${SUPABASE_URL}/rest/v1/affiliates?seller_id=eq.${currentSellerId}&select=*`, { headers });
                 if (resp.ok) { const data = await resp.json(); if (data?.length) { currentAffiliateId = data[0].id; return data[0]; } }
                 const affiliateCode = 'AFF_' + currentSellerId.substring(0,6) + '_' + Math.random().toString(36).substr(2,8).toUpperCase();
@@ -988,20 +1011,28 @@
             
             try {
                 const session = JSON.parse(sessionData);
-                currentSellerId = session.user?.id;
+                currentSellerId = session.user?.id;  // This is the Auth user ID (UUID)
                 if (!currentSellerId) return false;
                 
                 document.querySelector('.account-label').textContent = `Hello, ${session.user?.email?.split('@')[0] || 'Affiliate'}`;
                 
-                // STEP 1: Check if user is registered as a seller
+                // STEP 1: Check if user is registered as a seller (using auth user ID)
                 const isSeller = await isUserRegisteredAsSeller(currentSellerId);
                 if (!isSeller) {
                     showNotASeller();
                     return false;
                 }
                 
-                // STEP 2: Check if user has an ACTIVE subscription
-                const hasActiveSubscription = await isUserActiveSubscribedSeller(currentSellerId);
+                // STEP 2: Get the seller's internal ID from sellers table
+                const sellerInternalId = await getSellerInternalId(currentSellerId);
+                if (!sellerInternalId) {
+                    showNotASeller();
+                    return false;
+                }
+                currentSellerInternalId = sellerInternalId;
+                
+                // STEP 3: Check if user has an ACTIVE subscription (using internal seller ID)
+                const hasActiveSubscription = await isUserActiveSubscribedSeller(sellerInternalId);
                 if (!hasActiveSubscription) {
                     showSubscriptionRequired();
                     return false;
@@ -1050,7 +1081,7 @@
                 </div>
 
                 <div class="bg-white rounded-xl p-30 mb-30">
-                    <h2 class="mb-20">Affiliate Tiers & Requirements</h2>
+                    <h2 class="mb-20">Affiliate Tiers &amp; Requirements</h2>
                     <div class="grid-3">
                         <div class="tier-card" id="bronzeCard"><div style="display:flex; justify-content:space-between;"><strong>Bronze</strong><span class="badge-bronze">20%</span></div><div style="font-size:14px;">100-500 referrals</div><div>Progress: <span id="bronzeProgress">0</span>/500</div></div>
                         <div class="tier-card" id="silverCard"><div style="display:flex; justify-content:space-between;"><strong>Silver</strong><span class="badge-silver">25%</span></div><div style="font-size:14px;">501-1000 referrals</div><div>Progress: <span id="silverProgress">0</span>/500</div></div>
@@ -1093,7 +1124,7 @@
                     <div style="overflow-x: auto;">
                         <table class="leaderboard-table">
                             <thead><tr><th>Source</th><th>Clicks</th><th>Conversions</th><th>Conversion Rate</th><th>Revenue</th></tr></thead>
-                            <tbody id="sourcesBody"><tr><td colspan="5" class="text-center placeholder-text">No click data available yet.瓣瓣</tbody>
+                            <tbody id="sourcesBody"><tr><td colspan="5" class="text-center placeholder-text">No click data available yet.</td></tr></tbody>
                         </table>
                     </div>
                     <div class="pie-chart-row">
@@ -1104,7 +1135,7 @@
 
                 <div class="bg-white rounded-xl p-30 mb-30">
                     <h2 class="mb-20">Recent Referral Activity</h2>
-                    <div style="overflow-x: auto;"><table class="leaderboard-table"><thead><tr><th>Date</th><th>Plan</th><th>Commission Earned</th><th>Status</th></tr></thead><tbody id="recentReferrals"><tr><td colspan="4" class="text-center placeholder-text">No referral activity yet瓣瓣</tbody></table></div>
+                    <div style="overflow-x: auto;"><table class="leaderboard-table"><thead><tr><th>Date</th><th>Plan</th><th>Commission Earned</th><th>Status</th></tr></thead><tbody id="recentReferrals"><tr><td colspan="4" class="text-center placeholder-text">No referral activity yet</td></tr></tbody></table></div>
                 </div>
                 
                 <div class="bg-white rounded-xl p-30 mb-30">
