@@ -239,10 +239,29 @@
             cursor: pointer;
             color: #111;
             transition: 0.2s;
+            text-decoration: none;
+            display: inline-block;
         }
         
         .btn-primary:hover {
             background: #F7CA00;
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #f90;
+            color: #f90;
+            padding: 10px 22px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-outline:hover {
+            background: #f90;
+            color: white;
         }
         
         .stats-grid {
@@ -572,7 +591,6 @@
         .tour-btn-next:hover { background: #e08500; }
         .tour-btn-finish { background: #28a745; color: white; flex: 1; }
         
-        /* Pie chart styles */
         .pie-chart-row {
             display: flex;
             flex-wrap: wrap;
@@ -595,6 +613,33 @@
         .pie-container {
             height: 260px;
             position: relative;
+        }
+        
+        /* Access denied / subscription required message */
+        .access-message {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: 50px auto;
+        }
+        .access-message h2 {
+            color: #232f3e;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+        .access-message p {
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        .access-message .btn-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
         }
         
         @media (max-width: 768px) {
@@ -695,110 +740,8 @@
         </nav>
     </header>
 
-    <div class="container mt-30">
-        <div id="inactiveWarning" class="inactive-warning" style="display: none;">
-            <strong>Stay Active!</strong> You haven't had any referral activity in over 40 days. Share your link to keep earning!
-        </div>
-
-        <div class="stats-grid">
-            <div class="stats-card"><div class="stats-number" id="totalClicks">0</div><div>Total Clicks</div><small>on your referral links</small></div>
-            <div class="stats-card"><div class="stats-number" id="totalReferrals">0</div><div>Total Referrals</div><small>successful signups</small></div>
-            <div class="stats-card"><div class="stats-number" id="totalEarnings">$0.00</div><div>Total Earnings</div><small>lifetime commission</small></div>
-            <div class="stats-card"><div class="stats-number" id="unpaidEarnings">$0.00</div><div>Unpaid Earnings</div><small>ready for payout</small></div>
-        </div>
-
-        <div class="bg-white rounded-xl p-30 mb-30">
-            <h2 class="mb-20">Your Leaderboard Position</h2>
-            <div class="your-rank-card">
-                <div style="font-size: 18px; opacity: 0.9;">Your Global Rank</div>
-                <div class="your-rank-number" id="yourRankNumber">--</div>
-                <div style="display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; margin-top: 20px;">
-                    <div><div style="font-size: 12px; opacity: 0.8;">Your Code</div><div style="font-size: 18px; font-weight: 600;" id="yourCode">Loading...</div></div>
-                    <div><div style="font-size: 12px; opacity: 0.8;">Your Tier</div><div style="font-size: 18px; font-weight: 600;" id="yourTier">Bronze</div></div>
-                    <div><div style="font-size: 12px; opacity: 0.8;">Total Referrals</div><div style="font-size: 18px; font-weight: 600;" id="yourReferrals">0</div></div>
-                    <div><div style="font-size: 12px; opacity: 0.8;">Total Earnings</div><div style="font-size: 18px; font-weight: 600;" id="yourEarnings">$0.00</div></div>
-                    <div><div style="font-size: 12px; opacity: 0.8;">30-Day Clicks</div><div style="font-size: 18px; font-weight: 600;" id="yourClicks30d">0</div></div>
-                </div>
-            </div>
-            <p class="mt-20" style="color: #666; font-size: 13px; text-align: center;">Your rank is based on total number of successful referrals. Higher rank = better commission rates!</p>
-        </div>
-
-        <div class="bg-white rounded-xl p-30 mb-30">
-            <h2 class="mb-20">Affiliate Tiers & Requirements</h2>
-            <div class="grid-3">
-                <div class="tier-card" id="bronzeCard"><div style="display:flex; justify-content:space-between;"><strong>Bronze</strong><span class="badge-bronze">20%</span></div><div style="font-size:14px;">100-500 referrals</div><div>Progress: <span id="bronzeProgress">0</span>/500</div></div>
-                <div class="tier-card" id="silverCard"><div style="display:flex; justify-content:space-between;"><strong>Silver</strong><span class="badge-silver">25%</span></div><div style="font-size:14px;">501-1000 referrals</div><div>Progress: <span id="silverProgress">0</span>/500</div></div>
-                <div class="tier-card" id="goldCard"><div style="display:flex; justify-content:space-between;"><strong>Gold</strong><span class="badge-gold">30%</span></div><div style="font-size:14px;">1000+ referrals</div><div>Progress: <span id="goldProgress">0</span>+</div></div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-xl p-30 mb-30">
-            <h2 class="mb-20">Your Referral Link</h2>
-            <div class="referral-link-box">
-                <input type="text" id="referralLink" class="referral-link-input" readonly>
-                <button class="btn-primary" onclick="copyReferralLink()">Copy Link</button>
-            </div>
-            <p class="mt-20" style="color: #666; font-size: 13px;">Share this link with potential sellers. When they sign up and subscribe to a paid plan, you earn commission!</p>
-        </div>
-
-        <div class="bg-white rounded-xl p-30 mb-30">
-            <h2 class="mb-20">Platform-Specific Referral Links</h2>
-            <p style="color:#666; font-size:13px; margin-bottom:15px;">Use different links to track which platform drives the most sales!</p>
-            <div class="social-links-grid" id="socialLinksContainer"></div>
-        </div>
-
-        <div class="charts-row">
-            <div class="bg-white rounded-xl p-30"><h3 class="mb-20 text-center">Clicks vs Conversions</h3><div class="chart-container"><canvas id="clicksChart"></canvas></div><div class="empty-chart-message" id="clicksChartMessage">No data yet</div></div>
-            <div class="bg-white rounded-xl p-30"><h3 class="mb-20 text-center">Earnings Breakdown</h3><div class="chart-container"><canvas id="earningsChart"></canvas></div><div class="empty-chart-message" id="earningsChartMessage">No data yet</div></div>
-        </div>
-
-        <div class="bg-white rounded-xl p-30 mb-30">
-            <h2 class="mb-20">Referral Statistics</h2>
-            <div class="grid-3">
-                <div class="stats-card"><div class="stats-number" id="totalReferredCount">0</div><div>Total Referred</div><small>sellers who signed up</small></div>
-                <div class="stats-card"><div class="stats-number" id="activeSubscribers">0</div><div>Active Subscribers</div><small>currently on paid plan</small></div>
-                <div class="stats-card"><div class="stats-number" id="churnedCount">0</div><div>Churned Subscribers</div><small>canceled or expired</small></div>
-            </div>
-        </div>
-
-        <!-- Best Performing Sources with PIE CHARTS -->
-        <div class="bg-white rounded-xl p-30 mb-30">
-            <h2 class="mb-20">Best Performing Sources</h2>
-            <p style="color:#666; margin-bottom:15px; font-size:13px;">Where your clicks and conversions are coming from</p>
-            <div style="overflow-x: auto;">
-                <table class="leaderboard-table">
-                    <thead><tr><th>Source</th><th>Clicks</th><th>Conversions</th><th>Conversion Rate</th><th>Revenue</th></tr></thead>
-                    <tbody id="sourcesBody"><tr><td colspan="5" class="text-center placeholder-text">No click data available yet.</td></tr></tbody>
-                </table>
-            </div>
-            
-            <!-- PIE CHART BREAKDOWN -->
-            <div class="pie-chart-row">
-                <div class="pie-chart-box">
-                    <h4>Clicks by Source</h4>
-                    <div class="pie-container"><canvas id="clicksPieChart"></canvas></div>
-                </div>
-                <div class="pie-chart-box">
-                    <h4>Conversions by Source</h4>
-                    <div class="pie-container"><canvas id="conversionsPieChart"></canvas></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-xl p-30 mb-30">
-            <h2 class="mb-20">Recent Referral Activity</h2>
-            <div style="overflow-x: auto;"><table class="leaderboard-table"><thead><tr><th>Date</th><th>Plan</th><th>Commission Earned</th><th>Status</th></tr></thead><tbody id="recentReferrals"><tr><td colspan="4" class="text-center placeholder-text">No referral activity yet</td></tr></tbody></table></div>
-        </div>
-        
-        <div class="bg-white rounded-xl p-30 mb-30">
-            <h2 class="mb-20">Payout Information</h2>
-            <p style="color:#666; margin-bottom:15px;">Payouts processed on the 5th of every month via PayNow. Minimum $10.</p>
-            <div class="grid-3">
-                <div class="stats-card"><div class="stats-number" id="pendingPayout">$0.00</div><div>Pending Payout</div></div>
-                <div class="stats-card"><div class="stats-number" id="nextPayoutDate">-</div><div>Next Payout Date</div></div>
-                <div class="stats-card"><div class="stats-number" id="totalPaid">$0.00</div><div>Total Paid</div></div>
-            </div>
-        </div>
+    <div class="container mt-30" id="mainContent">
+        <!-- Dashboard content will be loaded here if user has active subscription -->
     </div>
 
     <footer class="footer">
@@ -826,7 +769,6 @@
         let currentAffiliateId = null, currentSellerId = null;
         let clicksChart = null, earningsChart = null, clicksPieChart = null, conversionsPieChart = null;
 
-        // FIX: Use SERVICE KEY to bypass RLS (same as analytics page)
         function getAuthHeaders() {
             return {
                 'apikey': SUPABASE_SERVICE_KEY,
@@ -836,6 +778,79 @@
         }
 
         function getNextPayoutDate() { const today = new Date(); return new Date(today.getFullYear(), today.getMonth() + 1, 5); }
+
+        // ============================================
+        // NEW: Check if user is an ACTIVE SUBSCRIBED SELLER
+        // ============================================
+        async function isUserActiveSubscribedSeller(userId) {
+            if (!userId) return false;
+            try {
+                const headers = getAuthHeaders();
+                const today = new Date().toISOString();
+                const response = await fetch(
+                    `${SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${userId}&status=eq.active&end_date>gt.${today}&select=id,plan_type`,
+                    { headers }
+                );
+                if (!response.ok) return false;
+                const subscriptions = await response.json();
+                return subscriptions && subscriptions.length > 0;
+            } catch (error) {
+                console.error('Error checking subscription:', error);
+                return false;
+            }
+        }
+
+        async function isUserRegisteredAsSeller(userId) {
+            if (!userId) return false;
+            try {
+                const headers = getAuthHeaders();
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/sellers?seller_id=eq.${userId}&select=id`, { headers });
+                if (!response.ok) return false;
+                const sellers = await response.json();
+                return sellers && sellers.length > 0;
+            } catch (error) {
+                console.error('Error checking seller status:', error);
+                return false;
+            }
+        }
+
+        // Show subscription required message with option to register
+        function showSubscriptionRequired() {
+            const mainContent = document.getElementById('mainContent');
+            if (mainContent) {
+                mainContent.innerHTML = `
+                    <div class="access-message">
+                        <h2>🔒 Active Subscription Required</h2>
+                        <p>You need an active seller subscription to participate in the affiliate program and earn commissions.</p>
+                        <p>Subscribe now to start earning $0.10 per month for every new seller you refer!</p>
+                        <div class="btn-group">
+                            <a href="seller-register.html" class="btn-primary">Register as Seller</a>
+                            <a href="subscription.html" class="btn-outline">View Subscription Plans</a>
+                        </div>
+                    </div>
+                `;
+            }
+            const loading = document.getElementById('loadingOverlay');
+            if (loading) loading.style.display = 'none';
+        }
+
+        // Show not a seller message
+        function showNotASeller() {
+            const mainContent = document.getElementById('mainContent');
+            if (mainContent) {
+                mainContent.innerHTML = `
+                    <div class="access-message">
+                        <h2>📝 Seller Account Required</h2>
+                        <p>You need to register as a seller before you can join the affiliate program.</p>
+                        <div class="btn-group">
+                            <a href="seller-register.html" class="btn-primary">Register as Seller</a>
+                        </div>
+                    </div>
+                `;
+            }
+            const loading = document.getElementById('loadingOverlay');
+            if (loading) loading.style.display = 'none';
+        }
 
         function initEmptyCharts() {
             const ctx1 = document.getElementById('clicksChart')?.getContext('2d');
@@ -921,7 +936,6 @@
                 const recent = completed.slice(0,10);
                 recentBody.innerHTML = recent.length ? recent.map(r => `<tr><td>${new Date(r.completion_date || r.referral_date).toLocaleDateString()}</td><td>${r.referred_plan === 'tier_5' ? '$5 Plan' : '$1.50 Plan'}</td><td>$${(r.commission_earned || 0).toFixed(2)}</td><td><span style="color:#28a745;">Completed</span></td></tr>`).join('') : '<tr><td colspan="4" class="text-center placeholder-text">No referral activity yet</td></tr>';
                 
-                // Source tracking for table + PIE CHARTS
                 const sourceMap = new Map();
                 clicks.forEach(click => { 
                     let src = click.utm_source || click.source_domain || 'Direct'; 
@@ -936,25 +950,15 @@
                 if(sources.length) {
                     sourcesBody.innerHTML = sources.map(s => `<tr><td><span class="source-badge">${s.source}</span></td><td>${s.clicks}</td><td>${s.conversions}</td><td>${s.convRate}%</td><td>$${s.revenue.toFixed(2)}</td></tr>`).join('');
                     
-                    // PIE CHART for Clicks
                     const pieCtx = document.getElementById('clicksPieChart')?.getContext('2d');
                     if(pieCtx && sources.length) {
                         if(clicksPieChart) clicksPieChart.destroy();
-                        clicksPieChart = new Chart(pieCtx, {
-                            type: 'pie',
-                            data: { labels: sources.map(s => s.source), datasets: [{ data: sources.map(s => s.clicks), backgroundColor: ['#3498db','#e74c3c','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e67e22','#34495e'] }] },
-                            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'right', labels: { font: { size: 10 } } } } }
-                        });
+                        clicksPieChart = new Chart(pieCtx, { type: 'pie', data: { labels: sources.map(s => s.source), datasets: [{ data: sources.map(s => s.clicks), backgroundColor: ['#3498db','#e74c3c','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e67e22','#34495e'] }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'right', labels: { font: { size: 10 } } } } } });
                     }
-                    // PIE CHART for Conversions
                     const convCtx = document.getElementById('conversionsPieChart')?.getContext('2d');
                     if(convCtx && sources.length) {
                         if(conversionsPieChart) conversionsPieChart.destroy();
-                        conversionsPieChart = new Chart(convCtx, {
-                            type: 'pie',
-                            data: { labels: sources.map(s => s.source), datasets: [{ data: sources.map(s => s.conversions), backgroundColor: ['#3498db','#e74c3c','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e67e22','#34495e'] }] },
-                            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'right', labels: { font: { size: 10 } } } } }
-                        });
+                        conversionsPieChart = new Chart(convCtx, { type: 'pie', data: { labels: sources.map(s => s.source), datasets: [{ data: sources.map(s => s.conversions), backgroundColor: ['#3498db','#e74c3c','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e67e22','#34495e'] }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'right', labels: { font: { size: 10 } } } } } });
                     }
                 } else {
                     sourcesBody.innerHTML = '<tr><td colspan="5" class="text-center placeholder-text">No click data available yet.</td></tr>';
@@ -976,13 +980,157 @@
         async function checkAuth() {
             const sessionData = localStorage.getItem('supabase_session');
             const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-            if(!isLoggedIn || !sessionData) { window.location.href = 'login.html?redirect=affiliates.html'; return false; }
-            try { const session = JSON.parse(sessionData); currentSellerId = session.user?.id; if(!currentSellerId) return false; document.querySelector('.account-label').textContent = `Hello, ${session.user?.email?.split('@')[0] || 'Affiliate'}`; return true; } 
-            catch(e) { window.location.href = 'login.html?redirect=affiliates.html'; return false; }
+            
+            if (!isLoggedIn || !sessionData) { 
+                window.location.href = 'login.html?redirect=affiliates.html'; 
+                return false; 
+            }
+            
+            try {
+                const session = JSON.parse(sessionData);
+                currentSellerId = session.user?.id;
+                if (!currentSellerId) return false;
+                
+                document.querySelector('.account-label').textContent = `Hello, ${session.user?.email?.split('@')[0] || 'Affiliate'}`;
+                
+                // STEP 1: Check if user is registered as a seller
+                const isSeller = await isUserRegisteredAsSeller(currentSellerId);
+                if (!isSeller) {
+                    showNotASeller();
+                    return false;
+                }
+                
+                // STEP 2: Check if user has an ACTIVE subscription
+                const hasActiveSubscription = await isUserActiveSubscribedSeller(currentSellerId);
+                if (!hasActiveSubscription) {
+                    showSubscriptionRequired();
+                    return false;
+                }
+                
+                return true;
+                
+            } catch(e) {
+                console.error('Auth error:', e);
+                window.location.href = 'login.html?redirect=affiliates.html';
+                return false;
+            }
+        }
+
+        // Function to render the full dashboard HTML
+        function renderDashboardHTML() {
+            const mainContent = document.getElementById('mainContent');
+            if (!mainContent) return;
+            
+            mainContent.innerHTML = `
+                <div id="inactiveWarning" class="inactive-warning" style="display: none;">
+                    <strong>Stay Active!</strong> You haven't had any referral activity in over 40 days. Share your link to keep earning!
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stats-card"><div class="stats-number" id="totalClicks">0</div><div>Total Clicks</div><small>on your referral links</small></div>
+                    <div class="stats-card"><div class="stats-number" id="totalReferrals">0</div><div>Total Referrals</div><small>successful signups</small></div>
+                    <div class="stats-card"><div class="stats-number" id="totalEarnings">$0.00</div><div>Total Earnings</div><small>lifetime commission</small></div>
+                    <div class="stats-card"><div class="stats-number" id="unpaidEarnings">$0.00</div><div>Unpaid Earnings</div><small>ready for payout</small></div>
+                </div>
+
+                <div class="bg-white rounded-xl p-30 mb-30">
+                    <h2 class="mb-20">Your Leaderboard Position</h2>
+                    <div class="your-rank-card">
+                        <div style="font-size: 18px; opacity: 0.9;">Your Global Rank</div>
+                        <div class="your-rank-number" id="yourRankNumber">--</div>
+                        <div style="display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; margin-top: 20px;">
+                            <div><div style="font-size: 12px; opacity: 0.8;">Your Code</div><div style="font-size: 18px; font-weight: 600;" id="yourCode">Loading...</div></div>
+                            <div><div style="font-size: 12px; opacity: 0.8;">Your Tier</div><div style="font-size: 18px; font-weight: 600;" id="yourTier">Bronze</div></div>
+                            <div><div style="font-size: 12px; opacity: 0.8;">Total Referrals</div><div style="font-size: 18px; font-weight: 600;" id="yourReferrals">0</div></div>
+                            <div><div style="font-size: 12px; opacity: 0.8;">Total Earnings</div><div style="font-size: 18px; font-weight: 600;" id="yourEarnings">$0.00</div></div>
+                            <div><div style="font-size: 12px; opacity: 0.8;">30-Day Clicks</div><div style="font-size: 18px; font-weight: 600;" id="yourClicks30d">0</div></div>
+                        </div>
+                    </div>
+                    <p class="mt-20" style="color: #666; font-size: 13px; text-align: center;">Your rank is based on total number of successful referrals. Higher rank = better commission rates!</p>
+                </div>
+
+                <div class="bg-white rounded-xl p-30 mb-30">
+                    <h2 class="mb-20">Affiliate Tiers & Requirements</h2>
+                    <div class="grid-3">
+                        <div class="tier-card" id="bronzeCard"><div style="display:flex; justify-content:space-between;"><strong>Bronze</strong><span class="badge-bronze">20%</span></div><div style="font-size:14px;">100-500 referrals</div><div>Progress: <span id="bronzeProgress">0</span>/500</div></div>
+                        <div class="tier-card" id="silverCard"><div style="display:flex; justify-content:space-between;"><strong>Silver</strong><span class="badge-silver">25%</span></div><div style="font-size:14px;">501-1000 referrals</div><div>Progress: <span id="silverProgress">0</span>/500</div></div>
+                        <div class="tier-card" id="goldCard"><div style="display:flex; justify-content:space-between;"><strong>Gold</strong><span class="badge-gold">30%</span></div><div style="font-size:14px;">1000+ referrals</div><div>Progress: <span id="goldProgress">0</span>+</div></div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl p-30 mb-30">
+                    <h2 class="mb-20">Your Referral Link</h2>
+                    <div class="referral-link-box">
+                        <input type="text" id="referralLink" class="referral-link-input" readonly>
+                        <button class="btn-primary" onclick="copyReferralLink()">Copy Link</button>
+                    </div>
+                    <p class="mt-20" style="color: #666; font-size: 13px;">Share this link with potential sellers. When they sign up and subscribe to a paid plan, you earn commission!</p>
+                </div>
+
+                <div class="bg-white rounded-xl p-30 mb-30">
+                    <h2 class="mb-20">Platform-Specific Referral Links</h2>
+                    <p style="color:#666; font-size:13px; margin-bottom:15px;">Use different links to track which platform drives the most sales!</p>
+                    <div class="social-links-grid" id="socialLinksContainer"></div>
+                </div>
+
+                <div class="charts-row">
+                    <div class="bg-white rounded-xl p-30"><h3 class="mb-20 text-center">Clicks vs Conversions</h3><div class="chart-container"><canvas id="clicksChart"></canvas></div><div class="empty-chart-message" id="clicksChartMessage">No data yet</div></div>
+                    <div class="bg-white rounded-xl p-30"><h3 class="mb-20 text-center">Earnings Breakdown</h3><div class="chart-container"><canvas id="earningsChart"></canvas></div><div class="empty-chart-message" id="earningsChartMessage">No data yet</div></div>
+                </div>
+
+                <div class="bg-white rounded-xl p-30 mb-30">
+                    <h2 class="mb-20">Referral Statistics</h2>
+                    <div class="grid-3">
+                        <div class="stats-card"><div class="stats-number" id="totalReferredCount">0</div><div>Total Referred</div><small>sellers who signed up</small></div>
+                        <div class="stats-card"><div class="stats-number" id="activeSubscribers">0</div><div>Active Subscribers</div><small>currently on paid plan</small></div>
+                        <div class="stats-card"><div class="stats-number" id="churnedCount">0</div><div>Churned Subscribers</div><small>canceled or expired</small></div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl p-30 mb-30">
+                    <h2 class="mb-20">Best Performing Sources</h2>
+                    <p style="color:#666; margin-bottom:15px; font-size:13px;">Where your clicks and conversions are coming from</p>
+                    <div style="overflow-x: auto;">
+                        <table class="leaderboard-table">
+                            <thead><tr><th>Source</th><th>Clicks</th><th>Conversions</th><th>Conversion Rate</th><th>Revenue</th></tr></thead>
+                            <tbody id="sourcesBody"><tr><td colspan="5" class="text-center placeholder-text">No click data available yet.瓣瓣</tbody>
+                        </table>
+                    </div>
+                    <div class="pie-chart-row">
+                        <div class="pie-chart-box"><h4>Clicks by Source</h4><div class="pie-container"><canvas id="clicksPieChart"></canvas></div></div>
+                        <div class="pie-chart-box"><h4>Conversions by Source</h4><div class="pie-container"><canvas id="conversionsPieChart"></canvas></div></div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl p-30 mb-30">
+                    <h2 class="mb-20">Recent Referral Activity</h2>
+                    <div style="overflow-x: auto;"><table class="leaderboard-table"><thead><tr><th>Date</th><th>Plan</th><th>Commission Earned</th><th>Status</th></tr></thead><tbody id="recentReferrals"><tr><td colspan="4" class="text-center placeholder-text">No referral activity yet瓣瓣</tbody></table></div>
+                </div>
+                
+                <div class="bg-white rounded-xl p-30 mb-30">
+                    <h2 class="mb-20">Payout Information</h2>
+                    <p style="color:#666; margin-bottom:15px;">Payouts processed on the 5th of every month via PayNow. Minimum $10.</p>
+                    <div class="grid-3">
+                        <div class="stats-card"><div class="stats-number" id="pendingPayout">$0.00</div><div>Pending Payout</div></div>
+                        <div class="stats-card"><div class="stats-number" id="nextPayoutDate">-</div><div>Next Payout Date</div></div>
+                        <div class="stats-card"><div class="stats-number" id="totalPaid">$0.00</div><div>Total Paid</div></div>
+                    </div>
+                </div>
+            `;
         }
 
         let currentStep = 0, totalSteps = 4;
-        function updateTourSteps() { for(let i=0;i<totalSteps;i++) { const el = document.getElementById(`tourStep${i+1}`); if(el) i===currentStep ? el.classList.add('active') : el.classList.remove('active'); } document.querySelectorAll('.tour-dot').forEach((d,idx)=>{ idx===currentStep ? d.classList.add('active') : d.classList.remove('active'); }); const nb = document.getElementById('tourNextBtn'); if(currentStep === totalSteps-1) { nb.textContent='Finish'; nb.classList.add('tour-btn-finish'); nb.classList.remove('tour-btn-next'); } else { nb.textContent='Next'; nb.classList.remove('tour-btn-finish'); nb.classList.add('tour-btn-next'); } }
+        function updateTourSteps() { 
+            for(let i=0;i<totalSteps;i++) { 
+                const el = document.getElementById(`tourStep${i+1}`); 
+                if(el) i===currentStep ? el.classList.add('active') : el.classList.remove('active'); 
+            } 
+            document.querySelectorAll('.tour-dot').forEach((d,idx)=>{ idx===currentStep ? d.classList.add('active') : d.classList.remove('active'); }); 
+            const nb = document.getElementById('tourNextBtn'); 
+            if(currentStep === totalSteps-1) { nb.textContent='Finish'; nb.classList.add('tour-btn-finish'); nb.classList.remove('tour-btn-next'); } 
+            else { nb.textContent='Next'; nb.classList.remove('tour-btn-finish'); nb.classList.add('tour-btn-next'); } 
+        }
+        
         function nextTourStep() { if(currentStep < totalSteps-1) { currentStep++; updateTourSteps(); } else closeTour(); }
         function closeTour() { document.getElementById('tourOverlay').style.display='none'; localStorage.setItem('affiliate_tour_shown','true'); }
         function skipTour() { closeTour(); }
@@ -990,21 +1138,35 @@
 
         async function init() {
             const loading = document.getElementById('loadingOverlay');
-            if(!await checkAuth()) return;
+            const isAuthed = await checkAuth();
+            if (!isAuthed) {
+                if (loading) loading.style.display = 'none';
+                return;
+            }
+            
+            // Render the dashboard HTML first
+            renderDashboardHTML();
+            
+            // Then initialize charts and data
             await ensureAffiliateRecord();
-            if(!currentAffiliateId) { if(loading) loading.style.display='none'; return; }
+            if (!currentAffiliateId) { 
+                if (loading) loading.style.display = 'none'; 
+                return; 
+            }
+            
             initEmptyCharts();
             await updateDashboard();
             showWelcomeTour();
-            if(loading) loading.style.display='none';
+            
+            if (loading) loading.style.display = 'none';
             setInterval(() => updateDashboard(), 30000);
         }
         
         document.getElementById('tourNextBtn')?.addEventListener('click', nextTourStep);
         document.getElementById('tourSkipBtn')?.addEventListener('click', skipTour);
         document.querySelectorAll('.tour-dot').forEach((dot,idx) => dot.addEventListener('click', () => { currentStep = idx; updateTourSteps(); }));
+        
         init();
     </script>
 </body>
 </html>
-        
