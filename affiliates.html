@@ -615,7 +615,6 @@
             position: relative;
         }
         
-        /* Access denied / subscription required message */
         .access-message {
             text-align: center;
             padding: 60px 20px;
@@ -740,9 +739,7 @@
         </nav>
     </header>
 
-    <div class="container mt-30" id="mainContent">
-        <!-- Dashboard content will be loaded here if user has active subscription -->
-    </div>
+    <div class="container mt-30" id="mainContent"></div>
 
     <footer class="footer">
         <div class="footer-top"><a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'})">Back to top</a></div>
@@ -766,7 +763,7 @@
     <script>
         const SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
         const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZubmNlcmR4Zmh3bHJkb3Bzd3B4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NzEwMTgwOSwiZXhwIjoyMDgyNjc3ODA5fQ.gS45zReH5gtMeTY74tjb6ECfdjENglLejU4kTFNnIh0';
-        let currentAffiliateId = null, currentSellerId = null, currentSellerInternalId = null;
+        let currentAffiliateId = null, currentSellerId = null;
         let clicksChart = null, earningsChart = null, clicksPieChart = null, conversionsPieChart = null;
 
         function getAuthHeaders() {
@@ -780,36 +777,17 @@
         function getNextPayoutDate() { const today = new Date(); return new Date(today.getFullYear(), today.getMonth() + 1, 5); }
 
         // ============================================
-        // FIXED: Check if user is an ACTIVE SUBSCRIBED SELLER
-        // Flow: auth.user.id -> sellers table (get internal id) -> seller_subscriptions
+        // FIXED: Check subscription using AUTH UUID directly
+        // Looks for: seller_id = auth UUID in seller_subscriptions table
         // ============================================
         
-        // Step 1: Get the seller's internal ID from the sellers table using auth user ID
-        async function getSellerInternalId(authUserId) {
-            if (!authUserId) return null;
-            try {
-                const headers = getAuthHeaders();
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/sellers?seller_id=eq.${authUserId}&select=id`, { headers });
-                if (!response.ok) return null;
-                const sellers = await response.json();
-                if (sellers && sellers.length > 0) {
-                    return sellers[0].id;
-                }
-                return null;
-            } catch (error) {
-                console.error('Error getting seller internal ID:', error);
-                return null;
-            }
-        }
-        
-        // Step 2: Check if this seller has an active subscription using the internal ID
-        async function isUserActiveSubscribedSeller(sellerInternalId) {
-            if (!sellerInternalId) return false;
+        async function isUserActiveSubscribedSeller(authUserId) {
+            if (!authUserId) return false;
             try {
                 const headers = getAuthHeaders();
                 const today = new Date().toISOString();
                 const response = await fetch(
-                    `${SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${sellerInternalId}&status=eq.active&end_date>gt.${today}&select=id,plan_type`,
+                    `${SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${authUserId}&status=eq.active&end_date>gt.${today}&select=id,plan_type`,
                     { headers }
                 );
                 if (!response.ok) return false;
@@ -821,7 +799,6 @@
             }
         }
 
-        // Check if user exists in sellers table (by auth user ID)
         async function isUserRegisteredAsSeller(authUserId) {
             if (!authUserId) return false;
             try {
@@ -836,7 +813,6 @@
             }
         }
 
-        // Show subscription required message with option to register
         function showSubscriptionRequired() {
             const mainContent = document.getElementById('mainContent');
             if (mainContent) {
@@ -856,7 +832,6 @@
             if (loading) loading.style.display = 'none';
         }
 
-        // Show not a seller message
         function showNotASeller() {
             const mainContent = document.getElementById('mainContent');
             if (mainContent) {
@@ -885,7 +860,6 @@
             if (!currentSellerId) return null;
             const headers = getAuthHeaders();
             try {
-                // Use the auth user ID (currentSellerId) to find affiliate
                 const resp = await fetch(`${SUPABASE_URL}/rest/v1/affiliates?seller_id=eq.${currentSellerId}&select=*`, { headers });
                 if (resp.ok) { const data = await resp.json(); if (data?.length) { currentAffiliateId = data[0].id; return data[0]; } }
                 const affiliateCode = 'AFF_' + currentSellerId.substring(0,6) + '_' + Math.random().toString(36).substr(2,8).toUpperCase();
@@ -1011,28 +985,20 @@
             
             try {
                 const session = JSON.parse(sessionData);
-                currentSellerId = session.user?.id;  // This is the Auth user ID (UUID)
+                currentSellerId = session.user?.id;
                 if (!currentSellerId) return false;
                 
                 document.querySelector('.account-label').textContent = `Hello, ${session.user?.email?.split('@')[0] || 'Affiliate'}`;
                 
-                // STEP 1: Check if user is registered as a seller (using auth user ID)
+                // STEP 1: Check if user is registered as a seller (using auth UUID)
                 const isSeller = await isUserRegisteredAsSeller(currentSellerId);
                 if (!isSeller) {
                     showNotASeller();
                     return false;
                 }
                 
-                // STEP 2: Get the seller's internal ID from sellers table
-                const sellerInternalId = await getSellerInternalId(currentSellerId);
-                if (!sellerInternalId) {
-                    showNotASeller();
-                    return false;
-                }
-                currentSellerInternalId = sellerInternalId;
-                
-                // STEP 3: Check if user has an ACTIVE subscription (using internal seller ID)
-                const hasActiveSubscription = await isUserActiveSubscribedSeller(sellerInternalId);
+                // STEP 2: Check if user has an ACTIVE subscription (using auth UUID directly)
+                const hasActiveSubscription = await isUserActiveSubscribedSeller(currentSellerId);
                 if (!hasActiveSubscription) {
                     showSubscriptionRequired();
                     return false;
@@ -1047,7 +1013,6 @@
             }
         }
 
-        // Function to render the full dashboard HTML
         function renderDashboardHTML() {
             const mainContent = document.getElementById('mainContent');
             if (!mainContent) return;
@@ -1175,10 +1140,8 @@
                 return;
             }
             
-            // Render the dashboard HTML first
             renderDashboardHTML();
             
-            // Then initialize charts and data
             await ensureAffiliateRecord();
             if (!currentAffiliateId) { 
                 if (loading) loading.style.display = 'none'; 
