@@ -158,6 +158,14 @@
             background: #F7CA00;
         }
         
+        /* FIX: Stats cards - 2 per row on mobile */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
         .stats-card {
             background: white;
             padding: 24px 16px;
@@ -171,6 +179,14 @@
             font-size: 34px;
             font-weight: 800;
             color: #B12704;
+        }
+        
+        /* FIX: Charts row - side by side on desktop, stack on mobile */
+        .charts-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 30px;
         }
         
         .grid-3 {
@@ -248,6 +264,38 @@
             border: 1px solid #ddd;
             border-radius: 8px;
             font-size: 14px;
+            background: white;
+            font-family: monospace;
+        }
+        
+        /* Social links grid */
+        .social-links-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 20px;
+        }
+        
+        .social-link-card {
+            background: #f1f3f4;
+            border-radius: 30px;
+            padding: 8px 12px;
+            text-align: center;
+        }
+        
+        .social-link-card span {
+            font-size: 12px;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 6px;
+        }
+        
+        .social-link-input {
+            width: 100%;
+            font-size: 10px;
+            padding: 6px;
+            border-radius: 20px;
+            border: 1px solid #ddd;
             background: white;
             font-family: monospace;
         }
@@ -396,35 +444,267 @@
             margin: 20px 0;
         }
         
+        /* FIX: Welcome Tour - fully responsive */
+        .tour-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 20000;
+            padding: 20px;
+        }
+        
+        .tour-card {
+            background: white;
+            max-width: 500px;
+            width: 100%;
+            border-radius: 32px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: tourFadeIn 0.3s ease;
+        }
+        
+        @keyframes tourFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        .tour-header {
+            background: linear-gradient(135deg, #131921, #232f3e);
+            color: white;
+            padding: 28px 24px;
+            text-align: center;
+        }
+        
+        .tour-header h2 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        
+        .tour-header p {
+            font-size: 14px;
+            opacity: 0.85;
+        }
+        
+        .tour-body {
+            padding: 28px 24px 32px;
+        }
+        
+        .tour-step {
+            display: none;
+            animation: tourStepFade 0.25s ease;
+        }
+        
+        .tour-step.active {
+            display: block;
+        }
+        
+        @keyframes tourStepFade {
+            from {
+                opacity: 0;
+                transform: translateX(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .tour-step h3 {
+            font-size: 22px;
+            margin-bottom: 16px;
+            color: #111;
+        }
+        
+        .tour-step p {
+            font-size: 15px;
+            line-height: 1.5;
+            color: #444;
+            margin-bottom: 12px;
+        }
+        
+        .tour-step ul {
+            padding-left: 24px;
+            margin: 16px 0;
+        }
+        
+        .tour-step li {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #444;
+            margin: 8px 0;
+        }
+        
+        .tour-progress {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin: 28px 0 24px;
+        }
+        
+        .tour-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ccc;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .tour-dot.active {
+            background: #f90;
+            width: 28px;
+            border-radius: 10px;
+        }
+        
+        .tour-buttons {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .tour-btn {
+            padding: 12px 24px;
+            border-radius: 40px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+        
+        .tour-btn-skip {
+            background: #f1f3f4;
+            color: #666;
+        }
+        
+        .tour-btn-skip:hover {
+            background: #e4e6e9;
+        }
+        
+        .tour-btn-next {
+            background: #f90;
+            color: white;
+            flex: 1;
+        }
+        
+        .tour-btn-next:hover {
+            background: #e08500;
+        }
+        
+        .tour-btn-finish {
+            background: #28a745;
+            color: white;
+            flex: 1;
+        }
+        
+        .tour-btn-finish:hover {
+            background: #218838;
+        }
+        
+        /* MOBILE RESPONSIVE FIXES */
         @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+            
+            .stats-card {
+                padding: 16px 12px;
+            }
+            
+            .stats-number {
+                font-size: 24px;
+            }
+            
+            .charts-row {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
             .grid-3, .grid-4, .grid-2 {
                 grid-template-columns: 1fr;
             }
+            
             .leaderboard-table {
                 font-size: 12px;
             }
+            
             .leaderboard-table th,
             .leaderboard-table td {
                 padding: 8px;
             }
+            
             .p-30 {
                 padding: 20px;
             }
+            
             .referral-link-box {
                 flex-direction: column;
             }
+            
             .referral-link-input {
                 width: 100%;
             }
+            
             .chart-container {
                 height: 220px;
             }
-            .stats-number {
-                font-size: 24px;
-            }
+            
             .your-rank-number {
                 font-size: 40px;
             }
+            
+            .your-rank-card {
+                padding: 20px;
+            }
+            
+            .social-links-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .tour-card {
+                max-width: 95%;
+            }
+            
+            .tour-header h2 {
+                font-size: 22px;
+            }
+            
+            .tour-step h3 {
+                font-size: 18px;
+            }
+            
+            .tour-body {
+                padding: 20px;
+            }
+        }
+        
+        /* Source chart container */
+        .source-chart-container {
+            max-width: 100%;
+            height: 300px;
+            margin-top: 20px;
+        }
+        
+        .platform-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #f0f2f5;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
         }
     </style>
 </head>
@@ -435,44 +715,51 @@
         <p style="margin-top: 16px; color: #666;">Loading affiliate dashboard...</p>
     </div>
 
-    <!-- Welcome Tour Overlay -->
+    <!-- Welcome Tour Overlay - FIXED: now shows properly -->
     <div id="tourOverlay" class="tour-overlay" style="display: none;">
         <div class="tour-card">
             <div class="tour-header">
-                <h2>Affiliate Program</h2>
-                <p>Earn commission by referring sellers</p>
+                <h2>🚀 Affiliate Program</h2>
+                <p>Earn $0.10 per active seller every month</p>
             </div>
             <div class="tour-body">
                 <div id="tourStep1" class="tour-step active">
-                    <h3>Welcome to Mbare Affiliate Program</h3>
-                    <p>Earn money by inviting sellers to join Mbare Marketplace! When a seller you refer subscribes to a paid plan, you earn commission.</p>
+                    <h3>💰 Welcome to Mbare Affiliate</h3>
+                    <p>Invite sellers and earn recurring commission! Every seller you bring who stays subscribed earns you <strong>$0.10 per month</strong>.</p>
                     <ul>
-                        <li>20% commission on every referral</li>
                         <li>Lifetime recurring earnings</li>
-                        <li>Unlock higher tiers with more referrals</li>
+                        <li>No cap on referrals</li>
+                        <li>Track performance by platform</li>
                     </ul>
                 </div>
                 <div id="tourStep2" class="tour-step">
-                    <h3>How It Works</h3>
+                    <h3>🔗 How It Works</h3>
                     <ul>
-                        <li>Share your unique referral link</li>
-                        <li>Sellers click your link and sign up</li>
-                        <li>When they subscribe, you earn commission</li>
-                        <li>Earnings are paid monthly via PayNow</li>
+                        <li>Generate your unique referral link below</li>
+                        <li>Share on Instagram, Facebook, TikTok, WhatsApp, X and more</li>
+                        <li>When a seller subscribes through your link → you earn</li>
+                        <li>Payments sent monthly via PayNow</li>
                     </ul>
                 </div>
                 <div id="tourStep3" class="tour-step">
-                    <h3>Affiliate Tiers</h3>
+                    <h3>📊 Affiliate Tiers</h3>
+                    <p>Higher tiers = better commission rates:</p>
                     <ul>
-                        <li><strong>Bronze:</strong> 100-500 referrals - 20% commission</li>
-                        <li><strong>Silver:</strong> 501-1000 referrals + 10 x $5 tier - 25% commission</li>
-                        <li><strong>Gold:</strong> 1000+ referrals + 100 x $5 tier - 30% commission</li>
+                        <li><strong>Bronze:</strong> 20% base commission</li>
+                        <li><strong>Silver:</strong> 25% commission + bonuses</li>
+                        <li><strong>Gold:</strong> 30% top-tier commission</li>
                     </ul>
+                    <p>Unlock tiers by reaching referral milestones!</p>
                 </div>
                 <div id="tourStep4" class="tour-step">
-                    <h3>Your Stats</h3>
-                    <p>Track your performance, clicks, earnings, and leaderboard position all in one place.</p>
-                    <p>Higher tiers unlock better commission rates and exclusive bonuses.</p>
+                    <h3>📈 Your Dashboard</h3>
+                    <p>Track everything in one place:</p>
+                    <ul>
+                        <li>Total clicks & conversions by platform</li>
+                        <li>Your leaderboard position</li>
+                        <li>Pending earnings & next payout</li>
+                        <li>Best performing sources</li>
+                    </ul>
                 </div>
                 
                 <div class="tour-progress" id="tourProgress">
@@ -523,8 +810,8 @@
             <strong>⚠️ Stay Active!</strong> You haven't had any referral activity in over 40 days. Share your link to keep earning!
         </div>
 
-        <!-- Stats Overview -->
-        <div class="grid-4 mb-30">
+        <!-- Stats Overview - FIXED: 2 per row on mobile -->
+        <div class="stats-grid">
             <div class="stats-card">
                 <div class="stats-number" id="totalClicks">0</div>
                 <div>Total Clicks</div>
@@ -547,7 +834,7 @@
             </div>
         </div>
 
-        <!-- Your Rank Card - Only shows YOUR position -->
+        <!-- Your Rank Card - FIXED: appears first after stats -->
         <div class="bg-white rounded-xl p-30 mb-30">
             <h2 class="mb-20">Your Leaderboard Position</h2>
             <div class="your-rank-card" id="yourRankCard">
@@ -592,7 +879,7 @@
                     </div>
                     <div style="font-size: 14px; color: #666; margin: 10px 0;">Requirements: 100-500 referrals</div>
                     <div style="font-size: 12px; background: #f4f5f7; padding: 8px; border-radius: 30px;">
-                        Your progress: <span id="bronzeProgress">0</span>/500 referrals | <span id="bronzeFiveTier">0</span>/0 x $5 tiers
+                        Your progress: <span id="bronzeProgress">0</span>/500 referrals
                     </div>
                 </div>
                 <div class="tier-card" id="silverCard">
@@ -600,9 +887,9 @@
                         <strong style="font-size: 1.2rem;">Silver</strong>
                         <span class="badge-silver">25% Commission</span>
                     </div>
-                    <div style="font-size: 14px; color: #666; margin: 10px 0;">Requirements: 501-1000 referrals + 10 x $5 tier</div>
+                    <div style="font-size: 14px; color: #666; margin: 10px 0;">Requirements: 501-1000 referrals</div>
                     <div style="font-size: 12px; background: #f4f5f7; padding: 8px; border-radius: 30px;">
-                        Your progress: <span id="silverProgress">0</span>/500 referrals | <span id="silverFiveTier">0</span>/10 x $5 tiers
+                        Your progress: <span id="silverProgress">0</span>/500 referrals
                     </div>
                 </div>
                 <div class="tier-card" id="goldCard">
@@ -610,9 +897,9 @@
                         <strong style="font-size: 1.2rem;">Gold</strong>
                         <span class="badge-gold">30% Commission</span>
                     </div>
-                    <div style="font-size: 14px; color: #666; margin: 10px 0;">Requirements: 1000+ referrals + 100 x $5 tier</div>
+                    <div style="font-size: 14px; color: #666; margin: 10px 0;">Requirements: 1000+ referrals</div>
                     <div style="font-size: 12px; background: #f4f5f7; padding: 8px; border-radius: 30px;">
-                        Your progress: <span id="goldProgress">0</span>+ referrals | <span id="goldFiveTier">0</span>/100 x $5 tiers
+                        Your progress: <span id="goldProgress">0</span>+ referrals
                     </div>
                 </div>
             </div>
@@ -630,8 +917,17 @@
             </p>
         </div>
 
-        <!-- Performance Charts -->
-        <div class="grid-2 mb-30">
+        <!-- Platform Specific Links - FIXED: all social platforms -->
+        <div class="bg-white rounded-xl p-30 mb-30">
+            <h2 class="mb-20">Platform-Specific Referral Links</h2>
+            <p style="color: #666; margin-bottom: 15px; font-size: 13px;">Use different links to track which platform drives the most sales!</p>
+            <div class="social-links-grid" id="socialLinksContainer">
+                <!-- Dynamic social links will appear here -->
+            </div>
+        </div>
+
+        <!-- Performance Charts - FIXED: side by side on desktop, stacked on mobile -->
+        <div class="charts-row">
             <div class="bg-white rounded-xl p-30">
                 <h3 class="mb-20 text-center">Clicks vs Conversions</h3>
                 <div class="chart-container">
@@ -671,7 +967,7 @@
             </div>
         </div>
 
-        <!-- Best Performing Sources -->
+        <!-- Best Performing Sources - FIXED: added chart for sources -->
         <div class="bg-white rounded-xl p-30 mb-30">
             <h2 class="mb-20">Best Performing Sources</h2>
             <p style="color: #666; margin-bottom: 15px; font-size: 13px;">Where your clicks and conversions are coming from</p>
@@ -684,6 +980,10 @@
                         <tr><td colspan="5" class="text-center placeholder-text">No click data available yet. Share your link to start tracking!</td></tr>
                     </tbody>
                 </table>
+            </div>
+            <!-- Source performance chart -->
+            <div class="source-chart-container" id="sourceChartContainer" style="display: none;">
+                <canvas id="sourceChart" width="400" height="200"></canvas>
             </div>
         </div>
 
@@ -745,12 +1045,13 @@
         let currentSellerId = null;
         let clicksChart = null;
         let earningsChart = null;
+        let sourceChart = null;
         
         // Tier requirements
         const TIER_REQUIREMENTS = {
-            bronze: { minReferrals: 100, maxReferrals: 500, minFiveTier: 0, commission: 20 },
-            silver: { minReferrals: 501, maxReferrals: 1000, minFiveTier: 10, commission: 25 },
-            gold: { minReferrals: 1001, maxReferrals: Infinity, minFiveTier: 100, commission: 30 }
+            bronze: { minReferrals: 100, maxReferrals: 500, commission: 20 },
+            silver: { minReferrals: 501, maxReferrals: 1000, commission: 25 },
+            gold: { minReferrals: 1001, maxReferrals: Infinity, commission: 30 }
         };
         
         function getAuthHeaders() {
@@ -894,7 +1195,9 @@
                     return data[0];
                 }
                 
-                const affiliateCode = 'AFF_' + currentSellerId.substring(0, 8) + '_' + Math.random().toString(36).substr(2, 6).toUpperCase();
+                // FIXED: Generate unique affiliate code that always appears
+                const uniqueSuffix = Math.random().toString(36).substring(2, 10).toUpperCase();
+                const affiliateCode = 'AFF_' + currentSellerId.substring(0, 6) + '_' + uniqueSuffix;
                 
                 const createResponse = await fetch(`${SUPABASE_URL}/rest/v1/affiliates`, {
                     method: 'POST',
@@ -986,6 +1289,50 @@
             }
         }
         
+        // Generate social links
+        function generateSocialLinks(affiliateCode) {
+            const domain = window.location.origin;
+            const baseUrl = `${domain}/seller-register.html?ref=${affiliateCode}`;
+            
+            const platforms = [
+                { name: '📱 Instagram', param: 'instagram', icon: '📷' },
+                { name: '📘 Facebook', param: 'facebook', icon: '👍' },
+                { name: '💼 LinkedIn', param: 'linkedin', icon: '🔗' },
+                { name: '🎵 TikTok', param: 'tiktok', icon: '🎵' },
+                { name: '🧵 Threads', param: 'threads', icon: '🧵' },
+                { name: '💬 WhatsApp', param: 'whatsapp', icon: '📱' },
+                { name: '🐦 X (Twitter)', param: 'x', icon: '🐦' }
+            ];
+            
+            const container = document.getElementById('socialLinksContainer');
+            if (!container) return;
+            
+            container.innerHTML = platforms.map(platform => {
+                const linkWithSource = `${baseUrl}&utm_source=${platform.param}`;
+                return `
+                    <div class="social-link-card">
+                        <span>${platform.icon} ${platform.name}</span>
+                        <input type="text" class="social-link-input" value="${linkWithSource}" readonly onclick="this.select(); copyToClipboard(this.value)">
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Copy helper
+        window.copyToClipboard = function(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showCopyMessage('Link copied to clipboard!');
+            });
+        };
+        
+        function showCopyMessage(message) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'copy-success';
+            msgDiv.innerHTML = message;
+            document.body.appendChild(msgDiv);
+            setTimeout(() => msgDiv.remove(), 2000);
+        }
+        
         // Update dashboard
         async function updateDashboard() {
             try {
@@ -997,7 +1344,6 @@
                 
                 const completedReferrals = referrals.filter(r => r.status === 'completed');
                 const pendingReferrals = referrals.filter(r => r.status === 'pending');
-                const fiveTierCount = completedReferrals.filter(r => r.referred_plan === 'tier_5').length;
                 const totalClicks = clicks.length;
                 const convertedClicks = clicks.filter(c => c.converted === true).length;
                 
@@ -1006,10 +1352,11 @@
                 const paidEarnings = earnings.filter(e => e.status === 'paid').reduce((sum, e) => sum + (e.amount || 0), 0);
                 
                 const currentTier = affiliate?.tier || 'bronze';
+                const affiliateCode = affiliate?.affiliate_code || ('AFF_' + (currentSellerId?.substring(0, 8) || 'DEFAULT'));
                 
-                // Update Your Rank Card
+                // FIXED: Always show affiliate code
                 document.getElementById('yourRankNumber').innerHTML = rankData?.rank || '--';
-                document.getElementById('yourCode').innerHTML = affiliate?.affiliate_code || 'AFF_XXXXXXXX';
+                document.getElementById('yourCode').innerHTML = affiliateCode;
                 document.getElementById('yourTier').innerHTML = currentTier.charAt(0).toUpperCase() + currentTier.slice(1);
                 document.getElementById('yourReferrals').innerHTML = completedReferrals.length;
                 document.getElementById('yourEarnings').innerHTML = `$${totalEarnings.toFixed(2)}`;
@@ -1024,9 +1371,6 @@
                 document.getElementById('bronzeProgress').innerHTML = Math.min(completedReferrals.length, 500);
                 document.getElementById('silverProgress').innerHTML = Math.min(Math.max(0, completedReferrals.length - 500), 500);
                 document.getElementById('goldProgress').innerHTML = Math.max(0, completedReferrals.length - 1000);
-                document.getElementById('bronzeFiveTier').innerHTML = fiveTierCount;
-                document.getElementById('silverFiveTier').innerHTML = fiveTierCount;
-                document.getElementById('goldFiveTier').innerHTML = fiveTierCount;
                 
                 // Highlight current tier
                 document.getElementById('bronzeCard').classList.remove('tier-highlight');
@@ -1047,19 +1391,21 @@
                 document.getElementById('pendingPayout').innerHTML = `$${pendingEarnings.toFixed(2)}`;
                 document.getElementById('totalPaid').innerHTML = `$${paidEarnings.toFixed(2)}`;
                 
-                // Next payout date (5th of next month)
+                // Next payout date
                 const nextPayout = getNextPayoutDate();
                 document.getElementById('nextPayoutDate').innerHTML = nextPayout.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                 
                 // Update charts
                 updateCharts(totalClicks, convertedClicks, paidEarnings, pendingEarnings);
                 
-                // Update referral link
+                // Update referral link - FIXED: always shows code
                 const domain = window.location.origin;
-                const affiliateCode = affiliate?.affiliate_code || 'AFF_' + currentSellerId?.substring(0, 8);
                 document.getElementById('referralLink').value = `${domain}/seller-register.html?ref=${affiliateCode}`;
                 
-                // Update recent referrals (NO NAMES)
+                // Generate social platform links
+                generateSocialLinks(affiliateCode);
+                
+                // Update recent referrals
                 const recentBody = document.getElementById('recentReferrals');
                 const recent = completedReferrals.slice(0, 10);
                 if (recent.length > 0) {
@@ -1079,7 +1425,7 @@
                 const sourcesBody = document.getElementById('sourcesBody');
                 const sourceMap = new Map();
                 clicks.forEach(click => {
-                    const source = click.source_domain || click.utm_source || 'Direct';
+                    const source = click.utm_source || click.source_domain || 'Direct';
                     if (!sourceMap.has(source)) {
                         sourceMap.set(source, { clicks: 0, conversions: 0, revenue: 0 });
                     }
@@ -1110,8 +1456,51 @@
                             <td>$${s.revenue.toFixed(2)}</td>
                         </tr>
                     `).join('');
+                    
+                    // Show source chart if we have data
+                    const sourceChartContainer = document.getElementById('sourceChartContainer');
+                    if (sourceChartContainer && sources.length > 0) {
+                        sourceChartContainer.style.display = 'block';
+                        const ctx = document.getElementById('sourceChart')?.getContext('2d');
+                        if (ctx) {
+                            if (sourceChart) sourceChart.destroy();
+                            sourceChart = new Chart(ctx, {
+                                type: 'bar',
+                                data: {
+                                    labels: sources.map(s => s.source),
+                                    datasets: [
+                                        {
+                                            label: 'Clicks',
+                                            data: sources.map(s => s.clicks),
+                                            backgroundColor: '#3498db',
+                                            borderRadius: 8
+                                        },
+                                        {
+                                            label: 'Conversions',
+                                            data: sources.map(s => s.conversions),
+                                            backgroundColor: '#2ecc71',
+                                            borderRadius: 8
+                                        }
+                                    ]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: true,
+                                    plugins: {
+                                        legend: { position: 'top' },
+                                        tooltip: { mode: 'index', intersect: false }
+                                    },
+                                    scales: {
+                                        y: { beginAtZero: true, title: { display: true, text: 'Count' } }
+                                    }
+                                }
+                            });
+                        }
+                    }
                 } else {
                     sourcesBody.innerHTML = '<tr><td colspan="5" class="text-center placeholder-text">No click data available yet. Share your link to start tracking!</td></tr>';
+                    const sourceChartContainer = document.getElementById('sourceChartContainer');
+                    if (sourceChartContainer) sourceChartContainer.style.display = 'none';
                 }
                 
                 // Check inactivity (40 days)
@@ -1158,14 +1547,10 @@
             const linkInput = document.getElementById('referralLink');
             linkInput.select();
             document.execCommand('copy');
-            const successMsg = document.createElement('div');
-            successMsg.className = 'copy-success';
-            successMsg.innerHTML = 'Referral link copied to clipboard';
-            document.body.appendChild(successMsg);
-            setTimeout(() => successMsg.remove(), 2000);
+            showCopyMessage('Referral link copied to clipboard!');
         };
         
-        // Welcome Tour
+        // Welcome Tour - FIXED: works properly on all devices
         let currentStep = 0;
         const totalSteps = 4;
         
@@ -1210,10 +1595,15 @@
         }
         
         function skipTour() { closeTour(); }
+        
         function showWelcomeTour() {
             const tourShown = localStorage.getItem('affiliate_tour_shown');
             const tourOverlay = document.getElementById('tourOverlay');
-            if (!tourShown && tourOverlay) tourOverlay.style.display = 'flex';
+            if (!tourShown && tourOverlay) {
+                tourOverlay.style.display = 'flex';
+                currentStep = 0;
+                updateTourSteps();
+            }
         }
         
         // Initialize
