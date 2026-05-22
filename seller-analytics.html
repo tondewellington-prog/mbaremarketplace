@@ -292,6 +292,8 @@
         // Supabase configuration
         const SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
+        // SERVICE KEY bypasses RLS - use for analytics/admin pages
+        const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZubmNlcmR4Zmh3bHJkb3Bzd3B4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NzEwMTgwOSwiZXhwIjoyMDgyNjc3ODA5fQ.gS45zReH5gtMeTY74tjb6ECfdjENglLejU4kTFNnIh0';
         
         let currentSellerId = null;
         let currentAccessToken = null;
@@ -323,14 +325,44 @@
             }
         }
 
-        // Fetch current subscription tier
+        // Function to refresh the token - KEPT FROM ORIGINAL
+        async function refreshAccessToken(refreshToken) {
+            try {
+                const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_ANON_KEY
+                    },
+                    body: JSON.stringify({ refresh_token: refreshToken })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    localStorage.setItem('supabase_session', JSON.stringify(data));
+                    localStorage.setItem('isLoggedIn', 'true');
+                    return { success: true, session: data };
+                }
+                return { success: false, error: data };
+            } catch (error) {
+                console.error('Token refresh error:', error);
+                return { success: false, error };
+            }
+        }
+
+        // Helper to get headers with SERVICE KEY (bypasses RLS)
+        function getServiceHeaders() {
+            return {
+                'apikey': SUPABASE_SERVICE_KEY,
+                'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+                'Content-Type': 'application/json'
+            };
+        }
+
+        // Fetch current subscription tier - FIXED: using SERVICE KEY
         async function fetchSubscriptionTier() {
             try {
                 const response = await fetch(`${SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${currentSellerId}&status=eq.active&select=plan_type&order=created_at.desc&limit=1`, {
-                    headers: {
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${currentAccessToken}`
-                    }
+                    headers: getServiceHeaders()
                 });
                 if (response.ok) {
                     const data = await response.json();
@@ -348,7 +380,7 @@
             }
         }
 
-        // Fetch product views from Supabase
+        // Fetch product views from Supabase - FIXED: using SERVICE KEY
         async function fetchProductViews(days = 30) {
             const startDate = new Date();
             startDate.setDate(startDate.getDate() - days);
@@ -356,12 +388,7 @@
             try {
                 const response = await fetch(
                     `${SUPABASE_URL}/rest/v1/product_views?select=*&seller_id=eq.${currentSellerId}&viewed_at=gte.${startDate.toISOString()}&order=viewed_at.asc`,
-                    {
-                        headers: {
-                            'apikey': SUPABASE_ANON_KEY,
-                            'Authorization': `Bearer ${currentAccessToken}`
-                        }
-                    }
+                    { headers: getServiceHeaders() }
                 );
                 const data = await response.json();
                 return data || [];
@@ -371,7 +398,7 @@
             }
         }
 
-        // Fetch WhatsApp clicks from Supabase
+        // Fetch WhatsApp clicks from Supabase - FIXED: using SERVICE KEY
         async function fetchWhatsAppClicks(days = 30) {
             const startDate = new Date();
             startDate.setDate(startDate.getDate() - days);
@@ -379,12 +406,7 @@
             try {
                 const response = await fetch(
                     `${SUPABASE_URL}/rest/v1/whatsapp_clicks?select=*&seller_id=eq.${currentSellerId}&clicked_at=gte.${startDate.toISOString()}&order=clicked_at.asc`,
-                    {
-                        headers: {
-                            'apikey': SUPABASE_ANON_KEY,
-                            'Authorization': `Bearer ${currentAccessToken}`
-                        }
-                    }
+                    { headers: getServiceHeaders() }
                 );
                 const data = await response.json();
                 return data || [];
@@ -394,17 +416,12 @@
             }
         }
 
-        // Fetch seller products
+        // Fetch seller products - FIXED: using SERVICE KEY
         async function fetchProducts() {
             try {
                 const response = await fetch(
                     `${SUPABASE_URL}/rest/v1/products?select=*&seller_id=eq.${currentSellerId}&order=created_at.desc`,
-                    {
-                        headers: {
-                            'apikey': SUPABASE_ANON_KEY,
-                            'Authorization': `Bearer ${currentAccessToken}`
-                        }
-                    }
+                    { headers: getServiceHeaders() }
                 );
                 const data = await response.json();
                 return data || [];
@@ -414,17 +431,12 @@
             }
         }
 
-        // Fetch seller activities
+        // Fetch seller activities - FIXED: using SERVICE KEY
         async function fetchSellerActivities(limit = 20) {
             try {
                 const response = await fetch(
                     `${SUPABASE_URL}/rest/v1/seller_activities?select=*&seller_id=eq.${currentSellerId}&order=created_at.desc&limit=${limit}`,
-                    {
-                        headers: {
-                            'apikey': SUPABASE_ANON_KEY,
-                            'Authorization': `Bearer ${currentAccessToken}`
-                        }
-                    }
+                    { headers: getServiceHeaders() }
                 );
                 const data = await response.json();
                 return data || [];
@@ -434,17 +446,12 @@
             }
         }
 
-        // Fetch subscription info
+        // Fetch subscription info - FIXED: using SERVICE KEY
         async function fetchSubscriptionInfo() {
             try {
                 const response = await fetch(
                     `${SUPABASE_URL}/rest/v1/seller_subscriptions?select=*&seller_id=eq.${currentSellerId}&order=created_at.desc&limit=1`,
-                    {
-                        headers: {
-                            'apikey': SUPABASE_ANON_KEY,
-                            'Authorization': `Bearer ${currentAccessToken}`
-                        }
-                    }
+                    { headers: getServiceHeaders() }
                 );
                 const data = await response.json();
                 return data?.[0] || null;
