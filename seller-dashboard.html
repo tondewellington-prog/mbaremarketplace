@@ -133,9 +133,8 @@
         window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
         const IMGBB_API_KEY = '670ea8c38e955ebdfdf84a41489713bf';
         
-        // PayNow Bill Payment Links (Your provided links - NO LOGIN REQUIRED)
-        const PAYNOW_LINK_150 = 'https://www.paynow.co.zw/Payment/BillPaymentLink/?q=aWQ9MjQ2NzImYW1vdW50PTEuNTAmYW1vdW50X3F1YW50aXR5PTAuMDAmbD0x';
-        const PAYNOW_LINK_500 = 'https://www.paynow.co.zw/Payment/BillPaymentLink/?q=aWQ9MjQ2NzkmYW1vdW50PTUuMDAmYW1vdW50X3F1YW50aXR5PTAuMDAmbD0x';
+        // PayNow Bill Payment Links (with return URL)
+        // The return URL will be set dynamically in openPayNowPayment function
         
         let currentSellerId = null, currentAccessToken = null;
         let currentTier = 'free', subscriptionStatus = 'inactive', subscriptionExpiry = null, autoRenew = true;
@@ -155,91 +154,92 @@
             setTimeout(() => toast.remove(), 5000);
         }
 
-        // Check URL parameters for payment status from PayNow redirect
+        // Check localStorage for payment status (set by payment-return.html)
+        function checkLocalStoragePaymentStatus() {
+            // Check for successful payment
+            if (localStorage.getItem('payment_success') === 'true') {
+                const transactionId = localStorage.getItem('payment_transaction');
+                const amount = localStorage.getItem('payment_amount');
+                
+                console.log('Found successful payment in localStorage:', { transactionId, amount });
+                
+                // Determine plan from amount
+                let planType = 'tier_150';
+                if (amount === '5.00' || amount === '5') {
+                    planType = 'tier_5';
+                }
+                
+                // Activate subscription
+                activateSubscription(planType, transactionId || 'paynow_' + Date.now());
+                
+                // Clear localStorage flags
+                localStorage.removeItem('payment_success');
+                localStorage.removeItem('payment_transaction');
+                localStorage.removeItem('payment_amount');
+                localStorage.removeItem('payment_cancelled');
+                localStorage.removeItem('payment_pending_check');
+                
+                return true;
+            }
+            
+            // Check for cancelled payment
+            if (localStorage.getItem('payment_cancelled') === 'true') {
+                showToast('❌ Payment was cancelled. No charges were made.', true);
+                localStorage.removeItem('payment_cancelled');
+                localStorage.removeItem('payment_transaction');
+                return false;
+            }
+            
+            return false;
+        }
+
+        // Check URL parameters for payment status from PayNow redirect (fallback)
         function checkPaymentStatusFromURL() {
             const urlParams = new URLSearchParams(window.location.search);
             
-            // Log all URL parameters for debugging
-            console.log('=== PayNow Redirect Detected ===');
-            console.log('Full URL:', window.location.href);
-            console.log('URL Parameters:', Object.fromEntries(urlParams));
+            console.log('Checking URL params:', Object.fromEntries(urlParams));
             
-            // Check for common PayNow return parameter names
             const status = urlParams.get('status') || urlParams.get('PaymentStatus') || urlParams.get('result') || urlParams.get('State');
             const reference = urlParams.get('reference') || urlParams.get('paynow_reference') || urlParams.get('ref') || urlParams.get('transaction');
             const amount = urlParams.get('amount');
-            const planFromUrl = urlParams.get('plan');
             
             if (status) {
-                console.log('Payment Status found:', status);
-                console.log('Reference:', reference);
+                console.log('Payment Status found in URL:', status);
                 
-                // Payment successful - PayNow returns "Ok" or "Paid" or "Success"
-                if (status.toLowerCase() === 'ok' || status.toLowerCase() === 'paid' || status.toLowerCase() === 'success' || status === 'Ok') {
-                    showToast('✅ Payment successful! Activating your subscription...', false);
-                    
-                    // Determine which plan was paid for
-                    let planType = planFromUrl || localStorage.getItem('pending_payment_plan');
-                    
-                    // If amount is in URL, determine plan by amount
-                    if (amount) {
-                        if (amount === '1.50' || amount === '1.5') planType = 'tier_150';
-                        else if (amount === '5.00' || amount === '5') planType = 'tier_5';
-                    }
-                    
-                    // Default to tier_150 if still unknown
+                if (status.toLowerCase() === 'ok' || status.toLowerCase() === 'paid' || status.toLowerCase() === 'success') {
+                    let planType = localStorage.getItem('pending_payment_plan');
+                    if (amount && (amount === '1.50' || amount === '1.5')) planType = 'tier_150';
+                    else if (amount && (amount === '5.00' || amount === '5')) planType = 'tier_5';
                     if (!planType) planType = 'tier_150';
                     
-                    // Activate subscription
                     activateSubscription(planType, reference || 'paynow_' + Date.now());
-                    
-                    // Clean URL (remove query parameters)
                     window.history.replaceState({}, document.title, window.location.pathname);
                     return true;
-                }
-                // Payment cancelled
-                else if (status.toLowerCase() === 'cancelled' || status.toLowerCase() === 'cancel') {
-                    showToast('❌ Payment was cancelled. No charges were made.', true);
+                } else if (status.toLowerCase() === 'cancelled' || status.toLowerCase() === 'cancel') {
+                    showToast('❌ Payment was cancelled.', true);
                     localStorage.removeItem('pending_payment_plan');
-                    
-                    // Clean URL
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                    return false;
-                }
-                // Payment error
-                else if (status.toLowerCase() === 'error' || status.toLowerCase() === 'failed') {
-                    showToast('❌ Payment failed. Please try again.', true);
-                    localStorage.removeItem('pending_payment_plan');
-                    
-                    // Clean URL
                     window.history.replaceState({}, document.title, window.location.pathname);
                     return false;
                 }
             }
-            
-            // If no status parameter but we have a reference, check for pending payment
-            if (reference && !status) {
-                console.log('Reference found without status, checking pending payment...');
-                const pendingPlan = localStorage.getItem('pending_payment_plan');
-                if (pendingPlan) {
-                    // Assume payment was successful if redirected back with reference
-                    showToast('✅ Payment detected! Activating subscription...', false);
-                    activateSubscription(pendingPlan, reference);
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                    return true;
-                }
-            }
-            
-            // If no payment parameters, just return
             return null;
         }
 
-        // Open PayNow payment - just opens the link, no confirmation buttons
+        // Open PayNow payment - with return URL
         function openPayNowPayment(planType) {
             const plan = tierMap[planType];
-            const paynowLink = planType === 'tier_150' ? PAYNOW_LINK_150 : PAYNOW_LINK_500;
+            const amount = planType === 'tier_150' ? '1.50' : '5.00';
             
-            // Store pending plan in localStorage so we know which plan to activate on return
+            // Create return URL pointing to payment-return.html
+            const returnBaseUrl = window.location.origin + '/payment-return.html';
+            const returnUrl = encodeURIComponent(returnBaseUrl);
+            
+            // PayNow links with return_url parameter
+            const paynowLink = planType === 'tier_150' 
+                ? `https://www.paynow.co.zw/Payment/BillPaymentLink/?q=aWQ9MjQ2NzImYW1vdW50PTEuNTAmYW1vdW50X3F1YW50aXR5PTAuMDAmbD0x&return_url=${returnUrl}`
+                : `https://www.paynow.co.zw/Payment/BillPaymentLink/?q=aWQ9MjQ2NzkmYW1vdW50PTUuMDAmYW1vdW50X3F1YW50aXR5PTAuMDAmbD0x&return_url=${returnUrl}`;
+            
+            // Store pending plan in localStorage
             localStorage.setItem('pending_payment_plan', planType);
             
             const modalHtml = `
@@ -254,9 +254,10 @@
                             <p style="margin-bottom:10px;"><strong>📱 Payment Instructions:</strong></p>
                             <ol style="text-align:left; margin-left:20px; line-height:1.8;">
                                 <li>Click the PayNow button below</li>
-                                <li>Enter your EcoCash/InnBucks number</li>
+                                <li>Select EcoCash</li>
+                                <li>Enter your phone number</li>
                                 <li>Enter your PIN when prompted on your phone</li>
-                                <li>After payment, you will be redirected back automatically</li>
+                                <li>After payment, click <strong>"Return to Merchant Website"</strong></li>
                             </ol>
                         </div>
                         
@@ -267,7 +268,7 @@
                         </div>
                         
                         <div class="auto-redirect-message">
-                            🔄 You will be automatically redirected back after payment
+                            ⚠️ After completing payment, click "Return to Merchant Website" to activate your subscription
                         </div>
                         
                         <button class="btn-secondary" id="closePayModal" style="width:100%; margin-top:15px; padding:14px;">Cancel</button>
@@ -286,13 +287,13 @@
                 window.closePaymentModal();
             };
             
-            // Open PayNow in new tab when link is clicked
             const paynowLinkElem = document.getElementById('paynowRedirectLink');
-            paynowLinkElem.onclick = (e) => {
-                e.preventDefault();
-                window.open(paynowLink, '_blank');
-                // Don't close modal - user will be redirected back automatically
-            };
+            if (paynowLinkElem) {
+                paynowLinkElem.onclick = (e) => {
+                    e.preventDefault();
+                    window.open(paynowLink, '_blank');
+                };
+            }
         }
 
         async function activateSubscription(planType, reference) {
@@ -351,7 +352,6 @@
                 
                 showToast(`🎉 SUCCESS! ${plan.name} activated! Thank you for subscribing.`, false);
                 
-                // Show success banner
                 const successBanner = document.createElement('div');
                 successBanner.style.cssText = 'position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#28a745;color:white;padding:15px 30px;border-radius:12px;z-index:10002;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.2);';
                 successBanner.innerHTML = `🎉 ${plan.name} Activated! 🎉`;
@@ -807,7 +807,14 @@
         async function init() {
             if (!await checkAuth()) return;
             
-            // First check URL for payment status (PayNow redirect)
+            // FIRST check localStorage for payment status (from payment-return.html)
+            const paymentProcessed = checkLocalStoragePaymentStatus();
+            
+            if (paymentProcessed) {
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+            
+            // Then check URL parameters (fallback)
             checkPaymentStatusFromURL();
             
             // Then load subscription and products
