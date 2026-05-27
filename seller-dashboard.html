@@ -155,15 +155,16 @@
             setTimeout(() => toast.remove(), 5000);
         }
 
-        // Check localStorage for payment status (set by payment-return.html)
+        // Check localStorage for payment status
         function checkLocalStoragePaymentStatus() {
+            const paymentGuid = localStorage.getItem('payment_guid');
             const paymentSuccess = localStorage.getItem('payment_success');
             const paymentTransaction = localStorage.getItem('payment_transaction');
             const paymentAmount = localStorage.getItem('payment_amount');
             
-            console.log('Checking localStorage - success:', paymentSuccess, 'transaction:', paymentTransaction);
+            console.log('Checking localStorage - guid:', paymentGuid, 'success:', paymentSuccess);
             
-            if (paymentSuccess === 'true' && paymentTransaction) {
+            if ((paymentGuid || paymentTransaction) && paymentSuccess === 'true') {
                 let planType = 'tier_150';
                 if (paymentAmount === '5.00' || paymentAmount === '5') {
                     planType = 'tier_5';
@@ -171,14 +172,13 @@
                 
                 showToast('✅ Payment detected! Activating subscription...', false);
                 
-                // Clear localStorage immediately to prevent double activation
+                localStorage.removeItem('payment_guid');
                 localStorage.removeItem('payment_success');
                 localStorage.removeItem('payment_transaction');
                 localStorage.removeItem('payment_amount');
                 localStorage.removeItem('payment_cancelled');
                 
-                // Activate subscription
-                activateSubscription(planType, paymentTransaction);
+                activateSubscription(planType, paymentTransaction || paymentGuid || 'paynow_' + Date.now());
                 return true;
             }
             
@@ -188,23 +188,6 @@
                 return false;
             }
             
-            return false;
-        }
-
-        // Check URL parameters for payment status (fallback)
-        function checkPaymentStatusFromURL() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const status = urlParams.get('status') || urlParams.get('PaymentStatus');
-            const reference = urlParams.get('reference') || urlParams.get('paynow_reference');
-            const amount = urlParams.get('amount');
-            
-            if (status === 'Ok' || status === 'Paid' || status === 'Success') {
-                let planType = 'tier_150';
-                if (amount === '5.00' || amount === '5') planType = 'tier_5';
-                activateSubscription(planType, reference || 'paynow_' + Date.now());
-                window.history.replaceState({}, document.title, window.location.pathname);
-                return true;
-            }
             return false;
         }
 
@@ -267,7 +250,6 @@
                     current_period_end: new Date(Date.now() + 2592000000).toISOString()
                 };
                 
-                // Check if subscription exists
                 let checkResp = await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${userId}&select=id`, {
                     headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}` }
                 });
@@ -305,7 +287,6 @@
                 localStorage.setItem(`mbare_tier_${userId}`, currentTier);
                 localStorage.removeItem('pending_payment_plan');
                 
-                // Reactivate all products
                 for (const product of sellerProducts) {
                     if (product.status === 'paused') {
                         await fetch(`${window.SUPABASE_URL}/rest/v1/products?id=eq.${product.id}`, {
@@ -858,7 +839,6 @@
             console.log('Dashboard initializing...');
             
             checkLocalStoragePaymentStatus();
-            checkPaymentStatusFromURL();
             
             const sub = await fetchSubscription();
             currentTier = sub || localStorage.getItem(`mbare_tier_${currentSellerId}`) || 'free';
