@@ -1128,11 +1128,209 @@
     </div>
 
     <script src="api.js"></script>
-    <script src="script.js"></script>
     <script src="auth-check.js"></script>
     
     <script>
-        // Keep all your existing JavaScript - it's working fine
+        // ==================== CONFIGURATION ====================
+        window.SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
+        window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
+        
+        let allProducts = [];
+        let currentUser = null;
+
+        // ==================== LOAD PRODUCTS ====================
+        async function loadAllProducts() {
+            try {
+                const response = await fetch(`${window.SUPABASE_URL}/rest/v1/products?status=eq.active&select=*`, {
+                    headers: {
+                        'apikey': window.SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}`
+                    }
+                });
+                if (response.ok) {
+                    allProducts = await response.json();
+                    displayAllSections();
+                } else {
+                    console.error('Failed to load products');
+                    loadMockProducts();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                loadMockProducts();
+            }
+        }
+
+        function loadMockProducts() {
+            allProducts = [
+                { id: 1, title: "Smartphone X", price: 599.99, category: "Electronic Devices", image_url: "https://via.placeholder.com/200", stock: 10, seller_id: "seller123" },
+                { id: 2, title: "Laptop Pro", price: 1299.99, category: "Electronic Devices", image_url: "https://via.placeholder.com/200", stock: 5, seller_id: "seller123" },
+                { id: 3, title: "T-Shirt", price: 19.99, category: "Clothing", image_url: "https://via.placeholder.com/200", stock: 50, seller_id: "seller456" },
+                { id: 4, title: "Jeans", price: 49.99, category: "Clothing", image_url: "https://via.placeholder.com/200", stock: 30, seller_id: "seller456" },
+                { id: 5, title: "Dog Food", price: 29.99, category: "Pet Supplies", image_url: "https://via.placeholder.com/200", stock: 100, seller_id: "seller789" },
+                { id: 6, title: "Cat Bed", price: 39.99, category: "Pet Supplies", image_url: "https://via.placeholder.com/200", stock: 20, seller_id: "seller789" }
+            ];
+            displayAllSections();
+        }
+
+        // ==================== DISPLAY PRODUCTS WITH SHOP LINKS ====================
+        function renderProductCard(product) {
+            return `
+                <div class="product-card" onclick="goToProductDetail('${product.id}')">
+                    <img src="${product.image_url || 'https://via.placeholder.com/200'}" alt="${product.title}" onerror="this.src='https://via.placeholder.com/200'">
+                    <div class="product-info">
+                        <h3>${escapeHtml(product.title)}</h3>
+                        <div class="product-price">$${parseFloat(product.price).toFixed(2)}</div>
+                        <!-- VISIT SHOP BUTTON - ADDED HERE -->
+                        <a href="shop.html?seller=${product.seller_id}" class="visit-shop-link" onclick="event.stopPropagation()">Visit Shop</a>
+                        <div class="product-actions">
+                            <button onclick="event.stopPropagation(); addToCart(${product.id})">Add to Cart</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        function displayAllSections() {
+            // Today's Deals (first 4 products)
+            const todaysDeals = allProducts.slice(0, 4);
+            document.getElementById('todaysDeals').innerHTML = todaysDeals.map(p => renderProductCard(p)).join('');
+            
+            // Electronics
+            const electronics = allProducts.filter(p => p.category === 'Electronic Devices').slice(0, 4);
+            document.getElementById('bestSellersElectronics').innerHTML = electronics.map(p => renderProductCard(p)).join('');
+            
+            // Clothing
+            const clothing = allProducts.filter(p => p.category === 'Clothing').slice(0, 4);
+            document.getElementById('bestSellersClothing').innerHTML = clothing.map(p => renderProductCard(p)).join('');
+            
+            // Pet Supplies
+            const petSupplies = allProducts.filter(p => p.category === 'Pet Supplies').slice(0, 4);
+            document.getElementById('bestSellersPetSupplies').innerHTML = petSupplies.map(p => renderProductCard(p)).join('');
+            
+            // All Products
+            document.getElementById('allProducts').innerHTML = allProducts.map(p => renderProductCard(p)).join('');
+            
+            // Other sections (empty for now)
+            const emptySections = ['bestSellersPetsLivestock', 'bestSellersFarmProducts', 'bestSellersHardware', 'bestSellersVehicleParts&amp;Accessories', 'bestSellersVehicle&amp;Transportation', 'bestSellersHome&amp;Kitchen', 'bestSellersBeautyCosmetics', 'recommended'];
+            emptySections.forEach(section => {
+                const el = document.getElementById(section);
+                if (el) el.innerHTML = '<p style="text-align:center; padding:20px;">No products yet</p>';
+            });
+        }
+
+        // ==================== CAROUSEL ====================
+        let currentSlide = 0;
+        let carouselInterval;
+
+        function startCarousel() {
+            carouselInterval = setInterval(() => moveCarousel(1), 5000);
+        }
+
+        window.moveCarousel = function(direction) {
+            const slides = document.querySelectorAll('.carousel-slide');
+            const indicators = document.querySelectorAll('.indicator');
+            
+            slides[currentSlide].classList.remove('active');
+            indicators[currentSlide].classList.remove('active');
+            
+            currentSlide = (currentSlide + direction + slides.length) % slides.length;
+            
+            slides[currentSlide].classList.add('active');
+            indicators[currentSlide].classList.add('active');
+            
+            const container = document.getElementById('carouselSlides');
+            container.style.transform = `translateX(-${currentSlide * 100}%)`;
+        };
+
+        window.goToSlide = function(index) {
+            const slides = document.querySelectorAll('.carousel-slide');
+            const indicators = document.querySelectorAll('.indicator');
+            
+            slides[currentSlide].classList.remove('active');
+            indicators[currentSlide].classList.remove('active');
+            
+            currentSlide = index;
+            
+            slides[currentSlide].classList.add('active');
+            indicators[currentSlide].classList.add('active');
+            
+            const container = document.getElementById('carouselSlides');
+            container.style.transform = `translateX(-${currentSlide * 100}%)`;
+        };
+
+        // ==================== BASKET FUNCTIONS ====================
+        function updateBasketCount() {
+            const sessionData = localStorage.getItem('supabase_session');
+            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+            const basketCount = document.getElementById('basketCount');
+            
+            if (isLoggedIn && sessionData && basketCount) {
+                try {
+                    const session = JSON.parse(sessionData);
+                    const userId = session.user?.id;
+                    if (userId) {
+                        const basketKey = `basket_${userId}`;
+                        const userBasket = JSON.parse(localStorage.getItem(basketKey)) || [];
+                        const total = userBasket.reduce((sum, item) => sum + (item.quantity || 0), 0);
+                        basketCount.textContent = total;
+                        basketCount.style.display = total > 0 ? 'flex' : 'none';
+                    }
+                } catch(e) {}
+            }
+        }
+
+        window.addToCart = function(productId) {
+            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+            if (!isLoggedIn) {
+                showLoginPrompt();
+                return;
+            }
+            alert('Product added to cart!');
+            updateBasketCount();
+        };
+
+        // ==================== LOGIN/LOGOUT ====================
+        function showLoginPrompt() {
+            document.getElementById('loginPromptModal').style.display = 'flex';
+        }
+        
+        function hideLoginPrompt() {
+            document.getElementById('loginPromptModal').style.display = 'none';
+        }
+        
+        window.goToProductDetail = function(productId) {
+            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+            if (!isLoggedIn) {
+                showLoginPrompt();
+                return;
+            }
+            window.location.href = `product-detail.html?id=${productId}`;
+        };
+
+        window.logout = function() {
+            localStorage.removeItem('supabase_session');
+            localStorage.removeItem('isLoggedIn');
+            window.location.href = 'index.html';
+        };
+
+        window.handleSearch = function() {
+            const query = document.getElementById('searchInput').value;
+            if (query) {
+                window.location.href = `search-results.html?q=${encodeURIComponent(query)}`;
+            }
+        };
+
+        // ==================== DROPDOWN ====================
         const dropdownBtn = document.getElementById('categoryDropdownBtn');
         const dropdownMenu = document.getElementById('categoryDropdownMenu');
         
@@ -1157,201 +1355,14 @@
                 closeDropdown();
             }
         });
-        
-        const categoryItems = document.querySelectorAll('.dropdown-category-item');
-        categoryItems.forEach(item => {
-            item.addEventListener('click', function() {
-                closeDropdown();
-            });
-        });
-    </script>
-    
-    <script>
-        window.SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
-        window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
-        
-        window.trackInstallClick = function(source) { recordAppDownload('install_click', { source: source }); };
-        
-        async function recordAppDownload(downloadType, details) {
-            try {
-                const SUPABASE_URL = window.SUPABASE_URL;
-                const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
-                if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return;
-                const userAgent = navigator.userAgent;
-                let deviceType = /mobile|android|iphone|ipad|ipod/i.test(userAgent) ? 'mobile' : 'desktop';
-                let os = 'unknown';
-                if (userAgent.indexOf('Win') !== -1) os = 'windows';
-                else if (userAgent.indexOf('Mac') !== -1) os = 'macos';
-                else if (userAgent.indexOf('Android') !== -1) os = 'android';
-                else if (userAgent.indexOf('like Mac') !== -1) os = 'ios';
-                let userId = null;
-                const sessionData = localStorage.getItem('supabase_session');
-                if (sessionData) {
-                    try { userId = JSON.parse(sessionData).user?.id; } catch(e) {}
-                }
-                const downloadData = {
-                    download_type: downloadType,
-                    device_type: deviceType,
-                    os: os,
-                    user_agent: userAgent.substring(0, 255),
-                    user_id: userId,
-                    timestamp: new Date().toISOString()
-                };
-                await fetch(`${SUPABASE_URL}/rest/v1/app_downloads`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
-                    body: JSON.stringify(downloadData)
-                });
-            } catch(e) { console.error('Track error:', e); }
-        }
 
-        window.addEventListener('appinstalled', () => { recordAppDownload('pwa_install'); });
-        
-        if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
-            if (!localStorage.getItem('app_install_tracked')) {
-                recordAppDownload('pwa_install');
-                localStorage.setItem('app_install_tracked', 'true');
-            }
-        }
-        
-        let promptCount = 0;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            promptCount++;
-            if (promptCount === 1) recordAppDownload('install_prompt_shown');
-        });
-        
-        if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream && !window.navigator.standalone) {
-            setTimeout(() => { recordAppDownload('ios_add_to_homescreen_prompt'); }, 10000);
-        }
-        
-        document.addEventListener('click', function(e) {
-            if (e.target.closest('#installButton')) {
-                recordAppDownload('install_click', { method: 'click_event' });
-            }
-        });
-        
-        let deferredPrompt;
-        const installButton = document.getElementById('installButton');
-        const iosPrompt = document.getElementById('iosPromptModal');
-
-        const isMobile = /iPhone|iPad|iPod|Android|Mobile|webOS|BlackBerry|Windows Phone/i.test(navigator.userAgent);
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-        const isAndroid = /Android/i.test(navigator.userAgent);
-        
-        let isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-        const wasInstalled = localStorage.getItem('pwa_installed') === 'true';
-        
-        if (isStandalone || wasInstalled) {
-            installButton.style.display = 'none';
-        }
-
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            if (!isStandalone && !wasInstalled) {
-                installButton.style.display = 'flex';
-            }
-        });
-
-        if (isMobile && !isStandalone && !wasInstalled) {
-            installButton.style.display = 'flex';
-        }
-
-        installButton.addEventListener('click', async () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    recordAppDownload('install_accepted');
-                    localStorage.setItem('pwa_installed', 'true');
-                    installButton.style.display = 'none';
-                } else {
-                    recordAppDownload('install_dismissed');
-                }
-                deferredPrompt = null;
-            } else if (isIOS) {
-                iosPrompt.style.display = 'block';
-                recordAppDownload('ios_install_modal_shown');
-            } else if (isAndroid) {
-                alert('To install the app:\n\n1. Tap the three dots ⋮ in the top right\n2. Tap "Install app"\n3. Tap "Install"');
-                recordAppDownload('android_manual_install');
-            } else {
-                alert('To install the app:\n\n1. Click the install icon in the address bar\n2. Click "Install"\n\nOr look for "Install app" in the browser menu');
-                recordAppDownload('install_fallback');
-            }
-        });
-
-        window.addEventListener('appinstalled', () => {
-            localStorage.setItem('pwa_installed', 'true');
-            installButton.style.display = 'none';
-            recordAppDownload('pwa_install_complete');
-        });
-
-        window.matchMedia('(display-mode: standalone)').addEventListener('change', (e) => {
-            if (e.matches) {
-                localStorage.setItem('pwa_installed', 'true');
-                installButton.style.display = 'none';
-            }
-        });
-
-        window.closeIOSPrompt = function() {
-            iosPrompt.style.display = 'none';
-        };
-
-        window.addEventListener('click', function(e) {
-            if (e.target === iosPrompt) {
-                closeIOSPrompt();
-            }
-        });
-
-        function showLoginPrompt() {
-            document.getElementById('loginPromptModal').style.display = 'flex';
-        }
-        
-        function hideLoginPrompt() {
-            document.getElementById('loginPromptModal').style.display = 'none';
-        }
-        
-        function checkLoginAndNavigate(productId) {
-            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-            if (!isLoggedIn) {
-                showLoginPrompt();
-                return false;
-            }
-            window.location.href = `product-detail.html?id=${productId}`;
-            return true;
-        }
-
-        document.addEventListener('click', function(e) {
-            const productCard = e.target.closest('.product-card');
-            if (productCard) {
-                e.preventDefault();
-                let productId = null;
-                const onclick = productCard.getAttribute('onclick');
-                if (onclick) {
-                    const match = onclick.match(/id=(\d+)/);
-                    if (match) productId = match[1];
-                }
-                if (productId) checkLoginAndNavigate(productId);
-            }
-        });
-        
-        window.goToProductDetail = function(productId) {
-            checkLoginAndNavigate(productId);
-        };
-
-        window.logout = function() {
-            if (window.api && window.api.logout) {
-                window.api.logout();
-            } else {
-                localStorage.removeItem('supabase_session');
-                localStorage.removeItem('isLoggedIn');
-                window.location.href = 'index.html';
-            }
-        };
-
-        document.addEventListener('DOMContentLoaded', function() {
+        // ==================== INITIALIZE ====================
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadAllProducts();
+            updateBasketCount();
+            startCarousel();
+            
+            // Update header for logged in user
             const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
             const logoutBtn = document.getElementById('logoutBtn');
             const accountMenu = document.getElementById('accountMenu');
@@ -1379,71 +1390,57 @@
                 }
             }
         });
-    </script>
-    
-    <script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js', { 
-                updateViaCache: 'none'
-            }).then(registration => {
-                console.log('Service Worker registered with scope:', registration.scope);
-                
-                setInterval(() => {
-                    registration.update();
-                    console.log('Checking for service worker updates...');
-                }, 60000);
-            }).catch(err => {
-                console.log('Service Worker registration failed:', err);
-            });
-        });
-    }
-    </script>
 
-    <script>
-        // OVERRIDE THE PRODUCT RENDERING FUNCTIONS TO ADD VISIT SHOP LINKS
-        // This modifies the existing product grids to include shop links
+        // ==================== PWA INSTALL ====================
+        let deferredPrompt;
+        const installButton = document.getElementById('installButton');
+        const iosPrompt = document.getElementById('iosPromptModal');
+        const isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent);
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        let isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
         
-        (function addShopLinksToProducts() {
-            // Function to add shop links to existing product cards after they're rendered
-            function addShopLinksToProductCards() {
-                const productCards = document.querySelectorAll('.product-card');
-                productCards.forEach(card => {
-                    // Check if shop link already exists in this card
-                    if (card.querySelector('.visit-shop-link')) return;
-                    
-                    // Find the product info div
-                    const productInfo = card.querySelector('.product-info');
-                    if (!productInfo) return;
-                    
-                    // Try to find seller_id from onclick attribute or data attribute
-                    let sellerId = null;
-                    const onclick = card.getAttribute('onclick');
-                    if (onclick) {
-                        const match = onclick.match(/id=(\d+)/);
-                        // We need seller_id from product data - this is a limitation
-                        // The product data needs to include seller_id
-                    }
-                    
-                    // Alternative: Add a data-seller-id attribute to product cards when rendering
-                    // For now, we'll add a generic link that will be populated by the rendering function
-                });
+        if (isStandalone || localStorage.getItem('pwa_installed') === 'true') {
+            installButton.style.display = 'none';
+        }
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (!isStandalone) installButton.style.display = 'flex';
+        });
+
+        installButton.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    localStorage.setItem('pwa_installed', 'true');
+                    installButton.style.display = 'none';
+                }
+                deferredPrompt = null;
+            } else if (isIOS) {
+                iosPrompt.style.display = 'block';
+            } else if (isMobile) {
+                alert('Tap the menu (⋮ or share) and select "Install App" or "Add to Home Screen"');
             }
-            
-            // Wait for DOM to load and observe changes
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.addedNodes.length) {
-                        addShopLinksToProductCards();
-                    }
-                });
+        });
+
+        window.closeIOSPrompt = function() {
+            iosPrompt.style.display = 'none';
+        };
+
+        window.addEventListener('click', function(e) {
+            if (e.target === iosPrompt) closeIOSPrompt();
+        });
+
+        // Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
+                    .then(registration => console.log('SW registered:', registration.scope))
+                    .catch(err => console.log('SW failed:', err));
             });
-            
-            observer.observe(document.body, { childList: true, subtree: true });
-            
-            // Initial run
-            setTimeout(addShopLinksToProductCards, 1000);
-        })();
+        }
     </script>
 </body>
 </html>
