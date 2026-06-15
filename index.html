@@ -758,18 +758,6 @@
             align-items: center;
             flex-wrap: wrap;
         }
-
-        /* Visit Shop link styling */
-        .visit-shop-link {
-            color: #f90;
-            text-decoration: underline;
-            font-size: 12px;
-            display: inline-block;
-            margin: 5px 0;
-        }
-        .visit-shop-link:hover {
-            color: #e68a00;
-        }
     </style>
 </head>
 <body>
@@ -1131,7 +1119,7 @@
     <script src="auth-check.js"></script>
     
     <script>
-        // Keep all your existing JavaScript - it's working fine
+        // Simple dropdown functionality only - NO product interference
         const dropdownBtn = document.getElementById('categoryDropdownBtn');
         const dropdownMenu = document.getElementById('categoryDropdownMenu');
         
@@ -1322,25 +1310,6 @@
             return true;
         }
 
-        // Handle product card clicks for navigation
-        document.addEventListener('click', function(e) {
-            const productCard = e.target.closest('.product-card');
-            if (productCard) {
-                // Don't navigate if clicking on the shop link or add to cart button
-                if (e.target.closest('.visit-shop-link') || e.target.closest('.add-to-cart-btn')) {
-                    return;
-                }
-                e.preventDefault();
-                let productId = null;
-                const onclick = productCard.getAttribute('onclick');
-                if (onclick) {
-                    const match = onclick.match(/id=(\d+)/);
-                    if (match) productId = match[1];
-                }
-                if (productId) checkLoginAndNavigate(productId);
-            }
-        });
-        
         window.goToProductDetail = function(productId) {
             checkLoginAndNavigate(productId);
         };
@@ -1382,63 +1351,7 @@
                     } catch (e) {}
                 }
             }
-            
-            // Wait for products to load from script.js then add shop links
-            setTimeout(addShopLinksToExistingProducts, 1500);
         });
-        
-        // Function to add Visit Shop links to existing product cards
-        function addShopLinksToExistingProducts() {
-            const productCards = document.querySelectorAll('.product-card');
-            productCards.forEach(card => {
-                // Check if shop link already exists
-                if (card.querySelector('.visit-shop-link')) return;
-                
-                const productInfo = card.querySelector('.product-info');
-                if (!productInfo) return;
-                
-                // Try to get seller_id from the product data
-                // This depends on how your script.js stores product data
-                const productId = card.getAttribute('data-product-id') || 
-                                 (card.getAttribute('onclick')?.match(/id=(\d+)/)?.[1]);
-                
-                // Look for seller_id in a data attribute or from global products array
-                let sellerId = card.getAttribute('data-seller-id');
-                
-                if (!sellerId && window.allProducts && productId) {
-                    const product = window.allProducts.find(p => p.id == productId);
-                    if (product && product.seller_id) {
-                        sellerId = product.seller_id;
-                    }
-                }
-                
-                if (sellerId) {
-                    const priceDiv = productInfo.querySelector('.product-price');
-                    const shopLink = document.createElement('a');
-                    shopLink.href = `shop.html?seller=${sellerId}`;
-                    shopLink.className = 'visit-shop-link';
-                    shopLink.innerHTML = '🏪 Visit Shop';
-                    shopLink.onclick = (e) => e.stopPropagation();
-                    
-                    if (priceDiv) {
-                        priceDiv.insertAdjacentElement('afterend', shopLink);
-                    } else {
-                        productInfo.insertBefore(shopLink, productInfo.firstChild);
-                    }
-                }
-            });
-        }
-        
-        // Also add shop links when new products are loaded (observe DOM changes)
-        const observer = new MutationObserver(function(mutations) {
-            mutations.forEach(function(mutation) {
-                if (mutation.addedNodes.length) {
-                    addShopLinksToExistingProducts();
-                }
-            });
-        });
-        
-        observer.observe(document.body, { childList: true, subtree: true });
     </script>
     
     <script>
