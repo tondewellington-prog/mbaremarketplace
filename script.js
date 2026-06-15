@@ -214,7 +214,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         await loadBestSellersPetSupplies();
         await loadBestSellersPetsLivestock();
         await loadBestSellersFarmProducts();
-        await loadBestSellersHardwareProducts();  // FIXED: Now matches function name
+        await loadBestSellersHardwareProducts();
         await loadBestSellersVehicleParts();
         await loadBestSellersVehicles();
         await loadBestSellersHomeKitchen();
@@ -509,7 +509,7 @@ function createProductCard(product) {
         <div class="product-price">
             <span class="currency">$</span>${product.price.toFixed(2)}
         </div>
-        <!-- VISIT SHOP LINK - ADDED HERE -->
+        <!-- VISIT SHOP LINK -->
         <a href="shop.html?seller=${product.seller_id}" class="visit-shop-link" onclick="event.stopPropagation()" style="color:#f90;text-decoration:underline;font-size:12px;display:inline-block;margin:5px 0;">Visit Shop</a>
         <div class="product-seller" style="font-size: 12px; color: #666; margin: 5px 0;">
             Seller: ${escapeHtml(sellerName)}
@@ -955,10 +955,23 @@ styleSheet.textContent = `
 `;
 document.head.appendChild(styleSheet);
 
+// ============================================
+// EXPOSE FUNCTIONS TO GLOBAL WINDOW OBJECT
+// ============================================
 window.checkLoginAndNavigate = checkLoginAndNavigate;
 window.goToProductDetail = checkLoginAndNavigate;
+window.addToBasket = addToBasket;
+window.showSellerContact = showSellerContact;
+window.removeFromBasket = removeFromBasket;
+window.updateBasketQuantity = updateBasketQuantity;
+window.buyNow = buyNow;
 window.logout = function() {
     localStorage.removeItem('supabase_session');
     localStorage.removeItem('isLoggedIn');
     window.location.href = 'index.html';
 };
+window.showLoginPrompt = showLoginPrompt;
+window.hideLoginPrompt = hideLoginPrompt;
+window.moveCarousel = moveCarousel;
+window.goToSlide = goToSlide;
+window.handleSearch = handleSearch;
