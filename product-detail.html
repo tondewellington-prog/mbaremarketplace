@@ -106,6 +106,17 @@
             border-radius: 4px;
             font-weight: 600;
         }
+        .view-shop-btn {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #f90;
+            color: white;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 10px;
+            margin-right: 10px;
+        }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
@@ -379,6 +390,9 @@
                             <p><strong>Shop:</strong> ${sellerName}</p>
                             <p><strong>Location:</strong> ${shopLocation}</p>
                             ${whatsappNumber ? `<p><strong>Phone:</strong> ${whatsappNumber}</p>` : ''}
+                            
+                            <!-- VIEW SHOP BUTTON - ADDED HERE -->
+                            <a href="shop.html?seller=${product.seller_id}" class="view-shop-btn">View Seller's Shop</a>
                             
                             <!-- Seller Rating Display -->
                             <div class="seller-rating-large">
