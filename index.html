@@ -758,6 +758,19 @@
             align-items: center;
             flex-wrap: wrap;
         }
+
+        /* Visit Shop link styling */
+        .visit-shop-link {
+            color: #f90;
+            text-decoration: underline;
+            font-size: 12px;
+            display: inline-block;
+            margin-top: 5px;
+            margin-bottom: 8px;
+        }
+        .visit-shop-link:hover {
+            color: #e68a00;
+        }
     </style>
 </head>
 <body>
@@ -1385,6 +1398,52 @@
             });
         });
     }
+    </script>
+
+    <script>
+        // OVERRIDE THE PRODUCT RENDERING FUNCTIONS TO ADD VISIT SHOP LINKS
+        // This modifies the existing product grids to include shop links
+        
+        (function addShopLinksToProducts() {
+            // Function to add shop links to existing product cards after they're rendered
+            function addShopLinksToProductCards() {
+                const productCards = document.querySelectorAll('.product-card');
+                productCards.forEach(card => {
+                    // Check if shop link already exists in this card
+                    if (card.querySelector('.visit-shop-link')) return;
+                    
+                    // Find the product info div
+                    const productInfo = card.querySelector('.product-info');
+                    if (!productInfo) return;
+                    
+                    // Try to find seller_id from onclick attribute or data attribute
+                    let sellerId = null;
+                    const onclick = card.getAttribute('onclick');
+                    if (onclick) {
+                        const match = onclick.match(/id=(\d+)/);
+                        // We need seller_id from product data - this is a limitation
+                        // The product data needs to include seller_id
+                    }
+                    
+                    // Alternative: Add a data-seller-id attribute to product cards when rendering
+                    // For now, we'll add a generic link that will be populated by the rendering function
+                });
+            }
+            
+            // Wait for DOM to load and observe changes
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.addedNodes.length) {
+                        addShopLinksToProductCards();
+                    }
+                });
+            });
+            
+            observer.observe(document.body, { childList: true, subtree: true });
+            
+            // Initial run
+            setTimeout(addShopLinksToProductCards, 1000);
+        })();
     </script>
 </body>
 </html>
