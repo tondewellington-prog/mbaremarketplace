@@ -501,7 +501,7 @@ function createProductCard(product) {
     
     card.innerHTML = `
         <img src="${imageUrl}" alt="${product.title}" class="product-image" onclick="checkLoginAndNavigate(${product.id})" style="cursor: pointer;" onerror="this.src='https://via.placeholder.com/300x300?text=Product'">
-        <h3 class="product-title" onclick="checkLoginAndNavigate(${product.id})" style="cursor: pointer;">${product.title}</h3>
+        <h3 class="product-title" onclick="checkLoginAndNavigate(${product.id})" style="cursor: pointer;">${escapeHtml(product.title)}</h3>
         <div class="product-rating">
             <span class="stars">${stars}</span>
             <span class="rating-count">(${product.reviews})</span>
@@ -509,8 +509,10 @@ function createProductCard(product) {
         <div class="product-price">
             <span class="currency">$</span>${product.price.toFixed(2)}
         </div>
+        <!-- VISIT SHOP LINK - ADDED HERE -->
+        <a href="shop.html?seller=${product.seller_id}" class="visit-shop-link" onclick="event.stopPropagation()" style="color:#f90;text-decoration:underline;font-size:12px;display:inline-block;margin:5px 0;">Visit Shop</a>
         <div class="product-seller" style="font-size: 12px; color: #666; margin: 5px 0;">
-            Seller: ${sellerName}
+            Seller: ${escapeHtml(sellerName)}
         </div>
         <div class="seller-rating" id="rating-${product.id}" style="font-size: 12px; margin: 5px 0; min-height: 20px;">
             <span style="color: #999;">Loading ratings...</span>
@@ -522,6 +524,19 @@ function createProductCard(product) {
     `;
     
     return card;
+}
+
+// Helper function to escape HTML and remove emojis
+function escapeHtml(text) {
+    if (!text) return '';
+    return text
+        .replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        })
+        .replace(/[\u{1F300}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
 }
 
 // ============================================
@@ -605,33 +620,33 @@ async function showSellerContact(productId) {
     
     const modalContent = document.getElementById('sellerContactContent');
     modalContent.innerHTML = `
-        <div class="product-title">${product.title}</div>
+        <div class="product-title">${escapeHtml(product.title)}</div>
         <div class="seller-info">
             <div class="info-row">
                 <div class="info-icon">🏪</div>
                 <div class="info-text">
                     <div class="info-label">Seller</div>
-                    <div class="info-value">${seller.business_name || 'Unknown Seller'}</div>
+                    <div class="info-value">${escapeHtml(seller.business_name || 'Unknown Seller')}</div>
                 </div>
             </div>
             <div class="info-row">
                 <div class="info-icon">📞</div>
                 <div class="info-text">
                     <div class="info-label">Phone Number</div>
-                    <div class="info-value">${phone}</div>
+                    <div class="info-value">${escapeHtml(phone)}</div>
                 </div>
             </div>
             <div class="info-row">
                 <div class="info-icon">📍</div>
                 <div class="info-text">
                     <div class="info-label">Shop Location</div>
-                    <div class="info-value">${seller.business_address || 'Location not specified'}</div>
+                    <div class="info-value">${escapeHtml(seller.business_address || 'Location not specified')}</div>
                 </div>
             </div>
         </div>
         <div class="contact-actions">
-            <a href="${callLink}" class="contact-btn call-btn">📞 Call Seller</a>
-            <a href="${whatsappLink}" class="contact-btn whatsapp-btn" target="_blank">💬 WhatsApp</a>
+            <a href="${callLink}" class="contact-btn call-btn">Call Seller</a>
+            <a href="${whatsappLink}" class="contact-btn whatsapp-btn" target="_blank">WhatsApp</a>
         </div>
     `;
     
@@ -806,16 +821,16 @@ function displayProductDetail(product, ratingInfo) {
             <img src="${product.image_url || product.image}" alt="${product.title}" class="product-detail-image" id="productMainImage" onerror="this.src='https://via.placeholder.com/500x500?text=Product'">
         </div>
         <div class="product-detail-info">
-            <h1>${product.title}</h1>
+            <h1>${escapeHtml(product.title)}</h1>
             <div class="product-detail-rating">
                 <span class="stars">${stars}</span>
                 <span class="rating-count">${product.reviews || 0} ratings</span>
             </div>
             <div class="product-detail-price">$${product.price.toFixed(2)}</div>
-            <p class="product-detail-description">${product.description || ''}</p>
+            <p class="product-detail-description">${escapeHtml(product.description || '')}</p>
             <div class="detail-actions">
                 <button class="btn-add-cart-large" onclick="addToBasket('${product.id}')">Add to Basket</button>
-                ${whatsappNumber ? `<a href="${whatsappLink}" target="_blank" class="btn-buy-now-large" style="display: inline-block; text-decoration: none; background: #25D366; color: white; padding: 12px 30px; border-radius: 4px;">💬 Buy via WhatsApp</a>` : ''}
+                ${whatsappNumber ? `<a href="${whatsappLink}" target="_blank" class="btn-buy-now-large" style="display: inline-block; text-decoration: none; background: #25D366; color: white; padding: 12px 30px; border-radius: 4px;">Buy via WhatsApp</a>` : ''}
             </div>
         </div>
     `;
@@ -860,7 +875,7 @@ async function loadBasketPage() {
         basketItem.className = 'basket-item';
         basketItem.innerHTML = `
             <img src="${item.image}" alt="${item.title}" style="width: 100px;">
-            <div><a href="product-detail.html?id=${item.id}">${item.title}</a></div>
+            <div><a href="product-detail.html?id=${item.id}">${escapeHtml(item.title)}</a></div>
             <div>$${item.price.toFixed(2)}</div>
             <div>Quantity: ${item.quantity}</div>
             <div>Total: $${itemTotal.toFixed(2)}</div>
