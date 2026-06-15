@@ -72,6 +72,7 @@
         .analytics-btn:hover { background: #1f5e7a; transform: scale(1.02); }
         .banner { background: linear-gradient(135deg, #1e2a3a 0%, #0f1724 100%); color: white; padding: 28px; border-radius: 24px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
         .banner h1 { margin: 0; } .banner p { margin-top: 8px; opacity: 0.9; }
+        .banner-buttons { display: flex; gap: 12px; flex-wrap: wrap; }
         .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); display: flex; align-items: center; justify-content: center; z-index: 9999; }
         .image-upload-area { border: 2px dashed #ccc; border-radius: 12px; padding: 30px; text-align: center; background: #fafafa; cursor: pointer; transition: all 0.3s; }
         .image-upload-area:hover { border-color: #f90; background: #fff8f0; }
@@ -90,6 +91,8 @@
         .paynow-button-img { cursor: pointer; transition: transform 0.2s; border-radius: 8px; }
         .paynow-button-img:hover { transform: scale(1.05); }
         .auto-redirect-message { font-size: 12px; color: #666; margin-top: 15px; padding: 10px; background: #f0f9ff; border-radius: 8px; }
+        .view-shop-btn-header { background: #28a745; color: white; padding: 10px 24px; border-radius: 40px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
+        .view-shop-btn-header:hover { background: #218838; transform: scale(1.02); }
     </style>
 </head>
 <body>
@@ -99,7 +102,16 @@
         <nav class="nav-menu"><div class="container"><a href="#" class="nav-item">All</a><a href="#" class="nav-item">Today's Deals</a><a href="#" class="nav-item">Customer Service</a><a href="seller-register.html" class="nav-item">Sell</a></div></nav>
     </header>
     <div class="container mt-30">
-        <div class="banner"><div><h1>Seller Dashboard</h1><p>Manage products, track sales and subscription</p></div><button id="analyticsNavBtn" class="analytics-btn">Seller Analytics</button></div>
+        <div class="banner">
+            <div>
+                <h1>Seller Dashboard</h1>
+                <p>Manage products, track sales and subscription</p>
+            </div>
+            <div class="banner-buttons">
+                <button id="analyticsNavBtn" class="analytics-btn">Seller Analytics</button>
+                <a id="viewShopBtn" href="#" class="view-shop-btn-header">🏪 View My Shop</a>
+            </div>
+        </div>
         <div id="expiryBanner" class="expiry-banner info" style="display:none;"></div>
         
         <h2 class="mb-20">Subscription Plans <span class="badge-live">LIVE</span></h2>
@@ -409,10 +421,23 @@
                 currentAccessToken = session.access_token;
                 if (!currentSellerId) throw new Error('No ID');
                 document.querySelector('.account-menu').textContent = 'Hello, ' + (session.user?.email || 'Seller').split('@')[0];
+                
+                // UPDATE VIEW SHOP BUTTON LINK
+                updateViewShopButton();
+                
                 return true;
             } catch (e) {
                 window.location.href = 'login.html';
                 return false;
+            }
+        }
+        
+        // Function to update the View My Shop button with the correct seller ID
+        function updateViewShopButton() {
+            const viewShopBtn = document.getElementById('viewShopBtn');
+            if (viewShopBtn && currentSellerId) {
+                viewShopBtn.href = `shop.html?seller=${currentSellerId}`;
+                console.log('View Shop button updated to:', viewShopBtn.href);
             }
         }
 
@@ -849,6 +874,9 @@
             updateSubscriptionControls();
             startExpiryChecker();
             document.getElementById('loadingOverlay').style.display = 'none';
+            
+            // Update view shop button again after everything is loaded
+            updateViewShopButton();
         }
         
         init();
