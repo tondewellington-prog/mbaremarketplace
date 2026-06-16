@@ -150,12 +150,12 @@ window.goToProductDetail = function(productId) {
     }
 };
 
-// ==================== ADD TO BASKET (FIXED) ====================
+// ==================== ADD TO BASKET ====================
 // Add to basket - uses global products array from script.js
 window.addToBasket = function(productId, quantity = 1) {
     // Check if user is logged in
     if (!isUserLoggedIn()) {
-        showNotification('Please login to add items to basket');
+        showNotificationAuth('Please login to add items to basket');
         setTimeout(() => {
             window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.pathname);
         }, 1500);
@@ -176,7 +176,7 @@ window.addToBasket = function(productId, quantity = 1) {
         const productCards = document.querySelectorAll('.product-card');
         for (const card of productCards) {
             const onclick = card.getAttribute('onclick');
-            if (onclick && onclick.includes(`id=${productId}`) || onclick && onclick.includes(`id='${productId}'`)) {
+            if (onclick && (onclick.includes(`id=${productId}`) || onclick.includes(`id='${productId}'`))) {
                 const titleEl = card.querySelector('.product-title');
                 const priceEl = card.querySelector('.product-price');
                 const imgEl = card.querySelector('img');
@@ -196,7 +196,7 @@ window.addToBasket = function(productId, quantity = 1) {
     }
     
     if (!product) {
-        showNotification('Product not found');
+        showNotificationAuth('Product not found');
         return;
     }
     
@@ -218,19 +218,13 @@ window.addToBasket = function(productId, quantity = 1) {
     }
     
     saveUserBasket(basket);
-    showNotification('Item added to Basket!');
+    showNotificationAuth('Item added to Basket!');
 };
 
-// ==================== NOTIFICATION ====================
-// Show notification
-function showNotification(message) {
-    // Check if notification function exists in script.js
-    if (typeof window.showNotification === 'function') {
-        window.showNotification(message);
-        return;
-    }
-    
-    // Fallback notification
+// ==================== NOTIFICATION (FIXED - NO INFINITE LOOP) ====================
+// Show notification - uses a different name to avoid conflicts
+function showNotificationAuth(message) {
+    // Create notification directly - no recursion
     const notification = document.createElement('div');
     notification.style.cssText = `
         position: fixed;
@@ -248,7 +242,11 @@ function showNotification(message) {
     document.body.appendChild(notification);
     setTimeout(() => {
         notification.style.animation = 'slideOut 0.3s ease';
-        setTimeout(() => notification.remove(), 300);
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
     }, 2000);
 }
 
@@ -358,7 +356,6 @@ window.isUserLoggedIn = isUserLoggedIn;
 window.getCurrentUserId = getCurrentUserId;
 window.getUserBasket = getUserBasket;
 window.saveUserBasket = saveUserBasket;
-window.showNotification = showNotification;
 window.injectLoginPrompt = injectLoginPrompt;
 window.checkLoginStatus = checkLoginStatus;
 window.setLoggedOutState = setLoggedOutState;
