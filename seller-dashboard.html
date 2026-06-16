@@ -41,7 +41,7 @@
         .badge-live { background: #28a745; color: white; padding: 4px 12px; border-radius: 40px; font-size: 11px; font-weight: 700; }
         .product-card { background: white; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; transition: 0.2s; position: relative; }
         .product-card.paused { opacity: 0.6; }
-        .product-card.paused::after { content: 'PAUSED'; position: absolute; top: 10px; left: 10px; background: #dc3545; color: white; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; z-index: 2; }
+        .product-card.paused::after { content: 'PAUSED - Limit Reached'; position: absolute; top: 10px; left: 10px; background: #dc3545; color: white; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; z-index: 2; }
         .product-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
         .product-card img { width: 100%; height: 220px; object-fit: cover; }
         .product-info { padding: 16px; }
@@ -119,6 +119,12 @@
         .cover-upload-area .placeholder { color: #999; padding: 20px; }
         .cover-upload-area .placeholder svg { display: block; margin: 0 auto; }
         .cover-status { font-size: 12px; color: #666; margin-top: 5px; }
+
+        /* Product limit warning */
+        .product-limit-banner { background: #fff3cd; border: 1px solid #ffc107; padding: 12px 20px; border-radius: 8px; margin-bottom: 15px; display: none; }
+        .product-limit-banner strong { color: #856404; }
+        .product-limit-banner .upgrade-link { color: #f90; font-weight: 600; cursor: pointer; text-decoration: underline; }
+        .product-limit-banner .upgrade-link:hover { color: #e68a00; }
     </style>
 </head>
 <body>
@@ -187,6 +193,13 @@
         <h2 class="mb-20">Subscription Plans <span class="badge-live">LIVE</span></h2>
         <div id="tierContainer" class="grid-3 mb-30"></div>
         <div id="subscriptionControls" class="subscription-controls text-center" style="display:none;"></div>
+        
+        <!-- Product Limit Warning Banner -->
+        <div id="productLimitBanner" class="product-limit-banner">
+            <strong>⚠️ Product Limit Reached!</strong> You have <span id="activeCount">0</span> active products out of <span id="maxCount">8</span> allowed for your <span id="tierName">Free</span> plan. 
+            <a href="#" class="upgrade-link" onclick="showUpgradeOptions(); return false;">Upgrade to add more products</a> or delete some products.
+        </div>
+        
         <div id="tierMessage" class="limit-warning"></div>
         <div class="grid-3 mb-30">
             <div class="stats-card"><div class="stats-number" id="totalProducts">0</div><div>Total Products</div></div>
@@ -369,17 +382,6 @@
                 localStorage.setItem(`mbare_tier_${userId}`, currentTier);
                 localStorage.removeItem('pending_payment_plan');
                 
-                for (const product of sellerProducts) {
-                    if (product.status === 'paused') {
-                        await fetch(`${window.SUPABASE_URL}/rest/v1/products?id=eq.${product.id}`, {
-                            method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json', 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}`, 'Prefer': 'return=minimal' },
-                            body: JSON.stringify({ status: 'active' })
-                        });
-                    }
-                }
-                sellerProducts.forEach(p => p.status = 'active');
-                
                 await loadProductsFromSupabase();
                 renderTiers();
                 enforceProductLimit();
@@ -492,10 +494,7 @@
                 if (!currentSellerId) throw new Error('No ID');
                 document.querySelector('.account-menu').textContent = 'Hello, ' + (session.user?.email || 'Seller').split('@')[0];
                 
-                // UPDATE VIEW SHOP BUTTON LINK
                 updateViewShopButton();
-                
-                // Load profile data
                 await loadSellerProfile();
                 
                 return true;
@@ -505,7 +504,6 @@
             }
         }
         
-        // Function to update the View My Shop button with the correct seller ID
         function updateViewShopButton() {
             const viewShopBtn = document.getElementById('viewShopBtn');
             if (viewShopBtn && currentSellerId) {
@@ -544,7 +542,6 @@
         function updateProfileUI() {
             if (!currentSellerProfile) return;
             
-            // Update profile image
             const profileImg = document.getElementById('profileAvatarImg');
             const placeholder = document.getElementById('profilePlaceholder');
             const status = document.getElementById('profileStatus');
@@ -560,7 +557,6 @@
                 status.textContent = 'No profile photo uploaded. Please upload a photo.';
             }
             
-            // Update cover image
             const coverPreview = document.getElementById('coverPreview');
             const coverPlaceholder = document.getElementById('coverPlaceholder');
             const coverStatus = document.getElementById('coverStatus');
@@ -576,7 +572,6 @@
                 coverStatus.textContent = 'No cover image uploaded. Please upload a cover image.';
             }
             
-            // Update description
             const descInput = document.getElementById('shopDescription');
             if (descInput && currentSellerProfile.shop_description) {
                 descInput.value = currentSellerProfile.shop_description;
@@ -596,7 +591,6 @@
                 return;
             }
             
-            // Show preview
             const reader = new FileReader();
             reader.onload = function(e) {
                 const img = document.getElementById('profileAvatarImg');
@@ -608,7 +602,6 @@
             };
             reader.readAsDataURL(file);
             
-            // Upload to ImgBB
             const formData = new FormData();
             formData.append('image', file);
             formData.append('key', IMGBB_API_KEY);
@@ -622,7 +615,6 @@
                 if (data.success) {
                     const imageUrl = data.data.url;
                     
-                    // Save to Supabase
                     const session = JSON.parse(localStorage.getItem('supabase_session'));
                     const token = session?.access_token || currentAccessToken;
                     
@@ -665,7 +657,6 @@
                 return;
             }
             
-            // Show preview
             const reader = new FileReader();
             reader.onload = function(e) {
                 const img = document.getElementById('coverPreview');
@@ -677,7 +668,6 @@
             };
             reader.readAsDataURL(file);
             
-            // Upload to ImgBB
             const formData = new FormData();
             formData.append('image', file);
             formData.append('key', IMGBB_API_KEY);
@@ -691,7 +681,6 @@
                 if (data.success) {
                     const imageUrl = data.data.url;
                     
-                    // Save to Supabase
                     const session = JSON.parse(localStorage.getItem('supabase_session'));
                     const token = session?.access_token || currentAccessToken;
                     
@@ -780,6 +769,8 @@
             }
         }
 
+        // ==================== SUBSCRIPTION FUNCTIONS ====================
+        
         async function fetchSubscription() {
             try {
                 const session = JSON.parse(localStorage.getItem('supabase_session'));
@@ -829,7 +820,15 @@
         }
 
         function handleExpiredSubscription() {
-            sellerProducts.forEach((p, i) => { p.status = i < 8 ? 'active' : 'paused'; });
+            // When expired, only allow 8 active products (free tier)
+            const max = 8;
+            sellerProducts.forEach((p, i) => {
+                if (i >= max) {
+                    p.paused = true;
+                } else {
+                    p.paused = false;
+                }
+            });
             currentTier = 'free';
             subscriptionStatus = 'expired';
             localStorage.setItem(`mbare_tier_${currentSellerId}`, 'free');
@@ -928,6 +927,8 @@
             }
         }
 
+        // ==================== PRODUCT FUNCTIONS ====================
+
         async function loadProductsFromSupabase() {
             try {
                 const session = JSON.parse(localStorage.getItem('supabase_session'));
@@ -935,7 +936,16 @@
                 const r = await fetch(`${window.SUPABASE_URL}/rest/v1/products?seller_id=eq.${currentSellerId}&select=*&order=created_at.desc`, {
                     headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` }
                 });
-                if (r.ok) { sellerProducts = await r.json(); return true; }
+                if (r.ok) { 
+                    sellerProducts = await r.json(); 
+                    // Add paused flag if it doesn't exist
+                    sellerProducts.forEach(p => {
+                        if (p.paused === undefined) {
+                            p.paused = false;
+                        }
+                    });
+                    return true; 
+                }
                 if (r.status === 401) { await refreshSession(); return loadProductsFromSupabase(); }
                 return false;
             } catch (e) { return false; }
@@ -947,7 +957,17 @@
             const r = await fetch(`${window.SUPABASE_URL}/rest/v1/products`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Prefer': 'return=representation' },
-                body: JSON.stringify({ seller_id: String(currentSellerId), title: pd.title, description: pd.description || '', price: pd.price, category: pd.category, stock: pd.stock, image_url: pd.image_url, status: pd.status || 'active', created_at: new Date().toISOString() })
+                body: JSON.stringify({ 
+                    seller_id: String(currentSellerId), 
+                    title: pd.title, 
+                    description: pd.description || '', 
+                    price: pd.price, 
+                    category: pd.category, 
+                    stock: pd.stock, 
+                    image_url: pd.image_url, 
+                    paused: pd.paused || false,
+                    created_at: new Date().toISOString() 
+                })
             });
             if (r.ok) return await r.json();
             throw new Error((await r.json()).message || 'Save failed');
@@ -960,6 +980,22 @@
                 method: 'DELETE',
                 headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` }
             })).ok;
+        }
+
+        // Update product paused status in Supabase
+        async function updateProductPausedStatus(productId, paused) {
+            const session = JSON.parse(localStorage.getItem('supabase_session'));
+            const token = session?.access_token || currentAccessToken;
+            await fetch(`${window.SUPABASE_URL}/rest/v1/products?id=eq.${productId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': window.SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${token}`,
+                    'Prefer': 'return=minimal'
+                },
+                body: JSON.stringify({ paused: paused })
+            });
         }
 
         async function uploadImageToImgBB(file) {
@@ -982,7 +1018,9 @@
             });
         }
 
-        function saveProductsLocal() { localStorage.setItem(`mbare_products_${currentSellerId}`, JSON.stringify(sellerProducts)); }
+        function saveProductsLocal() { 
+            localStorage.setItem(`mbare_products_${currentSellerId}`, JSON.stringify(sellerProducts)); 
+        }
 
         function renderTiers() {
             const c = document.getElementById('tierContainer');
@@ -1026,30 +1064,104 @@
             });
         }
 
+        // ==================== ENFORCE PRODUCT LIMITS (NO STATUS COLUMN) ====================
+        
         function enforceProductLimit() {
-            const max = currentTier === 'free' ? 8 : (currentTier === 'tier_150' ? 50 : 200);
-            sellerProducts.forEach((p, i) => {
-                if (i >= max) p.status = 'paused';
-                else if (p.status === 'paused' && subscriptionStatus !== 'expired') p.status = 'active';
+            const max = getCurrentLimit();
+            let pausedCount = 0;
+            
+            // Sort products by created_at (newest first) to keep newest active
+            const sortedProducts = [...sellerProducts].sort((a, b) => {
+                return new Date(b.created_at) - new Date(a.created_at);
             });
+            
+            // Reset all paused flags first
+            sellerProducts.forEach(p => {
+                // Only unpause if subscription is not expired
+                if (subscriptionStatus !== 'expired') {
+                    p.paused = false;
+                }
+            });
+            
+            // Find which products should be paused (beyond the limit)
+            const activeProducts = sellerProducts.filter(p => !p.paused);
+            
+            if (activeProducts.length > max) {
+                // Sort active products by created_at (oldest first to pause)
+                const toPause = activeProducts
+                    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+                    .slice(0, activeProducts.length - max);
+                
+                toPause.forEach(p => {
+                    p.paused = true;
+                    pausedCount++;
+                });
+                
+                // Save paused status to Supabase
+                toPause.forEach(async (p) => {
+                    await updateProductPausedStatus(p.id, true);
+                });
+            }
+            
+            if (pausedCount > 0) {
+                console.log(`⚠️ ${pausedCount} products were paused due to limit`);
+                saveProductsLocal();
+                // Show toast notification
+                showToast(`⚠️ ${pausedCount} product(s) have been paused because you exceeded your tier limit. Upgrade to activate more.`, true);
+            }
+            
             updateStatsAndLimits();
+            updateProductLimitBanner();
         }
 
-        function getCurrentLimit() { return currentTier === 'free' ? 8 : (currentTier === 'tier_150' ? 50 : 200); }
+        function getCurrentLimit() { 
+            return currentTier === 'free' ? 8 : (currentTier === 'tier_150' ? 50 : 200); 
+        }
+
+        function updateProductLimitBanner() {
+            const banner = document.getElementById('productLimitBanner');
+            const activeCount = document.getElementById('activeCount');
+            const maxCount = document.getElementById('maxCount');
+            const tierName = document.getElementById('tierName');
+            
+            const active = sellerProducts.filter(p => !p.paused).length;
+            const max = getCurrentLimit();
+            const tier = tierMap[currentTier]?.name || 'Free';
+            
+            if (activeCount) activeCount.textContent = active;
+            if (maxCount) maxCount.textContent = max;
+            if (tierName) tierName.textContent = tier;
+            
+            if (active >= max && banner) {
+                banner.style.display = 'block';
+            } else if (banner) {
+                banner.style.display = 'none';
+            }
+        }
 
         function updateStatsAndLimits() {
-            const a = sellerProducts.filter(p => p.status !== 'paused').length;
-            const l = getCurrentLimit();
-            const ps = sellerProducts.filter(p => p.status === 'paused').length;
+            const active = sellerProducts.filter(p => !p.paused).length;
+            const paused = sellerProducts.filter(p => p.paused).length;
+            const max = getCurrentLimit();
+            
             document.getElementById('tierMessage').innerHTML = currentTier === 'free' 
-                ? `<strong>Free:</strong> ${a}/${l} active. ${ps > 0 ? ps + ' paused. ' : ''}${a < l ? (l - a) + ' slots.' : 'Limit.'} <a href="#" id="upgradeLink" class="inline-link">Upgrade</a>`
-                : `<strong>${tierMap[currentTier]?.name}:</strong> ${a} active, ${l - a} slots. ${ps > 0 ? ps + ' paused.' : ''}`;
+                ? `<strong>Free:</strong> ${active}/${max} active. ${paused > 0 ? paused + ' paused. ' : ''}${active < max ? (max - active) + ' slots available.' : 'Limit reached.'} <a href="#" id="upgradeLink" class="inline-link">Upgrade</a>`
+                : `<strong>${tierMap[currentTier]?.name}:</strong> ${active} active, ${max - active} slots available. ${paused > 0 ? paused + ' paused.' : ''}`;
+            
             const ul = document.getElementById('upgradeLink');
             if (ul) ul.onclick = e => { e.preventDefault(); showUpgradeOptions(); };
-            document.getElementById('totalProducts').innerText = a;
-            document.getElementById('totalStock').innerText = sellerProducts.filter(p => p.status !== 'paused').reduce((s, p) => s + (p.stock || 0), 0);
-            document.getElementById('totalValue').innerText = '$' + sellerProducts.filter(p => p.status !== 'paused').reduce((s, p) => s + ((p.price || 0) * (p.stock || 0)), 0).toFixed(2);
-            document.getElementById('toggleFormBtn').disabled = (currentTier === 'free' && a >= 8) || subscriptionStatus === 'expired';
+            
+            document.getElementById('totalProducts').innerText = active;
+            document.getElementById('totalStock').innerText = sellerProducts.filter(p => !p.paused).reduce((s, p) => s + (p.stock || 0), 0);
+            document.getElementById('totalValue').innerText = '$' + sellerProducts.filter(p => !p.paused).reduce((s, p) => s + ((p.price || 0) * (p.stock || 0)), 0).toFixed(2);
+            
+            const toggleBtn = document.getElementById('toggleFormBtn');
+            if (toggleBtn) {
+                toggleBtn.disabled = active >= max || subscriptionStatus === 'expired';
+                toggleBtn.textContent = active >= max ? 'Limit Reached' : '+ Add Product';
+            }
+            
+            updateProductLimitBanner();
         }
 
         function esc(s) { if (!s) return ''; return s.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[m]); }
@@ -1057,23 +1169,36 @@
         function renderProducts() {
             const c = document.getElementById('productsList');
             if (!sellerProducts.length) { c.innerHTML = '<p class="text-center" style="padding:40px;color:#666;">No products yet.</p>'; return; }
-            c.innerHTML = sellerProducts.map(p => `<div class="product-card ${p.status === 'paused' ? 'paused' : ''}">
-                <img src="${p.image_url || 'https://placehold.co/400x300?text=No+Image'}" alt="${esc(p.title)}" onerror="this.src='https://placehold.co/400x300?text=No+Image'">
-                <div class="product-info">
-                    <h3>${esc(p.title)}</h3>
-                    <div style="font-size:20px;font-weight:600;color:#B12704;">$${parseFloat(p.price || 0).toFixed(2)}</div>
-                    <div>Stock: ${p.stock || 0} | ${p.category || 'N/A'}${p.status === 'paused' ? ' | PAUSED' : ''}</div>
-                    ${p.status !== 'paused' ? '<button class="whatsapp-btn" onclick="whatsappInquiry(\'' + esc(p.title) + '\')">WhatsApp</button>' : '<div style="color:#dc3545;font-size:12px;">Paused</div>'}
-                    <div style="display:flex;gap:8px;margin-top:8px;">
-                        <button class="btn-secondary" style="flex:1;" onclick="editProduct('${p.id}')">Edit</button>
-                        <button class="btn-delete" style="flex:1;" onclick="deleteProduct('${p.id}')">Delete</button>
+            
+            c.innerHTML = sellerProducts.map(p => `
+                <div class="product-card ${p.paused ? 'paused' : ''}">
+                    <img src="${p.image_url || 'https://placehold.co/400x300?text=No+Image'}" alt="${esc(p.title)}" onerror="this.src='https://placehold.co/400x300?text=No+Image'">
+                    <div class="product-info">
+                        <h3>${esc(p.title)}</h3>
+                        <div style="font-size:20px;font-weight:600;color:#B12704;">$${parseFloat(p.price || 0).toFixed(2)}</div>
+                        <div>Stock: ${p.stock || 0} | ${p.category || 'N/A'}${p.paused ? ' | PAUSED' : ''}</div>
+                        ${!p.paused ? '<button class="whatsapp-btn" onclick="whatsappInquiry(\'' + esc(p.title) + '\')">WhatsApp</button>' : '<div style="color:#dc3545;font-size:12px;">Paused - Limit Reached</div>'}
+                        <div style="display:flex;gap:8px;margin-top:8px;">
+                            <button class="btn-secondary" style="flex:1;" onclick="editProduct('${p.id}')">Edit</button>
+                            <button class="btn-delete" style="flex:1;" onclick="deleteProduct('${p.id}')">Delete</button>
+                        </div>
                     </div>
                 </div>
-            </div>`).join('');
+            `).join('');
         }
 
         window.whatsappInquiry = function(t) { window.open('https://wa.me/?text=' + encodeURIComponent('Hello, interested in "' + t + '" on Mbare Marketplace.'), '_blank'); };
-        window.deleteProduct = async function(id) { if (!confirm('Delete?')) return; await deleteProductFromSupabase(id); sellerProducts = sellerProducts.filter(p => p.id !== id); saveProductsLocal(); renderProducts(); updateStatsAndLimits(); };
+        
+        window.deleteProduct = async function(id) { 
+            if (!confirm('Delete this product?')) return; 
+            await deleteProductFromSupabase(id); 
+            sellerProducts = sellerProducts.filter(p => p.id !== id); 
+            saveProductsLocal(); 
+            renderProducts(); 
+            updateStatsAndLimits(); 
+            enforceProductLimit();
+        };
+        
         window.editProduct = function(id) {
             const p = sellerProducts.find(x => x.id == id);
             if (!p) return;
@@ -1093,9 +1218,20 @@
             document.getElementById('submitProductBtn').innerText = 'Update';
             document.getElementById('submitProductBtn').setAttribute('data-editing', 'true');
         };
+        
         window.toggleProductForm = function() {
             const f = document.getElementById('addProductForm'), b = document.getElementById('toggleFormBtn');
-            if (f.style.display === 'none' || f.style.display === '') { f.style.display = 'block'; b.innerText = 'Cancel'; } else { f.style.display = 'none'; b.innerText = '+ Add Product'; document.getElementById('productForm').reset(); removeImage(); document.getElementById('submitProductBtn').innerText = 'Add Product'; document.getElementById('submitProductBtn').removeAttribute('data-editing'); }
+            if (f.style.display === 'none' || f.style.display === '') { 
+                f.style.display = 'block'; 
+                b.innerText = 'Cancel'; 
+            } else { 
+                f.style.display = 'none'; 
+                b.innerText = '+ Add Product'; 
+                document.getElementById('productForm').reset(); 
+                removeImage(); 
+                document.getElementById('submitProductBtn').innerText = 'Add Product'; 
+                document.getElementById('submitProductBtn').removeAttribute('data-editing'); 
+            }
         };
         
         window.removeImage = function() {
@@ -1136,39 +1272,80 @@
         
         window.handleAddProduct = async function() {
             const ed = document.getElementById('submitProductBtn').getAttribute('data-editing');
-            const ac = sellerProducts.filter(p => p.status !== 'paused').length;
-            if (!ed && ac >= getCurrentLimit()) return alert('Limit reached.');
+            const activeProducts = sellerProducts.filter(p => !p.paused);
+            const max = getCurrentLimit();
+            
+            // Check if editing or adding new
+            if (!ed && activeProducts.length >= max) {
+                alert(`Limit reached! You have ${activeProducts.length} active products out of ${max} allowed for your ${currentTier} plan. Please upgrade or delete some products.`);
+                showUpgradeOptions();
+                return;
+            }
+            
             const t = document.getElementById('prodTitle').value.trim();
             const pr = parseFloat(document.getElementById('prodPrice').value);
             const st = parseInt(document.getElementById('prodStock').value);
             const cat = document.getElementById('prodCategory').value;
             const desc = document.getElementById('prodDescription').value.trim();
             let img = document.getElementById('prodImage').value.trim();
-            if (!t || isNaN(pr) || isNaN(st) || !cat) return alert('Fill all fields');
+            
+            if (!t || isNaN(pr) || isNaN(st) || !cat) return alert('Please fill all required fields');
+            
             const btn = document.getElementById('submitProductBtn');
             if (selectedImageFile) {
                 btn.disabled = true; btn.innerText = 'Uploading...';
-                try { img = await uploadImageToImgBB(selectedImageFile); } catch (e) { alert('Upload failed'); btn.disabled = false; btn.innerText = ed ? 'Update' : 'Add Product'; return; }
+                try { img = await uploadImageToImgBB(selectedImageFile); } catch (e) { 
+                    alert('Upload failed: ' + e.message); 
+                    btn.disabled = false; 
+                    btn.innerText = ed ? 'Update' : 'Add Product'; 
+                    return; 
+                }
             }
-            if (!img) return alert('Upload image');
+            if (!img) return alert('Please upload a product image');
+            
             btn.disabled = true; btn.innerText = 'Saving...';
-            const pd = { title: t, description: desc, price: pr, category: cat, stock: st, image_url: img, status: (subscriptionStatus === 'expired' && ac >= 8) ? 'paused' : 'active' };
+            
+            // Check if adding new product would exceed limit
+            const isPaused = (!ed && activeProducts.length >= max);
+            
+            const pd = { 
+                title: t, 
+                description: desc, 
+                price: pr, 
+                category: cat, 
+                stock: st, 
+                image_url: img, 
+                paused: isPaused
+            };
+            
             try {
                 const sv = await saveProductToSupabase(pd);
-                sellerProducts.unshift({ id: sv?.[0]?.id || Date.now().toString(), ...pd });
+                const newProduct = { id: sv?.[0]?.id || Date.now().toString(), ...pd };
+                sellerProducts.unshift(newProduct);
+                saveProductsLocal();
+                renderProducts();
+                updateStatsAndLimits();
+                
+                if (isPaused) {
+                    showToast('Product added but paused because you have reached your limit. Upgrade to activate it.', true);
+                    enforceProductLimit();
+                } else {
+                    showToast('Product added successfully!');
+                }
+                
+                toggleProductForm();
+                document.getElementById('productForm').reset();
+                removeImage();
+                selectedImageFile = null;
+                btn.disabled = false;
+                btn.innerText = 'Add Product';
+                btn.removeAttribute('data-editing');
+                
             } catch (e) {
-                sellerProducts.unshift({ id: Date.now().toString(), ...pd });
+                alert('Failed to save product: ' + e.message);
+                btn.disabled = false;
+                btn.innerText = ed ? 'Update' : 'Add Product';
             }
-            saveProductsLocal();
-            renderProducts();
-            updateStatsAndLimits();
-            toggleProductForm();
-            document.getElementById('productForm').reset();
-            removeImage();
-            selectedImageFile = null;
-            btn.disabled = false;
-            btn.innerText = 'Add Product';
-            btn.removeAttribute('data-editing');
         };
 
         (function() {
@@ -1214,9 +1391,11 @@
             updateExpiryBanner();
             updateSubscriptionControls();
             startExpiryChecker();
-            document.getElementById('loadingOverlay').style.display = 'none';
             
-            // Update view shop button again after everything is loaded
+            // ENFORCE LIMITS ON LOAD
+            enforceProductLimit();
+            
+            document.getElementById('loadingOverlay').style.display = 'none';
             updateViewShopButton();
         }
         
