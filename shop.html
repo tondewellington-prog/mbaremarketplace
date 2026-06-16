@@ -180,6 +180,7 @@
                         business_email: '',
                         email: '',
                         profile_image: '',
+                        cover_image: '',
                         shop_description: 'Welcome to my shop! Please check out my products.',
                         shop_verified: false,
                         shop_joined_date: new Date().toISOString()
@@ -276,6 +277,7 @@
             const sellerEmail = getSellerEmail();
             const sellerAddress = getSellerAddress();
             const profileImage = currentSeller.profile_image || '';
+            const coverImage = currentSeller.cover_image || '';
             const shopDescription = currentSeller.shop_description || 'Welcome to my shop! Please check out my products.';
             const verified = currentSeller.shop_verified || false;
             const joinedDate = currentSeller.shop_joined_date ? new Date(currentSeller.shop_joined_date).toLocaleDateString() : 'Recently';
@@ -286,7 +288,7 @@
             const html = `
                 <div class="shop-banner">
                     <div class="shop-cover">
-                        ${currentSeller.cover_image ? `<img src="${currentSeller.cover_image}" alt="Cover">` : ''}
+                        ${coverImage ? `<img src="${coverImage}" alt="Cover">` : ''}
                     </div>
                     <div class="shop-profile-section">
                         <div class="container">
