@@ -17,7 +17,7 @@
         .shop-banner { background: linear-gradient(135deg, #1a1a2e, #16213e); color: white; padding: 40px 0; }
         .shop-banner .container { max-width: 1300px; margin: 0 auto; padding: 0 20px; }
         .shop-header { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
-        .shop-avatar { width: 80px; height: 80px; border-radius: 50%; background: #f90; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700; color: white; }
+        .shop-avatar { width: 80px; height: 80px; border-radius: 50%; background: #f90; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700; color: white; flex-shrink: 0; }
         .shop-info h1 { font-size: 1.8rem; margin-bottom: 5px; }
         .shop-info p { opacity: 0.8; font-size: 14px; margin: 3px 0; }
         .shop-stats { display: flex; gap: 30px; margin-top: 10px; flex-wrap: wrap; }
@@ -47,7 +47,7 @@
         .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
         .product-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: 0.3s; cursor: pointer; }
         .product-card:hover { transform: translateY(-3px); box-shadow: 0 5px 20px rgba(0,0,0,0.15); }
-        .product-card img { width: 100%; height: 200px; object-fit: cover; }
+        .product-card img { width: 100%; height: 200px; object-fit: cover; background: #f0f0f0; }
         .product-card .info { padding: 15px; }
         .product-card .title { font-size: 14px; font-weight: 500; margin-bottom: 8px; color: #333; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .product-card .price { font-size: 20px; font-weight: 700; color: #B12704; }
@@ -62,6 +62,7 @@
         @keyframes spin { to { transform: rotate(360deg); } }
         
         .error { text-align: center; padding: 40px; color: #dc3545; }
+        .error h2 { font-size: 24px; margin-bottom: 10px; }
         
         .footer { background: #1a1a2e; color: white; text-align: center; padding: 20px; margin-top: 50px; font-size: 14px; }
         
@@ -101,39 +102,116 @@
         let filteredProducts = [];
         let selectedCategory = 'All';
 
+        // Get seller ID from URL
         const urlParams = new URLSearchParams(window.location.search);
         const sellerId = urlParams.get('seller') || urlParams.get('id');
 
+        console.log('🔍 Seller ID from URL:', sellerId);
+
         if (!sellerId) {
-            document.getElementById('shopContent').innerHTML = '<div class="error"><h2>Seller not found</h2><p>No seller specified. Please go back and try again.</p></div>';
+            document.getElementById('shopContent').innerHTML = `
+                <div class="error" style="padding:80px 20px;">
+                    <h2>⚠️ Seller Not Found</h2>
+                    <p>No seller specified. Please go back and try again.</p>
+                    <a href="index.html" style="display:inline-block;margin-top:20px;padding:10px 30px;background:#f90;color:white;text-decoration:none;border-radius:8px;">Go Home</a>
+                </div>
+            `;
         } else {
             loadShop(sellerId);
         }
 
         async function loadShop(sellerId) {
             try {
-                const sellerResp = await fetch(`${window.SUPABASE_URL}/rest/v1/sellers?id=eq.${sellerId}&select=*`, {
-                    headers: { 'apikey': window.SUPABASE_ANON_KEY }
-                });
-                const sellers = await sellerResp.json();
+                console.log('📦 Loading seller data for ID:', sellerId);
                 
-                if (!sellers || sellers.length === 0) {
-                    document.getElementById('shopContent').innerHTML = '<div class="error"><h2>Seller not found</h2><p>This seller does not exist.</p></div>';
-                    return;
+                // First try to get seller from the sellers table
+                let sellerResp = await fetch(`${window.SUPABASE_URL}/rest/v1/sellers?user_id=eq.${sellerId}&select=*`, {
+                    headers: { 
+                        'apikey': window.SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}`
+                    }
+                });
+                
+                let sellers = [];
+                if (sellerResp.ok) {
+                    sellers = await sellerResp.json();
+                    console.log('👤 Sellers found:', sellers);
                 }
                 
-                currentSeller = sellers[0];
+                // If no seller found with user_id, try with id
+                if (!sellers || sellers.length === 0) {
+                    console.log('🔄 Trying with id field...');
+                    sellerResp = await fetch(`${window.SUPABASE_URL}/rest/v1/sellers?id=eq.${sellerId}&select=*`, {
+                        headers: { 
+                            'apikey': window.SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}`
+                        }
+                    });
+                    if (sellerResp.ok) {
+                        sellers = await sellerResp.json();
+                        console.log('👤 Sellers found with id:', sellers);
+                    }
+                }
+                
+                // If still no seller, try to get from auth users
+                if (!sellers || sellers.length === 0) {
+                    console.log('🔄 Trying to get seller from auth...');
+                    // Try to get from the sellers map in script.js if available
+                    if (window.sellersMap) {
+                        const seller = window.sellersMap[sellerId];
+                        if (seller) {
+                            sellers = [seller];
+                            console.log('👤 Seller found in sellersMap:', seller);
+                        }
+                    }
+                }
+                
+                if (!sellers || sellers.length === 0) {
+                    // Create a fallback seller from the ID
+                    console.log('⚠️ No seller found, creating fallback');
+                    currentSeller = {
+                        user_id: sellerId,
+                        business_name: 'Seller',
+                        full_name: 'Seller',
+                        business_address: 'Zimbabwe',
+                        business_phone: '',
+                        business_email: '',
+                        email: ''
+                    };
+                } else {
+                    currentSeller = sellers[0];
+                    console.log('✅ Seller loaded:', currentSeller);
+                }
 
+                // Load products for this seller
+                console.log('📦 Loading products for seller:', sellerId);
                 const prodResp = await fetch(`${window.SUPABASE_URL}/rest/v1/products?seller_id=eq.${sellerId}&select=*&order=created_at.desc`, {
-                    headers: { 'apikey': window.SUPABASE_ANON_KEY }
+                    headers: { 
+                        'apikey': window.SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}`
+                    }
                 });
-                allProducts = await prodResp.json() || [];
+                
+                if (prodResp.ok) {
+                    allProducts = await prodResp.json() || [];
+                    console.log('📦 Products loaded:', allProducts.length);
+                } else {
+                    console.warn('⚠️ Failed to load products, status:', prodResp.status);
+                    allProducts = [];
+                }
+                
                 filteredProducts = [...allProducts];
-
                 renderShop();
+
             } catch (e) {
-                console.error('Load error:', e);
-                document.getElementById('shopContent').innerHTML = '<div class="error"><h2>Error loading shop</h2><p>Please try again later.</p></div>';
+                console.error('❌ Load error:', e);
+                document.getElementById('shopContent').innerHTML = `
+                    <div class="error" style="padding:80px 20px;">
+                        <h2>⚠️ Error Loading Shop</h2>
+                        <p>${e.message || 'Please try again later.'}</p>
+                        <a href="index.html" style="display:inline-block;margin-top:20px;padding:10px 30px;background:#f90;color:white;text-decoration:none;border-radius:8px;">Go Home</a>
+                    </div>
+                `;
             }
         }
 
@@ -146,25 +224,50 @@
             return cats;
         }
 
+        function getSellerDisplayName() {
+            if (!currentSeller) return 'Seller Shop';
+            return currentSeller.business_name || currentSeller.full_name || currentSeller.shop_name || 'Seller Shop';
+        }
+
+        function getSellerPhone() {
+            if (!currentSeller) return '';
+            return currentSeller.business_phone || currentSeller.phone || currentSeller.contact_phone || '';
+        }
+
+        function getSellerEmail() {
+            if (!currentSeller) return '';
+            return currentSeller.business_email || currentSeller.email || '';
+        }
+
+        function getSellerAddress() {
+            if (!currentSeller) return 'Zimbabwe';
+            return currentSeller.business_address || currentSeller.address || currentSeller.location || 'Zimbabwe';
+        }
+
         function renderShop() {
             const categories = getCategories();
             const uniqueCategories = Object.keys(categories);
+            const sellerName = getSellerDisplayName();
+            const sellerPhone = getSellerPhone();
+            const sellerEmail = getSellerEmail();
+            const sellerAddress = getSellerAddress();
+            const avatarLetter = sellerName.charAt(0).toUpperCase();
             
             const html = `
                 <div class="shop-banner">
                     <div class="container">
                         <div class="shop-header">
-                            <div class="shop-avatar">${(currentSeller.business_name || currentSeller.full_name || 'S').charAt(0).toUpperCase()}</div>
+                            <div class="shop-avatar">${avatarLetter}</div>
                             <div class="shop-info">
-                                <h1>${currentSeller.business_name || currentSeller.full_name || 'Seller Shop'}</h1>
-                                <p>&#128205; ${currentSeller.business_address || currentSeller.address || 'Zimbabwe'}</p>
-                                <p>&#9993; ${currentSeller.business_email || currentSeller.email || ''}</p>
-                                <p>&#9742; ${currentSeller.business_phone || currentSeller.phone || ''}</p>
+                                <h1>${sellerName}</h1>
+                                <p>📍 ${sellerAddress}</p>
+                                ${sellerEmail ? `<p>✉️ ${sellerEmail}</p>` : ''}
+                                ${sellerPhone ? `<p>📞 ${sellerPhone}</p>` : ''}
                                 <div class="shop-stats">
                                     <div class="shop-stat"><div class="num">${allProducts.length}</div><div class="label">Products</div></div>
                                     <div class="shop-stat"><div class="num">${uniqueCategories.length}</div><div class="label">Categories</div></div>
                                 </div>
-                                ${currentSeller.business_phone || currentSeller.phone ? `<a href="https://wa.me/${(currentSeller.business_phone || currentSeller.phone || '').replace(/[^0-9]/g,'')}" target="_blank" class="contact-btn">&#128172; Contact via WhatsApp</a>` : ''}
+                                ${sellerPhone ? `<a href="https://wa.me/${sellerPhone.replace(/[^0-9]/g,'')}?text=Hello!%20I%20am%20interested%20in%20your%20products%20on%20Mbare%20Marketplace" target="_blank" class="contact-btn">💬 Contact via WhatsApp</a>` : ''}
                             </div>
                         </div>
                     </div>
@@ -174,7 +277,7 @@
                     <div class="main-content">
                         <div class="sidebar">
                             <div class="sidebar-section">
-                                <h3>Categories</h3>
+                                <h3>📂 Categories</h3>
                                 <ul class="category-list">
                                     <li class="${selectedCategory === 'All' ? 'active' : ''}" onclick="filterByCategory('All')">All Products <span class="count">(${allProducts.length})</span></li>
                                     ${uniqueCategories.map(cat => `
@@ -183,7 +286,7 @@
                                 </ul>
                             </div>
                             <div class="sidebar-section">
-                                <h3>Search Products</h3>
+                                <h3>🔍 Search Products</h3>
                                 <input type="text" class="search-box" placeholder="Search in this shop..." id="searchInput" oninput="searchProducts()">
                                 <select class="sort-select" id="sortSelect" onchange="sortProducts()">
                                     <option value="newest">Newest First</option>
@@ -194,7 +297,7 @@
                             </div>
                         </div>
                         <div class="products-area">
-                            <h2 style="margin-bottom:20px;color:#333;">${selectedCategory === 'All' ? 'All Products' : selectedCategory} (${filteredProducts.length})</h2>
+                            <h2 style="margin-bottom:20px;color:#333;">${selectedCategory === 'All' ? 'All Products' : selectedCategory} <span style="font-size:16px;font-weight:400;color:#999;">(${filteredProducts.length})</span></h2>
                             ${filteredProducts.length > 0 ? `
                                 <div class="products-grid">
                                     ${filteredProducts.map(p => `
@@ -211,7 +314,7 @@
                                 </div>
                             ` : `
                                 <div class="no-products">
-                                    <div class="icon">&#128230;</div>
+                                    <div class="icon">📦</div>
                                     <h3>No products found</h3>
                                     <p>Try changing your search or filter</p>
                                 </div>
