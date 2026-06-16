@@ -93,11 +93,45 @@ window.hideLoginPrompt = function() {
     if (modal) modal.style.display = 'none';
 };
 
+// ==================== CHECK LOGIN STATUS ====================
+// Check if user is logged in
+function isUserLoggedIn() {
+    return localStorage.getItem('isLoggedIn') === 'true' && localStorage.getItem('supabase_session') !== null;
+}
+
+// Get current user ID
+function getCurrentUserId() {
+    try {
+        const sessionData = localStorage.getItem('supabase_session');
+        if (!sessionData) return null;
+        const session = JSON.parse(sessionData);
+        return session.user?.id || null;
+    } catch (e) {
+        return null;
+    }
+}
+
+// Get basket for current user
+function getUserBasket() {
+    const userId = getCurrentUserId();
+    if (!userId) return [];
+    const basketKey = `basket_${userId}`;
+    return JSON.parse(localStorage.getItem(basketKey)) || [];
+}
+
+// Save basket for current user
+function saveUserBasket(basket) {
+    const userId = getCurrentUserId();
+    if (!userId) return;
+    const basketKey = `basket_${userId}`;
+    localStorage.setItem(basketKey, JSON.stringify(basket));
+    updateBasketCount();
+}
+
 // ==================== PROTECTED ACTIONS ====================
 // Check if user is logged in before navigating to product detail
 window.requireLogin = function(callback) {
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    if (!isLoggedIn) {
+    if (!isUserLoggedIn()) {
         showLoginPrompt();
         return false;
     }
@@ -109,46 +143,144 @@ window.requireLogin = function(callback) {
 
 // Navigate to product detail (protected)
 window.goToProductDetail = function(productId) {
-    if (requireLogin(function() {
+    if (window.requireLogin(function() {
         window.location.href = 'product-detail.html?id=' + productId;
     })) {
         // requireLogin already handled the navigation
     }
 };
 
-// Add to basket (protected) - also check basket
-window.addToBasket = function(productId) {
-    const sessionData = localStorage.getItem('supabase_session');
-    if (!sessionData) {
-        showLoginPrompt();
+// ==================== ADD TO BASKET (FIXED) ====================
+// Add to basket - uses global products array from script.js
+window.addToBasket = function(productId, quantity = 1) {
+    // Check if user is logged in
+    if (!isUserLoggedIn()) {
+        showNotification('Please login to add items to basket');
+        setTimeout(() => {
+            window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.pathname);
+        }, 1500);
         return;
     }
-    const session = JSON.parse(sessionData);
-    const basketKey = 'basket_' + session.user.id;
-    let basket = JSON.parse(localStorage.getItem(basketKey)) || [];
     
-    // The product should be found by the calling page
-    // This is a helper that the page can use
-    if (typeof window.allProducts !== 'undefined') {
-        const product = window.allProducts.find(p => p.id == productId);
-        if (product) {
-            const existingItem = basket.find(item => item.id == productId);
-            if (existingItem) {
-                existingItem.quantity = (existingItem.quantity || 1) + 1;
-            } else {
-                basket.push({ ...product, quantity: 1 });
+    // Get product from global products array (defined in script.js)
+    let product = null;
+    
+    // Try to find product in window.products (from script.js)
+    if (window.products && Array.isArray(window.products)) {
+        product = window.products.find(p => String(p.id) === String(productId));
+    }
+    
+    // If not found, try to get from DOM
+    if (!product) {
+        // Try to find product card and extract info
+        const productCards = document.querySelectorAll('.product-card');
+        for (const card of productCards) {
+            const onclick = card.getAttribute('onclick');
+            if (onclick && onclick.includes(`id=${productId}`) || onclick && onclick.includes(`id='${productId}'`)) {
+                const titleEl = card.querySelector('.product-title');
+                const priceEl = card.querySelector('.product-price');
+                const imgEl = card.querySelector('img');
+                const title = titleEl ? titleEl.textContent : 'Product';
+                const priceText = priceEl ? priceEl.textContent.replace('$', '') : '0';
+                const image = imgEl ? imgEl.src : '';
+                product = {
+                    id: productId,
+                    title: title,
+                    price: parseFloat(priceText),
+                    image: image,
+                    seller_id: card.getAttribute('data-seller-id') || null
+                };
+                break;
             }
-            localStorage.setItem(basketKey, JSON.stringify(basket));
-            updateBasketCount(basket.reduce((sum, item) => sum + (item.quantity || 1), 0));
-            alert('Item added to basket!');
+        }
+    }
+    
+    if (!product) {
+        showNotification('Product not found');
+        return;
+    }
+    
+    // Get current basket
+    const basket = getUserBasket();
+    const existingItem = basket.find(item => String(item.id) === String(productId));
+    
+    if (existingItem) {
+        existingItem.quantity += quantity;
+    } else {
+        basket.push({
+            id: product.id,
+            title: product.title,
+            price: product.price,
+            image: product.image_url || product.image || 'https://via.placeholder.com/300x300?text=Product',
+            quantity: quantity,
+            seller_id: product.seller_id || null
+        });
+    }
+    
+    saveUserBasket(basket);
+    showNotification('Item added to Basket!');
+};
+
+// ==================== NOTIFICATION ====================
+// Show notification
+function showNotification(message) {
+    // Check if notification function exists in script.js
+    if (typeof window.showNotification === 'function') {
+        window.showNotification(message);
+        return;
+    }
+    
+    // Fallback notification
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background-color: #232F3E;
+        color: white;
+        padding: 15px 25px;
+        border-radius: 4px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+    `;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 2000);
+}
+
+// ==================== BASKET COUNT ====================
+// Update basket count
+window.updateBasketCount = function(count) {
+    const el = document.getElementById('basketCount');
+    if (el) { 
+        if (count !== undefined) {
+            el.textContent = count;
+            el.style.display = count > 0 ? 'flex' : 'none';
+        } else {
+            // Calculate from basket
+            const basket = getUserBasket();
+            const total = basket.reduce((sum, item) => sum + (item.quantity || 0), 0);
+            el.textContent = total;
+            el.style.display = total > 0 ? 'flex' : 'none';
         }
     }
 };
 
-// Show seller contact (protected)
+// ==================== LOGOUT ====================
+// Logout function
+window.logout = function() {
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('supabase_session');
+    window.location.href = 'index.html';
+};
+
+// ==================== SHOW SELLER CONTACT (PROTECTED) ====================
 window.showSellerContactSafe = function(callback) {
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    if (!isLoggedIn) {
+    if (!isUserLoggedIn()) {
         showLoginPrompt();
         return false;
     }
@@ -158,36 +290,29 @@ window.showSellerContactSafe = function(callback) {
     return true;
 };
 
-// Update basket count
-window.updateBasketCount = function(count) {
-    const el = document.getElementById('basketCount');
-    if (el) { 
-        el.textContent = count; 
-        el.style.display = count > 0 ? 'flex' : 'none'; 
-    }
-};
-
-// ==================== CHECK LOGIN STATUS ====================
+// ==================== INITIALIZATION ====================
 document.addEventListener('DOMContentLoaded', function() {
     injectLoginPrompt();
     checkLoginStatus();
-    updateBasketFromStorage();
+    updateBasketCount();
 });
 
 // Also check when page becomes visible (in case user logs in/out in another tab)
 document.addEventListener('visibilitychange', function() {
     if (!document.hidden) {
         checkLoginStatus();
+        updateBasketCount();
     }
 });
 
 function checkLoginStatus() {
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    const isLoggedIn = isUserLoggedIn();
     const sessionData = localStorage.getItem('supabase_session');
     
     const accountLabel = document.querySelector('.account-label');
     const accountLink = document.querySelector('.account-link');
     const logoutBtn = document.getElementById('logoutBtn');
+    const accountMenu = document.getElementById('accountMenu');
     
     if (isLoggedIn && sessionData && accountLabel && accountLink) {
         try {
@@ -199,44 +324,43 @@ function checkLoginStatus() {
             accountLink.textContent = userName;
             accountLink.href = '#';
             
+            if (accountMenu) accountMenu.classList.add('logged-in');
+            
             if (logoutBtn) {
                 logoutBtn.style.display = 'inline-block';
             }
         } catch (e) {
             localStorage.removeItem('isLoggedIn');
             localStorage.removeItem('supabase_session');
-            setLoggedOutState(accountLabel, accountLink, logoutBtn);
+            setLoggedOutState(accountLabel, accountLink, logoutBtn, accountMenu);
         }
     } else if (accountLabel && accountLink) {
-        setLoggedOutState(accountLabel, accountLink, logoutBtn);
+        setLoggedOutState(accountLabel, accountLink, logoutBtn, accountMenu);
     }
 }
 
-function setLoggedOutState(accountLabel, accountLink, logoutBtn) {
-    accountLabel.textContent = 'Hi there, Sign in';
+function setLoggedOutState(accountLabel, accountLink, logoutBtn, accountMenu) {
+    accountLabel.textContent = 'Hello, Sign in';
     accountLink.textContent = 'Account & Lists';
     accountLink.href = 'login.html';
+    
+    if (accountMenu) accountMenu.classList.remove('logged-in');
     
     if (logoutBtn) {
         logoutBtn.style.display = 'none';
     }
 }
 
-function updateBasketFromStorage() {
-    const sessionData = localStorage.getItem('supabase_session');
-    if (sessionData) {
-        try {
-            const session = JSON.parse(sessionData);
-            const basketKey = 'basket_' + session.user.id;
-            const basket = JSON.parse(localStorage.getItem(basketKey)) || [];
-            updateBasketCount(basket.reduce((sum, item) => sum + (item.quantity || 1), 0));
-        } catch (e) {}
-    }
-}
+// ============================================
+// EXPOSE FUNCTIONS TO GLOBAL WINDOW OBJECT
+// ============================================
+window.isUserLoggedIn = isUserLoggedIn;
+window.getCurrentUserId = getCurrentUserId;
+window.getUserBasket = getUserBasket;
+window.saveUserBasket = saveUserBasket;
+window.showNotification = showNotification;
+window.injectLoginPrompt = injectLoginPrompt;
+window.checkLoginStatus = checkLoginStatus;
+window.setLoggedOutState = setLoggedOutState;
 
-// Logout function
-window.logout = function() {
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('supabase_session');
-    window.location.href = 'index.html';
-};
+console.log('✅ Auth check loaded successfully');
