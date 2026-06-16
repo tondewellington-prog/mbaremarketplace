@@ -93,6 +93,24 @@
         .auto-redirect-message { font-size: 12px; color: #666; margin-top: 15px; padding: 10px; background: #f0f9ff; border-radius: 8px; }
         .view-shop-btn-header { background: #28a745; color: white; padding: 10px 24px; border-radius: 40px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
         .view-shop-btn-header:hover { background: #218838; transform: scale(1.02); }
+
+        /* Profile Section Styles */
+        .profile-section { display: flex; gap: 30px; flex-wrap: wrap; align-items: flex-start; }
+        .profile-avatar-container { text-align: center; flex-shrink: 0; }
+        .profile-avatar { width: 150px; height: 150px; border-radius: 50%; background: #f0f0f0; overflow: hidden; border: 3px solid #f90; margin: 0 auto; position: relative; }
+        .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .profile-avatar .placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 50px; color: #ccc; background: #f5f5f5; }
+        .profile-form { flex: 1; min-width: 250px; }
+        .profile-form .form-group { margin-bottom: 15px; }
+        .profile-form label { font-weight: 600; display: block; margin-bottom: 5px; font-size: 14px; }
+        .profile-form input, .profile-form textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+        .profile-form textarea { resize: vertical; min-height: 80px; }
+        .profile-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 5px; }
+        .btn-upload { background: #232f3e; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+        .btn-upload:hover { background: #131921; }
+        .btn-save-profile { background: #f90; color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; }
+        .btn-save-profile:hover { background: #e68a00; }
+        .profile-status { font-size: 12px; color: #666; margin-top: 8px; }
     </style>
 </head>
 <body>
@@ -114,6 +132,31 @@
         </div>
         <div id="expiryBanner" class="expiry-banner info" style="display:none;"></div>
         
+        <!-- Shop Profile Section -->
+        <div class="bg-white rounded-xl p-30 mb-30">
+            <h2 class="mb-20">Shop Profile</h2>
+            <div class="profile-section">
+                <div class="profile-avatar-container">
+                    <div class="profile-avatar" id="profileAvatarContainer">
+                        <img id="profileAvatarImg" src="" alt="Profile Photo" style="display:none;">
+                        <div class="placeholder" id="profilePlaceholder">Shop</div>
+                    </div>
+                    <div class="profile-status" id="profileStatus">No profile photo uploaded</div>
+                    <input type="file" id="profileImageInput" accept="image/*" style="display:none;" onchange="handleProfileImage(event)">
+                    <button class="btn-upload" onclick="document.getElementById('profileImageInput').click()">Upload Photo</button>
+                </div>
+                <div class="profile-form">
+                    <div class="form-group">
+                        <label>Shop Description</label>
+                        <textarea id="shopDescription" rows="3" placeholder="Describe your shop, what you sell, and your business values..."></textarea>
+                    </div>
+                    <div class="profile-actions">
+                        <button class="btn-save-profile" onclick="saveShopProfile()">Save Profile</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <h2 class="mb-20">Subscription Plans <span class="badge-live">LIVE</span></h2>
         <div id="tierContainer" class="grid-3 mb-30"></div>
         <div id="subscriptionControls" class="subscription-controls text-center" style="display:none;"></div>
@@ -127,7 +170,7 @@
             <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px;"><h2>Add New Product</h2><button class="btn-primary" id="toggleFormBtn" onclick="toggleProductForm()">+ Add Product</button></div>
             <div id="addProductForm" style="display:none;margin-top:25px;">
                 <form id="productForm" onsubmit="return false;">
-                    <div class="form-group"><label>Product Image *</label><input type="file" id="imageFileInput" accept="image/*" style="display:none;" onchange="handleFileSelect(event)"><div class="image-upload-area" id="uploadArea" onclick="document.getElementById('imageFileInput').click()"><div id="uploadPlaceholder"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><p style="color:#666;margin-top:10px;">Click to upload or drag & drop</p><p style="color:#999;font-size:12px;">PNG, JPG, GIF up to 10MB</p><div class="upload-actions"><button type="button" class="camera-btn" onclick="event.stopPropagation();openCamera()">📷 Take Photo</button><button type="button" class="camera-btn" onclick="event.stopPropagation();document.getElementById('imageFileInput').click()">📄 Choose File</button></div></div></div><div class="image-preview-container" id="imagePreviewContainer"><img id="imagePreview" src="" alt="Preview"><button type="button" class="remove-image-btn" onclick="removeImage()">✕</button></div><div class="upload-progress-bar" id="uploadProgressBar"><div class="upload-progress-fill" id="uploadProgressFill"></div></div><input type="hidden" id="prodImage" required><small style="color:#666;display:block;margin-top:5px;" id="imageStatus"></small></div>
+                    <div class="form-group"><label>Product Image *</label><input type="file" id="imageFileInput" accept="image/*" style="display:none;" onchange="handleFileSelect(event)"><div class="image-upload-area" id="uploadArea" onclick="document.getElementById('imageFileInput').click()"><div id="uploadPlaceholder"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><p style="color:#666;margin-top:10px;">Click to upload or drag & drop</p><p style="color:#999;font-size:12px;">PNG, JPG, GIF up to 10MB</p><div class="upload-actions"><button type="button" class="camera-btn" onclick="event.stopPropagation();openCamera()">Take Photo</button><button type="button" class="camera-btn" onclick="event.stopPropagation();document.getElementById('imageFileInput').click()">Choose File</button></div></div></div><div class="image-preview-container" id="imagePreviewContainer"><img id="imagePreview" src="" alt="Preview"><button type="button" class="remove-image-btn" onclick="removeImage()">✕</button></div><div class="upload-progress-bar" id="uploadProgressBar"><div class="upload-progress-fill" id="uploadProgressFill"></div></div><input type="hidden" id="prodImage" required><small style="color:#666;display:block;margin-top:5px;" id="imageStatus"></small></div>
                     <div class="form-row"><div class="form-group"><label>Product Title *</label><input type="text" id="prodTitle" required></div><div class="form-group"><label>Category *</label><select id="prodCategory" required><option value="">Select Category</option><option value="Electronic Devices">Electronic Devices</option><option value="Books">Books</option><option value="Clothing">Clothing</option><option value="Home & Kitchen">Home & Kitchen</option><option value="Pet Supplies">Pet Supplies</option><option value="Pets & Livestock">Pets & Livestock</option><option value="Vehicle Parts & Accessories">Vehicle Parts & Accessories</option><option value="Vehicles & Transportation">Vehicles & Transportation</option><option value="Sports & Outdoors">Sports & Outdoors</option><option value="Bags & Luggage">Bags & Luggage</option><option value="Farm Products">Farm Products</option><option value="Beauty & Cosmetics">Beauty & Cosmetics</option><option value="Hardware">Hardware</option><option value="Other">Other</option></select></div></div>
                     <div class="form-group"><label>Description</label><textarea id="prodDescription" rows="3"></textarea></div>
                     <div class="form-row"><div class="form-group"><label>Price ($) *</label><input type="number" id="prodPrice" step="0.01" min="0" required></div><div class="form-group"><label>Stock Quantity *</label><input type="number" id="prodStock" min="0" required></div></div>
@@ -182,7 +225,7 @@
                     planType = 'tier_5';
                 }
                 
-                showToast('✅ Payment detected! Activating subscription...', false);
+                showToast('Payment detected! Activating subscription...', false);
                 
                 localStorage.removeItem('payment_guid');
                 localStorage.removeItem('payment_success');
@@ -195,7 +238,7 @@
             }
             
             if (localStorage.getItem('payment_cancelled') === 'true') {
-                showToast('❌ Payment was cancelled. No charges were made.', true);
+                showToast('Payment was cancelled. No charges were made.', true);
                 localStorage.removeItem('payment_cancelled');
                 return false;
             }
@@ -318,7 +361,7 @@
                 updateSubscriptionControls();
                 renderProducts();
                 
-                showToast(`🎉 SUCCESS! ${plan.name} activated!`, false);
+                showToast('SUCCESS! ' + plan.name + ' activated!', false);
                 
                 setTimeout(() => window.location.reload(), 2000);
                 
@@ -345,7 +388,7 @@
                         <div class="tier-price">$${plan.amount}<span style="font-size:14px;">/month</span></div>
                         <p>${plan.perks}</p>
                         <div style="margin:20px 0; padding:15px; background:#f0f9ff; border-radius:12px;">
-                            <p><strong>📱 Instructions:</strong></p>
+                            <p><strong>Instructions:</strong></p>
                             <ol style="text-align:left; margin-left:20px;">
                                 <li>Click PayNow button below</li>
                                 <li>Select EcoCash</li>
@@ -357,7 +400,7 @@
                         <a href="${paynowLink}" target="_blank">
                             <img src='https://www.paynow.co.zw/Content/Buttons/Medium_buttons/button_pay-now_medium.png' style="cursor:pointer; border-radius:8px; max-width:200px;" />
                         </a>
-                        <p style="font-size:12px; margin-top:15px;">⚠️ After payment, click "Return to Merchant Website"</p>
+                        <p style="font-size:12px; margin-top:15px;">After payment, click "Return to Merchant Website"</p>
                         <button class="btn-secondary" id="closePayModal" style="width:100%; margin-top:15px;">Cancel</button>
                     </div>
                 </div>
@@ -425,6 +468,9 @@
                 // UPDATE VIEW SHOP BUTTON LINK
                 updateViewShopButton();
                 
+                // Load profile data
+                await loadSellerProfile();
+                
                 return true;
             } catch (e) {
                 window.location.href = 'login.html';
@@ -438,6 +484,157 @@
             if (viewShopBtn && currentSellerId) {
                 viewShopBtn.href = `shop.html?seller=${currentSellerId}`;
                 console.log('View Shop button updated to:', viewShopBtn.href);
+            }
+        }
+
+        // ==================== SELLER PROFILE FUNCTIONS ====================
+        let currentSellerProfile = null;
+
+        async function loadSellerProfile() {
+            try {
+                const session = JSON.parse(localStorage.getItem('supabase_session'));
+                const token = session?.access_token || currentAccessToken;
+                
+                const resp = await fetch(`${window.SUPABASE_URL}/rest/v1/sellers?user_id=eq.${currentSellerId}&select=*`, {
+                    headers: { 
+                        'apikey': window.SUPABASE_ANON_KEY, 
+                        'Authorization': `Bearer ${token}` 
+                    }
+                });
+                
+                if (resp.ok) {
+                    const sellers = await resp.json();
+                    if (sellers && sellers.length > 0) {
+                        currentSellerProfile = sellers[0];
+                        updateProfileUI();
+                    }
+                }
+            } catch (e) {
+                console.error('Error loading profile:', e);
+            }
+        }
+
+        function updateProfileUI() {
+            if (!currentSellerProfile) return;
+            
+            // Update profile image
+            const profileImg = document.getElementById('profileAvatarImg');
+            const placeholder = document.getElementById('profilePlaceholder');
+            const status = document.getElementById('profileStatus');
+            
+            if (currentSellerProfile.profile_image) {
+                profileImg.src = currentSellerProfile.profile_image;
+                profileImg.style.display = 'block';
+                placeholder.style.display = 'none';
+                status.textContent = 'Profile photo uploaded';
+            } else {
+                profileImg.style.display = 'none';
+                placeholder.style.display = 'flex';
+                status.textContent = 'No profile photo uploaded. Please upload a photo.';
+            }
+            
+            // Update description
+            const descInput = document.getElementById('shopDescription');
+            if (descInput && currentSellerProfile.shop_description) {
+                descInput.value = currentSellerProfile.shop_description;
+            }
+        }
+
+        async function handleProfileImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (!file.type.match('image.*')) {
+                alert('Please select an image file');
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Image must be under 5MB');
+                return;
+            }
+            
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.getElementById('profileAvatarImg');
+                const placeholder = document.getElementById('profilePlaceholder');
+                img.src = e.target.result;
+                img.style.display = 'block';
+                placeholder.style.display = 'none';
+                document.getElementById('profileStatus').textContent = 'Uploading...';
+            };
+            reader.readAsDataURL(file);
+            
+            // Upload to ImgBB
+            const formData = new FormData();
+            formData.append('image', file);
+            formData.append('key', IMGBB_API_KEY);
+            
+            try {
+                const response = await fetch('https://api.imgbb.com/1/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.success) {
+                    const imageUrl = data.data.url;
+                    
+                    // Save to Supabase
+                    const session = JSON.parse(localStorage.getItem('supabase_session'));
+                    const token = session?.access_token || currentAccessToken;
+                    
+                    await fetch(`${window.SUPABASE_URL}/rest/v1/sellers?user_id=eq.${currentSellerId}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': window.SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${token}`,
+                            'Prefer': 'return=minimal'
+                        },
+                        body: JSON.stringify({ profile_image: imageUrl })
+                    });
+                    
+                    document.getElementById('profileStatus').textContent = 'Profile photo uploaded successfully!';
+                    showToast('Profile photo updated!');
+                    
+                    // Update local object
+                    if (currentSellerProfile) {
+                        currentSellerProfile.profile_image = imageUrl;
+                    }
+                } else {
+                    throw new Error(data.error?.message || 'Upload failed');
+                }
+            } catch (error) {
+                alert('Failed to upload image: ' + error.message);
+                document.getElementById('profileStatus').textContent = 'Upload failed. Please try again.';
+            }
+        }
+
+        async function saveShopProfile() {
+            const description = document.getElementById('shopDescription').value.trim();
+            
+            try {
+                const session = JSON.parse(localStorage.getItem('supabase_session'));
+                const token = session?.access_token || currentAccessToken;
+                
+                await fetch(`${window.SUPABASE_URL}/rest/v1/sellers?user_id=eq.${currentSellerId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': window.SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${token}`,
+                        'Prefer': 'return=minimal'
+                    },
+                    body: JSON.stringify({ shop_description: description })
+                });
+                
+                if (currentSellerProfile) {
+                    currentSellerProfile.shop_description = description;
+                }
+                
+                showToast('Shop profile saved successfully!');
+            } catch (e) {
+                alert('Failed to save shop profile');
             }
         }
 
@@ -840,8 +1037,10 @@
             a.addEventListener('drop', e => { e.preventDefault(); a.classList.remove('dragover'); if (e.dataTransfer.files.length > 0) handleImageFile(e.dataTransfer.files[0]); });
         })();
 
+        // Analytics button with subscription check
         document.getElementById('analyticsNavBtn').addEventListener('click', () => {
-            if (currentTier === 'free' || subscriptionStatus === 'expired') {
+            if (currentTier === 'free' || subscriptionStatus === 'expired' || subscriptionStatus === 'inactive') {
+                alert('You need to be a registered seller with an active subscription to access analytics. Please subscribe to a plan first.');
                 showUpgradeOptions();
                 return;
             }
