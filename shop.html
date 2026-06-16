@@ -190,9 +190,9 @@
                     console.log('Seller loaded:', currentSeller);
                 }
 
-                // Load products for this seller
+                // Load products for this seller - REMOVED status filter to avoid 400 error
                 console.log('Loading products for seller:', sellerId);
-                const prodResp = await fetch(`${window.SUPABASE_URL}/rest/v1/products?seller_id=eq.${sellerId}&status=eq.active&select=*&order=created_at.desc`, {
+                const prodResp = await fetch(`${window.SUPABASE_URL}/rest/v1/products?seller_id=eq.${sellerId}&select=*&order=created_at.desc`, {
                     headers: { 
                         'apikey': window.SUPABASE_ANON_KEY,
                         'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}`
