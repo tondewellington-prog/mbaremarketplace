@@ -128,6 +128,84 @@ function saveUserBasket(basket) {
     updateBasketCount();
 }
 
+// ==================== FIND PRODUCT HELPER ====================
+// Find product by ID from various sources
+function findProductById(productId) {
+    console.log('🔍 Looking for product with ID:', productId);
+    console.log('📦 window.products:', window.products);
+    console.log('📦 window.allProducts:', window.allProducts);
+    console.log('📦 products variable (from script.js):', typeof products !== 'undefined' ? products : 'not defined');
+    
+    let product = null;
+    
+    // Try 1: Check window.products (from script.js)
+    if (window.products && Array.isArray(window.products)) {
+        product = window.products.find(p => String(p.id) === String(productId));
+        if (product) {
+            console.log('✅ Found product in window.products:', product.title);
+            return product;
+        }
+    }
+    
+    // Try 2: Check window.allProducts (fallback)
+    if (window.allProducts && Array.isArray(window.allProducts)) {
+        product = window.allProducts.find(p => String(p.id) === String(productId));
+        if (product) {
+            console.log('✅ Found product in window.allProducts:', product.title);
+            return product;
+        }
+    }
+    
+    // Try 3: Check global products variable (from script.js)
+    if (typeof products !== 'undefined' && Array.isArray(products)) {
+        product = products.find(p => String(p.id) === String(productId));
+        if (product) {
+            console.log('✅ Found product in products variable:', product.title);
+            // Also expose it to window for future use
+            window.products = products;
+            return product;
+        }
+    }
+    
+    // Try 4: Extract from DOM
+    console.log('🔄 Trying to extract product from DOM...');
+    const productCards = document.querySelectorAll('.product-card');
+    for (const card of productCards) {
+        // Check all possible onclick attributes
+        const onclick = card.getAttribute('onclick') || '';
+        const dataId = card.getAttribute('data-product-id') || '';
+        const cardId = card.id || '';
+        
+        if (onclick.includes(`id=${productId}`) || 
+            onclick.includes(`id='${productId}'`) || 
+            onclick.includes(`id="${productId}"`) ||
+            String(dataId) === String(productId) ||
+            String(cardId) === String(productId)) {
+            
+            const titleEl = card.querySelector('.product-title');
+            const priceEl = card.querySelector('.product-price');
+            const imgEl = card.querySelector('img');
+            const title = titleEl ? titleEl.textContent : 'Product';
+            const priceText = priceEl ? priceEl.textContent.replace(/[$,]/g, '') : '0';
+            const image = imgEl ? imgEl.src : '';
+            
+            product = {
+                id: productId,
+                title: title,
+                price: parseFloat(priceText) || 0,
+                image: image,
+                image_url: image,
+                seller_id: card.getAttribute('data-seller-id') || null
+            };
+            console.log('✅ Found product from DOM:', product.title);
+            return product;
+        }
+    }
+    
+    console.log('❌ Product not found anywhere!');
+    return null;
+}
+
 // ==================== PROTECTED ACTIONS ====================
 // Check if user is logged in before navigating to product detail
 window.requireLogin = function(callback) {
@@ -150,9 +228,11 @@ window.goToProductDetail = function(productId) {
     }
 };
 
-// ==================== ADD TO BASKET ====================
-// Add to basket - uses global products array from script.js
+// ==================== ADD TO BASKET (FIXED) ====================
+// Add to basket - uses improved product lookup
 window.addToBasket = function(productId, quantity = 1) {
+    console.log('🛒 addToBasket called with productId:', productId);
+    
     // Check if user is logged in
     if (!isUserLoggedIn()) {
         showNotificationAuth('Please login to add items to basket');
@@ -162,43 +242,16 @@ window.addToBasket = function(productId, quantity = 1) {
         return;
     }
     
-    // Get product from global products array (defined in script.js)
-    let product = null;
-    
-    // Try to find product in window.products (from script.js)
-    if (window.products && Array.isArray(window.products)) {
-        product = window.products.find(p => String(p.id) === String(productId));
-    }
-    
-    // If not found, try to get from DOM
-    if (!product) {
-        // Try to find product card and extract info
-        const productCards = document.querySelectorAll('.product-card');
-        for (const card of productCards) {
-            const onclick = card.getAttribute('onclick');
-            if (onclick && (onclick.includes(`id=${productId}`) || onclick.includes(`id='${productId}'`))) {
-                const titleEl = card.querySelector('.product-title');
-                const priceEl = card.querySelector('.product-price');
-                const imgEl = card.querySelector('img');
-                const title = titleEl ? titleEl.textContent : 'Product';
-                const priceText = priceEl ? priceEl.textContent.replace('$', '') : '0';
-                const image = imgEl ? imgEl.src : '';
-                product = {
-                    id: productId,
-                    title: title,
-                    price: parseFloat(priceText),
-                    image: image,
-                    seller_id: card.getAttribute('data-seller-id') || null
-                };
-                break;
-            }
-        }
-    }
+    // Find the product using the helper function
+    const product = findProductById(productId);
     
     if (!product) {
-        showNotificationAuth('Product not found');
+        showNotificationAuth('Product not found. Please refresh and try again.');
+        console.error('❌ Product with ID', productId, 'not found in any data source');
         return;
     }
+    
+    console.log('✅ Product found:', product.title, 'Price:', product.price);
     
     // Get current basket
     const basket = getUserBasket();
@@ -206,6 +259,7 @@ window.addToBasket = function(productId, quantity = 1) {
     
     if (existingItem) {
         existingItem.quantity += quantity;
+        console.log('📦 Updated existing item quantity to:', existingItem.quantity);
     } else {
         basket.push({
             id: product.id,
@@ -215,13 +269,15 @@ window.addToBasket = function(productId, quantity = 1) {
             quantity: quantity,
             seller_id: product.seller_id || null
         });
+        console.log('📦 Added new item to basket:', product.title);
     }
     
     saveUserBasket(basket);
     showNotificationAuth('Item added to Basket!');
+    console.log('✅ Basket updated successfully');
 };
 
-// ==================== NOTIFICATION (FIXED - NO INFINITE LOOP) ====================
+// ==================== NOTIFICATION ====================
 // Show notification - uses a different name to avoid conflicts
 function showNotificationAuth(message) {
     // Create notification directly - no recursion
@@ -293,6 +349,14 @@ document.addEventListener('DOMContentLoaded', function() {
     injectLoginPrompt();
     checkLoginStatus();
     updateBasketCount();
+    
+    // Try to get products from script.js after it loads
+    setTimeout(function() {
+        if (typeof products !== 'undefined' && Array.isArray(products)) {
+            window.products = products;
+            console.log('📦 Synced products from script.js to window.products:', products.length);
+        }
+    }, 1000);
 });
 
 // Also check when page becomes visible (in case user logs in/out in another tab)
@@ -359,5 +423,7 @@ window.saveUserBasket = saveUserBasket;
 window.injectLoginPrompt = injectLoginPrompt;
 window.checkLoginStatus = checkLoginStatus;
 window.setLoggedOutState = setLoggedOutState;
+window.findProductById = findProductById;
+window.showNotificationAuth = showNotificationAuth;
 
 console.log('✅ Auth check loaded successfully');
