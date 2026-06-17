@@ -265,14 +265,16 @@
       window.location.href = 'index.html';
     };
 
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
+    function wireSearchEnterKey() {
+      const searchInput = document.getElementById('searchInput');
+      if (!searchInput) return;
       searchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') window.handleSearch();
       });
     }
 
-    document.addEventListener('DOMContentLoaded', async () => {
+    async function start() {
+      wireSearchEnterKey();
       await loadSellers();
       await loadProducts();
       const sessionData = localStorage.getItem('supabase_session');
@@ -285,7 +287,13 @@
         const accountLabel = document.querySelector('.account-label');
         if (accountLabel) accountLabel.textContent = `Hello, ${session.user.email.split('@')[0]}`;
       }
-    });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', start);
+    } else {
+      start();
+    }
 
     window.addEventListener('beforeunload', () => {
       if (sliderInterval) clearInterval(sliderInterval);
