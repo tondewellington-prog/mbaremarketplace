@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en-ZW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Trade-In Estimator | Mbare Marketplace</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-primary: #232f3e;      /* Deep Slate Navy */
+            --color-secondary: #1a2533;    /* Darker Slate Contrast */
+            --color-accent: #f90;          /* Amazonian Amber Gold */
+            --color-accent-hover: #dd8000; /* Darker Gold */
+            --color-text: #111111;         /* Off-Black Text */
+            --color-text-muted: #666666;   /* Muted Gray Text */
+            --color-bg-light: #f5f5f5;     /* Structural Container Gray */
+            --color-border: #e0e0e0;       /* Divider Line Tint */
+            --font-stack: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            
+            /* Status Colors matching the canvas configuration rules */
+            --color-success: #34c759;
+            --color-warning: #0066cc;
+            --color-error: #ff3b30;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-stack);
+            background-color: #ffffff;
+            color: var(--color-text);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header Construction */
+        .header {
+            width: 100%;
+            background-color: var(--color-primary);
+            color: #ffffff;
+        }
+
+        .header-top {
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-top .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .logo a {
+            font-size: 22px;
+            font-weight: 700;
+            color: #ffffff;
+            text-decoration: none;
+            letter-spacing: -0.5px;
+        }
+
+        /* Workspace Layout Split */
+        .workspace {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 40px;
+            padding: 40px 0;
+        }
+
+        @media (max-width: 992px) {
+            .workspace {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+        }
+
+        /* Interactive Controls Form Style */
+        .form-group {
+            margin-bottom: 30px;
+        }
+
+        .form-label {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--color-primary);
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .form-hint {
+            font-size: 13px;
+            color: var(--color-text-muted);
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .select-input {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 15px;
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            background-color: #ffffff;
+            color: var(--color-text);
+            outline: none;
+            font-family: inherit;
+        }
+
+        .select-input:focus {
+            border-color: var(--color-accent);
+            box-shadow: 0 0 0 3px rgba(255, 153, 0, 0.15);
+        }
+
+        /* Custom Segmented Button Matrices */
+        .option-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+        }
+
+        .option-btn {
+            background: #ffffff;
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 14px;
+            text-align: left;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+
+        .option-btn:hover {
+            border-color: var(--color-text-muted);
+        }
+
+        .option-btn.active {
+            border-color: var(--color-accent);
+            background-color: rgba(255, 153, 0, 0.05);
+            box-shadow: 0 0 0 1px var(--color-accent);
+        }
+
+        .option-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--color-primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .option-check {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background-color: var(--color-bg-light);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+            color: var(--color-text-muted);
+        }
+
+        .option-btn.active .option-check {
+            background-color: var(--color-accent);
+            color: var(--color-primary);
+        }
+
+        .option-desc {
+            font-size: 12px;
+            color: var(--color-text-muted);
+            margin-top: 4px;
+            line-height: 1.3;
+        }
+
+        /* Slider Engine Elements */
+        .slider-container {
+            background: var(--color-bg-light);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--color-border);
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .slider-value-chip {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .range-slider {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            background: var(--color-border);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--color-primary);
+            cursor: pointer;
+            border: 2px solid #ffffff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+
+        /* Payout Summary Dynamic Card Block */
+        .summary-card {
+            background-color: var(--color-bg-light);
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            padding: 30px;
+            position: sticky;
+            top: 30px;
+            height: fit-content;
+        }
+
+        .summary-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--color-primary);
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--color-border);
+            padding-bottom: 10px;
+        }
+
+        .calc-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+            font-size: 14px;
+        }
+
+        .calc-row.negative {
+            color: var(--color-error);
+        }
+
+        .calc-row.total {
+            border-top: 2px dashed var(--color-border);
+            margin-top: 20px;
+            padding-top: 20px;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--color-primary);
+        }
+
+        /* Authentication Forced Prompt Overlay */
+        .login-prompt-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 9999;
+            display: none; /* Controlled dynamically via JS script engine */
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .login-prompt-box {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            text-align: center;
+            max-width: 400px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            font-family: var(--font-stack);
+        }
+        
+        .login-prompt-box h2 {
+            margin-bottom: 15px;
+            color: var(--color-primary);
+            font-size: 22px;
+        }
+        
+        .login-prompt-box p {
+            margin-bottom: 25px;
+            color: var(--color-text-muted);
+            font-size: 14px;
+        }
+        
+        .login-prompt-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .login-prompt-btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .login-btn {
+            background: var(--color-accent);
+            color: white;
+        }
+        
+        .cancel-btn {
+            background: var(--color-bg-light);
+            color: var(--color-text-muted);
+        }
+
+        /* Footer Architecture */
+        .footer {
+            background-color: var(--color-primary);
+            color: #ffffff;
+            padding: 30px 0;
+            margin-top: 60px;
+            border-top: 4px solid var(--color-accent);
+        }
+
+        .footer .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loginPromptModal" class="login-prompt-overlay">
+        <div class="login-prompt-box">
+            <h2>Login Required</h2>
+            <p>You need to be logged in to view product trade-in details.</p>
+            <div class="login-prompt-buttons">
+                <a href="login.html" class="login-prompt-btn login-btn">Login</a>
+                <a href="index.html" class="login-prompt-btn cancel-btn">Cancel</a>
+            </div>
+        </div>
+    </div>
+
+    <header class="header">
+        <div class="header-top">
+            <div class="container">
+                <div class="logo">
+                    <a href="index.html">Mbare Marketplace</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="workspace">
+            
+            <section>
+                <div class="form-group">
+                    <label class="form-label" for="deviceModel">Select Device Model</label>
+                    <span class="form-hint">Choose your current running iPhone variant model hardware baseline.</span>
+                    <select id="deviceModel" class="select-input" onchange="runEvaluationEngine()">
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Battery Health Condition</label>
+                    <span class="form-hint">Check settings level reported inside the native iOS Battery Health parameter panel.</span>
+                    <div class="slider-container">
+                        <div class="slider-header">
+                            <span id="batteryStatusLabel" style="font-size: 14px; font-weight: 500;">Status Level</span>
+                            <span id="batteryPercentBadge" class="slider-value-chip">100%</span>
+                        </div>
+                        <input type="range" id="batteryHealth" class="range-slider" min="65" max="100" value="100" oninput="runEvaluationEngine()">
+                        
+                        <div style="margin-top: 15px; border-top: 1px dashed var(--color-border); padding-top: 12px;">
+                            <details style="cursor: pointer; font-size: 13px; color: var(--color-text-muted);">
+                                <summary style="font-weight: 600; color: var(--color-primary); outline: none; user-select: none;">
+                                    Where to find your battery health percentage?
+                                </summary>
+                                <div style="margin-top: 8px; padding-left: 12px; line-height: 1.4; border-left: 2px solid var(--color-accent);">
+                                    Open your iPhone and go to: <br>
+                                    <strong>Settings &#8250; Battery &#8250; Battery Health &amp; Charging</strong> <br>
+                                    Look for the number next to <strong>Maximum Capacity</strong>.
+                                </div>
+                            </details>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Display Screen Panel State</label>
+                    <span class="form-hint">Physical evaluation status check of front matrix layers and digitizers.</span>
+                    <div class="option-grid" id="screenGrid">
+                        <button type="button" class="option-btn active" data-value="excellent" onclick="setConditionOption('screen', this)">
+                            <div class="option-title">Excellent <span class="option-check">&#10003;</span></div>
+                            <div class="option-desc">Flawless surface. No visibility marks or line scratches.</div>
+                        </button>
+                        <button type="button" class="option-btn" data-value="scratched" onclick="setConditionOption('screen', this)">
+                            <div class="option-title">Scratched <span class="option-check"></span></div>
+                            <div class="option-desc">Visible usage hairline markings, zero glass fractures.</div>
+                        </button>
+                        <button type="button" class="option-btn" data-value="cracked" onclick="setConditionOption('screen', this)">
+                            <div class="option-title">Cracked <span class="option-check"></span></div>
+                            <div class="option-desc">Glass shattered, bleeding matrix rows, or structural touch degradation.</div>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Rear Enclosure Glass Shell State</label>
+                    <span class="form-hint">Rear perimeter coating inspection layer diagnostics status.</span>
+                    <div class="option-grid" id="backGlassGrid">
+                        <button type="button" class="option-btn active" data-value="good" onclick="setConditionOption('backGlass', this)">
+                            <div class="option-title">Good Condition <span class="option-check">&#10003;</span></div>
+                            <div class="option-desc">Normal baseline standard protective casing wear patterns.</div>
+                        </button>
+                        <button type="button" class="option-btn" data-value="scratched" onclick="setConditionOption('backGlass', this)">
+                            <div class="option-title">Scratched Shell <span class="option-check"></span></div>
+                            <div class="option-desc">Deep structural paint micro-abrasions along surface fields.</div>
+                        </button>
+                        <button type="button" class="option-btn" data-value="cracked" onclick="setConditionOption('backGlass', this)">
+                            <div class="option-title">Cracked Glass <span class="option-check"></span></div>
+                            <div class="option-desc">Broken perimeter fragments, spider web impact cracks, missing parts.</div>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Optics Camera Module Status</label>
+                    <span class="form-hint">Image capture test matrix checking performance validation across lenses.</span>
+                    <div class="option-grid" id="cameraGrid">
+                        <button type="button" class="option-btn active" data-value="fully_working" onclick="setConditionOption('camera', this)">
+                            <div class="option-title">Fully Working <span class="option-check">&#10003;</span></div>
+                            <div class="option-desc">Clear autofocus tracks across all zoom focal lengths.</div>
+                        </button>
+                        <button type="button" class="option-btn" data-value="minor_issue" onclick="setConditionOption('camera', this)">
+                            <div class="option-title">Minor Issue <span class="option-check"></span></div>
+                            <div class="option-desc">Isolated lens micro-shake stabilization failure, tracking delay.</div>
+                        </button>
+                        <button type="button" class="option-btn" data-value="major_issue" onclick="setConditionOption('camera', this)">
+                            <div class="option-title">Major Issue <span class="option-check"></span></div>
+                            <div class="option-desc">Total black sensor readout crash feeds, camera module execution failure.</div>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Biometric Face ID Enrollment Engine</label>
+                    <span class="form-hint">Dot projector check validating user authentication protocols.</span>
+                    <div class="option-grid" id="faceIdGrid">
+                        <button type="button" class="option-btn active" data-value="true" onclick="setConditionOption('faceId', this)">
+                            <div class="option-title">Face ID Operates <span class="option-check">&#10003;</span></div>
+                            <div class="option-desc">TrueDepth camera framework processes mapping data instantly.</div>
+                        </button>
+                        <button type="button" class="option-btn" data-value="false" onclick="setConditionOption('faceId', this)">
+                            <div class="option-title">Sensor Failure <span class="option-check"></span></div>
+                            <div class="option-desc">System throws authentication warning errors during calibration.</div>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <aside>
+                <div class="summary-card">
+                    <h2 class="summary-title">Upfront Rebate Summary</h2>
+                    
+                    <div class="calc-row">
+                        <span id="summaryModelName">Device Baseline Base</span>
+                        <span id="summaryBasePrice">&#36;0</span>
+                    </div>
+                    
+                    <div class="calc-row negative" id="rowBatteryDeduction">
+                        <span>Battery Capacity Correction Adjustments</span>
+                        <span id="summaryBatteryDeduction">-&#36;0</span>
+                    </div>
+
+                    <div class="calc-row negative" id="rowScreenDeduction">
+                        <span>Display Glass Structural Degradation Penalty</span>
+                        <span id="summaryScreenDeduction">-&#36;0</span>
+                    </div>
+
+                    <div class="calc-row negative" id="rowBackGlassDeduction">
+                        <span>Enclosure Structural Wear Correction</span>
+                        <span id="summaryBackGlassDeduction">-&#36;0</span>
+                    </div>
+
+                    <div class="calc-row negative" id="rowCameraDeduction">
+                        <span>Optics Module Operational Degradation Penalty</span>
+                        <span id="summaryCameraDeduction">-&#36;0</span>
+                    </div>
+
+                    <div class="calc-row negative" id="rowFaceIdDeduction">
+                        <span>TrueDepth Authentication Assembly Correction</span>
+                        <span id="summaryFaceIdDeduction">-&#36;0</span>
+                    </div>
+
+                    <div class="calc-row total">
+                        <span>Estimated Trade-In Payout</span>
+                        <span id="summaryFinalTotal">&#36;0</span>
+                    </div>
+
+                </div>
+            </aside>
+
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-logo">Mbare Marketplace</div>
+            <div>
+                &copy; 2026 Mbaremarketplace.com, Inc. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+        <script src="js/pages/trade-in-estimator-1.js"></script>
+
+        <script src="js/pages/trade-in-estimator-2.js"></script>
+</body>
+</html>
