@@ -128,7 +128,7 @@
     </style>
 </head>
 <body>
-    <div id="loadingOverlay" class="loading-overlay"><div style="text-align:center;"><div class="spinner"></div><p id="loadingText" style="margin-top:16px;color:#666;">Loading dashboard...</p></div></div>
+    <div id="loadingOverlay" class="loading-overlay"><div style="text-align:center;"><div class="spinner"></div><p style="margin-top:16px;color:#666;">Loading dashboard...</p></div></div>
     <header class="header">
         <div class="header-top"><div class="container"><div class="logo"><a href="index.html">Mbare Marketplace</a></div><div class="header-right"><div class="account-menu">Hello, Seller</div><div class="returns">Returns & Orders</div><a href="Basket.html" class="basket">Basket<span class="basket-count">0</span></a></div></div></div>
         <nav class="nav-menu"><div class="container"><a href="#" class="nav-item">All</a><a href="#" class="nav-item">Today's Deals</a><a href="#" class="nav-item">Customer Service</a><a href="seller-register.html" class="nav-item">Sell</a></div></nav>
@@ -194,7 +194,7 @@
         <div id="subscriptionControls" class="subscription-controls text-center" style="display:none;"></div>
         
         <div id="productLimitBanner" class="product-limit-banner">
-            <strong>Product Limit Reached!</strong> You have <span id="activeCount">0</span> active products out of <span id="maxCount">8</span> allowed for your <span id="tierName">Free</span> plan. 
+            <strong>⚠️ Product Limit Reached!</strong> You have <span id="activeCount">0</span> active products out of <span id="maxCount">8</span> allowed for your <span id="tierName">Free</span> plan. 
             <a href="#" class="upgrade-link" onclick="showUpgradeOptions(); return false;">Upgrade to add more products</a> or delete some products.
         </div>
         
@@ -221,30 +221,47 @@
     <footer class="footer"><div class="footer-top"><a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="color:white;">Back to top</a></div><div class="footer-bottom"><div class="container">&copy; 2026 Mbare Marketplace</div></div></footer>
 
     <script>
-        // Restructured initialization flow to stop unintended redirect loops on refresh
-        document.addEventListener("DOMContentLoaded", () => {
+        document.addEventListener("DOMContentLoaded", async () => {
             const sessionToken = localStorage.getItem("seller_session_token");
-            
-            // Check absolute local token state before evaluating query references
-            if (!sessionToken) {
-                window.location.href = "login.html?redirect=seller-dashboard.html";
-                return;
-            }
-
+            const sellerId = localStorage.getItem("seller_id");
             const urlParams = new URLSearchParams(window.location.search);
             const paymentRef = urlParams.get('ref');
             const returnStatus = urlParams.get('status');
 
-            // If returning directly from the gateway interface, route to verification engine
-            if (returnStatus === 'checking' && paymentRef) {
-                if (typeof verifySubscriptionPayment === "function") {
-                    verifySubscriptionPayment(paymentRef);
+            // Force redirect to login page if token state fields are empty
+            if (!sessionToken || !sellerId) {
+                window.location.href = "login.html?redirect=seller-dashboard.html";
+                return;
+            }
+
+            try {
+                // Read from backend seller subscription endpoint to evaluate absolute Paid status
+                const response = await fetch(`/api/subscriptions/status/${sellerId}`, {
+                    headers: { 'Authorization': `Bearer ${sessionToken}` }
+                });
+                
+                if (!response.ok) throw new Error("Status query failed");
+                const subData = await response.json();
+
+                // Lock dashboard out completely unless status matches 'Paid' exactly
+                if (subData.status !== 'Paid') {
+                    window.location.href = "login.html?redirect=seller-dashboard.html";
+                    return;
                 }
-            } else {
-                // Secure path for page reloads: bypass lookup blocks completely
-                if (typeof initializeDashboardData === "function") {
-                    initializeDashboardData();
+
+                // Authorized successfully: Hand off safely to the layout rendering routines
+                if (returnStatus === 'checking' && paymentRef) {
+                    if (typeof verifySubscriptionPayment === "function") {
+                        verifySubscriptionPayment(paymentRef);
+                    }
+                } else {
+                    if (typeof initializeDashboardData === "function") {
+                        initializeDashboardData();
+                    }
                 }
+            } catch (error) {
+                console.error("Subscription validation fault:", error);
+                window.location.href = "login.html?redirect=seller-dashboard.html";
             }
         });
     </script>
