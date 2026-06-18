@@ -33,7 +33,10 @@
                         'Authorization': `Bearer ${currentAccessToken}`
                     }
                 });
-                if (!response.ok) return null;
+                if (!response.ok) {
+                    console.warn("Supabase returned a non-200 response for subscriptions. Defaulting to free tier.");
+                    return 'free';
+                }
                 const data = await response.json();
                 if (data && data.length > 0) {
                     const sub = data[0];
@@ -43,9 +46,9 @@
                     return sub.tier || 'free';
                 }
             } catch (err) {
-                console.error('Error fetching subscription details:', err);
+                console.error('Error fetching subscription details from Supabase:', err);
             }
-            return null;
+            return 'free';
         }
 
         // ==================== INVENTORY LOGIC ====================
@@ -61,9 +64,14 @@
                     sellerProducts = await response.json();
                     renderProducts();
                     calculateMetrics();
+                } else {
+                    renderProducts();
+                    calculateMetrics();
                 }
             } catch (err) {
                 console.error('Error loading products:', err);
+                renderProducts();
+                calculateMetrics();
             }
         }
 
@@ -95,7 +103,7 @@
                     <div class="product-info">
                         <h4 style="margin-bottom:8px;font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.title}</h4>
                         <p style="color:#666;font-size:13px;margin-bottom:12px;height:36px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${p.description || 'No description provided.'}</p>
-                        <div style="display:flex;justify-content:between;align-items:center;margin-bottom:15px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
                             <span style="font-size:18px;font-weight:700;color:#B12704;">$${parseFloat(p.price).toFixed(2)}</span>
                             <span style="font-size:12px;color:#666;background:#f0f2f2;padding:4px 8px;border-radius:4px;">Stock: ${p.stock}</span>
                         </div>
@@ -332,8 +340,7 @@
                 } else if (key === 'free') {
                     actionBtn = `<button class="btn-secondary" style="width:100%;" disabled>Downgrade Blocked</button>`;
                 } else {
-                    const payUrl = key === 'growth' ? PAYNOW_BASE_150 : PAYNOW_BASE_500;
-                    actionBtn = `<a href="${payUrl}" target="_blank" style="text-decoration:none;"><button class="btn-primary" style="width:100%;" onclick="trackExternalPaymentLinkClick('${key}')">Upgrade Membership</button></a>`;
+                    actionBtn = `<button class="btn-primary" style="width:100%;" onclick="handleSubscribeClick('${key}')">Upgrade Membership</button>`;
                 }
 
                 card.innerHTML = `
@@ -347,10 +354,73 @@
             });
         }
 
-        function trackExternalPaymentLinkClick(targetTier) {
+        async function handleSubscribeClick(targetTier) {
+            showToast('Initializing subscription database allocation sequence...');
+            
             localStorage.setItem(`mbare_pending_upgrade_${currentSellerId}`, targetTier);
             localStorage.setItem(`mbare_pending_timestamp_${currentSellerId}`, new Date().getTime());
-            showToast('Opening official payment validation gateway...');
+
+            try {
+                // Check if a subscription record row entry already exists for this seller
+                const checkRes = await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${currentSellerId}&select=*`, {
+                    headers: {
+                        'apikey': window.SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${currentAccessToken}`
+                    }
+                });
+                
+                const existingData = await checkRes.json();
+                let dbSuccess = false;
+
+                if (existingData && existingData.length > 0) {
+                    // Row exists: update the existing allocation row parameters to 'Pending' tracking state
+                    const updateRes = await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${currentSellerId}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'apikey': window.SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${currentAccessToken}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            tier: targetTier,
+                            status: 'Pending',
+                            auto_renew: true
+                        })
+                    });
+                    if (updateRes.ok) dbSuccess = true;
+                } else {
+                    // Row does not exist: create and push a fresh subscription row directly to the empty table
+                    const insertRes = await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions`, {
+                        method: 'POST',
+                        headers: {
+                            'apikey': window.SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${currentAccessToken}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            seller_id: currentSellerId,
+                            tier: targetTier,
+                            status: 'Pending',
+                            auto_renew: true
+                        })
+                    });
+                    if (insertRes.ok) dbSuccess = true;
+                }
+
+                if (dbSuccess) {
+                    console.log(`Successfully populated registration track parameters in Supabase for tier: ${targetTier}`);
+                    
+                    // Launch payment gateway portal configuration redirect route
+                    const payUrl = targetTier === 'growth' ? PAYNOW_BASE_150 : PAYNOW_BASE_500;
+                    window.open(payUrl, '_blank');
+                } else {
+                    showToast('Database pipeline instantiation rejected. Please check connection logs.', true);
+                }
+
+            } catch (err) {
+                console.error('Subscription insertion protocol sequence error context:', err);
+                showToast('Failed to communicate safely with database cluster core.', true);
+            }
         }
 
         function checkLocalStoragePaymentStatus() {
@@ -511,6 +581,3 @@
             console.log("Global handshake verified. Launching core layout data engine.");
             init();
         };
-
-        // Automatic run invocation removed to allow conditional activation boundary rules via the HTML loop
-        // init();
