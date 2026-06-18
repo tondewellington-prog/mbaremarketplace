@@ -221,12 +221,11 @@
     <footer class="footer"><div class="footer-top"><a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="color:white;">Back to top</a></div><div class="footer-bottom"><div class="container">&copy; 2026 Mbare Marketplace</div></div></footer>
 
     <script>
-        const API_BASE_URL = "https://api.mbaremarketplace.com";
-        let isPaymentProcessing = false;
-
+        // Restructured initialization flow to stop unintended redirect loops on refresh
         document.addEventListener("DOMContentLoaded", () => {
             const sessionToken = localStorage.getItem("seller_session_token");
             
+            // Check absolute local token state before evaluating query references
             if (!sessionToken) {
                 window.location.href = "login.html?redirect=seller-dashboard.html";
                 return;
@@ -236,238 +235,19 @@
             const paymentRef = urlParams.get('ref');
             const returnStatus = urlParams.get('status');
 
+            // If returning directly from the gateway interface, route to verification engine
             if (returnStatus === 'checking' && paymentRef) {
-                verifySubscriptionPayment(paymentRef);
+                if (typeof verifySubscriptionPayment === "function") {
+                    verifySubscriptionPayment(paymentRef);
+                }
             } else {
-                initializeDashboardData();
-            }
-        });
-
-        async function initializeDashboardData() {
-            try {
-                document.getElementById("loadingOverlay").style.display = "flex";
-                document.getElementById("loadingText").innerText = "Loading dashboard...";
-                
-                await Promise.all([
-                    fetchShopProfile(),
-                    fetchSubscriptionStatus(),
-                    fetchInventoryMetrics(),
-                    fetchSellerProducts()
-                ]);
-            } catch (error) {
-                showToastNotification("System error syncing workspace parameters.", true);
-                console.error("Dashboard Sync Error:", error);
-            } finally {
-                document.getElementById("loadingOverlay").style.display = "none";
-            }
-        }
-
-        async function selectPremiumPlan(selectedTier) {
-            if (isPaymentProcessing) {
-                showToastNotification("A transaction is already in progress. Please wait.", true);
-                return;
-            }
-
-            const sellerId = localStorage.getItem("seller_id");
-            const userEmail = localStorage.getItem("seller_email");
-
-            if (!sellerId || !userEmail) {
-                showToastNotification("Authentication parameters missing. Please log in again.", true);
-                window.location.href = "login.html";
-                return;
-            }
-
-            const payload = {
-                sellerId: sellerId,
-                planTier: selectedTier,
-                userEmail: userEmail,
-                returnUrl: window.location.origin + window.location.pathname
-            };
-
-            try {
-                isPaymentProcessing = true;
-                document.getElementById("loadingOverlay").style.display = "flex";
-                document.getElementById("loadingText").innerText = "Contacting Paynow gateway channels...";
-                
-                const response = await fetch(`${API_BASE_URL}/api/subscriptions/initiate`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) throw new Error("API configuration failure");
-
-                const data = await response.json();
-
-                if (data.redirectUrl) {
-                    window.location.href = data.redirectUrl;
-                } else {
-                    throw new Error("Invalid payload mapping from API gateway.");
-                }
-            } catch (error) {
-                console.error("Initialization fault:", error);
-                showToastNotification("Transaction setup failed. System state reset.", true);
-                isPaymentProcessing = false;
-                document.getElementById("loadingOverlay").style.display = "none";
-            }
-        }
-
-        function verifySubscriptionPayment(referenceString) {
-            const sellerId = localStorage.getItem("seller_id");
-            let pollingAttempts = 0;
-            const maxPollingAttempts = 12; 
-
-            document.getElementById("loadingOverlay").style.display = "flex";
-            document.getElementById("loadingText").innerText = "Awaiting secure server table confirmation...";
-
-            const paymentVerificationInterval = setInterval(async () => {
-                pollingAttempts++;
-
-                try {
-                    const response = await fetch(`${API_BASE_URL}/api/subscriptions/verify?ref=${referenceString}&sellerId=${sellerId}`);
-                    if (!response.ok) throw new Error("API connection error");
-
-                    const data = await response.json();
-
-                    if (data.status === 'Paid') {
-                        clearInterval(paymentVerificationInterval);
-                        document.getElementById("loadingOverlay").style.display = "none";
-                        showToastNotification("Payment confirmed! Your plan has been upgraded.");
-                        
-                        window.history.replaceState({}, document.title, window.location.pathname);
-                        initializeDashboardData();
-                    } 
-                    else if (data.status === 'Failed') {
-                        clearInterval(paymentVerificationInterval);
-                        document.getElementById("loadingOverlay").style.display = "none";
-                        showToastNotification("Transaction declined by network provider.", true);
-                        window.history.replaceState({}, document.title, window.location.pathname);
-                        initializeDashboardData();
-                    }
-                } catch (error) {
-                    console.error("Validation sync exception:", error);
-                }
-
-                if (pollingAttempts >= maxPollingAttempts) {
-                    clearInterval(paymentVerificationInterval);
-                    document.getElementById("loadingOverlay").style.display = "none";
-                    showToastNotification("Processing limit exceeded. Re-checking updates in background.", true);
-                    window.history.replaceState({}, document.title, window.location.pathname);
+                // Secure path for page reloads: bypass lookup blocks completely
+                if (typeof initializeDashboardData === "function") {
                     initializeDashboardData();
                 }
-            }, 3000);
-        }
-
-        async function fetchSubscriptionStatus() {
-            const sellerId = localStorage.getItem("seller_id");
-            try {
-                const response = await fetch(`${API_BASE_URL}/api/subscriptions/active/${sellerId}`);
-                if (!response.ok) throw new Error("Subscription status verification error.");
-                
-                const subscriptionData = await response.json();
-                updateDashboardTierUI(subscriptionData);
-            } catch (error) {
-                console.error("Dashboard subscription sync fault:", error);
             }
-        }
-
-        function updateDashboardTierUI(subscription) {
-            const tierLabel = document.getElementById("tierName");
-            const maxCountLabel = document.getElementById("maxCount");
-            const activeCountLabel = document.getElementById("activeCount");
-            const addProductBtn = document.getElementById("submitProductBtn");
-            const activeProductsCount = parseInt(document.getElementById("totalProducts").innerText) || 0;
-            const allowedLimit = subscription.max_products;
-
-            if (tierLabel) tierLabel.innerText = subscription.plan_tier;
-            if (maxCountLabel) maxCountLabel.innerText = allowedLimit;
-            if (activeCountLabel) activeCountLabel.innerText = activeProductsCount;
-
-            if (activeProductsCount >= allowedLimit) {
-                document.getElementById("productLimitBanner").style.display = "block";
-                if (addProductBtn) {
-                    addProductBtn.disabled = true;
-                    addProductBtn.innerText = "Limit Reached - Upgrade Plan";
-                }
-            } else {
-                document.getElementById("productLimitBanner").style.display = "none";
-                if (addProductBtn) {
-                    addProductBtn.disabled = false;
-                    addProductBtn.innerText = "Add Product";
-                }
-            }
-            
-            renderTierCardsUI(subscription.plan_tier);
-        }
-
-        function renderTierCardsUI(currentTier) {
-            const container = document.getElementById("tierContainer");
-            if (!container) return;
-
-            const tiers = [
-                { name: "Free", price: "0", limit: "8 Products", desc: "Basic selling setup" },
-                { name: "Silver", price: "15", limit: "50 Products", desc: "Growing merchant features" },
-                { name: "Gold", price: "35", limit: "500 Products", desc: "High volume supply chains" }
-            ];
-
-            container.innerHTML = tiers.map(t => {
-                const isCurrent = t.name.toLowerCase() === currentTier.toLowerCase();
-                return `
-                    <div class="tier-card ${isCurrent ? 'tier-highlight' : ''}">
-                        <h3>${t.name} Plan</h3>
-                        <p>${t.desc}</p>
-                        <div class="tier-price">$${t.price}<span style="font-size:14px;color:#666;">/mo</span></div>
-                        <p class="mb-20"><strong>Limit: ${t.limit}</strong></p>
-                        ${isCurrent ? 
-                            `<button class="btn-success" disabled>Active Plan</button>` : 
-                            `<button class="btn-primary" onclick="selectPremiumPlan('${t.name}')">Upgrade to ${t.name}</button>`
-                        }
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function showToastNotification(message, isError = false) {
-            const existing = document.querySelector(".toast-notification");
-            if (existing) existing.remove();
-
-            const container = document.createElement("div");
-            container.className = `toast-notification${isError ? ' error' : ''}`;
-            container.innerText = message;
-            document.body.appendChild(container);
-            setTimeout(() => container.remove(), 4000);
-        }
-
-        function showUpgradeOptions() {
-            window.scrollTo({
-                top: document.getElementById("tierContainer").offsetTop - 40,
-                behavior: "smooth"
-            });
-        }
-
-        function toggleProductForm() {
-            const form = document.getElementById("addProductForm");
-            const btn = document.getElementById("toggleFormBtn");
-            if (form.style.display === "none") {
-                form.style.display = "block";
-                btn.innerText = "Hide Form";
-            } else {
-                form.style.display = "none";
-                btn.innerText = "+ Add Product";
-            }
-        }
-
-        async function fetchShopProfile() { return Promise.resolve(); }
-        async function fetchInventoryMetrics() { return Promise.resolve(); }
-        async function fetchSellerProducts() { return Promise.resolve(); }
-        function saveShopProfile() { showToastNotification("Profile configurations saved."); }
-        function handleProfileImage(e) {}
-        function handleCoverImage(e) {}
-        function removeCoverImage() {}
-        function handleFileSelect(e) {}
-        function removeImage() {}
-        function handleAddProduct() {}
-        function openCamera() {}
+        });
     </script>
+    <script src="js/pages/seller-dashboard.js"></script>
 </body>
 </html>
