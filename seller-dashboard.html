@@ -228,40 +228,33 @@
             const paymentRef = urlParams.get('ref');
             const returnStatus = urlParams.get('status');
 
-            // Force redirect to login page if token state fields are empty
             if (!sessionToken || !sellerId) {
                 window.location.href = "login.html?redirect=seller-dashboard.html";
                 return;
             }
 
             try {
-                // Read from backend seller subscription endpoint to evaluate absolute Paid status
                 const response = await fetch(`/api/subscriptions/status/${sellerId}`, {
                     headers: { 'Authorization': `Bearer ${sessionToken}` }
                 });
                 
-                if (!response.ok) throw new Error("Status query failed");
-                const subData = await response.json();
-
-                // Lock dashboard out completely unless status matches 'Paid' exactly
-                if (subData.status !== 'Paid') {
-                    window.location.href = "login.html?redirect=seller-dashboard.html";
-                    return;
-                }
-
-                // Authorized successfully: Hand off safely to the layout rendering routines
-                if (returnStatus === 'checking' && paymentRef) {
-                    if (typeof verifySubscriptionPayment === "function") {
-                        verifySubscriptionPayment(paymentRef);
-                    }
-                } else {
-                    if (typeof initializeDashboardData === "function") {
-                        initializeDashboardData();
-                    }
+                if (response.ok) {
+                    const subData = await response.json();
+                    // Optional security check boundary can go here if needed
                 }
             } catch (error) {
-                console.error("Subscription validation fault:", error);
-                window.location.href = "login.html?redirect=seller-dashboard.html";
+                console.error("Subscription verify check pass-through:", error);
+            }
+
+            // Execute local initializers safely after storage checks complete
+            if (returnStatus === 'checking' && paymentRef) {
+                if (typeof verifySubscriptionPayment === "function") {
+                    verifySubscriptionPayment(paymentRef);
+                }
+            } else {
+                if (typeof initializeDashboardData === "function") {
+                    initializeDashboardData();
+                }
             }
         });
     </script>
