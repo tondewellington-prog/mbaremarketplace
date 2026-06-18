@@ -146,7 +146,6 @@
         </div>
         <div id="expiryBanner" class="expiry-banner info" style="display:none;"></div>
         
-        <!-- Shop Profile Section -->
         <div class="bg-white rounded-xl p-30 mb-30">
             <h2 class="mb-20">Shop Profile</h2>
             <div class="profile-section">
@@ -194,7 +193,6 @@
         <div id="tierContainer" class="grid-3 mb-30"></div>
         <div id="subscriptionControls" class="subscription-controls text-center" style="display:none;"></div>
         
-        <!-- Product Limit Warning Banner -->
         <div id="productLimitBanner" class="product-limit-banner">
             <strong>⚠️ Product Limit Reached!</strong> You have <span id="activeCount">0</span> active products out of <span id="maxCount">8</span> allowed for your <span id="tierName">Free</span> plan. 
             <a href="#" class="upgrade-link" onclick="showUpgradeOptions(); return false;">Upgrade to add more products</a> or delete some products.
@@ -222,6 +220,57 @@
     </div>
     <footer class="footer"><div class="footer-top"><a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="color:white;">Back to top</a></div><div class="footer-bottom"><div class="container">&copy; 2026 Mbare Marketplace</div></div></footer>
 
-        <script src="js/pages/seller-dashboard.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            const token = localStorage.getItem("seller_session_token");
+            const sellerId = localStorage.getItem("seller_id");
+
+            if (!token || !sellerId) {
+                window.location.href = "login.html?redirect=seller-dashboard.html";
+                return;
+            }
+
+            try {
+                await fetch('/api/subscriptions/initiate-sync', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ sellerId: sellerId, currentStatus: 'Pending' })
+                });
+            } catch (err) {
+                console.error("Initial handshake pass-through failure:", err);
+            }
+
+            async function checkVerificationLoop() {
+                // If local storage handles are removed during loop cycles, don't execute redirection logic here
+                if (!localStorage.getItem("seller_session_token") || !localStorage.getItem("seller_id")) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/subscriptions/status/${sellerId}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.status === 'Paid') {
+                            if (typeof initializeDashboardData === "function") {
+                                initializeDashboardData();
+                            }
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    console.error("Observer synchronization tracking error:", e);
+                }
+                setTimeout(checkVerificationLoop, 4000);
+            }
+
+            checkVerificationLoop();
+        });
+    </script>
+    <script src="js/pages/seller-dashboard.js"></script>
 </body>
 </html>
