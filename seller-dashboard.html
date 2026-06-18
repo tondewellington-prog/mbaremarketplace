@@ -225,12 +225,13 @@
             const token = localStorage.getItem("seller_session_token");
             const sellerId = localStorage.getItem("seller_id");
 
-            // Quiet verification boundary path context checking parameters safely
             if (!token || !sellerId) {
+                console.log("Sync skipped: missing seller credentials in localStorage.");
                 return;
             }
 
             try {
+                console.log("Initiating server synchronization handshake for seller:", sellerId);
                 await fetch('/api/subscriptions/initiate-sync', {
                     method: 'POST',
                     headers: {
@@ -239,6 +240,7 @@
                     },
                     body: JSON.stringify({ sellerId: sellerId, currentStatus: 'Pending' })
                 });
+                console.log("Initial handshake completed successfully.");
             } catch (err) {
                 console.error("Initial handshake pass-through failure:", err);
             }
@@ -249,12 +251,16 @@
                 }
 
                 try {
+                    console.log("Polling database for subscription verification update...");
                     const response = await fetch(`/api/subscriptions/status/${sellerId}`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (response.ok) {
                         const data = await response.json();
+                        console.log("Current verification status caught:", data.status);
+                        
                         if (data.status === 'Paid') {
+                            console.log("Status confirmed as 'Paid'. Initializing seller profile layout data.");
                             if (typeof initializeDashboardData === "function") {
                                 initializeDashboardData();
                             }
