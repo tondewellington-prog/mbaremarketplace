@@ -25,105 +25,20 @@ function showToast(message, isError = false) {
     setTimeout(() => toast.remove(), 5000);
 }
 
-// Check localStorage for payment status
-function checkLocalStoragePaymentStatus() {
-    const paymentGuid = localStorage.getItem('payment_guid');
-    const paymentSuccess = localStorage.getItem('payment_success');
-    const paymentTransaction = localStorage.getItem('payment_transaction');
-    const paymentAmount = localStorage.getItem('payment_amount');
-    
-    console.log('Checking localStorage - guid:', paymentGuid, 'success:', paymentSuccess);
-    
-    if ((paymentGuid || paymentTransaction) && paymentSuccess === 'true') {
-        let planType = 'tier_150';
-        if (paymentAmount === '5.00' || paymentAmount === '5') {
-            planType = 'tier_5';
-        }
-        
-        showToast('Payment detected! Activating subscription...', false);
-        
-        localStorage.removeItem('payment_guid');
-        localStorage.removeItem('payment_success');
-        localStorage.removeItem('payment_transaction');
-        localStorage.removeItem('payment_amount');
-        localStorage.removeItem('payment_cancelled');
-        
-        activateSubscription(planType, paymentTransaction || paymentGuid || 'paynow_' + Date.now());
-        return true;
-    }
-    
-    if (localStorage.getItem('payment_cancelled') === 'true') {
-        showToast('Payment was cancelled. No charges were made.', true);
-        localStorage.removeItem('payment_cancelled');
-        return false;
-    }
-    
-    return false;
-}
-
-// Refresh session if token expired
-async function refreshSession() {
-    const sessionStr = localStorage.getItem('supabase_session');
-    if (!sessionStr) return false;
-    
-    const session = JSON.parse(sessionStr);
-    const refreshToken = session.refresh_token;
-    
-    if (!refreshToken) return false;
-    
+// ==================== CREATE PENDING SUBSCRIPTION ====================
+async function createPendingSubscription(planType, paymentGuid) {
     try {
-        const response = await fetch(`${window.SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'apikey': window.SUPABASE_ANON_KEY
-            },
-            body: JSON.stringify({ refresh_token: refreshToken })
-        });
-        
-        if (response.ok) {
-            const newSession = await response.json();
-            localStorage.setItem('supabase_session', JSON.stringify(newSession));
-            currentAccessToken = newSession.access_token;
-            console.log('Session refreshed successfully');
-            return true;
-        }
-    } catch (e) {
-        console.error('Session refresh failed:', e);
-    }
-    return false;
-}
-
-async function activateSubscription(planType, reference) {
-    try {
-        const plan = tierMap[planType];
-        
         const sessionStr = localStorage.getItem('supabase_session');
         if (!sessionStr) throw new Error('No session found');
-        
         const session = JSON.parse(sessionStr);
         let accessToken = session.access_token;
         const userId = session.user?.id;
-        
         if (!userId) throw new Error('No user ID');
-        
-        console.log('Activating subscription for user:', userId, 'plan:', planType);
-        
-        const subData = {
-            seller_id: String(userId),
-            plan_type: planType,
-            status: 'active',
-            payment_status: 'completed',
-            auto_renew: true,
-            paynow_reference: reference,
-            current_period_start: new Date().toISOString(),
-            current_period_end: new Date(Date.now() + 2592000000).toISOString()
-        };
-        
+
+        // Check if subscription exists
         let checkResp = await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${userId}&select=id`, {
             headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}` }
         });
-        
         if (checkResp.status === 401) {
             await refreshSession();
             const newSession = JSON.parse(localStorage.getItem('supabase_session'));
@@ -132,23 +47,120 @@ async function activateSubscription(planType, reference) {
                 headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}` }
             });
         }
-        
+
         const existing = checkResp.ok ? await checkResp.json() : [];
-        
+
+        // Create a pending subscription record
+        const subData = {
+            seller_id: String(userId),
+            plan_type: planType,
+            status: 'pending',
+            payment_status: 'pending',
+            auto_renew: true,
+            paynow_reference: paymentGuid,
+            current_period_start: null,
+            current_period_end: null
+        };
+
+        let result = false;
         if (existing && existing.length > 0) {
-            await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?id=eq.${existing[0].id}`, {
+            const updateResp = await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?id=eq.${existing[0].id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json', 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}`, 'Prefer': 'return=minimal' },
                 body: JSON.stringify(subData)
             });
+            if (updateResp.ok) result = true;
         } else {
-            await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions`, {
+            const insertResp = await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}`, 'Prefer': 'return=minimal' },
                 body: JSON.stringify(subData)
             });
+            if (insertResp.ok) result = true;
         }
-        
+
+        if (result) {
+            console.log(`✅ Pending subscription created/updated for plan ${planType} with GUID ${paymentGuid}`);
+            return true;
+        } else {
+            throw new Error('Failed to create pending subscription');
+        }
+    } catch (e) {
+        console.error('Error creating pending subscription:', e);
+        showToast('Failed to initialize subscription. Please try again.', true);
+        return false;
+    }
+}
+
+// ==================== ACTIVATE SUBSCRIPTION (AFTER PAYMENT) ====================
+async function activateSubscription(planType, reference) {
+    try {
+        const plan = tierMap[planType];
+        const sessionStr = localStorage.getItem('supabase_session');
+        if (!sessionStr) throw new Error('No session found');
+        const session = JSON.parse(sessionStr);
+        let accessToken = session.access_token;
+        const userId = session.user?.id;
+        if (!userId) throw new Error('No user ID');
+
+        console.log('Activating subscription for user:', userId, 'plan:', planType, 'ref:', reference);
+
+        // Find the pending subscription with this reference
+        let findResp = await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${userId}&paynow_reference=eq.${reference}&select=id`, {
+            headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}` }
+        });
+        if (findResp.status === 401) {
+            await refreshSession();
+            const newSession = JSON.parse(localStorage.getItem('supabase_session'));
+            accessToken = newSession.access_token;
+            findResp = await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${userId}&paynow_reference=eq.${reference}&select=id`, {
+                headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}` }
+            });
+        }
+
+        let subId = null;
+        if (findResp.ok) {
+            const data = await findResp.json();
+            if (data && data.length > 0) {
+                subId = data[0].id;
+            }
+        }
+
+        // If no pending row found, fallback: try to update any subscription (or create new)
+        const updateData = {
+            plan_type: planType,
+            status: 'active',
+            payment_status: 'completed',
+            auto_renew: true,
+            paynow_reference: reference,
+            current_period_start: new Date().toISOString(),
+            current_period_end: new Date(Date.now() + 2592000000).toISOString()
+        };
+
+        let updateSuccess = false;
+        if (subId) {
+            const updateResp = await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?id=eq.${subId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}`, 'Prefer': 'return=minimal' },
+                body: JSON.stringify(updateData)
+            });
+            if (updateResp.ok) updateSuccess = true;
+        } else {
+            // No pending row – create a new one (shouldn't happen normally)
+            const insertResp = await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}`, 'Prefer': 'return=minimal' },
+                body: JSON.stringify({
+                    seller_id: String(userId),
+                    ...updateData
+                })
+            });
+            if (insertResp.ok) updateSuccess = true;
+        }
+
+        if (!updateSuccess) throw new Error('Failed to activate subscription');
+
+        // Update local state
         currentTier = planType;
         subscriptionStatus = 'active';
         autoRenew = true;
@@ -156,105 +168,146 @@ async function activateSubscription(planType, reference) {
         currentSellerId = userId;
         localStorage.setItem(`mbare_tier_${userId}`, currentTier);
         localStorage.removeItem('pending_payment_plan');
-        
+
+        // Refresh data and UI
         await loadProductsFromSupabase();
-        renderTiers();        // <-- refresh subscription plans
+        renderTiers();
         enforceProductLimit();
         updateStatsAndLimits();
         updateExpiryBanner();
         updateSubscriptionControls();
         renderProducts();
-        
-        showToast('SUCCESS! ' + plan.name + ' activated!', false);
-        
-        // DO NOT RELOAD – just update the UI
-        // setTimeout(() => window.location.reload(), 2000); // <-- removed to avoid loop
-        
+
+        showToast('✅ SUCCESS! ' + plan.name + ' activated!', false);
     } catch (error) {
         console.error('Activation error:', error);
-        showToast('Activation failed. Please refresh and try again.', true);
+        showToast('❌ Activation failed. Please refresh and try again.', true);
     }
 }
 
+// ==================== PAYMENT FLOW ====================
 function openPayNowPayment(planType) {
     const plan = tierMap[planType];
+    // Generate a unique GUID for this payment
+    const paymentGuid = 'pay_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
     const returnUrl = encodeURIComponent(window.location.origin + '/payment-return.html');
     const paynowLink = planType === 'tier_150' 
         ? `${PAYNOW_BASE_150}&return_url=${returnUrl}`
         : `${PAYNOW_BASE_500}&return_url=${returnUrl}`;
-    
+
+    // Store payment details in localStorage so payment-return can read them
     localStorage.setItem('pending_payment_plan', planType);
-    
-    const modalHtml = `
-        <div class="payment-modal" id="paynowModal">
-            <div class="payment-card" style="text-align:center;">
-                <button style="float:right;background:none;border:none;font-size:24px;cursor:pointer;" onclick="closePaymentModal()">&times;</button>
-                <h3>${plan.name}</h3>
-                <div class="tier-price">$${plan.amount}<span style="font-size:14px;">/month</span></div>
-                <p>${plan.perks}</p>
-                <div style="margin:20px 0; padding:15px; background:#f0f9ff; border-radius:12px;">
-                    <p><strong>Instructions:</strong></p>
-                    <ol style="text-align:left; margin-left:20px;">
-                        <li>Click PayNow button below</li>
-                        <li>Select EcoCash</li>
-                        <li>Enter your phone number</li>
-                        <li>Enter PIN when prompted</li>
-                        <li>After payment, click "Return to Merchant Website"</li>
-                    </ol>
+    localStorage.setItem('pending_payment_guid', paymentGuid);
+
+    // Create a pending subscription record in Supabase
+    createPendingSubscription(planType, paymentGuid).then(success => {
+        if (!success) {
+            showToast('Failed to create pending subscription. Please try again.', true);
+            return;
+        }
+
+        // Show modal with payment instructions and PayNow link
+        const modalHtml = `
+            <div class="payment-modal" id="paynowModal">
+                <div class="payment-card" style="text-align:center;">
+                    <button style="float:right;background:none;border:none;font-size:24px;cursor:pointer;" onclick="closePaymentModal()">&times;</button>
+                    <h3>${plan.name}</h3>
+                    <div class="tier-price">$${plan.amount}<span style="font-size:14px;">/month</span></div>
+                    <p>${plan.perks}</p>
+                    <div style="margin:20px 0; padding:15px; background:#f0f9ff; border-radius:12px;">
+                        <p><strong>Instructions:</strong></p>
+                        <ol style="text-align:left; margin-left:20px;">
+                            <li>Click PayNow button below</li>
+                            <li>Select EcoCash</li>
+                            <li>Enter your phone number</li>
+                            <li>Enter PIN when prompted</li>
+                            <li>After payment, click "Return to Merchant Website"</li>
+                        </ol>
+                    </div>
+                    <a href="${paynowLink}" target="_blank">
+                        <img src='https://www.paynow.co.zw/Content/Buttons/Medium_buttons/button_pay-now_medium.png' style="cursor:pointer; border-radius:8px; max-width:200px;" />
+                    </a>
+                    <p style="font-size:12px; margin-top:15px;">After payment, click "Return to Merchant Website"</p>
+                    <button class="btn-secondary" id="closePayModal" style="width:100%; margin-top:15px;">Cancel</button>
                 </div>
-                <a href="${paynowLink}" target="_blank">
-                    <img src='https://www.paynow.co.zw/Content/Buttons/Medium_buttons/button_pay-now_medium.png' style="cursor:pointer; border-radius:8px; max-width:200px;" />
-                </a>
-                <p style="font-size:12px; margin-top:15px;">After payment, click "Return to Merchant Website"</p>
-                <button class="btn-secondary" id="closePayModal" style="width:100%; margin-top:15px;">Cancel</button>
             </div>
-        </div>
-    `;
-    
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-    
-    window.closePaymentModal = function() {
-        document.getElementById('paynowModal')?.remove();
-        localStorage.removeItem('pending_payment_plan');
-    };
-    
-    document.getElementById('closePayModal').onclick = window.closePaymentModal;
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        window.closePaymentModal = function() {
+            document.getElementById('paynowModal')?.remove();
+            localStorage.removeItem('pending_payment_plan');
+            localStorage.removeItem('pending_payment_guid');
+        };
+
+        document.getElementById('closePayModal').onclick = window.closePaymentModal;
+    });
 }
 
-function showUpgradeOptions() {
-    const modalHtml = `
-        <div class="payment-modal" id="upgradeModal">
-            <div class="payment-card">
-                <h3 style="text-align:center;">Choose Your Plan</h3>
-                <div style="display:grid; gap:15px; margin:20px 0;">
-                    <div class="tier-card" style="padding:15px;">
-                        <strong>Merchant Basic</strong>
-                        <div class="tier-price">$1.50<span style="font-size:14px;">/month</span></div>
-                        <div>50 products limit</div>
-                        <button class="btn-primary" style="margin-top:15px; width:100%;" onclick="closeModalAndPay('tier_150')">Subscribe - $1.50</button>
-                    </div>
-                    <div class="tier-card" style="padding:15px;">
-                        <strong>Video Ads Plan</strong>
-                        <div class="tier-price">$5.00<span style="font-size:14px;">/month</span></div>
-                        <div>200 products + video ads</div>
-                        <button class="btn-primary" style="margin-top:15px; width:100%;" onclick="closeModalAndPay('tier_5')">Subscribe - $5.00</button>
-                    </div>
-                </div>
-                <button class="btn-secondary" id="closeUpgradeModal" style="width:100%;">Cancel</button>
-            </div>
-        </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-    document.getElementById('closeUpgradeModal').onclick = () => document.getElementById('upgradeModal')?.remove();
+// Check localStorage for payment status (called on dashboard load)
+function checkLocalStoragePaymentStatus() {
+    const paymentGuid = localStorage.getItem('payment_guid');
+    const paymentSuccess = localStorage.getItem('payment_success');
+    const paymentTransaction = localStorage.getItem('payment_transaction');
+    const paymentAmount = localStorage.getItem('payment_amount');
+
+    console.log('Checking localStorage - guid:', paymentGuid, 'success:', paymentSuccess);
+
+    if ((paymentGuid || paymentTransaction) && paymentSuccess === 'true') {
+        let planType = 'tier_150';
+        if (paymentAmount === '5.00' || paymentAmount === '5') {
+            planType = 'tier_5';
+        }
+
+        showToast('Payment detected! Activating subscription...', false);
+
+        // Clear the payment markers from localStorage
+        localStorage.removeItem('payment_guid');
+        localStorage.removeItem('payment_success');
+        localStorage.removeItem('payment_transaction');
+        localStorage.removeItem('payment_amount');
+        localStorage.removeItem('payment_cancelled');
+
+        // Use the payment_guid as the reference (or transaction if available)
+        const ref = paymentTransaction || paymentGuid || 'paynow_' + Date.now();
+        activateSubscription(planType, ref);
+        return true;
+    }
+
+    if (localStorage.getItem('payment_cancelled') === 'true') {
+        showToast('Payment was cancelled. No charges were made.', true);
+        localStorage.removeItem('payment_cancelled');
+        return false;
+    }
+
+    return false;
 }
 
-window.closeModalAndPay = function(planType) {
-    document.getElementById('upgradeModal')?.remove();
-    openPayNowPayment(planType);
-};
+// ==================== REFRESH SESSION ====================
+async function refreshSession() {
+    const sessionStr = localStorage.getItem('supabase_session');
+    if (!sessionStr) return false;
+    const session = JSON.parse(sessionStr);
+    const refreshToken = session.refresh_token;
+    if (!refreshToken) return false;
+    try {
+        const response = await fetch(`${window.SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'apikey': window.SUPABASE_ANON_KEY },
+            body: JSON.stringify({ refresh_token: refreshToken })
+        });
+        if (response.ok) {
+            const newSession = await response.json();
+            localStorage.setItem('supabase_session', JSON.stringify(newSession));
+            currentAccessToken = newSession.access_token;
+            console.log('Session refreshed successfully');
+            return true;
+        }
+    } catch (e) { console.error('Session refresh failed:', e); }
+    return false;
+}
 
 // ==================== AUTH AND PRODUCT FUNCTIONS ====================
-
 async function checkAuth() {
     const s = localStorage.getItem('supabase_session');
     const l = localStorage.getItem('isLoggedIn') === 'true';
@@ -269,10 +322,8 @@ async function checkAuth() {
         currentAccessToken = session.access_token;
         if (!currentSellerId) throw new Error('No ID');
         document.querySelector('.account-menu').textContent = 'Hello, ' + (session.user?.email || 'Seller').split('@')[0];
-        
         updateViewShopButton();
         await loadSellerProfile();
-        
         return true;
     } catch (e) {
         window.location.href = 'login.html';
@@ -295,14 +346,9 @@ async function loadSellerProfile() {
     try {
         const session = JSON.parse(localStorage.getItem('supabase_session'));
         const token = session?.access_token || currentAccessToken;
-        
         const resp = await fetch(`${window.SUPABASE_URL}/rest/v1/sellers?user_id=eq.${currentSellerId}&select=*`, {
-            headers: { 
-                'apikey': window.SUPABASE_ANON_KEY, 
-                'Authorization': `Bearer ${token}` 
-            }
+            headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` }
         });
-        
         if (resp.ok) {
             const sellers = await resp.json();
             if (sellers && sellers.length > 0) {
@@ -310,18 +356,14 @@ async function loadSellerProfile() {
                 updateProfileUI();
             }
         }
-    } catch (e) {
-        console.error('Error loading profile:', e);
-    }
+    } catch (e) { console.error('Error loading profile:', e); }
 }
 
 function updateProfileUI() {
     if (!currentSellerProfile) return;
-    
     const profileImg = document.getElementById('profileAvatarImg');
     const placeholder = document.getElementById('profilePlaceholder');
     const status = document.getElementById('profileStatus');
-    
     if (currentSellerProfile.profile_image) {
         profileImg.src = currentSellerProfile.profile_image;
         profileImg.style.display = 'block';
@@ -332,11 +374,9 @@ function updateProfileUI() {
         placeholder.style.display = 'flex';
         status.textContent = 'No profile photo uploaded. Please upload a photo.';
     }
-    
     const coverPreview = document.getElementById('coverPreview');
     const coverPlaceholder = document.getElementById('coverPlaceholder');
     const coverStatus = document.getElementById('coverStatus');
-    
     if (currentSellerProfile.cover_image) {
         coverPreview.src = currentSellerProfile.cover_image;
         coverPreview.style.display = 'block';
@@ -347,7 +387,6 @@ function updateProfileUI() {
         coverPlaceholder.style.display = 'block';
         coverStatus.textContent = 'No cover image uploaded. Please upload a cover image.';
     }
-    
     const descInput = document.getElementById('shopDescription');
     if (descInput && currentSellerProfile.shop_description) {
         descInput.value = currentSellerProfile.shop_description;
@@ -357,16 +396,8 @@ function updateProfileUI() {
 async function handleProfileImage(event) {
     const file = event.target.files[0];
     if (!file) return;
-    
-    if (!file.type.match('image.*')) {
-        alert('Please select an image file');
-        return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-        alert('Image must be under 5MB');
-        return;
-    }
-    
+    if (!file.type.match('image.*')) { alert('Please select an image file'); return; }
+    if (file.size > 5 * 1024 * 1024) { alert('Image must be under 5MB'); return; }
     const reader = new FileReader();
     reader.onload = function(e) {
         const img = document.getElementById('profileAvatarImg');
@@ -377,40 +408,24 @@ async function handleProfileImage(event) {
         document.getElementById('profileStatus').textContent = 'Uploading...';
     };
     reader.readAsDataURL(file);
-    
     const formData = new FormData();
     formData.append('image', file);
     formData.append('key', IMGBB_API_KEY);
-    
     try {
-        const response = await fetch('https://api.imgbb.com/1/upload', {
-            method: 'POST',
-            body: formData
-        });
+        const response = await fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: formData });
         const data = await response.json();
         if (data.success) {
             const imageUrl = data.data.url;
-            
             const session = JSON.parse(localStorage.getItem('supabase_session'));
             const token = session?.access_token || currentAccessToken;
-            
             await fetch(`${window.SUPABASE_URL}/rest/v1/sellers?user_id=eq.${currentSellerId}`, {
                 method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'apikey': window.SUPABASE_ANON_KEY,
-                    'Authorization': `Bearer ${token}`,
-                    'Prefer': 'return=minimal'
-                },
+                headers: { 'Content-Type': 'application/json', 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Prefer': 'return=minimal' },
                 body: JSON.stringify({ profile_image: imageUrl })
             });
-            
             document.getElementById('profileStatus').textContent = 'Profile photo uploaded successfully!';
             showToast('Profile photo updated!');
-            
-            if (currentSellerProfile) {
-                currentSellerProfile.profile_image = imageUrl;
-            }
+            if (currentSellerProfile) currentSellerProfile.profile_image = imageUrl;
         } else {
             throw new Error(data.error?.message || 'Upload failed');
         }
@@ -423,16 +438,8 @@ async function handleProfileImage(event) {
 async function handleCoverImage(event) {
     const file = event.target.files[0];
     if (!file) return;
-    
-    if (!file.type.match('image.*')) {
-        alert('Please select an image file');
-        return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-        alert('Image must be under 5MB');
-        return;
-    }
-    
+    if (!file.type.match('image.*')) { alert('Please select an image file'); return; }
+    if (file.size > 5 * 1024 * 1024) { alert('Image must be under 5MB'); return; }
     const reader = new FileReader();
     reader.onload = function(e) {
         const img = document.getElementById('coverPreview');
@@ -443,40 +450,24 @@ async function handleCoverImage(event) {
         document.getElementById('coverStatus').textContent = 'Uploading...';
     };
     reader.readAsDataURL(file);
-    
     const formData = new FormData();
     formData.append('image', file);
     formData.append('key', IMGBB_API_KEY);
-    
     try {
-        const response = await fetch('https://api.imgbb.com/1/upload', {
-            method: 'POST',
-            body: formData
-        });
+        const response = await fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: formData });
         const data = await response.json();
         if (data.success) {
             const imageUrl = data.data.url;
-            
             const session = JSON.parse(localStorage.getItem('supabase_session'));
             const token = session?.access_token || currentAccessToken;
-            
             await fetch(`${window.SUPABASE_URL}/rest/v1/sellers?user_id=eq.${currentSellerId}`, {
                 method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'apikey': window.SUPABASE_ANON_KEY,
-                    'Authorization': `Bearer ${token}`,
-                    'Prefer': 'return=minimal'
-                },
+                headers: { 'Content-Type': 'application/json', 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Prefer': 'return=minimal' },
                 body: JSON.stringify({ cover_image: imageUrl })
             });
-            
             document.getElementById('coverStatus').textContent = 'Cover image uploaded successfully!';
             showToast('Cover image updated!');
-            
-            if (currentSellerProfile) {
-                currentSellerProfile.cover_image = imageUrl;
-            }
+            if (currentSellerProfile) currentSellerProfile.cover_image = imageUrl;
         } else {
             throw new Error(data.error?.message || 'Upload failed');
         }
@@ -488,70 +479,42 @@ async function handleCoverImage(event) {
 
 async function removeCoverImage() {
     if (!confirm('Remove cover image?')) return;
-    
     try {
         const session = JSON.parse(localStorage.getItem('supabase_session'));
         const token = session?.access_token || currentAccessToken;
-        
         await fetch(`${window.SUPABASE_URL}/rest/v1/sellers?user_id=eq.${currentSellerId}`, {
             method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                'apikey': window.SUPABASE_ANON_KEY,
-                'Authorization': `Bearer ${token}`,
-                'Prefer': 'return=minimal'
-            },
+            headers: { 'Content-Type': 'application/json', 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Prefer': 'return=minimal' },
             body: JSON.stringify({ cover_image: null })
         });
-        
-        if (currentSellerProfile) {
-            currentSellerProfile.cover_image = null;
-        }
-        
+        if (currentSellerProfile) currentSellerProfile.cover_image = null;
         document.getElementById('coverPreview').style.display = 'none';
         document.getElementById('coverPlaceholder').style.display = 'block';
         document.getElementById('coverStatus').textContent = 'Cover image removed';
         showToast('Cover image removed');
-    } catch (e) {
-        alert('Failed to remove cover image');
-    }
+    } catch (e) { alert('Failed to remove cover image'); }
 }
 
 async function saveShopProfile() {
     const description = document.getElementById('shopDescription').value.trim();
-    
     try {
         const session = JSON.parse(localStorage.getItem('supabase_session'));
         const token = session?.access_token || currentAccessToken;
-        
         await fetch(`${window.SUPABASE_URL}/rest/v1/sellers?user_id=eq.${currentSellerId}`, {
             method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                'apikey': window.SUPABASE_ANON_KEY,
-                'Authorization': `Bearer ${token}`,
-                'Prefer': 'return=minimal'
-            },
+            headers: { 'Content-Type': 'application/json', 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Prefer': 'return=minimal' },
             body: JSON.stringify({ shop_description: description })
         });
-        
-        if (currentSellerProfile) {
-            currentSellerProfile.shop_description = description;
-        }
-        
+        if (currentSellerProfile) currentSellerProfile.shop_description = description;
         showToast('Shop profile saved successfully!');
-    } catch (e) {
-        alert('Failed to save shop profile');
-    }
+    } catch (e) { alert('Failed to save shop profile'); }
 }
 
 // ==================== SUBSCRIPTION FUNCTIONS ====================
-
 async function fetchSubscription() {
     try {
         const session = JSON.parse(localStorage.getItem('supabase_session'));
         const token = session?.access_token || currentAccessToken;
-        
         const resp = await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${currentSellerId}&select=*&order=created_at.desc&limit=1`, {
             headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` }
         });
@@ -570,10 +533,12 @@ async function fetchSubscription() {
                         return null;
                     }
                 }
+                // If status is active or paused, return the plan
                 if (s.status === 'active' || s.status === 'paused') {
                     if (s.plan_type === 'tier_5') return 'tier_5';
                     if (s.plan_type === 'tier_150') return 'tier_150';
                 }
+                // If status is pending, we keep the current tier as is (maybe show a message)
             }
         } else if (resp.status === 401) {
             await refreshSession();
@@ -596,14 +561,9 @@ async function updateSubscriptionStatus(sid, st) {
 }
 
 function handleExpiredSubscription() {
-    // When expired, only allow 8 active products (free tier)
     const max = 8;
     sellerProducts.forEach((p, i) => {
-        if (i >= max) {
-            p.paused = true;
-        } else {
-            p.paused = false;
-        }
+        p.paused = (i >= max);
     });
     currentTier = 'free';
     subscriptionStatus = 'expired';
@@ -700,13 +660,14 @@ function updateSubscriptionControls() {
         c.innerHTML = '<button class="btn-primary" onclick="resumeSubscription()">Resume Auto-Renewal</button>';
     } else if (subscriptionStatus === 'expired') {
         c.innerHTML = '<button class="btn-primary" onclick="showUpgradeOptions()">Renew Subscription</button>';
+    } else if (subscriptionStatus === 'pending') {
+        c.innerHTML = '<span style="color:#f90;">⏳ Payment pending... Please complete payment.</span>';
     } else {
         c.innerHTML = '<button class="btn-danger" onclick="pauseSubscription()">Pause Subscription</button><br><small>Current period remains active until expiry.</small>';
     }
 }
 
 // ==================== PRODUCT FUNCTIONS ====================
-
 async function loadProductsFromSupabase() {
     try {
         const session = JSON.parse(localStorage.getItem('supabase_session'));
@@ -714,15 +675,10 @@ async function loadProductsFromSupabase() {
         const r = await fetch(`${window.SUPABASE_URL}/rest/v1/products?seller_id=eq.${currentSellerId}&select=*&order=created_at.desc`, {
             headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` }
         });
-        if (r.ok) { 
-            sellerProducts = await r.json(); 
-            // Add paused flag if it doesn't exist
-            sellerProducts.forEach(p => {
-                if (p.paused === undefined) {
-                    p.paused = false;
-                }
-            });
-            return true; 
+        if (r.ok) {
+            sellerProducts = await r.json();
+            sellerProducts.forEach(p => { if (p.paused === undefined) p.paused = false; });
+            return true;
         }
         if (r.status === 401) { await refreshSession(); return loadProductsFromSupabase(); }
         return false;
@@ -735,16 +691,16 @@ async function saveProductToSupabase(pd) {
     const r = await fetch(`${window.SUPABASE_URL}/rest/v1/products`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Prefer': 'return=representation' },
-        body: JSON.stringify({ 
-            seller_id: String(currentSellerId), 
-            title: pd.title, 
-            description: pd.description || '', 
-            price: pd.price, 
-            category: pd.category, 
-            stock: pd.stock, 
-            image_url: pd.image_url, 
+        body: JSON.stringify({
+            seller_id: String(currentSellerId),
+            title: pd.title,
+            description: pd.description || '',
+            price: pd.price,
+            category: pd.category,
+            stock: pd.stock,
+            image_url: pd.image_url,
             paused: pd.paused || false,
-            created_at: new Date().toISOString() 
+            created_at: new Date().toISOString()
         })
     });
     if (r.ok) return await r.json();
@@ -760,18 +716,12 @@ async function deleteProductFromSupabase(id) {
     })).ok;
 }
 
-// Update product paused status in Supabase
 async function updateProductPausedStatus(productId, paused) {
     const session = JSON.parse(localStorage.getItem('supabase_session'));
     const token = session?.access_token || currentAccessToken;
     await fetch(`${window.SUPABASE_URL}/rest/v1/products?id=eq.${productId}`, {
         method: 'PATCH',
-        headers: {
-            'Content-Type': 'application/json',
-            'apikey': window.SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${token}`,
-            'Prefer': 'return=minimal'
-        },
+        headers: { 'Content-Type': 'application/json', 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Prefer': 'return=minimal' },
         body: JSON.stringify({ paused: paused })
     });
 }
@@ -796,15 +746,15 @@ function loadProducts() {
     });
 }
 
-function saveProductsLocal() { 
-    localStorage.setItem(`mbare_products_${currentSellerId}`, JSON.stringify(sellerProducts)); 
+function saveProductsLocal() {
+    localStorage.setItem(`mbare_products_${currentSellerId}`, JSON.stringify(sellerProducts));
 }
 
+// ==================== RENDER FUNCTIONS ====================
 function renderTiers() {
     const c = document.getElementById('tierContainer');
     if (!c) {
         console.error('tierContainer element not found!');
-        // Try to show a fallback message
         const parent = document.querySelector('.grid-3.mb-30');
         if (parent) {
             parent.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:20px; color:#999;">Subscription plans will appear here.</div>';
@@ -814,24 +764,29 @@ function renderTiers() {
     console.log('Rendering tiers with currentTier:', currentTier);
     c.innerHTML = '';
     for (const [k, d] of Object.entries(tierMap)) {
-        const a = currentTier === k;
-        const dg = currentTier !== 'free' && k !== 'free' && d.level < tierMap[currentTier]?.level;
-        const isDisabled = a || dg;
-        c.innerHTML += `<div class="tier-card ${a ? 'tier-highlight' : ''}">
+        const isCurrent = currentTier === k;
+        const isDowngrade = currentTier !== 'free' && k !== 'free' && d.level < tierMap[currentTier]?.level;
+        const isDisabled = isCurrent || isDowngrade || subscriptionStatus === 'pending';
+        let buttonText = isCurrent ? (subscriptionStatus === 'paused' ? 'Paused' : 'Current Plan') :
+                         (isDowngrade ? 'Cannot Downgrade' : 'Subscribe');
+        if (subscriptionStatus === 'pending' && !isCurrent) {
+            buttonText = '⏳ Pending';
+        }
+        c.innerHTML += `<div class="tier-card ${isCurrent ? 'tier-highlight' : ''}">
             <div style="display:flex;justify-content:space-between;align-items:center;">
                 <strong style="font-size:1.2rem;">${d.name}</strong>
                 ${d.badge ? `<span class="badge-pro">${d.badge}</span>` : ''}
-                ${a && subscriptionStatus === 'paused' ? '<span class="badge-paused">PAUSED</span>' : ''}
+                ${isCurrent && subscriptionStatus === 'paused' ? '<span class="badge-paused">PAUSED</span>' : ''}
+                ${subscriptionStatus === 'pending' ? '<span style="background:#f90;color:#fff;padding:2px 10px;border-radius:20px;font-size:11px;">Pending</span>' : ''}
             </div>
             <div class="tier-price">${d.price}</div>
             <div style="font-size:13px;margin:8px 0;">${d.perks}</div>
             <div style="font-size:12px;background:#f4f5f7;padding:5px;border-radius:30px;">Max: ${d.maxProducts} products</div>
             <button class="btn-primary subscribe-btn" data-tier="${k}" style="margin-top:18px;width:100%;" ${isDisabled ? 'disabled' : ''}>
-                ${a ? (subscriptionStatus === 'paused' ? 'Paused' : 'Current Plan') : (dg ? 'Cannot Downgrade' : 'Subscribe')}
+                ${buttonText}
             </button>
         </div>`;
     }
-    // Attach event listeners to the buttons
     document.querySelectorAll('.subscribe-btn').forEach(b => {
         b.addEventListener('click', () => {
             const t = b.dataset.tier;
@@ -840,6 +795,14 @@ function renderTiers() {
                 if (confirm('Switch to Free?')) {
                     currentTier = 'free';
                     localStorage.setItem(`mbare_tier_${currentSellerId}`, 'free');
+                    // Update subscription status in DB
+                    fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${currentSellerId}&select=id`, {
+                        headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${currentAccessToken}` }
+                    }).then(r => r.json()).then(subs => {
+                        if (subs && subs.length > 0) {
+                            updateSubscriptionStatus(subs[0].id, 'cancelled');
+                        }
+                    });
                     renderTiers();
                     enforceProductLimit();
                     updateStatsAndLimits();
@@ -853,58 +816,38 @@ function renderTiers() {
     });
 }
 
-// ==================== ENFORCE PRODUCT LIMITS (NO STATUS COLUMN) ====================
-
 function enforceProductLimit() {
     const max = getCurrentLimit();
     let pausedCount = 0;
-    
-    // Sort products by created_at (newest first) to keep newest active
-    const sortedProducts = [...sellerProducts].sort((a, b) => {
-        return new Date(b.created_at) - new Date(a.created_at);
-    });
-    
-    // Reset all paused flags first
     sellerProducts.forEach(p => {
-        // Only unpause if subscription is not expired
         if (subscriptionStatus !== 'expired') {
             p.paused = false;
         }
     });
-    
-    // Find which products should be paused (beyond the limit)
     const activeProducts = sellerProducts.filter(p => !p.paused);
-    
     if (activeProducts.length > max) {
-        // Sort active products by created_at (oldest first to pause)
         const toPause = activeProducts
             .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
             .slice(0, activeProducts.length - max);
-        
         toPause.forEach(p => {
             p.paused = true;
             pausedCount++;
         });
-        
-        // Save paused status to Supabase
         toPause.forEach(async (p) => {
             await updateProductPausedStatus(p.id, true);
         });
     }
-    
     if (pausedCount > 0) {
         console.log(`⚠️ ${pausedCount} products were paused due to limit`);
         saveProductsLocal();
-        // Show toast notification
         showToast(`⚠️ ${pausedCount} product(s) have been paused because you exceeded your tier limit. Upgrade to activate more.`, true);
     }
-    
     updateStatsAndLimits();
     updateProductLimitBanner();
 }
 
-function getCurrentLimit() { 
-    return currentTier === 'free' ? 8 : (currentTier === 'tier_150' ? 50 : 200); 
+function getCurrentLimit() {
+    return currentTier === 'free' ? 8 : (currentTier === 'tier_150' ? 50 : 200);
 }
 
 function updateProductLimitBanner() {
@@ -912,15 +855,12 @@ function updateProductLimitBanner() {
     const activeCount = document.getElementById('activeCount');
     const maxCount = document.getElementById('maxCount');
     const tierName = document.getElementById('tierName');
-    
     const active = sellerProducts.filter(p => !p.paused).length;
     const max = getCurrentLimit();
     const tier = tierMap[currentTier]?.name || 'Free';
-    
     if (activeCount) activeCount.textContent = active;
     if (maxCount) maxCount.textContent = max;
     if (tierName) tierName.textContent = tier;
-    
     if (active >= max && banner) {
         banner.style.display = 'block';
     } else if (banner) {
@@ -932,27 +872,22 @@ function updateStatsAndLimits() {
     const active = sellerProducts.filter(p => !p.paused).length;
     const paused = sellerProducts.filter(p => p.paused).length;
     const max = getCurrentLimit();
-    
     const msg = document.getElementById('tierMessage');
     if (msg) {
         msg.innerHTML = currentTier === 'free' 
             ? `<strong>Free:</strong> ${active}/${max} active. ${paused > 0 ? paused + ' paused. ' : ''}${active < max ? (max - active) + ' slots available.' : 'Limit reached.'} <a href="#" id="upgradeLink" class="inline-link">Upgrade</a>`
             : `<strong>${tierMap[currentTier]?.name}:</strong> ${active} active, ${max - active} slots available. ${paused > 0 ? paused + ' paused.' : ''}`;
-        
         const ul = document.getElementById('upgradeLink');
         if (ul) ul.onclick = e => { e.preventDefault(); showUpgradeOptions(); };
     }
-    
     document.getElementById('totalProducts').innerText = active;
     document.getElementById('totalStock').innerText = sellerProducts.filter(p => !p.paused).reduce((s, p) => s + (p.stock || 0), 0);
     document.getElementById('totalValue').innerText = '$' + sellerProducts.filter(p => !p.paused).reduce((s, p) => s + ((p.price || 0) * (p.stock || 0)), 0).toFixed(2);
-    
     const toggleBtn = document.getElementById('toggleFormBtn');
     if (toggleBtn) {
         toggleBtn.disabled = active >= max || subscriptionStatus === 'expired';
         toggleBtn.textContent = active >= max ? 'Limit Reached' : '+ Add Product';
     }
-    
     updateProductLimitBanner();
 }
 
@@ -962,7 +897,6 @@ function renderProducts() {
     const c = document.getElementById('productsList');
     if (!c) return;
     if (!sellerProducts.length) { c.innerHTML = '<p class="text-center" style="padding:40px;color:#666;">No products yet.</p>'; return; }
-    
     c.innerHTML = sellerProducts.map(p => `
         <div class="product-card ${p.paused ? 'paused' : ''}">
             <img src="${p.image_url || 'https://placehold.co/400x300?text=No+Image'}" alt="${esc(p.title)}" onerror="this.src='https://placehold.co/400x300?text=No+Image'">
@@ -982,13 +916,13 @@ function renderProducts() {
 
 window.whatsappInquiry = function(t) { window.open('https://wa.me/?text=' + encodeURIComponent('Hello, interested in "' + t + '" on Mbare Marketplace.'), '_blank'); };
 
-window.deleteProduct = async function(id) { 
-    if (!confirm('Delete this product?')) return; 
-    await deleteProductFromSupabase(id); 
-    sellerProducts = sellerProducts.filter(p => p.id !== id); 
-    saveProductsLocal(); 
-    renderProducts(); 
-    updateStatsAndLimits(); 
+window.deleteProduct = async function(id) {
+    if (!confirm('Delete this product?')) return;
+    await deleteProductFromSupabase(id);
+    sellerProducts = sellerProducts.filter(p => p.id !== id);
+    saveProductsLocal();
+    renderProducts();
+    updateStatsAndLimits();
     enforceProductLimit();
 };
 
@@ -1014,16 +948,16 @@ window.editProduct = function(id) {
 
 window.toggleProductForm = function() {
     const f = document.getElementById('addProductForm'), b = document.getElementById('toggleFormBtn');
-    if (f.style.display === 'none' || f.style.display === '') { 
-        f.style.display = 'block'; 
-        b.innerText = 'Cancel'; 
-    } else { 
-        f.style.display = 'none'; 
-        b.innerText = '+ Add Product'; 
-        document.getElementById('productForm').reset(); 
-        removeImage(); 
-        document.getElementById('submitProductBtn').innerText = 'Add Product'; 
-        document.getElementById('submitProductBtn').removeAttribute('data-editing'); 
+    if (f.style.display === 'none' || f.style.display === '') {
+        f.style.display = 'block';
+        b.innerText = 'Cancel';
+    } else {
+        f.style.display = 'none';
+        b.innerText = '+ Add Product';
+        document.getElementById('productForm').reset();
+        removeImage();
+        document.getElementById('submitProductBtn').innerText = 'Add Product';
+        document.getElementById('submitProductBtn').removeAttribute('data-editing');
     }
 };
 
@@ -1067,50 +1001,32 @@ window.handleAddProduct = async function() {
     const ed = document.getElementById('submitProductBtn').getAttribute('data-editing');
     const activeProducts = sellerProducts.filter(p => !p.paused);
     const max = getCurrentLimit();
-    
-    // Check if editing or adding new
     if (!ed && activeProducts.length >= max) {
         alert(`Limit reached! You have ${activeProducts.length} active products out of ${max} allowed for your ${currentTier} plan. Please upgrade or delete some products.`);
         showUpgradeOptions();
         return;
     }
-    
     const t = document.getElementById('prodTitle').value.trim();
     const pr = parseFloat(document.getElementById('prodPrice').value);
     const st = parseInt(document.getElementById('prodStock').value);
     const cat = document.getElementById('prodCategory').value;
     const desc = document.getElementById('prodDescription').value.trim();
     let img = document.getElementById('prodImage').value.trim();
-    
     if (!t || isNaN(pr) || isNaN(st) || !cat) return alert('Please fill all required fields');
-    
     const btn = document.getElementById('submitProductBtn');
     if (selectedImageFile) {
         btn.disabled = true; btn.innerText = 'Uploading...';
-        try { img = await uploadImageToImgBB(selectedImageFile); } catch (e) { 
-            alert('Upload failed: ' + e.message); 
-            btn.disabled = false; 
-            btn.innerText = ed ? 'Update' : 'Add Product'; 
-            return; 
+        try { img = await uploadImageToImgBB(selectedImageFile); } catch (e) {
+            alert('Upload failed: ' + e.message);
+            btn.disabled = false;
+            btn.innerText = ed ? 'Update' : 'Add Product';
+            return;
         }
     }
     if (!img) return alert('Please upload a product image');
-    
     btn.disabled = true; btn.innerText = 'Saving...';
-    
-    // Check if adding new product would exceed limit
     const isPaused = (!ed && activeProducts.length >= max);
-    
-    const pd = { 
-        title: t, 
-        description: desc, 
-        price: pr, 
-        category: cat, 
-        stock: st, 
-        image_url: img, 
-        paused: isPaused
-    };
-    
+    const pd = { title: t, description: desc, price: pr, category: cat, stock: st, image_url: img, paused: isPaused };
     try {
         const sv = await saveProductToSupabase(pd);
         const newProduct = { id: sv?.[0]?.id || Date.now().toString(), ...pd };
@@ -1118,14 +1034,12 @@ window.handleAddProduct = async function() {
         saveProductsLocal();
         renderProducts();
         updateStatsAndLimits();
-        
         if (isPaused) {
             showToast('Product added but paused because you have reached your limit. Upgrade to activate it.', true);
             enforceProductLimit();
         } else {
             showToast('Product added successfully!');
         }
-        
         toggleProductForm();
         document.getElementById('productForm').reset();
         removeImage();
@@ -1133,7 +1047,6 @@ window.handleAddProduct = async function() {
         btn.disabled = false;
         btn.innerText = 'Add Product';
         btn.removeAttribute('data-editing');
-        
     } catch (e) {
         alert('Failed to save product: ' + e.message);
         btn.disabled = false;
@@ -1153,8 +1066,8 @@ window.handleAddProduct = async function() {
 const analyticsBtn = document.getElementById('analyticsNavBtn');
 if (analyticsBtn) {
     analyticsBtn.addEventListener('click', () => {
-        if (currentTier === 'free' || subscriptionStatus === 'expired' || subscriptionStatus === 'inactive') {
-            alert('You need to be a registered seller with an active subscription to access analytics. Please subscribe to a plan first.');
+        if (currentTier === 'free' || subscriptionStatus === 'expired' || subscriptionStatus === 'inactive' || subscriptionStatus === 'pending') {
+            alert('You need an active subscription to access analytics. Please subscribe first.');
             showUpgradeOptions();
             return;
         }
@@ -1172,41 +1085,64 @@ function startExpiryChecker() {
     }, 60000);
 }
 
+// ==================== SHOW UPGRADE OPTIONS (UPGRADE MODAL) ====================
+function showUpgradeOptions() {
+    const modalHtml = `
+        <div class="payment-modal" id="upgradeModal">
+            <div class="payment-card">
+                <h3 style="text-align:center;">Choose Your Plan</h3>
+                <div style="display:grid; gap:15px; margin:20px 0;">
+                    <div class="tier-card" style="padding:15px;">
+                        <strong>Merchant Basic</strong>
+                        <div class="tier-price">$1.50<span style="font-size:14px;">/month</span></div>
+                        <div>50 products limit</div>
+                        <button class="btn-primary" style="margin-top:15px; width:100%;" onclick="closeModalAndPay('tier_150')">Subscribe - $1.50</button>
+                    </div>
+                    <div class="tier-card" style="padding:15px;">
+                        <strong>Video Ads Plan</strong>
+                        <div class="tier-price">$5.00<span style="font-size:14px;">/month</span></div>
+                        <div>200 products + video ads</div>
+                        <button class="btn-primary" style="margin-top:15px; width:100%;" onclick="closeModalAndPay('tier_5')">Subscribe - $5.00</button>
+                    </div>
+                </div>
+                <button class="btn-secondary" id="closeUpgradeModal" style="width:100%;">Cancel</button>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    document.getElementById('closeUpgradeModal').onclick = () => document.getElementById('upgradeModal')?.remove();
+}
+
+window.closeModalAndPay = function(planType) {
+    document.getElementById('upgradeModal')?.remove();
+    openPayNowPayment(planType);
+};
+
+// ==================== INIT ====================
 async function init() {
     if (!await checkAuth()) return;
-    
     console.log('Dashboard initializing...');
-    
-    // Check for payment status first – this may activate subscription and update UI
+    // Check for payment return
     const paymentProcessed = checkLocalStoragePaymentStatus();
-    
-    // If payment was processed, the activateSubscription already updated the tier and UI,
-    // but we still need to load products and render everything.
-    // However, to avoid race conditions, we'll still fetch subscription data.
+    // Fetch subscription
     const sub = await fetchSubscription();
     currentTier = sub || localStorage.getItem(`mbare_tier_${currentSellerId}`) || 'free';
     localStorage.setItem(`mbare_tier_${currentSellerId}`, currentTier);
     console.log('Current tier after init:', currentTier);
-    
     await loadProductsFromSupabase();
-    // If products failed to load from Supabase, try localStorage
     if (!sellerProducts.length) {
         sellerProducts = JSON.parse(localStorage.getItem(`mbare_products_${currentSellerId}`) || '[]');
     }
-    
-    // Render everything
     renderTiers();
     updateExpiryBanner();
     updateSubscriptionControls();
-    enforceProductLimit();  // This will also call updateStatsAndLimits and renderProducts
+    enforceProductLimit();
     renderProducts();
     updateStatsAndLimits();
     startExpiryChecker();
-    
     document.getElementById('loadingOverlay').style.display = 'none';
     updateViewShopButton();
     console.log('Dashboard fully initialized.');
 }
 
-// Start the app when DOM is ready
 document.addEventListener('DOMContentLoaded', init);
