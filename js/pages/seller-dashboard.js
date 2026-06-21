@@ -126,7 +126,6 @@ async function activateSubscription(planType, reference) {
             }
         }
 
-        // If no pending row found, fallback: try to update any subscription (or create new)
         const updateData = {
             plan_type: planType,
             status: 'active',
@@ -146,7 +145,7 @@ async function activateSubscription(planType, reference) {
             });
             if (updateResp.ok) updateSuccess = true;
         } else {
-            // No pending row – create a new one (shouldn't happen normally)
+            // No pending row – create a new one
             const insertResp = await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}`, 'Prefer': 'return=minimal' },
@@ -188,14 +187,12 @@ async function activateSubscription(planType, reference) {
 // ==================== PAYMENT FLOW ====================
 function openPayNowPayment(planType) {
     const plan = tierMap[planType];
-    // Generate a unique GUID for this payment
     const paymentGuid = 'pay_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
     const returnUrl = encodeURIComponent(window.location.origin + '/payment-return.html');
     const paynowLink = planType === 'tier_150' 
         ? `${PAYNOW_BASE_150}&return_url=${returnUrl}`
         : `${PAYNOW_BASE_500}&return_url=${returnUrl}`;
 
-    // Store payment details in localStorage so payment-return can read them
     localStorage.setItem('pending_payment_plan', planType);
     localStorage.setItem('pending_payment_guid', paymentGuid);
 
@@ -261,14 +258,12 @@ function checkLocalStoragePaymentStatus() {
 
         showToast('Payment detected! Activating subscription...', false);
 
-        // Clear the payment markers from localStorage
         localStorage.removeItem('payment_guid');
         localStorage.removeItem('payment_success');
         localStorage.removeItem('payment_transaction');
         localStorage.removeItem('payment_amount');
         localStorage.removeItem('payment_cancelled');
 
-        // Use the payment_guid as the reference (or transaction if available)
         const ref = paymentTransaction || paymentGuid || 'paynow_' + Date.now();
         activateSubscription(planType, ref);
         return true;
@@ -533,12 +528,10 @@ async function fetchSubscription() {
                         return null;
                     }
                 }
-                // If status is active or paused, return the plan
                 if (s.status === 'active' || s.status === 'paused') {
                     if (s.plan_type === 'tier_5') return 'tier_5';
                     if (s.plan_type === 'tier_150') return 'tier_150';
                 }
-                // If status is pending, we keep the current tier as is (maybe show a message)
             }
         } else if (resp.status === 401) {
             await refreshSession();
@@ -660,8 +653,6 @@ function updateSubscriptionControls() {
         c.innerHTML = '<button class="btn-primary" onclick="resumeSubscription()">Resume Auto-Renewal</button>';
     } else if (subscriptionStatus === 'expired') {
         c.innerHTML = '<button class="btn-primary" onclick="showUpgradeOptions()">Renew Subscription</button>';
-    } else if (subscriptionStatus === 'pending') {
-        c.innerHTML = '<span style="color:#f90;">⏳ Payment pending... Please complete payment.</span>';
     } else {
         c.innerHTML = '<button class="btn-danger" onclick="pauseSubscription()">Pause Subscription</button><br><small>Current period remains active until expiry.</small>';
     }
@@ -766,18 +757,15 @@ function renderTiers() {
     for (const [k, d] of Object.entries(tierMap)) {
         const isCurrent = currentTier === k;
         const isDowngrade = currentTier !== 'free' && k !== 'free' && d.level < tierMap[currentTier]?.level;
-        const isDisabled = isCurrent || isDowngrade || subscriptionStatus === 'pending';
+        const isDisabled = isCurrent || isDowngrade;
         let buttonText = isCurrent ? (subscriptionStatus === 'paused' ? 'Paused' : 'Current Plan') :
                          (isDowngrade ? 'Cannot Downgrade' : 'Subscribe');
-        if (subscriptionStatus === 'pending' && !isCurrent) {
-            buttonText = '⏳ Pending';
-        }
+
         c.innerHTML += `<div class="tier-card ${isCurrent ? 'tier-highlight' : ''}">
             <div style="display:flex;justify-content:space-between;align-items:center;">
                 <strong style="font-size:1.2rem;">${d.name}</strong>
                 ${d.badge ? `<span class="badge-pro">${d.badge}</span>` : ''}
                 ${isCurrent && subscriptionStatus === 'paused' ? '<span class="badge-paused">PAUSED</span>' : ''}
-                ${subscriptionStatus === 'pending' ? '<span style="background:#f90;color:#fff;padding:2px 10px;border-radius:20px;font-size:11px;">Pending</span>' : ''}
             </div>
             <div class="tier-price">${d.price}</div>
             <div style="font-size:13px;margin:8px 0;">${d.perks}</div>
@@ -795,7 +783,6 @@ function renderTiers() {
                 if (confirm('Switch to Free?')) {
                     currentTier = 'free';
                     localStorage.setItem(`mbare_tier_${currentSellerId}`, 'free');
-                    // Update subscription status in DB
                     fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${currentSellerId}&select=id`, {
                         headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${currentAccessToken}` }
                     }).then(r => r.json()).then(subs => {
@@ -1066,7 +1053,7 @@ window.handleAddProduct = async function() {
 const analyticsBtn = document.getElementById('analyticsNavBtn');
 if (analyticsBtn) {
     analyticsBtn.addEventListener('click', () => {
-        if (currentTier === 'free' || subscriptionStatus === 'expired' || subscriptionStatus === 'inactive' || subscriptionStatus === 'pending') {
+        if (currentTier === 'free' || subscriptionStatus === 'expired' || subscriptionStatus === 'inactive') {
             alert('You need an active subscription to access analytics. Please subscribe first.');
             showUpgradeOptions();
             return;
