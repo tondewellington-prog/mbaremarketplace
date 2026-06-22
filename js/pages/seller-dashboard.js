@@ -35,7 +35,6 @@ async function createPendingSubscription(planType, paymentGuid) {
         const userId = session.user?.id;
         if (!userId) throw new Error('No user ID');
 
-        // Check if subscription exists
         let checkResp = await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${userId}&select=id`, {
             headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}` }
         });
@@ -50,7 +49,6 @@ async function createPendingSubscription(planType, paymentGuid) {
 
         const existing = checkResp.ok ? await checkResp.json() : [];
 
-        // Create a pending subscription record
         const subData = {
             seller_id: String(userId),
             plan_type: planType,
@@ -80,7 +78,7 @@ async function createPendingSubscription(planType, paymentGuid) {
         }
 
         if (result) {
-            console.log(`✅ Pending subscription created/updated for plan ${planType} with GUID ${paymentGuid}`);
+            console.log('Pending subscription created/updated for plan ' + planType + ' with GUID ' + paymentGuid);
             return true;
         } else {
             throw new Error('Failed to create pending subscription');
@@ -105,7 +103,6 @@ async function activateSubscription(planType, reference) {
 
         console.log('Activating subscription for user:', userId, 'plan:', planType, 'ref:', reference);
 
-        // Find the pending subscription with this reference
         let findResp = await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${userId}&paynow_reference=eq.${reference}&select=id`, {
             headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}` }
         });
@@ -145,7 +142,6 @@ async function activateSubscription(planType, reference) {
             });
             if (updateResp.ok) updateSuccess = true;
         } else {
-            // No pending row – create a new one
             const insertResp = await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}`, 'Prefer': 'return=minimal' },
@@ -159,7 +155,6 @@ async function activateSubscription(planType, reference) {
 
         if (!updateSuccess) throw new Error('Failed to activate subscription');
 
-        // Update local state
         currentTier = planType;
         subscriptionStatus = 'active';
         autoRenew = true;
@@ -168,7 +163,6 @@ async function activateSubscription(planType, reference) {
         localStorage.setItem(`mbare_tier_${userId}`, currentTier);
         localStorage.removeItem('pending_payment_plan');
 
-        // Refresh data and UI
         await loadProductsFromSupabase();
         renderTiers();
         enforceProductLimit();
@@ -177,10 +171,10 @@ async function activateSubscription(planType, reference) {
         updateSubscriptionControls();
         renderProducts();
 
-        showToast('✅ SUCCESS! ' + plan.name + ' activated!', false);
+        showToast('SUCCESS! ' + plan.name + ' activated!', false);
     } catch (error) {
         console.error('Activation error:', error);
-        showToast('❌ Activation failed. Please refresh and try again.', true);
+        showToast('Activation failed. Please refresh and try again.', true);
     }
 }
 
@@ -196,14 +190,12 @@ function openPayNowPayment(planType) {
     localStorage.setItem('pending_payment_plan', planType);
     localStorage.setItem('pending_payment_guid', paymentGuid);
 
-    // Create a pending subscription record in Supabase
     createPendingSubscription(planType, paymentGuid).then(success => {
         if (!success) {
             showToast('Failed to create pending subscription. Please try again.', true);
             return;
         }
 
-        // Show modal with payment instructions and PayNow link
         const modalHtml = `
             <div class="payment-modal" id="paynowModal">
                 <div class="payment-card" style="text-align:center;">
@@ -241,7 +233,6 @@ function openPayNowPayment(planType) {
     });
 }
 
-// Check localStorage for payment status (called on dashboard load)
 function checkLocalStoragePaymentStatus() {
     const paymentGuid = localStorage.getItem('payment_guid');
     const paymentSuccess = localStorage.getItem('payment_success');
@@ -349,6 +340,7 @@ async function loadSellerProfile() {
             if (sellers && sellers.length > 0) {
                 currentSellerProfile = sellers[0];
                 updateProfileUI();
+                loadLocationData(); // Populate location fields
             }
         }
     } catch (e) { console.error('Error loading profile:', e); }
@@ -490,19 +482,158 @@ async function removeCoverImage() {
     } catch (e) { alert('Failed to remove cover image'); }
 }
 
+// ==================== LOCATION PICKER ====================
+let locationMap, locationMarker;
+let isMapInitialized = false;
+
+// Initialize the map (called by Google Maps callback)
+window.initLocationPicker = function() {
+    if (isMapInitialized) return;
+
+    const mapDiv = document.getElementById('profile-map');
+    if (!mapDiv) return;
+
+    const savedLat = parseFloat(document.getElementById('seller_lat').value) || -17.8252;
+    const savedLng = parseFloat(document.getElementById('seller_lng').value) || 31.0335;
+    const center = { lat: savedLat, lng: savedLng };
+
+    locationMap = new google.maps.Map(mapDiv, {
+        center: center,
+        zoom: 13,
+        mapTypeControl: false,
+    });
+
+    locationMarker = new google.maps.Marker({
+        position: center,
+        map: locationMap,
+        draggable: true,
+    });
+
+    locationMarker.addListener('dragend', () => {
+        const pos = locationMarker.getPosition();
+        document.getElementById('seller_lat').value = pos.lat();
+        document.getElementById('seller_lng').value = pos.lng();
+        reverseGeocode(pos.lat(), pos.lng());
+    });
+
+    const input = document.getElementById('location-search');
+    if (input) {
+        const searchBox = new google.maps.places.SearchBox(input);
+        locationMap.addListener('bounds_changed', () => {
+            searchBox.setBounds(locationMap.getBounds());
+        });
+        searchBox.addListener('places_changed', () => {
+            const places = searchBox.getPlaces();
+            if (places.length === 0) return;
+            const place = places[0];
+            if (!place.geometry) return;
+
+            const loc = place.geometry.location;
+            locationMarker.setPosition(loc);
+            locationMap.panTo(loc);
+            locationMap.setZoom(15);
+
+            document.getElementById('seller_lat').value = loc.lat();
+            document.getElementById('seller_lng').value = loc.lng();
+            document.getElementById('seller_display_name').value = place.formatted_address || place.name;
+            input.value = place.formatted_address || place.name;
+        });
+    }
+
+    isMapInitialized = true;
+    console.log('Location picker initialized.');
+};
+
+function reverseGeocode(lat, lng) {
+    const geocoder = new google.maps.Geocoder();
+    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+        if (status === 'OK' && results[0]) {
+            document.getElementById('seller_display_name').value = results[0].formatted_address;
+            document.getElementById('location-search').value = results[0].formatted_address;
+        }
+    });
+}
+
+function loadLocationData() {
+    const profile = currentSellerProfile;
+    if (!profile) return;
+    if (profile.latitude) {
+        document.getElementById('seller_lat').value = profile.latitude;
+        document.getElementById('seller_lng').value = profile.longitude;
+        document.getElementById('seller_display_name').value = profile.location_display_name || '';
+        document.getElementById('location-search').value = profile.location_display_name || '';
+        if (isMapInitialized && locationMarker) {
+            const pos = { lat: parseFloat(profile.latitude), lng: parseFloat(profile.longitude) };
+            locationMarker.setPosition(pos);
+            locationMap.panTo(pos);
+        }
+    }
+}
+
+// ==================== TOGGLE PROFILE FORM ====================
+function toggleProfileForm() {
+    const section = document.getElementById('profileSection');
+    const btn = document.getElementById('toggleProfileBtn');
+    if (section.style.display === 'none') {
+        section.style.display = 'block';
+        btn.textContent = 'Close Profile';
+        btn.style.background = '#dc3545';
+        setTimeout(() => {
+            if (!isMapInitialized) {
+                initLocationPicker();
+            } else {
+                google.maps.event.trigger(locationMap, 'resize');
+                const lat = parseFloat(document.getElementById('seller_lat').value) || -17.8252;
+                const lng = parseFloat(document.getElementById('seller_lng').value) || 31.0335;
+                locationMap.setCenter({ lat, lng });
+                locationMarker.setPosition({ lat, lng });
+            }
+            loadLocationData();
+        }, 300);
+    } else {
+        section.style.display = 'none';
+        btn.textContent = 'Edit Profile';
+        btn.style.background = '#6c757d';
+    }
+}
+
+// ==================== SAVE SHOP PROFILE (overridden) ====================
 async function saveShopProfile() {
     const description = document.getElementById('shopDescription').value.trim();
+    const latitude = document.getElementById('seller_lat').value;
+    const longitude = document.getElementById('seller_lng').value;
+    const locationDisplay = document.getElementById('seller_display_name').value;
+
+    const searchVal = document.getElementById('location-search').value.trim();
+    if (searchVal && (!latitude || !longitude)) {
+        if (!confirm('You searched for a location but did not select it from the dropdown. The location will not be saved. Continue?')) {
+            return;
+        }
+    }
+
     try {
         const session = JSON.parse(localStorage.getItem('supabase_session'));
         const token = session?.access_token || currentAccessToken;
         await fetch(`${window.SUPABASE_URL}/rest/v1/sellers?user_id=eq.${currentSellerId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json', 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Prefer': 'return=minimal' },
-            body: JSON.stringify({ shop_description: description })
+            body: JSON.stringify({ 
+                shop_description: description,
+                latitude: latitude || null,
+                longitude: longitude || null,
+                location_display_name: locationDisplay || null
+            })
         });
-        if (currentSellerProfile) currentSellerProfile.shop_description = description;
+        if (currentSellerProfile) {
+            currentSellerProfile.shop_description = description;
+            currentSellerProfile.latitude = latitude;
+            currentSellerProfile.longitude = longitude;
+            currentSellerProfile.location_display_name = locationDisplay;
+        }
         showToast('Shop profile saved successfully!');
-    } catch (e) { alert('Failed to save shop profile'); }
+    } catch (e) {
+        alert('Failed to save shop profile: ' + e.message);
+    }
 }
 
 // ==================== SUBSCRIPTION FUNCTIONS ====================
@@ -825,9 +956,9 @@ function enforceProductLimit() {
         });
     }
     if (pausedCount > 0) {
-        console.log(`⚠️ ${pausedCount} products were paused due to limit`);
+        console.log('Products paused due to limit');
         saveProductsLocal();
-        showToast(`⚠️ ${pausedCount} product(s) have been paused because you exceeded your tier limit. Upgrade to activate more.`, true);
+        showToast('Some products have been paused because you exceeded your tier limit. Upgrade to activate them.', true);
     }
     updateStatsAndLimits();
     updateProductLimitBanner();
@@ -1105,13 +1236,19 @@ window.closeModalAndPay = function(planType) {
     openPayNowPayment(planType);
 };
 
+// ==================== TOGGLE EVENT LISTENER ====================
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleBtn = document.getElementById('toggleProfileBtn');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', toggleProfileForm);
+    }
+});
+
 // ==================== INIT ====================
 async function init() {
     if (!await checkAuth()) return;
     console.log('Dashboard initializing...');
-    // Check for payment return
     const paymentProcessed = checkLocalStoragePaymentStatus();
-    // Fetch subscription
     const sub = await fetchSubscription();
     currentTier = sub || localStorage.getItem(`mbare_tier_${currentSellerId}`) || 'free';
     localStorage.setItem(`mbare_tier_${currentSellerId}`, currentTier);
