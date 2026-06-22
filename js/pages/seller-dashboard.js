@@ -10,6 +10,7 @@ const PAYNOW_BASE_500 = 'https://www.paynow.co.zw/Payment/BillPaymentLink/?q=aWQ
 let currentSellerId = null, currentAccessToken = null;
 let currentTier = 'free', subscriptionStatus = 'inactive', subscriptionExpiry = null, autoRenew = true;
 let sellerProducts = [], selectedImageFile = null, renewalCheckInterval = null;
+let isRefreshing = false;  // Prevent concurrent refresh calls
 
 const tierMap = {
     free: { name: 'Starter Plan', price: 'Free', maxProducts: 8, perks: '8 active products', badge: '', level: 0, amount: '0.00' },
@@ -23,6 +24,70 @@ function showToast(message, isError = false) {
     toast.innerHTML = message;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 5000);
+}
+
+// ==================== REFRESH SESSION (with concurrency guard) ====================
+async function refreshSession() {
+    if (isRefreshing) {
+        // Wait for the ongoing refresh to finish
+        await new Promise(resolve => {
+            const check = () => {
+                if (!isRefreshing) resolve();
+                else setTimeout(check, 200);
+            };
+            check();
+        });
+        // After waiting, check if we have a valid session now
+        const session = localStorage.getItem('supabase_session');
+        return !!session;
+    }
+
+    isRefreshing = true;
+    try {
+        const sessionStr = localStorage.getItem('supabase_session');
+        if (!sessionStr) {
+            console.warn('No session found in localStorage.');
+            return false;
+        }
+        const session = JSON.parse(sessionStr);
+        const refreshToken = session.refresh_token;
+        if (!refreshToken) {
+            console.warn('No refresh token available.');
+            return false;
+        }
+
+        const response = await fetch(`${window.SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': window.SUPABASE_ANON_KEY,
+            },
+            body: JSON.stringify({ refresh_token: refreshToken }),
+        });
+
+        if (response.ok) {
+            const newSession = await response.json();
+            localStorage.setItem('supabase_session', JSON.stringify(newSession));
+            currentAccessToken = newSession.access_token;
+            console.log('Session refreshed successfully');
+            return true;
+        } else {
+            console.error('Refresh failed with status:', response.status);
+            // Session is irrecoverable – clear and redirect
+            localStorage.removeItem('supabase_session');
+            localStorage.setItem('isLoggedIn', 'false');
+            // Avoid redirecting if already on login page
+            if (!window.location.pathname.includes('login.html')) {
+                window.location.href = 'login.html?session=expired';
+            }
+            return false;
+        }
+    } catch (e) {
+        console.error('Session refresh network error:', e);
+        return false;
+    } finally {
+        isRefreshing = false;
+    }
 }
 
 // ==================== CREATE PENDING SUBSCRIPTION ====================
@@ -39,7 +104,8 @@ async function createPendingSubscription(planType, paymentGuid) {
             headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}` }
         });
         if (checkResp.status === 401) {
-            await refreshSession();
+            const refreshed = await refreshSession();
+            if (!refreshed) return false;
             const newSession = JSON.parse(localStorage.getItem('supabase_session'));
             accessToken = newSession.access_token;
             checkResp = await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${userId}&select=id`, {
@@ -90,7 +156,7 @@ async function createPendingSubscription(planType, paymentGuid) {
     }
 }
 
-// ==================== ACTIVATE SUBSCRIPTION (AFTER PAYMENT) ====================
+// ==================== ACTIVATE SUBSCRIPTION ====================
 async function activateSubscription(planType, reference) {
     try {
         const plan = tierMap[planType];
@@ -107,7 +173,8 @@ async function activateSubscription(planType, reference) {
             headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}` }
         });
         if (findResp.status === 401) {
-            await refreshSession();
+            const refreshed = await refreshSession();
+            if (!refreshed) throw new Error('Session refresh failed');
             const newSession = JSON.parse(localStorage.getItem('supabase_session'));
             accessToken = newSession.access_token;
             findResp = await fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${userId}&paynow_reference=eq.${reference}&select=id`, {
@@ -269,49 +336,29 @@ function checkLocalStoragePaymentStatus() {
     return false;
 }
 
-// ==================== REFRESH SESSION ====================
-async function refreshSession() {
-    const sessionStr = localStorage.getItem('supabase_session');
-    if (!sessionStr) return false;
-    const session = JSON.parse(sessionStr);
-    const refreshToken = session.refresh_token;
-    if (!refreshToken) return false;
-    try {
-        const response = await fetch(`${window.SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'apikey': window.SUPABASE_ANON_KEY },
-            body: JSON.stringify({ refresh_token: refreshToken })
-        });
-        if (response.ok) {
-            const newSession = await response.json();
-            localStorage.setItem('supabase_session', JSON.stringify(newSession));
-            currentAccessToken = newSession.access_token;
-            console.log('Session refreshed successfully');
-            return true;
-        }
-    } catch (e) { console.error('Session refresh failed:', e); }
-    return false;
-}
-
-// ==================== AUTH AND PRODUCT FUNCTIONS ====================
+// ==================== AUTH ====================
 async function checkAuth() {
-    const s = localStorage.getItem('supabase_session');
-    const l = localStorage.getItem('isLoggedIn') === 'true';
-    if (!l || !s) {
+    const sessionStr = localStorage.getItem('supabase_session');
+    const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    if (!loggedIn || !sessionStr) {
         alert('Please login first.');
         window.location.href = 'login.html?redirect=seller-dashboard.html';
         return false;
     }
     try {
-        const session = JSON.parse(s);
+        const session = JSON.parse(sessionStr);
         currentSellerId = session.user?.id;
         currentAccessToken = session.access_token;
-        if (!currentSellerId) throw new Error('No ID');
+        if (!currentSellerId || !currentAccessToken) throw new Error('Invalid session data');
         document.querySelector('.account-menu').textContent = 'Hello, ' + (session.user?.email || 'Seller').split('@')[0];
         updateViewShopButton();
-        await loadSellerProfile();
+        // Load profile – this will handle its own token refresh
+        await loadSellerProfile(1);
         return true;
     } catch (e) {
+        console.error('Auth check error:', e);
+        localStorage.removeItem('supabase_session');
+        localStorage.setItem('isLoggedIn', 'false');
         window.location.href = 'login.html';
         return false;
     }
@@ -325,10 +372,10 @@ function updateViewShopButton() {
     }
 }
 
-// ==================== SELLER PROFILE FUNCTIONS ====================
+// ==================== SELLER PROFILE ====================
 let currentSellerProfile = null;
 
-async function loadSellerProfile() {
+async function loadSellerProfile(retries = 1) {
     try {
         const session = JSON.parse(localStorage.getItem('supabase_session'));
         const token = session?.access_token || currentAccessToken;
@@ -340,10 +387,23 @@ async function loadSellerProfile() {
             if (sellers && sellers.length > 0) {
                 currentSellerProfile = sellers[0];
                 updateProfileUI();
-                loadLocationData(); // Populate location fields
+                loadLocationData();
             }
+        } else if (resp.status === 401 && retries > 0) {
+            console.log('Profile fetch 401, trying refresh...');
+            const refreshed = await refreshSession();
+            if (refreshed) {
+                await loadSellerProfile(0);
+            } else {
+                // refreshSession already redirected if needed
+                return;
+            }
+        } else {
+            console.error('Profile load failed:', resp.status);
         }
-    } catch (e) { console.error('Error loading profile:', e); }
+    } catch (e) {
+        console.error('Error loading profile:', e);
+    }
 }
 
 function updateProfileUI() {
@@ -486,7 +546,6 @@ async function removeCoverImage() {
 let locationMap, locationMarker;
 let isMapInitialized = false;
 
-// Initialize the map (called by Google Maps callback)
 window.initLocationPicker = function() {
     if (isMapInitialized) return;
 
@@ -597,7 +656,7 @@ function toggleProfileForm() {
     }
 }
 
-// ==================== SAVE SHOP PROFILE (overridden) ====================
+// ==================== SAVE SHOP PROFILE ====================
 async function saveShopProfile() {
     const description = document.getElementById('shopDescription').value.trim();
     const latitude = document.getElementById('seller_lat').value;
@@ -637,7 +696,7 @@ async function saveShopProfile() {
 }
 
 // ==================== SUBSCRIPTION FUNCTIONS ====================
-async function fetchSubscription() {
+async function fetchSubscription(retries = 1) {
     try {
         const session = JSON.parse(localStorage.getItem('supabase_session'));
         const token = session?.access_token || currentAccessToken;
@@ -664,12 +723,23 @@ async function fetchSubscription() {
                     if (s.plan_type === 'tier_150') return 'tier_150';
                 }
             }
-        } else if (resp.status === 401) {
-            await refreshSession();
-            return fetchSubscription();
+            return null;
+        } else if (resp.status === 401 && retries > 0) {
+            console.log('Subscription fetch 401, trying refresh...');
+            const refreshed = await refreshSession();
+            if (refreshed) {
+                return fetchSubscription(0);
+            } else {
+                return null;
+            }
+        } else {
+            console.error('Subscription fetch failed:', resp.status);
+            return null;
         }
+    } catch (e) {
+        console.error('Error fetching subscription:', e);
         return null;
-    } catch (e) { return null; }
+    }
 }
 
 async function updateSubscriptionStatus(sid, st) {
@@ -790,7 +860,7 @@ function updateSubscriptionControls() {
 }
 
 // ==================== PRODUCT FUNCTIONS ====================
-async function loadProductsFromSupabase() {
+async function loadProductsFromSupabase(retries = 1) {
     try {
         const session = JSON.parse(localStorage.getItem('supabase_session'));
         const token = session?.access_token || currentAccessToken;
@@ -801,10 +871,22 @@ async function loadProductsFromSupabase() {
             sellerProducts = await r.json();
             sellerProducts.forEach(p => { if (p.paused === undefined) p.paused = false; });
             return true;
+        } else if (r.status === 401 && retries > 0) {
+            console.log('Products fetch 401, trying refresh...');
+            const refreshed = await refreshSession();
+            if (refreshed) {
+                return loadProductsFromSupabase(0);
+            } else {
+                return false;
+            }
+        } else {
+            console.error('Products fetch failed:', r.status);
+            return false;
         }
-        if (r.status === 401) { await refreshSession(); return loadProductsFromSupabase(); }
+    } catch (e) {
+        console.error('Error loading products:', e);
         return false;
-    } catch (e) { return false; }
+    }
 }
 
 async function saveProductToSupabase(pd) {
@@ -1203,7 +1285,7 @@ function startExpiryChecker() {
     }, 60000);
 }
 
-// ==================== SHOW UPGRADE OPTIONS (UPGRADE MODAL) ====================
+// ==================== SHOW UPGRADE OPTIONS ====================
 function showUpgradeOptions() {
     const modalHtml = `
         <div class="payment-modal" id="upgradeModal">
@@ -1248,25 +1330,37 @@ document.addEventListener('DOMContentLoaded', function() {
 async function init() {
     if (!await checkAuth()) return;
     console.log('Dashboard initializing...');
-    const paymentProcessed = checkLocalStoragePaymentStatus();
-    const sub = await fetchSubscription();
-    currentTier = sub || localStorage.getItem(`mbare_tier_${currentSellerId}`) || 'free';
-    localStorage.setItem(`mbare_tier_${currentSellerId}`, currentTier);
-    console.log('Current tier after init:', currentTier);
-    await loadProductsFromSupabase();
-    if (!sellerProducts.length) {
-        sellerProducts = JSON.parse(localStorage.getItem(`mbare_products_${currentSellerId}`) || '[]');
+    try {
+        // Check payment return
+        checkLocalStoragePaymentStatus();
+        // Fetch subscription (retries internally)
+        const sub = await fetchSubscription(1);
+        currentTier = sub || localStorage.getItem(`mbare_tier_${currentSellerId}`) || 'free';
+        localStorage.setItem(`mbare_tier_${currentSellerId}`, currentTier);
+        console.log('Current tier after init:', currentTier);
+        // Load products
+        await loadProductsFromSupabase(1);
+        if (!sellerProducts.length) {
+            sellerProducts = JSON.parse(localStorage.getItem(`mbare_products_${currentSellerId}`) || '[]');
+        }
+        // Render everything
+        renderTiers();
+        updateExpiryBanner();
+        updateSubscriptionControls();
+        enforceProductLimit();
+        renderProducts();
+        updateStatsAndLimits();
+        startExpiryChecker();
+        document.getElementById('loadingOverlay').style.display = 'none';
+        updateViewShopButton();
+        console.log('Dashboard fully initialized.');
+    } catch (e) {
+        console.error('Init error:', e);
+        // Only redirect if session is missing
+        if (!localStorage.getItem('supabase_session')) {
+            window.location.href = 'login.html';
+        }
     }
-    renderTiers();
-    updateExpiryBanner();
-    updateSubscriptionControls();
-    enforceProductLimit();
-    renderProducts();
-    updateStatsAndLimits();
-    startExpiryChecker();
-    document.getElementById('loadingOverlay').style.display = 'none';
-    updateViewShopButton();
-    console.log('Dashboard fully initialized.');
 }
 
 document.addEventListener('DOMContentLoaded', init);
