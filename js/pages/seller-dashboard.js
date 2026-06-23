@@ -9,7 +9,7 @@ const API_BASE_URL = 'https://api.mbaremarketplace.com';
 let currentSellerId = null, currentAccessToken = null;
 let currentTier = 'free', subscriptionStatus = 'inactive', subscriptionExpiry = null, autoRenew = true;
 let sellerProducts = [], selectedImageFile = null, renewalCheckInterval = null;
-let isRefreshing = false;  
+let isRefreshing = false;  // Prevent concurrent refresh calls
 
 const tierMap = {
     free: { name: 'Starter Plan', price: 'Free', maxProducts: 8, perks: '8 active products', badge: '', level: 0, amount: '0.00' },
@@ -91,9 +91,9 @@ async function openPayNowPayment(planType) {
             return;
         }
 
-        showToast('Contacting payment gateway server...', false);
+        showToast('Connecting to Paynow gateway securely...', false);
 
-        // Talk to your VPS Server directly to process the initialization payload securely
+        // Contact your backend VPS API to safely compute parameters and signatures
         const response = await fetch(`${API_BASE_URL}/initiate-subscription`, {
             method: 'POST',
             headers: {
@@ -113,46 +113,14 @@ async function openPayNowPayment(planType) {
             throw new Error(data.error || 'Failed to initiate secure token connection.');
         }
 
-        // Dynamic parameters returned directly by your server's successful SDK execution
-        const paynowLink = data.redirectUrl;
-        const paymentGuid = data.reference; 
-
+        // Cache parameters to process callbacks upon return matching your verification systems
         localStorage.setItem('pending_payment_plan', planType);
-        localStorage.setItem('pending_payment_guid', paymentGuid);
+        localStorage.setItem('pending_payment_guid', data.reference);
 
-        const modalHtml = `
-            <div class="payment-modal" id="paynowModal">
-                <div class="payment-card" style="text-align:center;">
-                    <button style="float:right;background:none;border:none;font-size:24px;cursor:pointer;" onclick="closePaymentModal()">&times;</button>
-                    <h3>${plan.name}</h3>
-                    <div class="tier-price">$${plan.amount}<span style="font-size:14px;">/month</span></div>
-                    <p>${plan.perks}</p>
-                    <div style="margin:20px 0; padding:15px; background:#f0f9ff; border-radius:12px;">
-                        <p><strong>Instructions:</strong></p>
-                        <ol style="text-align:left; margin-left:20px;">
-                            <li>Click PayNow button below</li>
-                            <li>Select your chosen payment routing method (EcoCash/OneMoney/Cards)</li>
-                            <li>Enter your credentials and approve payment authorization request</li>
-                            <li>After payment completes, click "Return to Merchant Website"</li>
-                        </ol>
-                    </div>
-                    <a href="${paynowLink}" target="_blank">
-                        <img src='https://www.paynow.co.zw/Content/Buttons/Medium_buttons/button_pay-now_medium.png' style="cursor:pointer; border-radius:8px; max-width:200px;" />
-                    </a>
-                    <p style="font-size:12px; margin-top:15px;">After payment, click "Return to Merchant Website"</p>
-                    <button class="btn-secondary" id="closePayModal" style="width:100%; margin-top:15px;">Cancel</button>
-                </div>
-            </div>
-        `;
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        showToast('Redirecting to Paynow checkout portal...', false);
 
-        window.closePaymentModal = function() {
-            document.getElementById('paynowModal')?.remove();
-            localStorage.removeItem('pending_payment_plan');
-            localStorage.removeItem('pending_payment_guid');
-        };
-
-        document.getElementById('closePayModal').onclick = window.closePaymentModal;
+        // INSTANT SEAMLESS DIRECT REDIRECTION MECHANISM 🚀
+        window.location.href = data.redirectUrl;
 
     } catch (e) {
         console.error('Payment initialization error:', e);
@@ -226,6 +194,7 @@ async function activateSubscription(planType, reference) {
         currentSellerId = userId;
         localStorage.setItem(`mbare_tier_${userId}`, currentTier);
         localStorage.removeItem('pending_payment_plan');
+        localStorage.removeItem('pending_payment_guid');
 
         await loadProductsFromSupabase();
         renderTiers();
@@ -243,34 +212,18 @@ async function activateSubscription(planType, reference) {
 }
 
 function checkLocalStoragePaymentStatus() {
-    const paymentGuid = localStorage.getItem('payment_guid');
-    const paymentSuccess = localStorage.getItem('payment_success');
-    const paymentTransaction = localStorage.getItem('payment_transaction');
-    const paymentAmount = localStorage.getItem('payment_amount');
+    // Check if user returned from standard Paynow redirection loops
+    const pendingPlan = localStorage.getItem('pending_payment_plan');
+    const pendingGuid = localStorage.getItem('pending_payment_guid');
 
-    if ((paymentGuid || paymentTransaction) && paymentSuccess === 'true') {
-        let planType = 'tier_150';
-        if (paymentAmount === '5.00' || paymentAmount === '5') {
-            planType = 'tier_5';
-        }
+    // Paynow return parameters check
+    const urlParams = new URLSearchParams(window.location.search);
+    const statusParam = urlParams.get('status');
 
-        showToast('Payment detected! Activating subscription...', false);
-
-        localStorage.removeItem('payment_guid');
-        localStorage.removeItem('payment_success');
-        localStorage.removeItem('payment_transaction');
-        localStorage.removeItem('payment_amount');
-        localStorage.removeItem('payment_cancelled');
-
-        const ref = paymentTransaction || paymentGuid || 'paynow_' + Date.now();
-        activateSubscription(planType, ref);
+    if (pendingPlan && pendingGuid && (statusParam === 'success' || !statusParam)) {
+        showToast('Processing returning payment session status updates...', false);
+        activateSubscription(pendingPlan, pendingGuid);
         return true;
-    }
-
-    if (localStorage.getItem('payment_cancelled') === 'true') {
-        showToast('Payment was cancelled. No charges were made.', true);
-        localStorage.removeItem('payment_cancelled');
-        return false;
     }
     return false;
 }
@@ -477,7 +430,6 @@ window.initLocationPicker = function() {
     isMapInitialized = true;
 };
 
-// ... (Keeping standard reverseGeocode, toggleProfileForm, saveShopProfile helper implementations stable)
 function reverseGeocode(lat, lng) {
     const geocoder = new google.maps.Geocoder();
     geocoder.geocode({ location: { lat, lng } }, (results, status) => {
@@ -646,22 +598,31 @@ function updateStatsAndLimits() {
 function renderProducts() {
     const c = document.getElementById('productsList');
     if (!c) return;
+    // Standard product item presentation loop syntax injection mappings
     c.innerHTML = sellerProducts.map(p => `
-        <div class="product-card">
+        <div class="product-card ${p.paused ? 'paused-product' : ''}">
+            <img src="${p.image_url || 'placeholder.jpg'}" alt="${p.title}" />
             <h3>${p.title}</h3>
             <p>$${p.price}</p>
+            ${p.paused ? '<span class="paused-tag">Allocation Exceeded (Paused)</span>' : ''}
         </div>
     `).join('');
 }
 
 function updateExpiryBanner() {
     const b = document.getElementById('expiryBanner');
-    if (b) b.style.display = 'none';
+    if (!b) return;
+    if (currentTier !== 'free' && subscriptionExpiry) {
+        b.style.display = 'block';
+        b.innerHTML = `Your plan expires on ${new Date(subscriptionExpiry).toLocaleDateString()}.`;
+    } else {
+        b.style.display = 'none';
+    }
 }
 
 function updateSubscriptionControls() {
     const c = document.getElementById('subscriptionControls');
-    if (c) c.style.display = 'none';
+    if (c) c.style.display = currentTier !== 'free' ? 'block' : 'none';
 }
 
 function startExpiryChecker() {
@@ -672,25 +633,36 @@ function startExpiryChecker() {
     }, 60000);
 }
 
-// ==================== INITIALIZATION TRICGGER ====================
+// ==================== INITIALIZATION TRIGGER ====================
 async function init() {
     if (!await checkAuth()) return;
+    console.log('Dashboard initializing...');
     try {
         checkLocalStoragePaymentStatus();
         const sub = await fetchSubscription(1);
-        currentTier = sub || 'free';
+        currentTier = sub || localStorage.getItem(`mbare_tier_${currentSellerId}`) || 'free';
         localStorage.setItem(`mbare_tier_${currentSellerId}`, currentTier);
+        
         await loadProductsFromSupabase(1);
         
         renderTiers();
         enforceProductLimit();
         renderProducts();
+        updateStatsAndLimits();
+        updateExpiryBanner();
+        updateSubscriptionControls();
         startExpiryChecker();
-        if(document.getElementById('loadingOverlay')) {
+        
+        if (document.getElementById('loadingOverlay')) {
             document.getElementById('loadingOverlay').style.display = 'none';
         }
+        updateViewShopButton();
+        console.log('Dashboard fully initialized.');
     } catch (e) {
         console.error('Init error:', e);
+        if (!localStorage.getItem('supabase_session')) {
+            window.location.href = 'login.html';
+        }
     }
 }
 
