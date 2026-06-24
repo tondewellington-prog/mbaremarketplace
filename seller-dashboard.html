@@ -7,6 +7,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Leaflet CSS (Free, no API key needed) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
         body { background-color: #EAEDED; }
@@ -125,6 +127,9 @@
         .product-limit-banner strong { color: #856404; }
         .product-limit-banner .upgrade-link { color: #f90; font-weight: 600; cursor: pointer; text-decoration: underline; }
         .product-limit-banner .upgrade-link:hover { color: #e68a00; }
+
+        /* Leaflet map container fix */
+        #profile-map { height: 300px; width: 100%; border-radius: 8px; border: 1px solid #ccc; z-index: 1; }
     </style>
 </head>
 <body>
@@ -195,7 +200,7 @@
 
                     <div class="form-group">
                         <label>Drag the pin to fine-tune</label>
-                        <div id="profile-map" style="height:300px; width:100%; border-radius:8px; border:1px solid #ccc;"></div>
+                        <div id="profile-map"></div>
                         <small style="color:#666;">Buyers will see a general area, not your exact address.</small>
                     </div>
 
@@ -293,8 +298,8 @@
             checkVerificationLoop();
         });
     </script>
-    <!-- Google Maps API - Replace YOUR_API_KEY -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places&callback=initLocationPicker" async defer></script>
+    <!-- Leaflet JS (Free, no API key needed) -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="js/pages/seller-dashboard.js"></script>
 </body>
 </html>
