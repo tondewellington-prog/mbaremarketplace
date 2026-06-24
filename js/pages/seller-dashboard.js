@@ -244,7 +244,7 @@ async function activateSubscription(planType, reference) {
     }
 }
 
-// ==================== PAYMENT FLOW (UPDATED - VPS BACKEND) ====================
+// ==================== PAYMENT FLOW (VPS BACKEND) ====================
 async function openPayNowPayment(planType) {
     const plan = tierMap[planType];
     
