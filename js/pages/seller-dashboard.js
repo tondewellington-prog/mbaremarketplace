@@ -244,7 +244,7 @@ async function activateSubscription(planType, reference) {
     }
 }
 
-// ==================== PAYMENT FLOW (VPS BACKEND) ====================
+// ==================== PAYMENT FLOW (UPDATED - VPS BACKEND) ====================
 async function openPayNowPayment(planType) {
     const plan = tierMap[planType];
     
@@ -523,89 +523,142 @@ async function removeCoverImage() {
     } catch (e) { alert('Failed to remove cover image'); }
 }
 
-// ==================== LOCATION PICKER ====================
+// ==================== LOCATION PICKER (FREE - Leaflet + OpenStreetMap) ====================
 let locationMap, locationMarker;
 let isMapInitialized = false;
+let searchTimeout = null;
 
-window.initLocationPicker = function() {
+function initLocationPicker() {
     if (isMapInitialized) return;
 
     const mapDiv = document.getElementById('profile-map');
-    if (!mapDiv) return;
+    if (!mapDiv) {
+        console.warn('Profile map container not found');
+        return;
+    }
 
+    // Get saved coordinates (default to Harare, Zimbabwe)
     const savedLat = parseFloat(document.getElementById('seller_lat').value) || -17.8252;
     const savedLng = parseFloat(document.getElementById('seller_lng').value) || 31.0335;
     const center = { lat: savedLat, lng: savedLng };
 
-    locationMap = new google.maps.Map(mapDiv, {
-        center: center,
-        zoom: 13,
-        mapTypeControl: false,
+    // Initialize the map
+    locationMap = L.map('profile-map').setView([center.lat, center.lng], 13);
+
+    // Add OpenStreetMap tiles (completely free, no API key)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(locationMap);
+
+    // Add draggable marker
+    locationMarker = L.marker([center.lat, center.lng], {
+        draggable: true
+    }).addTo(locationMap);
+
+    // When marker is dragged, update hidden fields
+    locationMarker.on('dragend', function() {
+        const pos = locationMarker.getLatLng();
+        document.getElementById('seller_lat').value = pos.lat;
+        document.getElementById('seller_lng').value = pos.lng;
+        // Reverse geocode to get address
+        reverseGeocode(pos.lat, pos.lng);
     });
 
-    locationMarker = new google.maps.Marker({
-        position: center,
-        map: locationMap,
-        draggable: true,
-    });
+    // Setup search with debouncing (free Nominatim API)
+    const searchInput = document.getElementById('location-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const query = this.value.trim();
+            if (query.length < 3) return;
 
-    locationMarker.addListener('dragend', () => {
-        const pos = locationMarker.getPosition();
-        document.getElementById('seller_lat').value = pos.lat();
-        document.getElementById('seller_lng').value = pos.lng();
-        reverseGeocode(pos.lat(), pos.lng());
-    });
-
-    const input = document.getElementById('location-search');
-    if (input) {
-        const searchBox = new google.maps.places.SearchBox(input);
-        locationMap.addListener('bounds_changed', () => {
-            searchBox.setBounds(locationMap.getBounds());
+            searchTimeout = setTimeout(() => {
+                searchLocation(query);
+            }, 500);
         });
-        searchBox.addListener('places_changed', () => {
-            const places = searchBox.getPlaces();
-            if (places.length === 0) return;
-            const place = places[0];
-            if (!place.geometry) return;
 
-            const loc = place.geometry.location;
-            locationMarker.setPosition(loc);
-            locationMap.panTo(loc);
-            locationMap.setZoom(15);
-
-            document.getElementById('seller_lat').value = loc.lat();
-            document.getElementById('seller_lng').value = loc.lng();
-            document.getElementById('seller_display_name').value = place.formatted_address || place.name;
-            input.value = place.formatted_address || place.name;
+        // Also handle Enter key
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                clearTimeout(searchTimeout);
+                const query = this.value.trim();
+                if (query.length >= 3) {
+                    searchLocation(query);
+                }
+            }
         });
     }
 
     isMapInitialized = true;
-    console.log('Location picker initialized.');
-};
+    console.log('Location picker initialized with Leaflet (free).');
+}
 
-function reverseGeocode(lat, lng) {
-    const geocoder = new google.maps.Geocoder();
-    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
-        if (status === 'OK' && results[0]) {
-            document.getElementById('seller_display_name').value = results[0].formatted_address;
-            document.getElementById('location-search').value = results[0].formatted_address;
+// Search using free Nominatim API (OpenStreetMap)
+async function searchLocation(query) {
+    try {
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=zw`
+        );
+        const data = await response.json();
+
+        if (data && data.length > 0) {
+            const result = data[0];
+            const lat = parseFloat(result.lat);
+            const lon = parseFloat(result.lon);
+
+            // Move map and marker
+            locationMap.setView([lat, lon], 15);
+            locationMarker.setLatLng([lat, lon]);
+
+            // Update hidden fields
+            document.getElementById('seller_lat').value = lat;
+            document.getElementById('seller_lng').value = lon;
+            document.getElementById('seller_display_name').value = result.display_name;
+            document.getElementById('location-search').value = result.display_name;
+
+            showToast('Location found: ' + result.display_name);
+        } else {
+            showToast('No location found. Please try a different search.', true);
         }
-    });
+    } catch (error) {
+        console.error('Search error:', error);
+        showToast('Error searching for location. Please try again.', true);
+    }
+}
+
+// Reverse geocode using free Nominatim API
+async function reverseGeocode(lat, lng) {
+    try {
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=16`
+        );
+        const data = await response.json();
+
+        if (data && data.display_name) {
+            document.getElementById('seller_display_name').value = data.display_name;
+            document.getElementById('location-search').value = data.display_name;
+        }
+    } catch (error) {
+        console.error('Reverse geocode error:', error);
+    }
 }
 
 function loadLocationData() {
     const profile = currentSellerProfile;
     if (!profile) return;
     if (profile.latitude) {
-        document.getElementById('seller_lat').value = profile.latitude;
-        document.getElementById('seller_lng').value = profile.longitude;
+        const lat = parseFloat(profile.latitude);
+        const lng = parseFloat(profile.longitude);
+        document.getElementById('seller_lat').value = lat;
+        document.getElementById('seller_lng').value = lng;
         document.getElementById('seller_display_name').value = profile.location_display_name || '';
         document.getElementById('location-search').value = profile.location_display_name || '';
+
         if (isMapInitialized && locationMarker) {
-            const pos = { lat: parseFloat(profile.latitude), lng: parseFloat(profile.longitude) };
-            locationMarker.setPosition(pos);
-            locationMap.panTo(pos);
+            locationMarker.setLatLng([lat, lng]);
+            locationMap.setView([lat, lng], 13);
         }
     }
 }
@@ -622,11 +675,14 @@ function toggleProfileForm() {
             if (!isMapInitialized) {
                 initLocationPicker();
             } else {
-                google.maps.event.trigger(locationMap, 'resize');
-                const lat = parseFloat(document.getElementById('seller_lat').value) || -17.8252;
-                const lng = parseFloat(document.getElementById('seller_lng').value) || 31.0335;
-                locationMap.setCenter({ lat, lng });
-                locationMarker.setPosition({ lat, lng });
+                // Refresh map
+                setTimeout(() => {
+                    locationMap.invalidateSize();
+                    const lat = parseFloat(document.getElementById('seller_lat').value) || -17.8252;
+                    const lng = parseFloat(document.getElementById('seller_lng').value) || 31.0335;
+                    locationMap.setView([lat, lng], 13);
+                    locationMarker.setLatLng([lat, lng]);
+                }, 100);
             }
             loadLocationData();
         }, 300);
@@ -850,498 +906,4 @@ async function loadProductsFromSupabase(retries = 1) {
         });
         if (r.ok) {
             sellerProducts = await r.json();
-            sellerProducts.forEach(p => { if (p.paused === undefined) p.paused = false; });
-            return true;
-        } else if (r.status === 401 && retries > 0) {
-            console.log('Products fetch 401, trying refresh...');
-            const refreshed = await refreshSession();
-            if (refreshed) {
-                return loadProductsFromSupabase(0);
-            } else {
-                return false;
-            }
-        } else {
-            console.error('Products fetch failed:', r.status);
-            return false;
-        }
-    } catch (e) {
-        console.error('Error loading products:', e);
-        return false;
-    }
-}
-
-async function saveProductToSupabase(pd) {
-    const session = JSON.parse(localStorage.getItem('supabase_session'));
-    const token = session?.access_token || currentAccessToken;
-    const r = await fetch(`${window.SUPABASE_URL}/rest/v1/products`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Prefer': 'return=representation' },
-        body: JSON.stringify({
-            seller_id: String(currentSellerId),
-            title: pd.title,
-            description: pd.description || '',
-            price: pd.price,
-            category: pd.category,
-            stock: pd.stock,
-            image_url: pd.image_url,
-            paused: pd.paused || false,
-            created_at: new Date().toISOString()
-        })
-    });
-    if (r.ok) return await r.json();
-    throw new Error((await r.json()).message || 'Save failed');
-}
-
-async function deleteProductFromSupabase(id) {
-    const session = JSON.parse(localStorage.getItem('supabase_session'));
-    const token = session?.access_token || currentAccessToken;
-    return (await fetch(`${window.SUPABASE_URL}/rest/v1/products?id=eq.${id}&seller_id=eq.${currentSellerId}`, {
-        method: 'DELETE',
-        headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` }
-    })).ok;
-}
-
-async function updateProductPausedStatus(productId, paused) {
-    const session = JSON.parse(localStorage.getItem('supabase_session'));
-    const token = session?.access_token || currentAccessToken;
-    await fetch(`${window.SUPABASE_URL}/rest/v1/products?id=eq.${productId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Prefer': 'return=minimal' },
-        body: JSON.stringify({ paused: paused })
-    });
-}
-
-async function uploadImageToImgBB(file) {
-    const bar = document.getElementById('uploadProgressBar'), fill = document.getElementById('uploadProgressFill');
-    bar.style.display = 'block'; fill.style.width = '30%';
-    const fd = new FormData(); fd.append('image', file); fd.append('key', IMGBB_API_KEY);
-    const resp = await fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: fd });
-    fill.style.width = '80%';
-    const data = await resp.json();
-    if (data.success) { fill.style.width = '100%'; setTimeout(() => bar.style.display = 'none', 1000); return data.data.url; }
-    throw new Error(data.error?.message || 'Upload failed');
-}
-
-function loadProducts() {
-    loadProductsFromSupabase().then(ok => {
-        if (!ok) { sellerProducts = JSON.parse(localStorage.getItem(`mbare_products_${currentSellerId}`) || '[]'); }
-        enforceProductLimit();
-        renderProducts();
-        updateStatsAndLimits();
-    });
-}
-
-function saveProductsLocal() {
-    localStorage.setItem(`mbare_products_${currentSellerId}`, JSON.stringify(sellerProducts));
-}
-
-// ==================== RENDER FUNCTIONS ====================
-function renderTiers() {
-    const c = document.getElementById('tierContainer');
-    if (!c) {
-        console.error('tierContainer element not found!');
-        const parent = document.querySelector('.grid-3.mb-30');
-        if (parent) {
-            parent.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:20px; color:#999;">Subscription plans will appear here.</div>';
-        }
-        return;
-    }
-    console.log('Rendering tiers with currentTier:', currentTier);
-    c.innerHTML = '';
-    for (const [k, d] of Object.entries(tierMap)) {
-        const isCurrent = currentTier === k;
-        const isDowngrade = currentTier !== 'free' && k !== 'free' && d.level < tierMap[currentTier]?.level;
-        const isDisabled = isCurrent || isDowngrade;
-        let buttonText = isCurrent ? (subscriptionStatus === 'paused' ? 'Paused' : 'Current Plan') :
-                         (isDowngrade ? 'Cannot Downgrade' : 'Subscribe');
-
-        c.innerHTML += `<div class="tier-card ${isCurrent ? 'tier-highlight' : ''}">
-            <div style="display:flex;justify-content:space-between;align-items:center;">
-                <strong style="font-size:1.2rem;">${d.name}</strong>
-                ${d.badge ? `<span class="badge-pro">${d.badge}</span>` : ''}
-                ${isCurrent && subscriptionStatus === 'paused' ? '<span class="badge-paused">PAUSED</span>' : ''}
-            </div>
-            <div class="tier-price">${d.price}</div>
-            <div style="font-size:13px;margin:8px 0;">${d.perks}</div>
-            <div style="font-size:12px;background:#f4f5f7;padding:5px;border-radius:30px;">Max: ${d.maxProducts} products</div>
-            <button class="btn-primary subscribe-btn" data-tier="${k}" style="margin-top:18px;width:100%;" ${isDisabled ? 'disabled' : ''}>
-                ${buttonText}
-            </button>
-        </div>`;
-    }
-    document.querySelectorAll('.subscribe-btn').forEach(b => {
-        b.addEventListener('click', () => {
-            const t = b.dataset.tier;
-            if (t === 'free') {
-                if (currentTier !== 'free' && subscriptionStatus !== 'expired') return alert('Wait for expiry.');
-                if (confirm('Switch to Free?')) {
-                    currentTier = 'free';
-                    localStorage.setItem(`mbare_tier_${currentSellerId}`, 'free');
-                    fetch(`${window.SUPABASE_URL}/rest/v1/seller_subscriptions?seller_id=eq.${currentSellerId}&select=id`, {
-                        headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${currentAccessToken}` }
-                    }).then(r => r.json()).then(subs => {
-                        if (subs && subs.length > 0) {
-                            updateSubscriptionStatus(subs[0].id, 'cancelled');
-                        }
-                    });
-                    renderTiers();
-                    enforceProductLimit();
-                    updateStatsAndLimits();
-                    updateExpiryBanner();
-                    updateSubscriptionControls();
-                }
-            } else {
-                openPayNowPayment(t);
-            }
-        });
-    });
-}
-
-function enforceProductLimit() {
-    const max = getCurrentLimit();
-    let pausedCount = 0;
-    sellerProducts.forEach(p => {
-        if (subscriptionStatus !== 'expired') {
-            p.paused = false;
-        }
-    });
-    const activeProducts = sellerProducts.filter(p => !p.paused);
-    if (activeProducts.length > max) {
-        const toPause = activeProducts
-            .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
-            .slice(0, activeProducts.length - max);
-        toPause.forEach(p => {
-            p.paused = true;
-            pausedCount++;
-        });
-        toPause.forEach(async (p) => {
-            await updateProductPausedStatus(p.id, true);
-        });
-    }
-    if (pausedCount > 0) {
-        console.log('Products paused due to limit');
-        saveProductsLocal();
-        showToast('Some products have been paused because you exceeded your tier limit. Upgrade to activate them.', true);
-    }
-    updateStatsAndLimits();
-    updateProductLimitBanner();
-}
-
-function getCurrentLimit() {
-    return currentTier === 'free' ? 8 : (currentTier === 'tier_150' ? 50 : 200);
-}
-
-function updateProductLimitBanner() {
-    const banner = document.getElementById('productLimitBanner');
-    const activeCount = document.getElementById('activeCount');
-    const maxCount = document.getElementById('maxCount');
-    const tierName = document.getElementById('tierName');
-    const active = sellerProducts.filter(p => !p.paused).length;
-    const max = getCurrentLimit();
-    const tier = tierMap[currentTier]?.name || 'Free';
-    if (activeCount) activeCount.textContent = active;
-    if (maxCount) maxCount.textContent = max;
-    if (tierName) tierName.textContent = tier;
-    if (active >= max && banner) {
-        banner.style.display = 'block';
-    } else if (banner) {
-        banner.style.display = 'none';
-    }
-}
-
-function updateStatsAndLimits() {
-    const active = sellerProducts.filter(p => !p.paused).length;
-    const paused = sellerProducts.filter(p => p.paused).length;
-    const max = getCurrentLimit();
-    const msg = document.getElementById('tierMessage');
-    if (msg) {
-        msg.innerHTML = currentTier === 'free' 
-            ? `<strong>Free:</strong> ${active}/${max} active. ${paused > 0 ? paused + ' paused. ' : ''}${active < max ? (max - active) + ' slots available.' : 'Limit reached.'} <a href="#" id="upgradeLink" class="inline-link">Upgrade</a>`
-            : `<strong>${tierMap[currentTier]?.name}:</strong> ${active} active, ${max - active} slots available. ${paused > 0 ? paused + ' paused.' : ''}`;
-        const ul = document.getElementById('upgradeLink');
-        if (ul) ul.onclick = e => { e.preventDefault(); showUpgradeOptions(); };
-    }
-    document.getElementById('totalProducts').innerText = active;
-    document.getElementById('totalStock').innerText = sellerProducts.filter(p => !p.paused).reduce((s, p) => s + (p.stock || 0), 0);
-    document.getElementById('totalValue').innerText = '$' + sellerProducts.filter(p => !p.paused).reduce((s, p) => s + ((p.price || 0) * (p.stock || 0)), 0).toFixed(2);
-    const toggleBtn = document.getElementById('toggleFormBtn');
-    if (toggleBtn) {
-        toggleBtn.disabled = active >= max || subscriptionStatus === 'expired';
-        toggleBtn.textContent = active >= max ? 'Limit Reached' : '+ Add Product';
-    }
-    updateProductLimitBanner();
-}
-
-function esc(s) { if (!s) return ''; return s.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[m]); }
-
-function renderProducts() {
-    const c = document.getElementById('productsList');
-    if (!c) return;
-    if (!sellerProducts.length) { c.innerHTML = '<p class="text-center" style="padding:40px;color:#666;">No products yet.</p>'; return; }
-    c.innerHTML = sellerProducts.map(p => `
-        <div class="product-card ${p.paused ? 'paused' : ''}">
-            <img src="${p.image_url || 'https://placehold.co/400x300?text=No+Image'}" alt="${esc(p.title)}" onerror="this.src='https://placehold.co/400x300?text=No+Image'">
-            <div class="product-info">
-                <h3>${esc(p.title)}</h3>
-                <div style="font-size:20px;font-weight:600;color:#B12704;">$${parseFloat(p.price || 0).toFixed(2)}</div>
-                <div>Stock: ${p.stock || 0} | ${p.category || 'N/A'}${p.paused ? ' | PAUSED' : ''}</div>
-                ${!p.paused ? '<button class="whatsapp-btn" onclick="whatsappInquiry(\'' + esc(p.title) + '\')">WhatsApp</button>' : '<div style="color:#dc3545;font-size:12px;">Paused - Limit Reached</div>'}
-                <div style="display:flex;gap:8px;margin-top:8px;">
-                    <button class="btn-secondary" style="flex:1;" onclick="editProduct('${p.id}')">Edit</button>
-                    <button class="btn-delete" style="flex:1;" onclick="deleteProduct('${p.id}')">Delete</button>
-                </div>
-            </div>
-        </div>
-    `).join('');
-}
-
-window.whatsappInquiry = function(t) { window.open('https://wa.me/?text=' + encodeURIComponent('Hello, interested in "' + t + '" on Mbare Marketplace.'), '_blank'); };
-
-window.deleteProduct = async function(id) {
-    if (!confirm('Delete this product?')) return;
-    await deleteProductFromSupabase(id);
-    sellerProducts = sellerProducts.filter(p => p.id !== id);
-    saveProductsLocal();
-    renderProducts();
-    updateStatsAndLimits();
-    enforceProductLimit();
-};
-
-window.editProduct = function(id) {
-    const p = sellerProducts.find(x => x.id == id);
-    if (!p) return;
-    document.getElementById('prodTitle').value = p.title || '';
-    document.getElementById('prodDescription').value = p.description || '';
-    document.getElementById('prodPrice').value = p.price || '';
-    document.getElementById('prodCategory').value = p.category || '';
-    document.getElementById('prodStock').value = p.stock || '';
-    document.getElementById('prodImage').value = p.image_url || '';
-    if (p.image_url) { document.getElementById('imagePreview').src = p.image_url; document.getElementById('imagePreviewContainer').style.display = 'block'; document.getElementById('uploadPlaceholder').style.display = 'none'; }
-    sellerProducts = sellerProducts.filter(x => x.id != id);
-    saveProductsLocal();
-    renderProducts();
-    updateStatsAndLimits();
-    document.getElementById('addProductForm').style.display = 'block';
-    document.getElementById('toggleFormBtn').innerText = 'Cancel';
-    document.getElementById('submitProductBtn').innerText = 'Update';
-    document.getElementById('submitProductBtn').setAttribute('data-editing', 'true');
-};
-
-window.toggleProductForm = function() {
-    const f = document.getElementById('addProductForm'), b = document.getElementById('toggleFormBtn');
-    if (f.style.display === 'none' || f.style.display === '') {
-        f.style.display = 'block';
-        b.innerText = 'Cancel';
-    } else {
-        f.style.display = 'none';
-        b.innerText = '+ Add Product';
-        document.getElementById('productForm').reset();
-        removeImage();
-        document.getElementById('submitProductBtn').innerText = 'Add Product';
-        document.getElementById('submitProductBtn').removeAttribute('data-editing');
-    }
-};
-
-window.removeImage = function() {
-    selectedImageFile = null;
-    document.getElementById('imagePreview').src = '';
-    document.getElementById('imagePreviewContainer').style.display = 'none';
-    document.getElementById('uploadPlaceholder').style.display = 'block';
-    document.getElementById('prodImage').value = '';
-    document.getElementById('imageFileInput').value = '';
-    document.getElementById('uploadProgressBar').style.display = 'none';
-};
-
-window.handleFileSelect = function(e) { if (e.target.files[0]) handleImageFile(e.target.files[0]); };
-
-function handleImageFile(file) {
-    if (!file.type.match('image.*')) return alert('Please select an image file');
-    if (file.size > 10 * 1024 * 1024) return alert('Image must be under 10MB');
-    selectedImageFile = file;
-    const r = new FileReader();
-    r.onload = function(e) {
-        document.getElementById('imagePreview').src = e.target.result;
-        document.getElementById('imagePreviewContainer').style.display = 'block';
-        document.getElementById('uploadPlaceholder').style.display = 'none';
-        document.getElementById('imageStatus').textContent = 'Image ready.';
-    };
-    r.readAsDataURL(file);
-    document.getElementById('prodImage').value = '';
-}
-
-window.openCamera = function() {
-    const i = document.createElement('input');
-    i.type = 'file';
-    i.accept = 'image/*';
-    i.capture = 'environment';
-    i.onchange = function(e) { if (e.target.files[0]) handleImageFile(e.target.files[0]); };
-    i.click();
-};
-
-window.handleAddProduct = async function() {
-    const ed = document.getElementById('submitProductBtn').getAttribute('data-editing');
-    const activeProducts = sellerProducts.filter(p => !p.paused);
-    const max = getCurrentLimit();
-    if (!ed && activeProducts.length >= max) {
-        alert(`Limit reached! You have ${activeProducts.length} active products out of ${max} allowed for your ${currentTier} plan. Please upgrade or delete some products.`);
-        showUpgradeOptions();
-        return;
-    }
-    const t = document.getElementById('prodTitle').value.trim();
-    const pr = parseFloat(document.getElementById('prodPrice').value);
-    const st = parseInt(document.getElementById('prodStock').value);
-    const cat = document.getElementById('prodCategory').value;
-    const desc = document.getElementById('prodDescription').value.trim();
-    let img = document.getElementById('prodImage').value.trim();
-    if (!t || isNaN(pr) || isNaN(st) || !cat) return alert('Please fill all required fields');
-    const btn = document.getElementById('submitProductBtn');
-    if (selectedImageFile) {
-        btn.disabled = true; btn.innerText = 'Uploading...';
-        try { img = await uploadImageToImgBB(selectedImageFile); } catch (e) {
-            alert('Upload failed: ' + e.message);
-            btn.disabled = false;
-            btn.innerText = ed ? 'Update' : 'Add Product';
-            return;
-        }
-    }
-    if (!img) return alert('Please upload a product image');
-    btn.disabled = true; btn.innerText = 'Saving...';
-    const isPaused = (!ed && activeProducts.length >= max);
-    const pd = { title: t, description: desc, price: pr, category: cat, stock: st, image_url: img, paused: isPaused };
-    try {
-        const sv = await saveProductToSupabase(pd);
-        const newProduct = { id: sv?.[0]?.id || Date.now().toString(), ...pd };
-        sellerProducts.unshift(newProduct);
-        saveProductsLocal();
-        renderProducts();
-        updateStatsAndLimits();
-        if (isPaused) {
-            showToast('Product added but paused because you have reached your limit. Upgrade to activate it.', true);
-            enforceProductLimit();
-        } else {
-            showToast('Product added successfully!');
-        }
-        toggleProductForm();
-        document.getElementById('productForm').reset();
-        removeImage();
-        selectedImageFile = null;
-        btn.disabled = false;
-        btn.innerText = 'Add Product';
-        btn.removeAttribute('data-editing');
-    } catch (e) {
-        alert('Failed to save product: ' + e.message);
-        btn.disabled = false;
-        btn.innerText = ed ? 'Update' : 'Add Product';
-    }
-};
-
-(function() {
-    const a = document.getElementById('uploadArea');
-    if (!a) return;
-    a.addEventListener('dragover', e => { e.preventDefault(); a.classList.add('dragover'); });
-    a.addEventListener('dragleave', () => a.classList.remove('dragover'));
-    a.addEventListener('drop', e => { e.preventDefault(); a.classList.remove('dragover'); if (e.dataTransfer.files.length > 0) handleImageFile(e.dataTransfer.files[0]); });
-})();
-
-// Analytics button with subscription check
-const analyticsBtn = document.getElementById('analyticsNavBtn');
-if (analyticsBtn) {
-    analyticsBtn.addEventListener('click', () => {
-        if (currentTier === 'free' || subscriptionStatus === 'expired' || subscriptionStatus === 'inactive') {
-            alert('You need an active subscription to access analytics. Please subscribe first.');
-            showUpgradeOptions();
-            return;
-        }
-        window.location.href = 'seller-analytics.html';
-    });
-}
-
-function startExpiryChecker() {
-    if (renewalCheckInterval) clearInterval(renewalCheckInterval);
-    renewalCheckInterval = setInterval(async () => {
-        if (currentTier === 'free' || !subscriptionExpiry) return;
-        if (new Date(subscriptionExpiry) < new Date() && subscriptionStatus === 'active') {
-            handleExpiredSubscription();
-        }
-    }, 60000);
-}
-
-// ==================== SHOW UPGRADE OPTIONS ====================
-function showUpgradeOptions() {
-    const modalHtml = `
-        <div class="payment-modal" id="upgradeModal">
-            <div class="payment-card">
-                <h3 style="text-align:center;">Choose Your Plan</h3>
-                <div style="display:grid; gap:15px; margin:20px 0;">
-                    <div class="tier-card" style="padding:15px;">
-                        <strong>Merchant Basic</strong>
-                        <div class="tier-price">$1.50<span style="font-size:14px;">/month</span></div>
-                        <div>50 products limit</div>
-                        <button class="btn-primary" style="margin-top:15px; width:100%;" onclick="closeModalAndPay('tier_150')">Subscribe - $1.50</button>
-                    </div>
-                    <div class="tier-card" style="padding:15px;">
-                        <strong>Video Ads Plan</strong>
-                        <div class="tier-price">$5.00<span style="font-size:14px;">/month</span></div>
-                        <div>200 products + video ads</div>
-                        <button class="btn-primary" style="margin-top:15px; width:100%;" onclick="closeModalAndPay('tier_5')">Subscribe - $5.00</button>
-                    </div>
-                </div>
-                <button class="btn-secondary" id="closeUpgradeModal" style="width:100%;">Cancel</button>
-            </div>
-        </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-    document.getElementById('closeUpgradeModal').onclick = () => document.getElementById('upgradeModal')?.remove();
-}
-
-window.closeModalAndPay = function(planType) {
-    document.getElementById('upgradeModal')?.remove();
-    openPayNowPayment(planType);
-};
-
-// ==================== TOGGLE EVENT LISTENER ====================
-document.addEventListener('DOMContentLoaded', function() {
-    const toggleBtn = document.getElementById('toggleProfileBtn');
-    if (toggleBtn) {
-        toggleBtn.addEventListener('click', toggleProfileForm);
-    }
-});
-
-// ==================== INIT ====================
-async function init() {
-    if (!await checkAuth()) return;
-    console.log('Dashboard initializing...');
-    try {
-        // Check payment return
-        checkLocalStoragePaymentStatus();
-        // Fetch subscription (retries internally)
-        const sub = await fetchSubscription(1);
-        currentTier = sub || localStorage.getItem(`mbare_tier_${currentSellerId}`) || 'free';
-        localStorage.setItem(`mbare_tier_${currentSellerId}`, currentTier);
-        console.log('Current tier after init:', currentTier);
-        // Load products
-        await loadProductsFromSupabase(1);
-        if (!sellerProducts.length) {
-            sellerProducts = JSON.parse(localStorage.getItem(`mbare_products_${currentSellerId}`) || '[]');
-        }
-        // Render everything
-        renderTiers();
-        updateExpiryBanner();
-        updateSubscriptionControls();
-        enforceProductLimit();
-        renderProducts();
-        updateStatsAndLimits();
-        startExpiryChecker();
-        document.getElementById('loadingOverlay').style.display = 'none';
-        updateViewShopButton();
-        console.log('Dashboard fully initialized.');
-    } catch (e) {
-        console.error('Init error:', e);
-        // Only redirect if session is missing
-        if (!localStorage.getItem('supabase_session')) {
-            window.location.href = 'login.html';
-        }
-    }
-}
-
-document.addEventListener('DOMContentLoaded', init);
+            seller
