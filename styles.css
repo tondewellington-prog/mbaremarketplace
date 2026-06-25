@@ -1291,3 +1291,136 @@ body {
     }
 }
 
+/* ==================== LOCATION & DISTANCE STYLES ==================== */
+
+/* Distance badges on product cards */
+.distance-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #28a745;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    z-index: 5;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.distance-badge.far {
+    background: #ffc107;
+    color: #333;
+}
+
+.distance-badge.very-far {
+    background: #dc3545;
+    color: white;
+}
+
+/* Product card needs relative positioning for badge */
+.product-card {
+    position: relative;
+}
+
+/* Location prompt styling */
+#locationPrompt {
+    background: #f0f8ff;
+    padding: 15px 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    border: 1px solid #d4e8f0;
+}
+
+#locationPrompt .btn-primary {
+    background: #f90;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 6px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+#locationPrompt .btn-primary:hover {
+    background: #e68a00;
+}
+
+#locationPrompt .btn-secondary {
+    background: #e7e9ec;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+#locationPrompt .btn-secondary:hover {
+    background: #d5d9dd;
+}
+
+#manualLocation {
+    padding: 8px 15px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    flex: 1;
+    min-width: 150px;
+    font-size: 14px;
+}
+
+#manualLocation:focus {
+    outline: none;
+    border-color: #f90;
+    box-shadow: 0 0 0 3px rgba(255, 153, 0, 0.2);
+}
+
+#distanceInfo {
+    text-align: center;
+    padding: 10px;
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 15px;
+}
+
+/* Seller location text on product cards */
+.product-location {
+    font-size: 12px;
+    color: #666;
+    margin: 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Mobile responsiveness for location prompt */
+@media (max-width: 768px) {
+    #locationPrompt {
+        padding: 12px 15px;
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    #locationPrompt .btn-primary,
+    #locationPrompt .btn-secondary {
+        width: 100%;
+        text-align: center;
+    }
+    
+    #manualLocation {
+        width: 100%;
+        min-width: unset;
+    }
+    
+    .distance-badge {
+        font-size: 10px;
+        padding: 3px 10px;
+        top: 8px;
+        right: 8px;
+    }
+}
