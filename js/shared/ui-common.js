@@ -79,8 +79,8 @@
   }
 
   // ==================== LOCATION & DISTANCE FUNCTIONS ====================
-  let userLat = null;
-  let userLng = null;
+  let currentUserLat = null;
+  let currentUserLng = null;
 
   // Get user's location via browser
   function getUserLocation() {
@@ -88,12 +88,13 @@
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
-            userLat = position.coords.latitude;
-            userLng = position.coords.longitude;
-            sessionStorage.setItem('userLat', userLat);
-            sessionStorage.setItem('userLng', userLng);
-            document.getElementById('distanceInfo')?.innerHTML = '📍 Showing products near you';
-            resolve({ lat: userLat, lng: userLng });
+            currentUserLat = position.coords.latitude;
+            currentUserLng = position.coords.longitude;
+            sessionStorage.setItem('userLat', currentUserLat);
+            sessionStorage.setItem('userLng', currentUserLng);
+            const infoEl = document.getElementById('distanceInfo');
+            if (infoEl) infoEl.innerHTML = '📍 Showing products near you';
+            resolve({ lat: currentUserLat, lng: currentUserLng });
           },
           (error) => {
             console.error('Location error:', error);
@@ -101,9 +102,9 @@
             const savedLat = sessionStorage.getItem('userLat');
             const savedLng = sessionStorage.getItem('userLng');
             if (savedLat && savedLng) {
-              userLat = parseFloat(savedLat);
-              userLng = parseFloat(savedLng);
-              resolve({ lat: userLat, lng: userLng });
+              currentUserLat = parseFloat(savedLat);
+              currentUserLng = parseFloat(savedLng);
+              resolve({ lat: currentUserLat, lng: currentUserLng });
             } else {
               resolve(null);
             }
@@ -113,9 +114,9 @@
         const savedLat = sessionStorage.getItem('userLat');
         const savedLng = sessionStorage.getItem('userLng');
         if (savedLat && savedLng) {
-          userLat = parseFloat(savedLat);
-          userLng = parseFloat(savedLng);
-          resolve({ lat: userLat, lng: userLng });
+          currentUserLat = parseFloat(savedLat);
+          currentUserLng = parseFloat(savedLng);
+          resolve({ lat: currentUserLat, lng: currentUserLng });
         } else {
           resolve(null);
         }
@@ -126,11 +127,11 @@
   // Search manual location
   async function searchManualLocation() {
     const input = document.getElementById('manualLocation');
-    if (!input) return;
+    if (!input) return null;
     const query = input.value.trim();
     if (query.length < 3) {
       alert('Please enter a valid location');
-      return;
+      return null;
     }
     
     try {
@@ -139,16 +140,17 @@
       );
       const data = await response.json();
       if (data && data.length > 0) {
-        userLat = parseFloat(data[0].lat);
-        userLng = parseFloat(data[0].lon);
-        sessionStorage.setItem('userLat', userLat);
-        sessionStorage.setItem('userLng', userLng);
-        document.getElementById('distanceInfo').innerHTML = `📍 Showing products near: ${data[0].display_name}`;
+        currentUserLat = parseFloat(data[0].lat);
+        currentUserLng = parseFloat(data[0].lon);
+        sessionStorage.setItem('userLat', currentUserLat);
+        sessionStorage.setItem('userLng', currentUserLng);
+        const infoEl = document.getElementById('distanceInfo');
+        if (infoEl) infoEl.innerHTML = `📍 Showing products near: ${data[0].display_name}`;
         // Trigger refresh if function exists
         if (typeof window.refreshProducts === 'function') {
           window.refreshProducts();
         }
-        return { lat: userLat, lng: userLng };
+        return { lat: currentUserLat, lng: currentUserLng };
       } else {
         alert('Location not found. Please try again.');
         return null;
@@ -187,16 +189,16 @@
     const savedLat = sessionStorage.getItem('userLat');
     const savedLng = sessionStorage.getItem('userLng');
     if (savedLat && savedLng) {
-      userLat = parseFloat(savedLat);
-      userLng = parseFloat(savedLng);
-      return { lat: userLat, lng: userLng };
+      currentUserLat = parseFloat(savedLat);
+      currentUserLng = parseFloat(savedLng);
+      return { lat: currentUserLat, lng: currentUserLng };
     }
     return null;
   }
 
   // Check if user has location set
   function hasUserLocation() {
-    return userLat !== null && userLng !== null;
+    return currentUserLat !== null && currentUserLng !== null;
   }
 
   // Get distance badge class based on distance
@@ -215,10 +217,10 @@
     const promptHTML = `
       <div id="locationPrompt" style="background:#f0f8ff; padding:15px; border-radius:10px; margin-bottom:20px; display:flex; align-items:center; gap:15px; flex-wrap:wrap;">
         <span style="font-weight:600;">📍 Find nearby products:</span>
-        <button onclick="getUserLocation()" class="btn-primary" style="padding:8px 20px; background:#f90; border:none; border-radius:6px; color:white; font-weight:600; cursor:pointer;">Use My Location</button>
+        <button onclick="window.getUserLocation()" class="btn-primary" style="padding:8px 20px; background:#f90; border:none; border-radius:6px; color:white; font-weight:600; cursor:pointer;">Use My Location</button>
         <span style="color:#666;font-size:14px;">or</span>
         <input type="text" id="manualLocation" placeholder="Enter city or address..." style="padding:8px 15px; border-radius:6px; border:1px solid #ccc; flex:1; min-width:150px;">
-        <button onclick="searchManualLocation()" class="btn-secondary" style="padding:8px 20px; background:#e7e9ec; border:none; border-radius:6px; font-weight:500; cursor:pointer;">Search</button>
+        <button onclick="window.searchManualLocation()" class="btn-secondary" style="padding:8px 20px; background:#e7e9ec; border:none; border-radius:6px; font-weight:500; cursor:pointer;">Search</button>
       </div>
       <div id="distanceInfo" style="text-align:center;padding:10px;color:#666;font-size:14px;"></div>
     `;
@@ -239,8 +241,8 @@
   function initLocation() {
     const saved = getUserLocationFromSession();
     if (saved) {
-      userLat = saved.lat;
-      userLng = saved.lng;
+      currentUserLat = saved.lat;
+      currentUserLng = saved.lng;
       const info = document.getElementById('distanceInfo');
       if (info) info.innerHTML = '📍 Showing products near you';
     }
@@ -251,9 +253,8 @@
     }
   }
 
-  // Expose location functions globally
-  window.userLat = userLat;
-  window.userLng = userLng;
+  // ==================== EXPOSE FUNCTIONS GLOBALLY ====================
+  // Use window object to expose functions
   window.getUserLocation = getUserLocation;
   window.searchManualLocation = searchManualLocation;
   window.calculateDistance = calculateDistance;
@@ -263,9 +264,9 @@
   window.getDistanceBadgeClass = getDistanceBadgeClass;
   window.initLocation = initLocation;
   window.injectLocationPrompt = injectLocationPrompt;
+  window.refreshProducts = window.refreshProducts || function() {};
 
-  // ==================== END LOCATION FUNCTIONS ====================
-
+  // ==================== UI COMMON EXPORTS ====================
   window.uiCommon = {
     getSession,
     getCurrentUser,
