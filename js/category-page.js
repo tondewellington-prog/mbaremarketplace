@@ -128,6 +128,33 @@
       }
     }
 
+    // Calculate distance for products
+    function addDistancesToProducts(products) {
+      const userLoc = window.getUserLocationFromSession ? window.getUserLocationFromSession() : null;
+      
+      return products.map(p => {
+        const seller = sellersMap[p.seller_id] || {};
+        const sellerLat = parseFloat(seller.latitude);
+        const sellerLng = parseFloat(seller.longitude);
+        let distance = null;
+        let distanceDisplay = 'Location unknown';
+        
+        if (userLoc && sellerLat && sellerLng) {
+          distance = window.calculateDistance ? window.calculateDistance(userLoc.lat, userLoc.lng, sellerLat, sellerLng) : null;
+          distanceDisplay = window.formatDistance ? window.formatDistance(distance) : (distance !== null ? distance.toFixed(1) + 'km away' : 'Location unknown');
+        }
+        
+        return {
+          ...p,
+          distance: distance,
+          distanceDisplay: distanceDisplay,
+          sellerLat: sellerLat,
+          sellerLng: sellerLng,
+          sellerLocation: seller.location_display_name || seller.business_address || 'Location not set'
+        };
+      });
+    }
+
     async function displayProducts(products) {
       const container = document.getElementById(config.gridId);
       if (!container) return;
@@ -137,17 +164,43 @@
         return;
       }
 
+      // Add distances to products
+      const productsWithDistance = addDistancesToProducts(products);
+      
+      // Sort by distance if user has location
+      const userLoc = window.getUserLocationFromSession ? window.getUserLocationFromSession() : null;
+      if (userLoc) {
+        productsWithDistance.sort((a, b) => {
+          if (a.distance === null) return 1;
+          if (b.distance === null) return -1;
+          return a.distance - b.distance;
+        });
+      }
+
       container.innerHTML = '';
 
-      for (const p of products) {
+      for (const p of productsWithDistance) {
         const seller = sellersMap[p.seller_id] || {};
         const ratingInfo = await getSellerRatings(p.seller_id);
         const card = document.createElement('div');
         card.className = 'product-card';
+        card.style.position = 'relative';
+        
+        // Distance badge HTML
+        let distanceBadge = '';
+        if (p.distance !== null && userLoc) {
+          let badgeClass = 'distance-badge';
+          if (p.distance > 20) badgeClass += ' very-far';
+          else if (p.distance > 10) badgeClass += ' far';
+          distanceBadge = `<span class="${badgeClass}" style="position:absolute;top:10px;right:10px;background:#28a745;color:white;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;z-index:5;">${p.distanceDisplay}</span>`;
+        }
+        
         card.innerHTML = `
+          ${distanceBadge}
           <img src="${p.image_url || `https://via.placeholder.com/300x300?text=${config.placeholderText}`}" class="product-image" onclick="viewProduct('${p.id}')" style="cursor: pointer;" onerror="this.src='https://via.placeholder.com/300x300?text=${config.placeholderText}'">
           <h3 class="product-title" onclick="viewProduct('${p.id}')" style="cursor: pointer;">${p.title || 'Product'}</h3>
           <div class="product-price">$${(p.price || 0).toFixed(2)}</div>
+          <div style="font-size:12px;color:#666;margin:4px 0;">📍 ${p.sellerLocation}</div>
           <a href="shop.html?seller=${p.seller_id}" class="visit-shop-link" onclick="event.stopPropagation()" style="color:#f90;text-decoration:underline;font-size:12px;display:inline-block;margin:5px 0;">Visit Shop</a>
           <div class="product-seller"> ${seller.business_name || config.sellerFallback}</div>
           <div class="seller-rating">${ratingInfo.display}</div>
@@ -182,7 +235,7 @@
         <div class="seller-info">
           <div class="info-row"><div class="info-icon"></div><div class="info-text"><div class="info-label">Seller</div><div class="info-value">${seller.business_name || 'Unknown Seller'}</div></div></div>
           <div class="info-row"><div class="info-icon"></div><div class="info-text"><div class="info-label">Phone Number</div><div class="info-value">${phone}</div></div></div>
-          <div class="info-row"><div class="info-icon"></div><div class="info-text"><div class="info-label">Shop Location</div><div class="info-value">${seller.business_address || 'Location not specified'}</div></div></div>
+          <div class="info-row"><div class="info-icon"></div><div class="info-text"><div class="info-label">Shop Location</div><div class="info-value">${seller.business_address || seller.location_display_name || 'Location not specified'}</div></div></div>
           <div class="info-row"><div class="info-icon"></div><div class="info-text"><div class="info-label">Price</div><div class="info-value">$${(product.price || 0).toFixed(2)}</div></div></div>
         </div>
         <div class="contact-actions">
@@ -214,7 +267,11 @@
 
     function updateResultsCount(count) {
       const countElement = document.getElementById('resultsCount');
-      if (countElement) countElement.textContent = `${count} product${count !== 1 ? 's' : ''} found`;
+      if (countElement) {
+        const userLoc = window.getUserLocationFromSession ? window.getUserLocationFromSession() : null;
+        const locationText = userLoc ? ' (sorted by distance)' : '';
+        countElement.textContent = `${count} product${count !== 1 ? 's' : ''} found${locationText}`;
+      }
     }
 
     window.sortProducts = function sortProducts() {
@@ -273,10 +330,21 @@
       });
     }
 
+    // Refresh products (for location changes)
+    window.refreshProducts = function() {
+      displayProducts(currentProducts);
+    };
+
     async function start() {
       wireSearchEnterKey();
       await loadSellers();
       await loadProducts();
+      
+      // Initialize location
+      if (typeof window.initLocation === 'function') {
+        window.initLocation();
+      }
+      
       const sessionData = localStorage.getItem('supabase_session');
       if (sessionData) {
         const session = JSON.parse(sessionData);
