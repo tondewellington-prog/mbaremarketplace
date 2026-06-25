@@ -82,7 +82,7 @@
   let currentUserLat = null;
   let currentUserLng = null;
 
-  // Get user's location via browser
+  // Get user's location via browser - SILENT, no UI prompts
   function getUserLocation() {
     return new Promise((resolve) => {
       if (navigator.geolocation) {
@@ -92,13 +92,11 @@
             currentUserLng = position.coords.longitude;
             sessionStorage.setItem('userLat', currentUserLat);
             sessionStorage.setItem('userLng', currentUserLng);
-            const infoEl = document.getElementById('distanceInfo');
-            if (infoEl) infoEl.innerHTML = '📍 Showing products near you';
             resolve({ lat: currentUserLat, lng: currentUserLng });
           },
           (error) => {
-            console.error('Location error:', error);
-            // Try to get from session storage
+            console.log('Location permission denied or error:', error.message);
+            // Try to get from session storage if previously allowed
             const savedLat = sessionStorage.getItem('userLat');
             const savedLng = sessionStorage.getItem('userLng');
             if (savedLat && savedLng) {
@@ -124,44 +122,6 @@
     });
   }
 
-  // Search manual location
-  async function searchManualLocation() {
-    const input = document.getElementById('manualLocation');
-    if (!input) return null;
-    const query = input.value.trim();
-    if (query.length < 3) {
-      alert('Please enter a valid location');
-      return null;
-    }
-    
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&countrycodes=zw`
-      );
-      const data = await response.json();
-      if (data && data.length > 0) {
-        currentUserLat = parseFloat(data[0].lat);
-        currentUserLng = parseFloat(data[0].lon);
-        sessionStorage.setItem('userLat', currentUserLat);
-        sessionStorage.setItem('userLng', currentUserLng);
-        const infoEl = document.getElementById('distanceInfo');
-        if (infoEl) infoEl.innerHTML = `📍 Showing products near: ${data[0].display_name}`;
-        // Trigger refresh if function exists
-        if (typeof window.refreshProducts === 'function') {
-          window.refreshProducts();
-        }
-        return { lat: currentUserLat, lng: currentUserLng };
-      } else {
-        alert('Location not found. Please try again.');
-        return null;
-      }
-    } catch (error) {
-      console.error('Search error:', error);
-      alert('Error searching location. Please try again.');
-      return null;
-    }
-  }
-
   // Calculate distance using Haversine formula (returns km)
   function calculateDistance(lat1, lon1, lat2, lon2) {
     if (!lat1 || !lon1 || !lat2 || !lon2) return null;
@@ -175,13 +135,13 @@
     return R * c;
   }
 
-  // Format distance for display
+  // Format distance for display on product cards
   function formatDistance(km) {
-    if (km === null || km === undefined) return 'Location unknown';
+    if (km === null || km === undefined) return null;
     if (km < 1) {
-      return Math.round(km * 1000) + 'm away';
+      return Math.round(km * 1000) + 'm';
     }
-    return km.toFixed(1) + 'km away';
+    return km.toFixed(1) + 'km';
   }
 
   // Get user location from session
@@ -209,62 +169,28 @@
     return 'distance-badge';
   }
 
-  // Inject location prompt into page
-  function injectLocationPrompt() {
-    // Check if prompt already exists
-    if (document.getElementById('locationPrompt')) return;
-    
-    const promptHTML = `
-      <div id="locationPrompt" style="background:#f0f8ff; padding:15px; border-radius:10px; margin-bottom:20px; display:flex; align-items:center; gap:15px; flex-wrap:wrap;">
-        <span style="font-weight:600;">📍 Find nearby products:</span>
-        <button onclick="window.getUserLocation()" class="btn-primary" style="padding:8px 20px; background:#f90; border:none; border-radius:6px; color:white; font-weight:600; cursor:pointer;">Use My Location</button>
-        <span style="color:#666;font-size:14px;">or</span>
-        <input type="text" id="manualLocation" placeholder="Enter city or address..." style="padding:8px 15px; border-radius:6px; border:1px solid #ccc; flex:1; min-width:150px;">
-        <button onclick="window.searchManualLocation()" class="btn-secondary" style="padding:8px 20px; background:#e7e9ec; border:none; border-radius:6px; font-weight:500; cursor:pointer;">Search</button>
-      </div>
-      <div id="distanceInfo" style="text-align:center;padding:10px;color:#666;font-size:14px;"></div>
-    `;
-    
-    // Insert after the filter bar or at the top of the main content
-    const filterBar = document.querySelector('.filter-bar');
-    if (filterBar) {
-      filterBar.insertAdjacentHTML('afterend', promptHTML);
-    } else {
-      const mainContent = document.querySelector('.main-content .container');
-      if (mainContent) {
-        mainContent.insertAdjacentHTML('afterbegin', promptHTML);
-      }
-    }
-  }
-
-  // Initialize location on page load
+  // Initialize location - SILENT, just tries to get location
   function initLocation() {
+    // Check if we already have location in session
     const saved = getUserLocationFromSession();
     if (saved) {
       currentUserLat = saved.lat;
       currentUserLng = saved.lng;
-      const info = document.getElementById('distanceInfo');
-      if (info) info.innerHTML = '📍 Showing products near you';
+      return;
     }
     
-    // Inject location prompt if not on dashboard
-    if (!window.location.pathname.includes('seller-dashboard')) {
-      injectLocationPrompt();
-    }
+    // Silently try to get location - browser will show native permission prompt
+    getUserLocation();
   }
 
   // ==================== EXPOSE FUNCTIONS GLOBALLY ====================
-  // Use window object to expose functions
   window.getUserLocation = getUserLocation;
-  window.searchManualLocation = searchManualLocation;
   window.calculateDistance = calculateDistance;
   window.formatDistance = formatDistance;
   window.getUserLocationFromSession = getUserLocationFromSession;
   window.hasUserLocation = hasUserLocation;
   window.getDistanceBadgeClass = getDistanceBadgeClass;
   window.initLocation = initLocation;
-  window.injectLocationPrompt = injectLocationPrompt;
-  window.refreshProducts = window.refreshProducts || function() {};
 
   // ==================== UI COMMON EXPORTS ====================
   window.uiCommon = {
@@ -275,18 +201,16 @@
     handleSearchRedirect,
     logoutToHome,
     getUserLocation,
-    searchManualLocation,
     calculateDistance,
     formatDistance,
     getUserLocationFromSession,
     hasUserLocation,
     getDistanceBadgeClass,
-    initLocation,
-    injectLocationPrompt
+    initLocation
   };
 })();
 
-// Auto-init location on page load
+// Auto-init location on page load - SILENT
 document.addEventListener('DOMContentLoaded', function() {
   if (typeof window.initLocation === 'function') {
     window.initLocation();
