@@ -1,5 +1,5 @@
 (function () {
-  const WEBSITE_URL = 'https://www.mbaremarketplace.com';
+  var WEBSITE_URL = 'https://www.mbaremarketplace.com';
 
   function checkLogin() {
     if (localStorage.getItem('isLoggedIn') !== 'true') {
@@ -10,64 +10,64 @@
   }
 
   function generateRatingStars(rating) {
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 >= 0.5;
-    let stars = '';
-    for (let i = 0; i < fullStars; i += 1) stars += '\u2605';
+    var fullStars = Math.floor(rating);
+    var hasHalfStar = rating % 1 >= 0.5;
+    var stars = '';
+    for (var i = 0; i < fullStars; i += 1) stars += '\u2605';
     if (hasHalfStar) stars += '\u00bd';
-    const emptyStars = 5 - Math.ceil(rating);
-    for (let i = 0; i < emptyStars; i += 1) stars += '\u2606';
+    var emptyStars = 5 - Math.ceil(rating);
+    for (var i = 0; i < emptyStars; i += 1) stars += '\u2606';
     return stars;
   }
 
   function matchesByKeywords(product, filter) {
     if (!filter) return true;
-    const category = (product.category || '').toLowerCase();
-    const title = (product.title || '').toLowerCase();
-    const description = (product.description || '').toLowerCase();
+    var category = (product.category || '').toLowerCase();
+    var title = (product.title || '').toLowerCase();
+    var description = (product.description || '').toLowerCase();
 
-    const inCategory = (filter.categoryKeywords || []).some((k) => category.includes(k));
-    const inTitle = (filter.titleKeywords || []).some((k) => title.includes(k));
-    const inDescription = (filter.descriptionKeywords || []).some((k) => description.includes(k));
+    var inCategory = (filter.categoryKeywords || []).some(function(k) { return category.includes(k); });
+    var inTitle = (filter.titleKeywords || []).some(function(k) { return title.includes(k); });
+    var inDescription = (filter.descriptionKeywords || []).some(function(k) { return description.includes(k); });
     return inCategory || inTitle || inDescription;
   }
 
   window.initCategoryPage = function initCategoryPage(categoryKey) {
-    const configMap = window.CATEGORY_PAGE_CONFIGS || {};
-    const config = configMap[categoryKey];
+    var configMap = window.CATEGORY_PAGE_CONFIGS || {};
+    var config = configMap[categoryKey];
     if (!config) {
       console.error('Missing category config for:', categoryKey);
       return;
     }
 
-    let allProducts = [];
-    let currentProducts = [];
-    let sellersMap = {};
-    let ratingsCache = {};
+    var allProducts = [];
+    var currentProducts = [];
+    var sellersMap = {};
+    var ratingsCache = {};
 
     function shuffleSlider() {
-      const panels = document.querySelectorAll('.slide-panel img');
-      panels.forEach((img) => {
+      var panels = document.querySelectorAll('.slide-panel img');
+      panels.forEach(function(img) {
         img.style.opacity = '0.3';
-        setTimeout(() => {
+        setTimeout(function() {
           img.src = config.images[Math.floor(Math.random() * config.images.length)];
           img.style.opacity = '1';
         }, 300);
       });
     }
 
-    let sliderInterval = setInterval(shuffleSlider, 5000);
+    var sliderInterval = setInterval(shuffleSlider, 5000);
 
     async function loadSellers() {
       try {
-        const response = await fetch(`${window.SUPABASE_URL}/rest/v1/sellers?select=*`, {
+        var response = await fetch(window.SUPABASE_URL + '/rest/v1/sellers?select=*', {
           headers: {
             apikey: window.SUPABASE_ANON_KEY,
-            Authorization: `Bearer ${window.SUPABASE_ANON_KEY}`
+            Authorization: 'Bearer ' + window.SUPABASE_ANON_KEY
           }
         });
-        const sellers = await response.json();
-        sellers.forEach((s) => {
+        var sellers = await response.json();
+        sellers.forEach(function(s) {
           sellersMap[s.user_id] = s;
         });
       } catch (e) {
@@ -78,19 +78,19 @@
     async function getSellerRatings(sellerId) {
       if (ratingsCache[sellerId]) return ratingsCache[sellerId];
       try {
-        const response = await fetch(`${window.SUPABASE_URL}/rest/v1/ratings?seller_id=eq.${sellerId}&select=rating`, {
+        var response = await fetch(window.SUPABASE_URL + '/rest/v1/ratings?seller_id=eq.' + sellerId + '&select=rating', {
           headers: {
             apikey: window.SUPABASE_ANON_KEY,
-            Authorization: `Bearer ${window.SUPABASE_ANON_KEY}`
+            Authorization: 'Bearer ' + window.SUPABASE_ANON_KEY
           }
         });
-        const ratings = await response.json();
-        let display = '<span style="color: #999;">No ratings yet</span>';
+        var ratings = await response.json();
+        var display = '<span style="color: #999;">No ratings yet</span>';
         if (ratings && ratings.length > 0) {
-          const avg = ratings.reduce((acc, curr) => acc + curr.rating, 0) / ratings.length;
-          display = `<span style="color: #f90;">${generateRatingStars(avg)}</span> <span style="color: #666;">(${ratings.length})</span>`;
+          var avg = ratings.reduce(function(acc, curr) { return acc + curr.rating; }, 0) / ratings.length;
+          display = '<span style="color: #f90;">' + generateRatingStars(avg) + '</span> <span style="color: #666;">(' + ratings.length + ')</span>';
         }
-        ratingsCache[sellerId] = { display };
+        ratingsCache[sellerId] = { display: display };
         return ratingsCache[sellerId];
       } catch {
         return { display: '<span style="color: #999;">No ratings</span>' };
@@ -99,29 +99,31 @@
 
     async function loadProducts() {
       try {
-        const response = await fetch(`${window.SUPABASE_URL}/rest/v1/products?${config.fetchQuery}`, {
+        var response = await fetch(window.SUPABASE_URL + '/rest/v1/products?' + config.fetchQuery, {
           headers: {
             apikey: window.SUPABASE_ANON_KEY,
-            Authorization: `Bearer ${window.SUPABASE_ANON_KEY}`
+            Authorization: 'Bearer ' + window.SUPABASE_ANON_KEY
           }
         });
-        const data = await response.json();
+        var data = await response.json();
 
-        const prepared = (data || []).map((p) => ({
-          ...p,
-          price: parseFloat(p.price),
-          created_at: p.created_at || new Date().toISOString()
-        }));
+        var prepared = (data || []).map(function(p) {
+          return {
+            ...p,
+            price: parseFloat(p.price),
+            created_at: p.created_at || new Date().toISOString()
+          };
+        });
 
-        allProducts = config.filter ? prepared.filter((p) => matchesByKeywords(p, config.filter)) : prepared;
+        allProducts = config.filter ? prepared.filter(function(p) { return matchesByKeywords(p, config.filter); }) : prepared;
 
-        console.log(`${config.loadLabel} products found:`, allProducts.length);
-        currentProducts = [...allProducts];
+        console.log(config.loadLabel + ' products found:', allProducts.length);
+        currentProducts = allProducts.slice();
         await displayProducts(currentProducts);
         updateResultsCount(currentProducts.length);
       } catch (error) {
         console.error('Error loading products:', error);
-        const container = document.getElementById(config.gridId);
+        var container = document.getElementById(config.gridId);
         if (container) {
           container.innerHTML = '<p style="text-align:center; padding:40px;">Error loading products. Please refresh the page.</p>';
         }
@@ -130,14 +132,14 @@
 
     // Calculate distance for products
     function addDistancesToProducts(products) {
-      const userLoc = window.getUserLocationFromSession ? window.getUserLocationFromSession() : null;
+      var userLoc = window.getUserLocationFromSession ? window.getUserLocationFromSession() : null;
       
-      return products.map(p => {
-        const seller = sellersMap[p.seller_id] || {};
-        const sellerLat = parseFloat(seller.latitude);
-        const sellerLng = parseFloat(seller.longitude);
-        let distance = null;
-        let distanceDisplay = 'Location unknown';
+      return products.map(function(p) {
+        var seller = sellersMap[p.seller_id] || {};
+        var sellerLat = parseFloat(seller.latitude);
+        var sellerLng = parseFloat(seller.longitude);
+        var distance = null;
+        var distanceDisplay = 'Location unknown';
         
         if (userLoc && sellerLat && sellerLng) {
           distance = window.calculateDistance ? window.calculateDistance(userLoc.lat, userLoc.lng, sellerLat, sellerLng) : null;
@@ -156,21 +158,21 @@
     }
 
     async function displayProducts(products) {
-      const container = document.getElementById(config.gridId);
+      var container = document.getElementById(config.gridId);
       if (!container) return;
 
       if (!products || products.length === 0) {
-        container.innerHTML = `<p style="text-align:center; padding:40px;">${config.emptyMessage}</p>`;
+        container.innerHTML = '<p style="text-align:center; padding:40px;">' + config.emptyMessage + '</p>';
         return;
       }
 
       // Add distances to products
-      const productsWithDistance = addDistancesToProducts(products);
+      var productsWithDistance = addDistancesToProducts(products);
       
       // Sort by distance if user has location
-      const userLoc = window.getUserLocationFromSession ? window.getUserLocationFromSession() : null;
+      var userLoc = window.getUserLocationFromSession ? window.getUserLocationFromSession() : null;
       if (userLoc) {
-        productsWithDistance.sort((a, b) => {
+        productsWithDistance.sort(function(a, b) {
           if (a.distance === null) return 1;
           if (b.distance === null) return -1;
           return a.distance - b.distance;
@@ -179,70 +181,76 @@
 
       container.innerHTML = '';
 
-      for (const p of productsWithDistance) {
-        const seller = sellersMap[p.seller_id] || {};
-        const ratingInfo = await getSellerRatings(p.seller_id);
-        const card = document.createElement('div');
+      for (var i = 0; i < productsWithDistance.length; i++) {
+        var p = productsWithDistance[i];
+        var seller = sellersMap[p.seller_id] || {};
+        var ratingInfo = await getSellerRatings(p.seller_id);
+        var card = document.createElement('div');
         card.className = 'product-card';
         card.style.position = 'relative';
         
         // Distance badge HTML
-        let distanceBadge = '';
+        var distanceBadge = '';
         if (p.distance !== null && userLoc) {
-          let badgeClass = 'distance-badge';
+          var badgeClass = 'distance-badge';
           if (p.distance > 20) badgeClass += ' very-far';
           else if (p.distance > 10) badgeClass += ' far';
-          distanceBadge = `<span class="${badgeClass}" style="position:absolute;top:10px;right:10px;background:#28a745;color:white;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;z-index:5;">${p.distanceDisplay}</span>`;
+          distanceBadge = '<span class="' + badgeClass + '" style="position:absolute;top:10px;right:10px;background:#28a745;color:white;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;z-index:5;">' + p.distanceDisplay + '</span>';
         }
         
-        card.innerHTML = `
-          ${distanceBadge}
-          <img src="${p.image_url || `https://via.placeholder.com/300x300?text=${config.placeholderText}`}" class="product-image" onclick="viewProduct('${p.id}')" style="cursor: pointer;" onerror="this.src='https://via.placeholder.com/300x300?text=${config.placeholderText}'">
-          <h3 class="product-title" onclick="viewProduct('${p.id}')" style="cursor: pointer;">${p.title || 'Product'}</h3>
-          <div class="product-price">$${(p.price || 0).toFixed(2)}</div>
-          <div style="font-size:12px;color:#666;margin:4px 0;">📍 ${p.sellerLocation}</div>
-          <a href="shop.html?seller=${p.seller_id}" class="visit-shop-link" onclick="event.stopPropagation()" style="color:#f90;text-decoration:underline;font-size:12px;display:inline-block;margin:5px 0;">Visit Shop</a>
-          <div class="product-seller"> ${seller.business_name || config.sellerFallback}</div>
-          <div class="seller-rating">${ratingInfo.display}</div>
-          <div class="product-actions">
-            <button class="btn-add-cart" onclick="addToBasket('${p.id}')">Add to Basket</button>
-            <button onclick="showSellerContact('${p.id}')" style="background:#25D366;color:white;border:none;padding:8px;border-radius:4px;width:100%;margin-top:5px;cursor:pointer"> Contact Seller</button>
-          </div>
-        `;
+        var imageUrl = p.image_url || 'https://via.placeholder.com/300x300?text=' + config.placeholderText;
+        var title = p.title || 'Product';
+        var price = (p.price || 0).toFixed(2);
+        // Use CSS triangle shape for location indicator
+        var sellerLocationDisplay = '<span class="location-shape"></span> ' + p.sellerLocation;
+        var sellerName = seller.business_name || config.sellerFallback;
+        
+        card.innerHTML = 
+          distanceBadge +
+          '<img src="' + imageUrl + '" class="product-image" onclick="viewProduct(\'' + p.id + '\')" style="cursor: pointer;" onerror="this.src=\'https://via.placeholder.com/300x300?text=' + config.placeholderText + '\'">' +
+          '<h3 class="product-title" onclick="viewProduct(\'' + p.id + '\')" style="cursor: pointer;">' + title + '</h3>' +
+          '<div class="product-price">$' + price + '</div>' +
+          '<div style="font-size:12px;color:#666;margin:4px 0;">' + sellerLocationDisplay + '</div>' +
+          '<a href="shop.html?seller=' + p.seller_id + '" class="visit-shop-link" onclick="event.stopPropagation()" style="color:#f90;text-decoration:underline;font-size:12px;display:inline-block;margin:5px 0;">Visit Shop</a>' +
+          '<div class="product-seller">' + sellerName + '</div>' +
+          '<div class="seller-rating">' + ratingInfo.display + '</div>' +
+          '<div class="product-actions">' +
+            '<button class="btn-add-cart" onclick="addToBasket(\'' + p.id + '\')">Add to Basket</button>' +
+            '<button onclick="showSellerContact(\'' + p.id + '\')" style="background:#25D366;color:white;border:none;padding:8px;border-radius:4px;width:100%;margin-top:5px;cursor:pointer">Contact Seller</button>' +
+          '</div>';
         container.appendChild(card);
       }
     }
 
     window.showSellerContact = function showSellerContact(productId) {
       if (!checkLogin()) return;
-      const product = allProducts.find((p) => p.id == productId);
+      var product = allProducts.find(function(p) { return p.id == productId; });
       if (!product) return;
-      const seller = sellersMap[product.seller_id];
+      var seller = sellersMap[product.seller_id];
       if (!seller) return;
 
-      const phone = seller.business_phone || 'Not provided';
-      const phoneDigits = phone.replace(/\D/g, '');
-      const whatsappMessage = `Hello! I am interested in ${product.title}, I saw it on ${WEBSITE_URL}`;
-      const encodedMessage = encodeURIComponent(whatsappMessage);
-      const whatsappLink = phoneDigits ? `https://wa.me/${phoneDigits}?text=${encodedMessage}` : '#';
-      const callLink = phoneDigits ? `tel:${phoneDigits}` : '#';
+      var phone = seller.business_phone || 'Not provided';
+      var phoneDigits = phone.replace(/\D/g, '');
+      var whatsappMessage = 'Hello! I am interested in ' + product.title + ', I saw it on ' + WEBSITE_URL;
+      var encodedMessage = encodeURIComponent(whatsappMessage);
+      var whatsappLink = phoneDigits ? 'https://wa.me/' + phoneDigits + '?text=' + encodedMessage : '#';
+      var callLink = phoneDigits ? 'tel:' + phoneDigits : '#';
 
-      const modal = document.getElementById('sellerContactModal');
-      const modalContent = document.getElementById('sellerContactContent');
+      var modal = document.getElementById('sellerContactModal');
+      var modalContent = document.getElementById('sellerContactContent');
 
-      modalContent.innerHTML = `
-        <div class="product-title">${product.title}</div>
-        <div class="seller-info">
-          <div class="info-row"><div class="info-icon"></div><div class="info-text"><div class="info-label">Seller</div><div class="info-value">${seller.business_name || 'Unknown Seller'}</div></div></div>
-          <div class="info-row"><div class="info-icon"></div><div class="info-text"><div class="info-label">Phone Number</div><div class="info-value">${phone}</div></div></div>
-          <div class="info-row"><div class="info-icon"></div><div class="info-text"><div class="info-label">Shop Location</div><div class="info-value">${seller.business_address || seller.location_display_name || 'Location not specified'}</div></div></div>
-          <div class="info-row"><div class="info-icon"></div><div class="info-text"><div class="info-label">Price</div><div class="info-value">$${(product.price || 0).toFixed(2)}</div></div></div>
-        </div>
-        <div class="contact-actions">
-          <a href="${callLink}" class="contact-btn call-btn"> Call Seller</a>
-          <a href="${whatsappLink}" class="contact-btn whatsapp-btn" target="_blank"> WhatsApp</a>
-        </div>
-      `;
+      modalContent.innerHTML = 
+        '<div class="product-title">' + product.title + '</div>' +
+        '<div class="seller-info">' +
+          '<div class="info-row"><div class="info-icon"></div><div class="info-text"><div class="info-label">Seller</div><div class="info-value">' + (seller.business_name || 'Unknown Seller') + '</div></div></div>' +
+          '<div class="info-row"><div class="info-icon"></div><div class="info-text"><div class="info-label">Phone Number</div><div class="info-value">' + phone + '</div></div></div>' +
+          '<div class="info-row"><div class="info-icon"></div><div class="info-text"><div class="info-label">Shop Location</div><div class="info-value">' + (seller.business_address || seller.location_display_name || 'Location not specified') + '</div></div></div>' +
+          '<div class="info-row"><div class="info-icon"></div><div class="info-text"><div class="info-label">Price</div><div class="info-value">$' + (product.price || 0).toFixed(2) + '</div></div></div>' +
+        '</div>' +
+        '<div class="contact-actions">' +
+          '<a href="' + callLink + '" class="contact-btn call-btn">Call Seller</a>' +
+          '<a href="' + whatsappLink + '" class="contact-btn whatsapp-btn" target="_blank">WhatsApp</a>' +
+        '</div>';
 
       modal.style.display = 'block';
       window.onclick = function closeOnOutsideClick(event) {
@@ -251,65 +259,72 @@
     };
 
     window.handleSearch = function handleSearch() {
-      const input = document.getElementById('searchInput');
-      const searchTerm = (input?.value || '').toLowerCase();
+      var input = document.getElementById('searchInput');
+      var searchTerm = (input?.value || '').toLowerCase();
       if (!searchTerm) {
-        currentProducts = [...allProducts];
+        currentProducts = allProducts.slice();
       } else {
-        currentProducts = allProducts.filter((product) =>
-          (product.title && product.title.toLowerCase().includes(searchTerm)) ||
-          (product.description && product.description.toLowerCase().includes(searchTerm))
-        );
+        currentProducts = allProducts.filter(function(product) {
+          return (product.title && product.title.toLowerCase().includes(searchTerm)) ||
+                 (product.description && product.description.toLowerCase().includes(searchTerm));
+        });
       }
       displayProducts(currentProducts);
       updateResultsCount(currentProducts.length);
     };
 
     function updateResultsCount(count) {
-      const countElement = document.getElementById('resultsCount');
+      var countElement = document.getElementById('resultsCount');
       if (countElement) {
-        const userLoc = window.getUserLocationFromSession ? window.getUserLocationFromSession() : null;
-        const locationText = userLoc ? ' (sorted by distance)' : '';
-        countElement.textContent = `${count} product${count !== 1 ? 's' : ''} found${locationText}`;
+        var userLoc = window.getUserLocationFromSession ? window.getUserLocationFromSession() : null;
+        var locationText = userLoc ? ' (sorted by distance)' : '';
+        countElement.textContent = count + ' product' + (count !== 1 ? 's' : '') + ' found' + locationText;
       }
     }
 
     window.sortProducts = function sortProducts() {
-      const sortValue = document.getElementById('sortSelect')?.value;
-      if (sortValue === 'price_low') currentProducts.sort((a, b) => (a.price || 0) - (b.price || 0));
-      else if (sortValue === 'price_high') currentProducts.sort((a, b) => (b.price || 0) - (a.price || 0));
-      else currentProducts.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+      var sortValue = document.getElementById('sortSelect')?.value;
+      if (sortValue === 'price_low') {
+        currentProducts.sort(function(a, b) { return (a.price || 0) - (b.price || 0); });
+      } else if (sortValue === 'price_high') {
+        currentProducts.sort(function(a, b) { return (b.price || 0) - (a.price || 0); });
+      } else {
+        currentProducts.sort(function(a, b) { return new Date(b.created_at || 0) - new Date(a.created_at || 0); });
+      }
       displayProducts(currentProducts);
     };
 
     window.viewProduct = function viewProduct(productId) {
       if (!checkLogin()) return;
-      window.location.href = `product-detail.html?id=${productId}`;
+      window.location.href = 'product-detail.html?id=' + productId;
     };
 
     window.addToBasket = function addToBasket(productId) {
-      const sessionData = localStorage.getItem('supabase_session');
+      var sessionData = localStorage.getItem('supabase_session');
       if (!sessionData) {
         window.location.href = 'login.html';
         return;
       }
-      const session = JSON.parse(sessionData);
-      const basketKey = `basket_${session.user.id}`;
-      let basket = JSON.parse(localStorage.getItem(basketKey)) || [];
-      const product = allProducts.find((p) => p.id == productId);
+      var session = JSON.parse(sessionData);
+      var basketKey = 'basket_' + session.user.id;
+      var basket = JSON.parse(localStorage.getItem(basketKey)) || [];
+      var product = allProducts.find(function(p) { return p.id == productId; });
       if (!product) return;
 
-      const existingItem = basket.find((item) => item.id == productId);
-      if (existingItem) existingItem.quantity = (existingItem.quantity || 1) + 1;
-      else basket.push({ ...product, quantity: 1 });
+      var existingItem = basket.find(function(item) { return item.id == productId; });
+      if (existingItem) {
+        existingItem.quantity = (existingItem.quantity || 1) + 1;
+      } else {
+        basket.push({ ...product, quantity: 1 });
+      }
 
       localStorage.setItem(basketKey, JSON.stringify(basket));
-      updateBasketCount(basket.reduce((sum, item) => sum + (item.quantity || 1), 0));
+      updateBasketCount(basket.reduce(function(sum, item) { return sum + (item.quantity || 1); }, 0));
       alert('Item added to basket!');
     };
 
     function updateBasketCount(count) {
-      const el = document.getElementById('basketCount');
+      var el = document.getElementById('basketCount');
       if (el) {
         el.textContent = count;
         el.style.display = count > 0 ? 'flex' : 'none';
@@ -323,9 +338,9 @@
     };
 
     function wireSearchEnterKey() {
-      const searchInput = document.getElementById('searchInput');
+      var searchInput = document.getElementById('searchInput');
       if (!searchInput) return;
-      searchInput.addEventListener('keypress', (e) => {
+      searchInput.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') window.handleSearch();
       });
     }
@@ -345,15 +360,15 @@
         window.initLocation();
       }
       
-      const sessionData = localStorage.getItem('supabase_session');
+      var sessionData = localStorage.getItem('supabase_session');
       if (sessionData) {
-        const session = JSON.parse(sessionData);
-        const basket = JSON.parse(localStorage.getItem(`basket_${session.user.id}`)) || [];
-        updateBasketCount(basket.reduce((sum, item) => sum + (item.quantity || 1), 0));
-        const logoutBtn = document.getElementById('logoutBtn');
+        var session = JSON.parse(sessionData);
+        var basket = JSON.parse(localStorage.getItem('basket_' + session.user.id)) || [];
+        updateBasketCount(basket.reduce(function(sum, item) { return sum + (item.quantity || 1); }, 0));
+        var logoutBtn = document.getElementById('logoutBtn');
         if (logoutBtn) logoutBtn.style.display = 'inline-block';
-        const accountLabel = document.querySelector('.account-label');
-        if (accountLabel) accountLabel.textContent = `Hello, ${session.user.email.split('@')[0]}`;
+        var accountLabel = document.querySelector('.account-label');
+        if (accountLabel) accountLabel.textContent = 'Hello, ' + session.user.email.split('@')[0];
       }
     }
 
@@ -363,14 +378,14 @@
       start();
     }
 
-    window.addEventListener('beforeunload', () => {
+    window.addEventListener('beforeunload', function() {
       if (sliderInterval) clearInterval(sliderInterval);
       sliderInterval = null;
     });
   };
 
   function autoInitFromBodyDataAttribute() {
-    const key = document.body?.dataset?.category;
+    var key = document.body?.dataset?.category;
     if (!key) return;
     if (typeof window.initCategoryPage === 'function') {
       window.initCategoryPage(key);
