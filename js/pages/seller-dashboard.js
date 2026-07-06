@@ -3,7 +3,7 @@ window.SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
 window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
 const IMGBB_API_KEY = '670ea8c38e955ebdfdf84a41489713bf';
 
-// Your backend VPS Server Base URL (points to Python server)
+// Your backend VPS Server Base URL
 const API_BASE_URL = 'https://api.mbaremarketplace.com';
 
 let currentSellerId = null, currentAccessToken = null;
@@ -25,7 +25,7 @@ function showToast(message, isError = false) {
     setTimeout(() => toast.remove(), 5000);
 }
 
-// ==================== REFRESH SESSION (with concurrency guard) ====================
+// ==================== REFRESH SESSION ====================
 async function refreshSession() {
     if (isRefreshing) {
         await new Promise(resolve => {
@@ -241,7 +241,7 @@ async function activateSubscription(planType, reference) {
     }
 }
 
-// ==================== PAYMENT FLOW (Python Server) ====================
+// ==================== PAYMENT FLOW (DIRECT REDIRECT + SERVER LISTENER) ====================
 async function openPayNowPayment(planType) {
     const plan = tierMap[planType];
     
@@ -252,44 +252,70 @@ async function openPayNowPayment(planType) {
         
         const sellerId = session.user?.id;
         const sellerEmail = session.user?.email;
-        const targetAmount = parseFloat(plan.amount);
+        const amount = parseFloat(plan.amount).toFixed(2);
+        const reference = `pay_${sellerId}_${Date.now()}`;
 
         if (!sellerId || !sellerEmail) {
             alert("Session authentication error. Please re-login.");
             return;
         }
 
-        showToast('Connecting to Paynow gateway securely...', false);
+        // ============================================================
+        // STEP 1: Create pending subscription in Supabase
+        // ============================================================
+        const pendingCreated = await createPendingSubscription(planType, reference);
+        if (!pendingCreated) {
+            throw new Error('Failed to create pending subscription');
+        }
 
-        // Call Python server
-        const response = await fetch(`${API_BASE_URL}/initiate-subscription`, {
+        // ============================================================
+        // STEP 2: Tell the server to listen for this payment
+        // ============================================================
+        showToast('Registering payment listener...', false);
+        
+        const listenResponse = await fetch(`${API_BASE_URL}/listen-payment`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
                 sellerId: sellerId,
-                sellerEmail: sellerEmail,
-                amount: targetAmount,
-                planType: planType
+                planType: planType,
+                reference: reference
             })
         });
 
-        const data = await response.json();
-
-        if (!response.ok || !data.success) {
-            throw new Error(data.error || 'Failed to initiate secure token connection.');
+        if (!listenResponse.ok) {
+            throw new Error('Failed to register payment listener');
         }
 
-        // Save pending payment info
+        const listenData = await listenResponse.json();
+        console.log('Server listening for payment:', listenData);
+
+        // ============================================================
+        // STEP 3: Cache payment info for fallback
+        // ============================================================
         localStorage.setItem('pending_payment_plan', planType);
-        localStorage.setItem('pending_payment_guid', data.reference);
-        localStorage.setItem('pending_poll_url', data.pollUrl);
+        localStorage.setItem('pending_payment_guid', reference);
 
-        showToast('Redirecting to Paynow checkout portal...', false);
+        // ============================================================
+        // STEP 4: Redirect directly to Paynow
+        // ============================================================
+        const params = new URLSearchParams({
+            id: '24679',
+            amount: amount,
+            authemail: sellerEmail,
+            reference: reference,
+            additionalinfo: `Mbare Marketplace ${planType}`,
+            returnurl: window.location.href + '?payment=return',
+            resulturl: 'https://api.mbaremarketplace.com/paynow-webhook',
+            status: 'Message'
+        });
 
-        // Redirect to Paynow
-        window.location.href = data.redirectUrl;
+        const paynowUrl = `https://www.paynow.co.zw/interface/initiatetransaction?${params.toString()}`;
+
+        showToast('Redirecting to Paynow...', false);
+        window.location.href = paynowUrl;
 
     } catch (e) {
         console.error('Payment initialization error:', e);
@@ -297,70 +323,73 @@ async function openPayNowPayment(planType) {
     }
 }
 
-// ==================== CHECK PAYMENT STATUS (Polling via Python Server) ====================
+// ==================== CHECK PAYMENT STATUS (Polling fallback) ====================
 function checkLocalStoragePaymentStatus() {
     const pendingPlan = localStorage.getItem('pending_payment_plan');
     const pendingGuid = localStorage.getItem('pending_payment_guid');
-    const pendingPollUrl = localStorage.getItem('pending_poll_url');
 
     // Check if user returned from Paynow
     const urlParams = new URLSearchParams(window.location.search);
-    const statusParam = urlParams.get('status');
+    const statusParam = urlParams.get('payment');
 
-    if (pendingPlan && pendingGuid && (statusParam === 'success' || statusParam === 'paid' || !statusParam)) {
-        showToast('Checking payment status...', false);
+    if (pendingPlan && pendingGuid && (statusParam === 'return' || statusParam === 'success')) {
+        showToast('Processing payment...', false);
         
-        // If we have a pollUrl, let the server check it
-        if (pendingPollUrl) {
-            pollPaymentStatus(pendingPollUrl, pendingPlan, pendingGuid);
-            return true;
-        }
-        
-        // Fallback: try to activate directly
-        activateSubscription(pendingPlan, pendingGuid);
+        // Start polling the server for status
+        pollPaymentStatus(pendingGuid, pendingPlan);
         return true;
     }
     return false;
 }
 
-async function pollPaymentStatus(pollUrl, planType, reference) {
+async function pollPaymentStatus(reference, planType, attempt = 0) {
+    const maxAttempts = 30; // 30 * 3 seconds = 90 seconds max
+    const delay = 3000; // 3 seconds between attempts
+    
     try {
-        // Tell the Python server to poll this transaction
-        const response = await fetch(`${API_BASE_URL}/poll-paynow`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                pollUrl: pollUrl,
-                sellerId: currentSellerId
-            })
-        });
-
+        console.log(`Checking payment status (attempt ${attempt + 1}/${maxAttempts})...`);
+        
+        const response = await fetch(`${API_BASE_URL}/payment-status/${reference}`);
+        
+        if (response.status === 404) {
+            // Payment not found yet - keep polling
+            if (attempt < maxAttempts) {
+                showToast('Waiting for payment confirmation...', false);
+                setTimeout(() => pollPaymentStatus(reference, planType, attempt + 1), delay);
+            } else {
+                showToast('Payment timed out. Please contact support.', true);
+                localStorage.removeItem('pending_payment_plan');
+                localStorage.removeItem('pending_payment_guid');
+            }
+            return;
+        }
+        
         const data = await response.json();
-
-        if (data.status === 'Paid' || data.status === 'Completed') {
+        
+        if (data.status === 'active') {
             // Payment confirmed!
-            activateSubscription(planType, reference);
-        } else if (data.status === 'Pending') {
-            // Wait and try again
-            showToast('Payment still processing. Checking again in 5 seconds...', false);
-            setTimeout(() => {
-                pollPaymentStatus(pollUrl, planType, reference);
-            }, 5000);
-        } else if (data.status === 'Error' || data.status === 'Cancelled') {
-            showToast('Payment failed or cancelled. Please try again.', true);
+            showToast('Payment confirmed! Activating subscription...', false);
+            await activateSubscription(planType, reference);
+        } else if (data.status === 'pending') {
+            // Still waiting
+            if (attempt < maxAttempts) {
+                setTimeout(() => pollPaymentStatus(reference, planType, attempt + 1), delay);
+            } else {
+                showToast('Payment still processing. Please refresh later.', true);
+            }
+        } else {
+            showToast('Payment failed. Please try again.', true);
             localStorage.removeItem('pending_payment_plan');
             localStorage.removeItem('pending_payment_guid');
-            localStorage.removeItem('pending_poll_url');
-        } else {
-            // Unknown status - try direct activation as fallback
-            activateSubscription(planType, reference);
         }
+        
     } catch (error) {
         console.error('Polling error:', error);
-        // Fallback: try direct activation
-        activateSubscription(planType, reference);
+        if (attempt < maxAttempts) {
+            setTimeout(() => pollPaymentStatus(reference, planType, attempt + 1), delay);
+        } else {
+            showToast('Error checking payment status. Please contact support.', true);
+        }
     }
 }
 
@@ -568,7 +597,7 @@ async function removeCoverImage() {
     } catch (e) { alert('Failed to remove cover image'); }
 }
 
-// ==================== LOCATION PICKER (FREE - Leaflet + OpenStreetMap) ====================
+// ==================== LOCATION PICKER ====================
 let locationMap, locationMarker;
 let isMapInitialized = false;
 let searchTimeout = null;
@@ -696,7 +725,6 @@ function loadLocationData() {
     }
 }
 
-// ==================== TOGGLE PROFILE FORM ====================
 function toggleProfileForm() {
     const section = document.getElementById('profileSection');
     const btn = document.getElementById('toggleProfileBtn');
@@ -1401,7 +1429,7 @@ async function init() {
     try {
         // Check payment return
         checkLocalStoragePaymentStatus();
-        // Fetch subscription
+        // Fetch subscription (retries internally)
         const sub = await fetchSubscription(1);
         currentTier = sub || localStorage.getItem(`mbare_tier_${currentSellerId}`) || 'free';
         localStorage.setItem(`mbare_tier_${currentSellerId}`, currentTier);
@@ -1424,6 +1452,7 @@ async function init() {
         console.log('Dashboard fully initialized.');
     } catch (e) {
         console.error('Init error:', e);
+        // Only redirect if session is missing
         if (!localStorage.getItem('supabase_session')) {
             window.location.href = 'login.html';
         }
