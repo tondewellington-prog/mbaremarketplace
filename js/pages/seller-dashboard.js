@@ -3,7 +3,7 @@ window.SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
 window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
 const IMGBB_API_KEY = '670ea8c38e955ebdfdf84a41489713bf';
 
-// Your backend VPS Server Base URL
+// Your backend VPS Server Base URL (points to Python server)
 const API_BASE_URL = 'https://api.mbaremarketplace.com';
 
 let currentSellerId = null, currentAccessToken = null;
@@ -28,7 +28,6 @@ function showToast(message, isError = false) {
 // ==================== REFRESH SESSION (with concurrency guard) ====================
 async function refreshSession() {
     if (isRefreshing) {
-        // Wait for the ongoing refresh to finish
         await new Promise(resolve => {
             const check = () => {
                 if (!isRefreshing) resolve();
@@ -36,7 +35,6 @@ async function refreshSession() {
             };
             check();
         });
-        // After waiting, check if we have a valid session now
         const session = localStorage.getItem('supabase_session');
         return !!session;
     }
@@ -72,10 +70,8 @@ async function refreshSession() {
             return true;
         } else {
             console.error('Refresh failed with status:', response.status);
-            // Session is irrecoverable – clear and redirect
             localStorage.removeItem('supabase_session');
             localStorage.setItem('isLoggedIn', 'false');
-            // Avoid redirecting if already on login page
             if (!window.location.pathname.includes('login.html')) {
                 window.location.href = 'login.html?session=expired';
             }
@@ -228,6 +224,7 @@ async function activateSubscription(planType, reference) {
         currentSellerId = userId;
         localStorage.setItem(`mbare_tier_${userId}`, currentTier);
         localStorage.removeItem('pending_payment_plan');
+        localStorage.removeItem('pending_payment_guid');
 
         await loadProductsFromSupabase();
         renderTiers();
@@ -244,7 +241,7 @@ async function activateSubscription(planType, reference) {
     }
 }
 
-// ==================== PAYMENT FLOW (UPDATED - VPS BACKEND) ====================
+// ==================== PAYMENT FLOW (Python Server) ====================
 async function openPayNowPayment(planType) {
     const plan = tierMap[planType];
     
@@ -264,7 +261,7 @@ async function openPayNowPayment(planType) {
 
         showToast('Connecting to Paynow gateway securely...', false);
 
-        // Contact your backend VPS API to safely compute parameters and signatures
+        // Call Python server
         const response = await fetch(`${API_BASE_URL}/initiate-subscription`, {
             method: 'POST',
             headers: {
@@ -284,13 +281,14 @@ async function openPayNowPayment(planType) {
             throw new Error(data.error || 'Failed to initiate secure token connection.');
         }
 
-        // Cache parameters to process callbacks upon return matching your verification systems
+        // Save pending payment info
         localStorage.setItem('pending_payment_plan', planType);
         localStorage.setItem('pending_payment_guid', data.reference);
+        localStorage.setItem('pending_poll_url', data.pollUrl);
 
         showToast('Redirecting to Paynow checkout portal...', false);
 
-        // INSTANT SEAMLESS DIRECT REDIRECTION MECHANISM
+        // Redirect to Paynow
         window.location.href = data.redirectUrl;
 
     } catch (e) {
@@ -299,22 +297,71 @@ async function openPayNowPayment(planType) {
     }
 }
 
-// ==================== CHECK LOCALSTORAGE FOR PENDING PAYMENT ====================
+// ==================== CHECK PAYMENT STATUS (Polling via Python Server) ====================
 function checkLocalStoragePaymentStatus() {
-    // Check if user returned from standard Paynow redirection loops
     const pendingPlan = localStorage.getItem('pending_payment_plan');
     const pendingGuid = localStorage.getItem('pending_payment_guid');
+    const pendingPollUrl = localStorage.getItem('pending_poll_url');
 
-    // Paynow return parameters check
+    // Check if user returned from Paynow
     const urlParams = new URLSearchParams(window.location.search);
     const statusParam = urlParams.get('status');
 
-    if (pendingPlan && pendingGuid && (statusParam === 'success' || !statusParam)) {
-        showToast('Processing returning payment session status updates...', false);
+    if (pendingPlan && pendingGuid && (statusParam === 'success' || statusParam === 'paid' || !statusParam)) {
+        showToast('Checking payment status...', false);
+        
+        // If we have a pollUrl, let the server check it
+        if (pendingPollUrl) {
+            pollPaymentStatus(pendingPollUrl, pendingPlan, pendingGuid);
+            return true;
+        }
+        
+        // Fallback: try to activate directly
         activateSubscription(pendingPlan, pendingGuid);
         return true;
     }
     return false;
+}
+
+async function pollPaymentStatus(pollUrl, planType, reference) {
+    try {
+        // Tell the Python server to poll this transaction
+        const response = await fetch(`${API_BASE_URL}/poll-paynow`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                pollUrl: pollUrl,
+                sellerId: currentSellerId
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.status === 'Paid' || data.status === 'Completed') {
+            // Payment confirmed!
+            activateSubscription(planType, reference);
+        } else if (data.status === 'Pending') {
+            // Wait and try again
+            showToast('Payment still processing. Checking again in 5 seconds...', false);
+            setTimeout(() => {
+                pollPaymentStatus(pollUrl, planType, reference);
+            }, 5000);
+        } else if (data.status === 'Error' || data.status === 'Cancelled') {
+            showToast('Payment failed or cancelled. Please try again.', true);
+            localStorage.removeItem('pending_payment_plan');
+            localStorage.removeItem('pending_payment_guid');
+            localStorage.removeItem('pending_poll_url');
+        } else {
+            // Unknown status - try direct activation as fallback
+            activateSubscription(planType, reference);
+        }
+    } catch (error) {
+        console.error('Polling error:', error);
+        // Fallback: try direct activation
+        activateSubscription(planType, reference);
+    }
 }
 
 // ==================== AUTH ====================
@@ -333,7 +380,6 @@ async function checkAuth() {
         if (!currentSellerId || !currentAccessToken) throw new Error('Invalid session data');
         document.querySelector('.account-menu').textContent = 'Hello, ' + (session.user?.email || 'Seller').split('@')[0];
         updateViewShopButton();
-        // Load profile – this will handle its own token refresh
         await loadSellerProfile(1);
         return true;
     } catch (e) {
@@ -376,7 +422,6 @@ async function loadSellerProfile(retries = 1) {
             if (refreshed) {
                 await loadSellerProfile(0);
             } else {
-                // refreshSession already redirected if needed
                 return;
             }
         } else {
@@ -537,35 +582,28 @@ function initLocationPicker() {
         return;
     }
 
-    // Get saved coordinates (default to Harare, Zimbabwe)
     const savedLat = parseFloat(document.getElementById('seller_lat').value) || -17.8252;
     const savedLng = parseFloat(document.getElementById('seller_lng').value) || 31.0335;
     const center = { lat: savedLat, lng: savedLng };
 
-    // Initialize the map
     locationMap = L.map('profile-map').setView([center.lat, center.lng], 13);
 
-    // Add OpenStreetMap tiles (completely free, no API key)
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(locationMap);
 
-    // Add draggable marker
     locationMarker = L.marker([center.lat, center.lng], {
         draggable: true
     }).addTo(locationMap);
 
-    // When marker is dragged, update hidden fields
     locationMarker.on('dragend', function() {
         const pos = locationMarker.getLatLng();
         document.getElementById('seller_lat').value = pos.lat;
         document.getElementById('seller_lng').value = pos.lng;
-        // Reverse geocode to get address
         reverseGeocode(pos.lat, pos.lng);
     });
 
-    // Setup search with debouncing (free Nominatim API)
     const searchInput = document.getElementById('location-search');
     if (searchInput) {
         searchInput.addEventListener('input', function() {
@@ -578,7 +616,6 @@ function initLocationPicker() {
             }, 500);
         });
 
-        // Also handle Enter key
         searchInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -595,7 +632,6 @@ function initLocationPicker() {
     console.log('Location picker initialized with Leaflet (free).');
 }
 
-// Search using free Nominatim API (OpenStreetMap)
 async function searchLocation(query) {
     try {
         const response = await fetch(
@@ -608,11 +644,9 @@ async function searchLocation(query) {
             const lat = parseFloat(result.lat);
             const lon = parseFloat(result.lon);
 
-            // Move map and marker
             locationMap.setView([lat, lon], 15);
             locationMarker.setLatLng([lat, lon]);
 
-            // Update hidden fields
             document.getElementById('seller_lat').value = lat;
             document.getElementById('seller_lng').value = lon;
             document.getElementById('seller_display_name').value = result.display_name;
@@ -628,7 +662,6 @@ async function searchLocation(query) {
     }
 }
 
-// Reverse geocode using free Nominatim API
 async function reverseGeocode(lat, lng) {
     try {
         const response = await fetch(
@@ -675,7 +708,6 @@ function toggleProfileForm() {
             if (!isMapInitialized) {
                 initLocationPicker();
             } else {
-                // Refresh map
                 setTimeout(() => {
                     locationMap.invalidateSize();
                     const lat = parseFloat(document.getElementById('seller_lat').value) || -17.8252;
@@ -693,7 +725,6 @@ function toggleProfileForm() {
     }
 }
 
-// ==================== SAVE SHOP PROFILE ====================
 async function saveShopProfile() {
     const description = document.getElementById('shopDescription').value.trim();
     const latitude = document.getElementById('seller_lat').value;
@@ -1370,7 +1401,7 @@ async function init() {
     try {
         // Check payment return
         checkLocalStoragePaymentStatus();
-        // Fetch subscription (retries internally)
+        // Fetch subscription
         const sub = await fetchSubscription(1);
         currentTier = sub || localStorage.getItem(`mbare_tier_${currentSellerId}`) || 'free';
         localStorage.setItem(`mbare_tier_${currentSellerId}`, currentTier);
@@ -1393,7 +1424,6 @@ async function init() {
         console.log('Dashboard fully initialized.');
     } catch (e) {
         console.error('Init error:', e);
-        // Only redirect if session is missing
         if (!localStorage.getItem('supabase_session')) {
             window.location.href = 'login.html';
         }
