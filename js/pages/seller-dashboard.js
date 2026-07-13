@@ -241,7 +241,7 @@ async function activateSubscription(planType, reference) {
     }
 }
 
-// ==================== PAYMENT FLOW (DIRECT REDIRECT + SERVER LISTENER) ====================
+// ==================== PAYMENT FLOW (FOLLOWS DOCUMENTATION WORKFLOW) ====================
 async function openPayNowPayment(planType) {
     const plan = tierMap[planType];
     
@@ -252,70 +252,52 @@ async function openPayNowPayment(planType) {
         
         const sellerId = session.user?.id;
         const sellerEmail = session.user?.email;
-        const amount = parseFloat(plan.amount).toFixed(2);
-        const reference = `pay_${sellerId}_${Date.now()}`;
+        const targetAmount = parseFloat(plan.amount);
 
         if (!sellerId || !sellerEmail) {
             alert("Session authentication error. Please re-login.");
             return;
         }
 
-        // ============================================================
-        // STEP 1: Create pending subscription in Supabase
-        // ============================================================
-        const pendingCreated = await createPendingSubscription(planType, reference);
-        if (!pendingCreated) {
-            throw new Error('Failed to create pending subscription');
-        }
+        showToast('Connecting to Paynow gateway securely...', false);
 
         // ============================================================
-        // STEP 2: Tell the server to listen for this payment
+        // STEP 1: Server initiates the transaction using Paynow SDK
+        // This follows the official documentation workflow
         // ============================================================
-        showToast('Registering payment listener...', false);
-        
-        const listenResponse = await fetch(`${API_BASE_URL}/listen-payment`, {
+        const response = await fetch(`${API_BASE_URL}/initiate-subscription`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
                 sellerId: sellerId,
-                planType: planType,
-                reference: reference
+                sellerEmail: sellerEmail,
+                amount: targetAmount,
+                planType: planType
             })
         });
 
-        if (!listenResponse.ok) {
-            throw new Error('Failed to register payment listener');
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'Failed to initiate secure token connection.');
         }
 
-        const listenData = await listenResponse.json();
-        console.log('Server listening for payment:', listenData);
-
         // ============================================================
-        // STEP 3: Cache payment info for fallback
+        // STEP 2: Server has created the payment and returned the redirect URL
+        // Save pending info and redirect the user to Paynow
         // ============================================================
         localStorage.setItem('pending_payment_plan', planType);
-        localStorage.setItem('pending_payment_guid', reference);
+        localStorage.setItem('pending_payment_guid', data.reference);
+
+        showToast('Redirecting to Paynow checkout portal...', false);
 
         // ============================================================
-        // STEP 4: Redirect directly to Paynow
+        // STEP 3: Redirect to Paynow using the URL from the server
+        // This follows the documentation: "Get the link to redirect the user to"
         // ============================================================
-        const params = new URLSearchParams({
-            id: '24679',
-            amount: amount,
-            authemail: sellerEmail,
-            reference: reference,
-            additionalinfo: `Mbare Marketplace ${planType}`,
-            returnurl: window.location.href + '?payment=return',
-            resulturl: 'https://api.mbaremarketplace.com/paynow-webhook',
-            status: 'Message'
-        });
-
-        const paynowUrl = `https://www.paynow.co.zw/interface/initiatetransaction?${params.toString()}`;
-
-        showToast('Redirecting to Paynow...', false);
-        window.location.href = paynowUrl;
+        window.location.href = data.redirectUrl;
 
     } catch (e) {
         console.error('Payment initialization error:', e);
