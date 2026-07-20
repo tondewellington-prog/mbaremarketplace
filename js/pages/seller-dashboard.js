@@ -12,9 +12,36 @@ let sellerProducts = [], selectedImageFile = null, renewalCheckInterval = null;
 let isRefreshing = false;  // Prevent concurrent refresh calls
 
 const tierMap = {
-    free: { name: 'Starter Plan', price: 'Free', maxProducts: 8, perks: '8 active products', badge: '', level: 0, amount: '0.00' },
-    tier_150: { name: 'Merchant Basic', price: '$1.50 / month', maxProducts: 50, perks: '50 products', badge: 'POPULAR', level: 1, amount: '1.50' },
-    tier_5: { name: 'Video Ads Plan', price: '$5 / month', maxProducts: 200, perks: '200 products + video ads', badge: 'VIDEO BOOST', level: 2, amount: '5.00' }
+    free: { 
+        name: 'Starter Plan', 
+        price: 'Free', 
+        maxProducts: 8, 
+        perks: '8 active products', 
+        badge: '', 
+        level: 0, 
+        amount: '0.00',
+        isFree: true
+    },
+    tier_150: { 
+        name: 'Merchant Basic', 
+        price: '$1.50 / month', 
+        maxProducts: 50, 
+        perks: '50 products · priority support', 
+        badge: 'POPULAR', 
+        level: 1, 
+        amount: '1.50',
+        isFree: false
+    },
+    tier_5: { 
+        name: 'Video Ads Plan', 
+        price: '$5 / month', 
+        maxProducts: 200, 
+        perks: '200 products + video ads on social platforms', 
+        badge: 'VIDEO BOOST', 
+        level: 2, 
+        amount: '5.00',
+        isFree: false
+    }
 };
 
 function showToast(message, isError = false) {
@@ -241,7 +268,7 @@ async function activateSubscription(planType, reference) {
     }
 }
 
-// ==================== PAYMENT FLOW (FOLLOWS DOCUMENTATION WORKFLOW) ====================
+// ==================== PAYMENT FLOW ====================
 async function openPayNowPayment(planType) {
     const plan = tierMap[planType];
     
@@ -261,10 +288,6 @@ async function openPayNowPayment(planType) {
 
         showToast('Connecting to Paynow gateway securely...', false);
 
-        // ============================================================
-        // STEP 1: Server initiates the transaction using Paynow SDK
-        // This follows the official documentation workflow
-        // ============================================================
         const response = await fetch(`${API_BASE_URL}/initiate-subscription`, {
             method: 'POST',
             headers: {
@@ -284,19 +307,11 @@ async function openPayNowPayment(planType) {
             throw new Error(data.error || 'Failed to initiate secure token connection.');
         }
 
-        // ============================================================
-        // STEP 2: Server has created the payment and returned the redirect URL
-        // Save pending info and redirect the user to Paynow
-        // ============================================================
         localStorage.setItem('pending_payment_plan', planType);
         localStorage.setItem('pending_payment_guid', data.reference);
 
         showToast('Redirecting to Paynow checkout portal...', false);
 
-        // ============================================================
-        // STEP 3: Redirect to Paynow using the URL from the server
-        // This follows the documentation: "Get the link to redirect the user to"
-        // ============================================================
         window.location.href = data.redirectUrl;
 
     } catch (e) {
@@ -305,19 +320,16 @@ async function openPayNowPayment(planType) {
     }
 }
 
-// ==================== CHECK PAYMENT STATUS (Polling fallback) ====================
+// ==================== CHECK PAYMENT STATUS ====================
 function checkLocalStoragePaymentStatus() {
     const pendingPlan = localStorage.getItem('pending_payment_plan');
     const pendingGuid = localStorage.getItem('pending_payment_guid');
 
-    // Check if user returned from Paynow
     const urlParams = new URLSearchParams(window.location.search);
     const statusParam = urlParams.get('payment');
 
     if (pendingPlan && pendingGuid && (statusParam === 'return' || statusParam === 'success')) {
         showToast('Processing payment...', false);
-        
-        // Start polling the server for status
         pollPaymentStatus(pendingGuid, pendingPlan);
         return true;
     }
@@ -325,8 +337,8 @@ function checkLocalStoragePaymentStatus() {
 }
 
 async function pollPaymentStatus(reference, planType, attempt = 0) {
-    const maxAttempts = 30; // 30 * 3 seconds = 90 seconds max
-    const delay = 3000; // 3 seconds between attempts
+    const maxAttempts = 30;
+    const delay = 3000;
     
     try {
         console.log(`Checking payment status (attempt ${attempt + 1}/${maxAttempts})...`);
@@ -334,7 +346,6 @@ async function pollPaymentStatus(reference, planType, attempt = 0) {
         const response = await fetch(`${API_BASE_URL}/payment-status/${reference}`);
         
         if (response.status === 404) {
-            // Payment not found yet - keep polling
             if (attempt < maxAttempts) {
                 showToast('Waiting for payment confirmation...', false);
                 setTimeout(() => pollPaymentStatus(reference, planType, attempt + 1), delay);
@@ -349,11 +360,9 @@ async function pollPaymentStatus(reference, planType, attempt = 0) {
         const data = await response.json();
         
         if (data.status === 'active') {
-            // Payment confirmed!
             showToast('Payment confirmed! Activating subscription...', false);
             await activateSubscription(planType, reference);
         } else if (data.status === 'pending') {
-            // Still waiting
             if (attempt < maxAttempts) {
                 setTimeout(() => pollPaymentStatus(reference, planType, attempt + 1), delay);
             } else {
@@ -1052,15 +1061,73 @@ function renderTiers() {
         let buttonText = isCurrent ? (subscriptionStatus === 'paused' ? 'Paused' : 'Current Plan') :
                          (isDowngrade ? 'Cannot Downgrade' : 'Subscribe');
 
+        // Build the badge HTML with star indicator for free tier
+        let badgeHtml = '';
+        if (d.badge) {
+            badgeHtml = `<span class="badge-pro">${d.badge}</span>`;
+        }
+        if (d.isFree && isCurrent) {
+            // Professional star badge for free tier - no emojis
+            badgeHtml = `
+                <span class="badge-free" style="
+                    background: #8B5CF6; 
+                    color: white; 
+                    padding: 4px 14px; 
+                    border-radius: 40px; 
+                    font-size: 11px; 
+                    font-weight: 700; 
+                    letter-spacing: 0.3px;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 4px;
+                ">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="#FFD700" stroke="none" style="display:inline-block;">
+                        <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
+                    </svg>
+                    FREE TIER
+                </span>
+            `;
+        } else if (d.isFree && !isCurrent) {
+            // Show subtle star for free tier even when not active
+            badgeHtml = `
+                <span class="badge-free-inactive" style="
+                    background: #E9E6FF; 
+                    color: #6D28D9; 
+                    padding: 4px 12px; 
+                    border-radius: 40px; 
+                    font-size: 11px; 
+                    font-weight: 600;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 4px;
+                ">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="#8B5CF6" stroke="none" style="display:inline-block;">
+                        <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
+                    </svg>
+                    Free
+                </span>
+            `;
+        }
+
+        // Determine if subscription is active (for paid plans)
+        let statusIndicator = '';
+        if (isCurrent && !d.isFree) {
+            if (subscriptionStatus === 'paused') {
+                statusIndicator = '<span class="badge-paused" style="color:#f90;font-size:11px;font-weight:600;">PAUSED</span>';
+            } else if (subscriptionStatus === 'active') {
+                statusIndicator = '<span class="badge-active" style="color:#28a745;font-size:11px;font-weight:600;">ACTIVE</span>';
+            }
+        }
+
         c.innerHTML += `<div class="tier-card ${isCurrent ? 'tier-highlight' : ''}">
             <div style="display:flex;justify-content:space-between;align-items:center;">
                 <strong style="font-size:1.2rem;">${d.name}</strong>
-                ${d.badge ? `<span class="badge-pro">${d.badge}</span>` : ''}
-                ${isCurrent && subscriptionStatus === 'paused' ? '<span class="badge-paused">PAUSED</span>' : ''}
+                ${badgeHtml}
             </div>
             <div class="tier-price">${d.price}</div>
             <div style="font-size:13px;margin:8px 0;">${d.perks}</div>
             <div style="font-size:12px;background:#f4f5f7;padding:5px;border-radius:30px;">Max: ${d.maxProducts} products</div>
+            ${statusIndicator ? `<div style="margin:6px 0;">${statusIndicator}</div>` : ''}
             <button class="btn-primary subscribe-btn" data-tier="${k}" style="margin-top:18px;width:100%;" ${isDisabled ? 'disabled' : ''}>
                 ${buttonText}
             </button>
@@ -1153,7 +1220,7 @@ function updateStatsAndLimits() {
     const msg = document.getElementById('tierMessage');
     if (msg) {
         msg.innerHTML = currentTier === 'free' 
-            ? `<strong>Free:</strong> ${active}/${max} active. ${paused > 0 ? paused + ' paused. ' : ''}${active < max ? (max - active) + ' slots available.' : 'Limit reached.'} <a href="#" id="upgradeLink" class="inline-link">Upgrade</a>`
+            ? `<strong>Free Plan:</strong> ${active}/${max} active. ${paused > 0 ? paused + ' paused. ' : ''}${active < max ? (max - active) + ' slots available.' : 'Limit reached.'} <a href="#" id="upgradeLink" class="inline-link">Upgrade</a>`
             : `<strong>${tierMap[currentTier]?.name}:</strong> ${active} active, ${max - active} slots available. ${paused > 0 ? paused + ' paused.' : ''}`;
         const ul = document.getElementById('upgradeLink');
         if (ul) ul.onclick = e => { e.preventDefault(); showUpgradeOptions(); };
@@ -1182,7 +1249,7 @@ function renderProducts() {
                 <h3>${esc(p.title)}</h3>
                 <div style="font-size:20px;font-weight:600;color:#B12704;">$${parseFloat(p.price || 0).toFixed(2)}</div>
                 <div>Stock: ${p.stock || 0} | ${p.category || 'N/A'}${p.paused ? ' | PAUSED' : ''}</div>
-                ${!p.paused ? '<button class="whatsapp-btn" onclick="whatsappInquiry(\'' + esc(p.title) + '\')">WhatsApp</button>' : '<div style="color:#dc3545;font-size:12px;">Paused - Limit Reached</div>'}
+                ${!p.paused ? '<button class="whatsapp-btn" onclick="whatsappInquiry(\'' + esc(p.title) + '\')">WhatsApp Inquiry</button>' : '<div style="color:#dc3545;font-size:12px;">Paused - Limit Reached</div>'}
                 <div style="display:flex;gap:8px;margin-top:8px;">
                     <button class="btn-secondary" style="flex:1;" onclick="editProduct('${p.id}')">Edit</button>
                     <button class="btn-delete" style="flex:1;" onclick="deleteProduct('${p.id}')">Delete</button>
