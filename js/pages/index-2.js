@@ -537,3 +537,8 @@ if ('serviceWorker' in navigator) {
             .catch(err => console.log('Service Worker registration failed:', err));
     });
 }
+// Make functions globally accessible
+window.startTour = startTour;
+window.endTour = endTour;
+window.showTourStep = showTourStep;
+window.checkUserAndShowTour = checkUserAndShowTour;
