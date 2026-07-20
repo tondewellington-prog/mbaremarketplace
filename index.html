@@ -266,8 +266,8 @@
             background: rgba(0,0,0,0.7);
             z-index: 9999;
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
         }
         
         .login-prompt-box {
@@ -758,12 +758,223 @@
             align-items: center;
             flex-wrap: wrap;
         }
+
+        /* Tour Overlay Styles */
+        .tour-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 20000;
+            padding: 20px;
+        }
+        
+        .tour-card {
+            background: white;
+            max-width: 520px;
+            width: 100%;
+            border-radius: 32px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: tourFadeIn 0.3s ease;
+        }
+        
+        @keyframes tourFadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        .tour-header {
+            background: linear-gradient(135deg, #131921, #232f3e);
+            color: white;
+            padding: 28px 24px;
+            text-align: center;
+        }
+        
+        .tour-header h2 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        .tour-header p {
+            font-size: 14px;
+            opacity: 0.85;
+        }
+        
+        .tour-body {
+            padding: 28px 24px 32px;
+        }
+        .tour-step {
+            display: none;
+            animation: tourStepFade 0.25s ease;
+        }
+        .tour-step.active {
+            display: block;
+        }
+        
+        @keyframes tourStepFade {
+            from { opacity: 0; transform: translateX(10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .tour-step h3 {
+            font-size: 22px;
+            margin-bottom: 16px;
+            color: #111;
+        }
+        .tour-step p {
+            font-size: 15px;
+            line-height: 1.5;
+            color: #444;
+            margin-bottom: 12px;
+        }
+        .tour-step ul {
+            padding-left: 24px;
+            margin: 16px 0;
+        }
+        .tour-step li {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #444;
+            margin: 8px 0;
+        }
+        .tour-step .highlight-location {
+            background: #f0f7ff;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border-left: 4px solid #f90;
+            margin: 12px 0;
+            font-size: 14px;
+        }
+        .tour-step .highlight-location strong {
+            color: #232f3e;
+        }
+        
+        .tour-progress {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin: 28px 0 24px;
+        }
+        
+        .tour-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ccc;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .tour-dot.active {
+            background: #f90;
+            width: 28px;
+            border-radius: 10px;
+        }
+        
+        .tour-buttons {
+            display: flex;
+            gap: 12px;
+        }
+        .tour-btn {
+            padding: 12px 24px;
+            border-radius: 40px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+        .tour-btn-skip {
+            background: #f1f3f4;
+            color: #666;
+        }
+        .tour-btn-skip:hover {
+            background: #e4e6e9;
+        }
+        .tour-btn-next {
+            background: #f90;
+            color: white;
+            flex: 1;
+        }
+        .tour-btn-next:hover {
+            background: #e08500;
+        }
+        .tour-btn-finish {
+            background: #28a745;
+            color: white;
+            flex: 1;
+        }
+
+        /* Welcome Banner for Logged Out Users */
+        .welcome-banner {
+            background: linear-gradient(135deg, #1e2a3a 0%, #0f1724 100%);
+            color: white;
+            padding: 28px;
+            border-radius: 24px;
+            margin-bottom: 30px;
+            text-align: center;
+            display: none;
+        }
+        .welcome-banner h1 {
+            font-size: 28px;
+            margin-bottom: 12px;
+        }
+        .welcome-banner p {
+            opacity: 0.9;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        .welcome-banner .btn-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .welcome-banner .btn-welcome {
+            background: #FFD814;
+            color: #111;
+            padding: 12px 28px;
+            border-radius: 40px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: 0.2s;
+        }
+        .welcome-banner .btn-welcome:hover {
+            background: #F7CA00;
+        }
+        .welcome-banner .btn-welcome-outline {
+            background: transparent;
+            border: 2px solid #FFD814;
+            color: white;
+            padding: 10px 26px;
+            border-radius: 40px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: 0.2s;
+        }
+        .welcome-banner .btn-welcome-outline:hover {
+            background: rgba(255, 216, 20, 0.1);
+        }
+
+        /* Login Prompt Modal - always visible but hidden by default */
+        .login-prompt-overlay {
+            display: none;
+        }
+        .login-prompt-overlay.show {
+            display: flex;
+        }
     </style>
 </head>
 <body>
-    <div id="loginPromptModal" class="login-prompt-overlay" style="display: none;">
+    <div id="loginPromptModal" class="login-prompt-overlay">
         <div class="login-prompt-box">
-            <h2> Login Required</h2>
+            <h2>Login Required</h2>
             <p>You need to be logged in to view product details.</p>
             <div class="login-prompt-buttons">
                 <a href="login.html" class="login-prompt-btn login-btn">Login</a>
@@ -781,6 +992,86 @@
         <div class="contact-modal-content">
             <span class="close-contact-modal" onclick="document.getElementById('sellerContactModal').style.display='none'">&times;</span>
             <div id="sellerContactContent"></div>
+        </div>
+    </div>
+
+    <!-- Tour Overlay -->
+    <div id="tourOverlay" class="tour-overlay">
+        <div class="tour-card">
+            <div class="tour-header">
+                <h2>Welcome to Mbare Marketplace</h2>
+                <p>Your guide to the platform</p>
+            </div>
+            <div class="tour-body">
+                <!-- Step 1: Welcome -->
+                <div id="tourStep1" class="tour-step active">
+                    <h3>Welcome Aboard!</h3>
+                    <p>You're now part of Mbare Marketplace, Zimbabwe's growing online shopping destination. Let's take a quick tour to help you get started.</p>
+                    <div class="highlight-location">
+                        <strong>Your Account:</strong> Top right corner - manage your profile, orders, and settings.
+                    </div>
+                </div>
+                <!-- Step 2: Search & Categories -->
+                <div id="tourStep2" class="tour-step">
+                    <h3>Find Anything</h3>
+                    <p>Use the <strong>Search Bar</strong> at the top to find products instantly.</p>
+                    <div class="highlight-location">
+                        <strong>Where:</strong> Top of the page, next to the Mbare logo.
+                    </div>
+                    <p>Or browse by category using the <strong>"What do you want to buy today?"</strong> dropdown menu.</p>
+                    <div class="highlight-location">
+                        <strong>Where:</strong> In the navigation bar below the search bar.
+                    </div>
+                </div>
+                <!-- Step 3: Sell on Mbare -->
+                <div id="tourStep3" class="tour-step">
+                    <h3>Start Selling</h3>
+                    <p>Have products to sell? Click the <strong>Sell</strong> button to register as a seller and start listing your products.</p>
+                    <div class="highlight-location">
+                        <strong>Where:</strong> In the navigation bar, look for the <strong>"Sell"</strong> link.
+                    </div>
+                    <p>You'll get a 1-month free trial of the Merchant Basic plan!</p>
+                </div>
+                <!-- Step 4: Analytics & Insights -->
+                <div id="tourStep4" class="tour-step">
+                    <h3>Track Your Performance</h3>
+                    <p>Access the <strong>Analytics</strong> dashboard to track your product views, sales, and customer engagement.</p>
+                    <div class="highlight-location">
+                        <strong>Where:</strong> In the navigation bar, click <strong>"Analytics"</strong>.
+                    </div>
+                    <p>Analytics is available for paid subscribers.</p>
+                </div>
+                <!-- Step 5: Affiliate Program -->
+                <div id="tourStep5" class="tour-step">
+                    <h3>Earn with Affiliates</h3>
+                    <p>Join our <strong>Affiliate Program</strong> and earn commissions by referring new sellers to the platform.</p>
+                    <div class="highlight-location">
+                        <strong>Where:</strong> Scroll to the bottom of the page and find <strong>"Become an Affiliate"</strong> in the footer.
+                    </div>
+                    <p>Earn $0.10 per active seller every month!</p>
+                </div>
+                <!-- Step 6: Basket & Checkout -->
+                <div id="tourStep6" class="tour-step">
+                    <h3>Ready to Buy?</h3>
+                    <p>Add products to your <strong>Basket</strong> and proceed to checkout when you're ready.</p>
+                    <div class="highlight-location">
+                        <strong>Where:</strong> Top right corner - the basket icon shows your item count.
+                    </div>
+                    <p>Happy shopping on Mbare Marketplace!</p>
+                </div>
+                <div class="tour-progress" id="tourProgress">
+                    <span class="tour-dot active" data-step="0"></span>
+                    <span class="tour-dot" data-step="1"></span>
+                    <span class="tour-dot" data-step="2"></span>
+                    <span class="tour-dot" data-step="3"></span>
+                    <span class="tour-dot" data-step="4"></span>
+                    <span class="tour-dot" data-step="5"></span>
+                </div>
+                <div class="tour-buttons">
+                    <button class="tour-btn tour-btn-skip" id="tourSkipBtn">Skip Tour</button>
+                    <button class="tour-btn tour-btn-next" id="tourNextBtn">Next</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -815,7 +1106,7 @@
                 </div>
                 <div class="header-right">
                     <div class="account-menu" id="accountMenu">
-                        <span class="account-label"> Hello, Sign in</span>
+                        <span class="account-label">Hello, Sign in</span>
                         <a href="login.html" class="account-link">Account & Lists</a>
                         <button id="logoutBtn" class="logout-btn" onclick="logout()" style="display: none;">Logout</button>
                     </div>
@@ -855,28 +1146,38 @@
                     </button>
                     <div class="dropdown-menu" id="categoryDropdownMenu">
                         <div class="dropdown-header">SHOP BY CATEGORY</div>
-                        <a href="electronics.html" class="dropdown-category-item"> Electronic Devices</a>
-                        <a href="books.html" class="dropdown-category-item"> Books</a>
-                        <a href="clothing.html" class="dropdown-category-item"> Clothing</a>
-                        <a href="home&kitchen.html" class="dropdown-category-item"> Home & Kitchen</a>
-                        <a href="pet-supplies.html" class="dropdown-category-item"> Pet Supplies</a>
-                        <a href="pets-livestock.html" class="dropdown-category-item"> Pets & Livestock</a>
-                        <a href="vehicle-parts.html" class="dropdown-category-item"> Vehicle Parts & Accessories</a>
-                        <a href="vehicles-transportation.html" class="dropdown-category-item"> Vehicles & Transportation</a>
-                        <a href="farm-products.html" class="dropdown-category-item"> Farm Products</a>
-                        <a href="hardware.html" class="dropdown-category-item"> Hardware</a>
-                        <a href="beauty-cosmetics.html" class="dropdown-category-item"> Beauty & Cosmetics</a>
+                        <a href="electronics.html" class="dropdown-category-item">Electronic Devices</a>
+                        <a href="books.html" class="dropdown-category-item">Books</a>
+                        <a href="clothing.html" class="dropdown-category-item">Clothing</a>
+                        <a href="home&kitchen.html" class="dropdown-category-item">Home & Kitchen</a>
+                        <a href="pet-supplies.html" class="dropdown-category-item">Pet Supplies</a>
+                        <a href="pets-livestock.html" class="dropdown-category-item">Pets & Livestock</a>
+                        <a href="vehicle-parts.html" class="dropdown-category-item">Vehicle Parts & Accessories</a>
+                        <a href="vehicles-transportation.html" class="dropdown-category-item">Vehicles & Transportation</a>
+                        <a href="farm-products.html" class="dropdown-category-item">Farm Products</a>
+                        <a href="hardware.html" class="dropdown-category-item">Hardware</a>
+                        <a href="beauty-cosmetics.html" class="dropdown-category-item">Beauty & Cosmetics</a>
                     </div>
                 </div>
                 <a href="#" class="nav-item">Registry</a>
                 <a href="#" class="nav-item">Gift Cards</a>
-                <a href="seller-register.html" class="nav-item">Sell</a>
-                <a href="analytics.html" class="nav-item">Analytics</a>
+                <a href="seller-register.html" class="nav-item" id="sellNavLink">Sell</a>
+                <a href="analytics.html" class="nav-item" id="analyticsNavLink">Analytics</a>
             </div>
         </nav>
     </header>
 
     <main class="main-content">
+        <!-- Welcome Banner for Logged Out Users -->
+        <div id="welcomeBanner" class="welcome-banner">
+            <h1>Welcome to Mbare Marketplace</h1>
+            <p>Discover amazing products from sellers across Zimbabwe. Sign in to access your account, manage orders, and unlock exclusive features.</p>
+            <div class="btn-group">
+                <a href="login.html" class="btn-welcome">Sign In</a>
+                <a href="register.html" class="btn-welcome-outline">Create Account</a>
+            </div>
+        </div>
+
         <section class="carousel-section">
             <div class="carousel-container">
                 <button class="carousel-btn prev" onclick="moveCarousel(-1)">❮</button>
@@ -929,7 +1230,7 @@
                 <div class="product-grid" id="bestSellersElectronics"></div>
             </section>
 
-             <section class="product-section">
+            <section class="product-section">
                 <div class="section-header">
                     <h2>Best Sellers in Clothing</h2>
                     <a href="clothing.html" class="see-all">See more</a>
@@ -1039,10 +1340,10 @@
                     <div class="footer-column">
                         <h3>Make Money with Us</h3>
                         <ul>
-                            <li><a href="seller-register.html">Sell products on Mbare Marketplace</a></li>
+                            <li><a href="seller-register.html" id="footerSellLink">Sell products on Mbare Marketplace</a></li>
                             <li><a href="#">Sell on Mbare Business</a></li>
                             <li><a href="#">Sell apps on Mbare Marketplace</a></li>
-                            <li><a href="affiliates.html">Become an Affiliate</a></li>
+                            <li><a href="affiliates.html" id="footerAffiliateLink">Become an Affiliate</a></li>
                             <li><a href="#">Advertise Your Products</a></li>
                         </ul>
                     </div>
@@ -1085,7 +1386,7 @@
     </footer>
 
     <div id="installButton" style="position: fixed; bottom: 20px; right: 20px; background: #232f3e; color: white; padding: 12px 24px; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 9999; display: flex; align-items: center; gap: 8px; font-weight: 600; border: none; font-size: 16px;">
-        <span> Install App</span>
+        <span>Install App</span>
     </div>
 
     <div id="iosPromptModal" class="ios-prompt-modal" style="border-top: 5px solid #232f3e;">
@@ -1100,7 +1401,7 @@
         <div class="ios-prompt-steps">
             <div class="ios-step" style="border-left: 4px solid #232f3e;">
                 <div class="ios-step-number" style="background: #232f3e;">1</div>
-                <div>Tap the Share button <span style="font-size: 20px;"></span></div>
+                <div>Tap the Share button</div>
             </div>
             <div class="ios-step" style="border-left: 4px solid #232f3e;">
                 <div class="ios-step-number" style="background: #232f3e;">2</div>
@@ -1117,12 +1418,7 @@
     <script src="api.js"></script>
     <script src="script.js"></script>
     <script src="auth-check.js"></script>
-    
-        <script src="js/pages/index-1.js"></script>
-    
-        <script src="js/shared/ui-common.js"></script>
-    <script src="js/pages/index-2.js"></script>
-    
-        <script src="js/pages/index-3.js"></script>
+    <script src="js/shared/ui-common.js"></script>
+    <script src="js/pages/index.js"></script>
 </body>
 </html>
