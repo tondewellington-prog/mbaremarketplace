@@ -1,3 +1,13 @@
+// =====================================================
+// SUPABASE CONFIGURATION - FIX FOR UNDEFINED ERROR
+// =====================================================
+if (typeof window.SUPABASE_URL === 'undefined') {
+    window.SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
+}
+if (typeof window.SUPABASE_ANON_KEY === 'undefined') {
+    window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
+}
+
 function formatSellerPhone() {
     const countryCode = document.getElementById('sellerCountryCode').value;
     let phoneLocal = document.getElementById('businessPhone').value;
@@ -243,9 +253,18 @@ async function handleSellerRegistration(event) {
             
             localStorage.setItem('isSeller', 'true');
             
+            // Add a manual redirect fallback
             setTimeout(() => {
                 window.location.href = 'seller-dashboard.html';
             }, 2000);
+            
+            // Fallback redirect after 5 seconds
+            setTimeout(() => {
+                // If still on this page, force redirect
+                if (window.location.pathname.includes('seller-register.html')) {
+                    window.location.href = 'seller-dashboard.html';
+                }
+            }, 5000);
         } else {
             const error = await response.json();
             console.error('Registration failed:', error);
