@@ -1,6 +1,5 @@
 // ==================== CONFIGURATION ====================
-window.SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
-window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
+
 const IMGBB_API_KEY = '670ea8c38e955ebdfdf84a41489713bf';
 
 // Your backend VPS Server Base URL
