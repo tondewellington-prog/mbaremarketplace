@@ -1,4 +1,7 @@
-
+// ==================== CONFIGURATION ====================
+// SUPABASE_URL and SUPABASE_ANON_KEY are already defined in api.js
+// Do NOT redeclare them here - this was causing the duplicate declaration error
+const IMGBB_API_KEY = '670ea8c38e955ebdfdf84a41489713bf';
 
 // Your backend VPS Server Base URL
 const API_BASE_URL = 'https://api.mbaremarketplace.com';
@@ -1467,6 +1470,20 @@ document.addEventListener('DOMContentLoaded', function() {
         toggleBtn.addEventListener('click', toggleProfileForm);
     }
 });
+
+// ==================== INITIALIZE DASHBOARD DATA ====================
+function initializeDashboardData() {
+    console.log('Dashboard data initialized');
+    loadProducts();
+    renderTiers();
+    updateStatsAndLimits();
+    updateExpiryBanner();
+    updateSubscriptionControls();
+    startExpiryChecker();
+    document.getElementById('loadingOverlay').style.display = 'none';
+    updateViewShopButton();
+    console.log('Dashboard fully initialized.');
+}
 
 // ==================== INIT ====================
 async function init() {
