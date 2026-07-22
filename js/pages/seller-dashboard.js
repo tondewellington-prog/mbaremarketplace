@@ -1,6 +1,4 @@
-// ==================== CONFIGURATION ====================
 
-const IMGBB_API_KEY = '670ea8c38e955ebdfdf84a41489713bf';
 
 // Your backend VPS Server Base URL
 const API_BASE_URL = 'https://api.mbaremarketplace.com';
