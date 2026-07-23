@@ -1,6 +1,15 @@
+// ==================== SAFETY CHECK ====================
+// Ensure SUPABASE_URL is defined (fallback if api.js didn't load)
+if (typeof window.SUPABASE_URL === 'undefined') {
+    console.warn('⚠️ SUPABASE_URL not defined, setting fallback...');
+    window.SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
+}
+if (typeof window.SUPABASE_ANON_KEY === 'undefined') {
+    console.warn('⚠️ SUPABASE_ANON_KEY not defined, setting fallback...');
+    window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
+}
+
 // ==================== CONFIGURATION ====================
-// SUPABASE_URL and SUPABASE_ANON_KEY are already defined in api.js
-// Do NOT redeclare them here - this was causing the duplicate declaration error
 const IMGBB_API_KEY = '670ea8c38e955ebdfdf84a41489713bf';
 
 // Your backend VPS Server Base URL
