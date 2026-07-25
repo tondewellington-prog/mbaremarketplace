@@ -216,8 +216,9 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
     };
 
     // =====================================================
-    // CATEGORY DROPDOWN
+    // CATEGORY DROPDOWN - DISABLED (handled by index-1.js)
     // =====================================================
+    /*
     function setupCategoryDropdown() {
         const dropdownBtn = document.getElementById('categoryDropdownBtn');
         const dropdownMenu = document.getElementById('categoryDropdownMenu');
@@ -245,6 +246,7 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
             });
         }
     }
+    */
 
     // =====================================================
     // CAROUSEL FUNCTIONS - Use unique variable name to avoid conflicts
@@ -544,8 +546,7 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
         // Setup search
         setupSearch();
         
-        // Setup category dropdown
-        setupCategoryDropdown();
+        // Category dropdown is handled by index-1.js - skipping here
         
         // Setup carousel
         setupCarousel();
