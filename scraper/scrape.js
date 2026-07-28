@@ -14,11 +14,12 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
     realtime: { timeout: 0 }
 });
 
-// Public stock list URL
-const TARGET_URL = 'https://www.beforward.jp/stocklist';
+// BASE URL for Japanese stock list
+const BASE_URL = 'https://www.beforward.jp/stocklist/page=';
+const PAGES_TO_SCRAPE = 4; // 4 pages * ~25-30 cars = 100-120 cars
 
 async function runScraper() {
-    console.log('Launching Puppeteer headless browser...');
+    console.log(`Launching Puppeteer headless browser to scrape ${PAGES_TO_SCRAPE} pages (~100 vehicles)...`);
 
     const browser = await puppeteer.launch({
         headless: 'new',
@@ -31,90 +32,86 @@ async function runScraper() {
         ]
     });
 
+    const allScrapedVehicles = [];
+
     try {
         const page = await browser.newPage();
-
-        // Set high-resolution desktop viewport and real browser headers
         await page.setViewport({ width: 1440, height: 900 });
         await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, Gecko) Chrome/122.0.0.0 Safari/537.36');
 
-        console.log(`Navigating to ${TARGET_URL}...`);
-        await page.goto(TARGET_URL, { waitUntil: 'networkidle2', timeout: 60000 });
+        for (let pageNum = 1; pageNum <= PAGES_TO_SCRAPE; pageNum++) {
+            const targetUrl = `${BASE_URL}${pageNum}`;
+            console.log(`[Page ${pageNum}/${PAGES_TO_SCRAPE}] Navigating to ${targetUrl}...`);
 
-        // Wait up to 15 seconds for vehicle listing cards to render in the browser DOM
-        await page.waitForSelector('.stocklist-row, tr.stocklist-row, .vehicle-card, .make-val', { timeout: 15000 })
-            .catch(() => console.log('Selector timeout reached. Proceeding with DOM evaluation...'));
+            await page.goto(targetUrl, { waitUntil: 'networkidle2', timeout: 60000 });
 
-        // Extract vehicles directly inside browser execution context
-        const rawVehicles = await page.evaluate(() => {
-            const items = [];
-            
-            // Query all possible table rows or grid cards containing vehicles
-            const rows = document.querySelectorAll('.stocklist-row, tr.stocklist-row, .vehicle-card');
+            await page.waitForSelector('.stocklist-row, tr.stocklist-row, .vehicle-card', { timeout: 15000 })
+                .catch(() => console.log(`[Page ${pageNum}] Selector timeout reached, processing current DOM...`));
 
-            rows.forEach(row => {
-                // Extract Title
-                const titleEl = row.querySelector('.vehicle-title, .title, .make-val, a.vehicle-url-title');
-                const title = titleEl ? titleEl.innerText.trim().replace(/\s+/g, ' ') : null;
+            const pageVehicles = await page.evaluate(() => {
+                const items = [];
+                const rows = document.querySelectorAll('.stocklist-row, tr.stocklist-row, .vehicle-card');
 
-                // Extract Price
-                const priceEl = row.querySelector('.price-value, .fob-price, span[class*="price"], .price');
-                const rawPrice = priceEl ? priceEl.innerText.trim() : '0';
-                const price_usd = parseInt(rawPrice.replace(/[^0-9]/g, '')) || 0;
+                rows.forEach(row => {
+                    const titleEl = row.querySelector('.vehicle-title, .title, .make-val, a.vehicle-url-title');
+                    const title = titleEl ? titleEl.innerText.trim().replace(/\s+/g, ' ') : null;
 
-                // Extract Specs
-                const yearEl = row.querySelector('.year, .registration-year');
-                const year = yearEl ? (parseInt(yearEl.innerText.replace(/[^0-9]/g, '')) || 2016) : 2016;
+                    const priceEl = row.querySelector('.price-value, .fob-price, span[class*="price"], .price');
+                    const rawPrice = priceEl ? priceEl.innerText.trim() : '0';
+                    const price_usd = parseInt(rawPrice.replace(/[^0-9]/g, '')) || 0;
 
-                const mileageEl = row.querySelector('.mileage, .mileage-spec');
-                const mileage = mileageEl ? mileageEl.innerText.trim() : 'N/A';
+                    const yearEl = row.querySelector('.year, .registration-year');
+                    const year = yearEl ? (parseInt(yearEl.innerText.replace(/[^0-9]/g, '')) || 2016) : 2016;
 
-                const transEl = row.querySelector('.trans, .transmission');
-                const transmission = transEl ? transEl.innerText.trim() : 'Automatic';
+                    const mileageEl = row.querySelector('.mileage, .mileage-spec');
+                    const mileage = mileageEl ? mileageEl.innerText.trim() : 'N/A';
 
-                // Extract Image
-                const imgEl = row.querySelector('img.vehicle-img, img');
-                let main_image = imgEl ? (imgEl.getAttribute('src') || imgEl.getAttribute('data-src') || imgEl.getAttribute('data-original')) : null;
-                if (main_image && main_image.startsWith('//')) {
-                    main_image = 'https:' + main_image;
-                }
+                    const transEl = row.querySelector('.trans, .transmission');
+                    const transmission = transEl ? transEl.innerText.trim() : 'Automatic';
 
-                // Extract Link URL
-                const linkEl = row.querySelector('a.vehicle-url-title, a[href*="/beforward/"], a');
-                let external_url = linkEl ? linkEl.getAttribute('href') : null;
-                if (external_url && !external_url.startsWith('http')) {
-                    external_url = 'https://www.beforward.jp' + external_url;
-                }
+                    const imgEl = row.querySelector('img.vehicle-img, img');
+                    let main_image = imgEl ? (imgEl.getAttribute('src') || imgEl.getAttribute('data-src') || imgEl.getAttribute('data-original')) : null;
+                    if (main_image && main_image.startsWith('//')) main_image = 'https:' + main_image;
 
-                if (title && price_usd > 0 && external_url) {
-                    items.push({
-                        title,
-                        price_usd,
-                        listing_source: 'import_japan',
-                        year,
-                        mileage,
-                        transmission,
-                        main_image: main_image || 'https://via.placeholder.com/300x200?text=No+Image',
-                        external_url,
-                        created_at: new Date().toISOString()
-                    });
-                }
+                    const linkEl = row.querySelector('a.vehicle-url-title, a[href*="/beforward/"], a');
+                    let external_url = linkEl ? linkEl.getAttribute('href') : null;
+                    if (external_url && !external_url.startsWith('http')) {
+                        external_url = 'https://www.beforward.jp' + external_url;
+                    }
+
+                    if (title && price_usd > 0 && external_url) {
+                        items.push({
+                            title,
+                            price_usd,
+                            listing_source: 'import_japan',
+                            year,
+                            mileage,
+                            transmission,
+                            main_image: main_image || 'https://via.placeholder.com/300x200?text=No+Image',
+                            external_url,
+                            created_at: new Date().toISOString()
+                        });
+                    }
+                });
+
+                return items;
             });
 
-            return items;
-        });
+            console.log(`[Page ${pageNum}] Extracted ${pageVehicles.length} vehicles.`);
+            allScrapedVehicles.push(...pageVehicles);
+        }
 
-        console.log(`Successfully extracted ${rawVehicles.length} raw vehicle listings.`);
+        console.log(`Total extracted across all pages: ${allScrapedVehicles.length} vehicles.`);
 
-        if (rawVehicles.length > 0) {
-            // Deduplicate array based on external_url to prevent PostgreSQL ON CONFLICT DO UPDATE crashes
+        if (allScrapedVehicles.length > 0) {
+            // Deduplicate batch using external_url
             const uniqueVehicles = Array.from(
-                new Map(rawVehicles.map(v => [v.external_url, v])).values()
+                new Map(allScrapedVehicles.map(v => [v.external_url, v])).values()
             );
 
-            console.log(`Pushing ${uniqueVehicles.length} unique items to Supabase database...`);
+            console.log(`Pushing ${uniqueVehicles.length} unique records to Supabase...`);
 
-            const { data, error } = await supabase
+            const { error } = await supabase
                 .from('vehicles')
                 .upsert(uniqueVehicles, { onConflict: 'external_url' });
 
@@ -122,10 +119,8 @@ async function runScraper() {
                 console.error('Supabase Upsert Error:', error.message);
                 process.exit(1);
             } else {
-                console.log(`Success! Upserted ${uniqueVehicles.length} vehicle records into Supabase.`);
+                console.log(`Success! Upserted ${uniqueVehicles.length} vehicles into Supabase.`);
             }
-        } else {
-            console.warn('WARNING: 0 vehicles extracted.');
         }
 
     } catch (err) {
