@@ -115,24 +115,50 @@
         </div>
     </div>
 
-    <!-- Supabase SDK & API config -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Load Supabase UMD module & api.js -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="api.js"></script>
 
     <script>
         const FALLBACK_IMG = 'https://via.placeholder.com/400x250?text=No+Image+Available';
 
+        // Safe client getter to prevent tracking protection crashes
+        function getSupabase() {
+            if (window.supabaseClient) {
+                return window.supabaseClient;
+            }
+            if (window.supabase && typeof window.supabase.createClient === 'function') {
+                // Adjust keys here if needed, or rely on api.js client initialization
+                const SUPABASE_URL = "YOUR_SUPABASE_URL"; 
+                const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY"; 
+                
+                window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                    auth: { persistSession: false }
+                });
+                return window.supabaseClient;
+            }
+            return null;
+        }
+
+        // Sanitizes unresolvable Be Forward image CDN hostnames
         function sanitizeUrl(url) {
             if (!url) return FALLBACK_IMG;
             return url.replace('bf-images.beforward.jp', 'cdn.beforward.jp');
         }
 
-        // Load existing database stock on page load
+        // Fetch stored stock from Supabase 'vehicles' table
         async function fetchScrapedVehicles() {
             const grid = document.getElementById('vehiclesGrid');
+            const supabase = getSupabase();
+
+            if (!supabase) {
+                console.error('Supabase client failed to initialize.');
+                grid.innerHTML = '<p style="color: red;">Database initialization failed. Please check api.js or reload.</p>';
+                return;
+            }
+
             try {
-                // FIXED: Changed table from 'japan_imports' to 'vehicles'
-                const { data: vehicles, error } = await window.supabaseClient
+                const { data: vehicles, error } = await supabase
                     .from('vehicles')
                     .select('*')
                     .order('created_at', { ascending: false });
