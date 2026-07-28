@@ -433,6 +433,63 @@
     <script src="auth-check.js"></script>
     <script src="js/category-config.js"></script>
     <script src="js/category-page.js"></script>
+    // Function to handle search input
+function handleVehicleSearch() {
+    const rawQuery = document.getElementById('searchInput')?.value || '';
+    
+    // Normalize keyword to lowercase and trim spaces
+    const cleanKeyword = rawQuery.trim().toLowerCase();
+
+    if (!cleanKeyword) {
+        renderVehicleGrid(allVehicles); // Reset grid if search is cleared
+        return;
+    }
+
+    // 1. Search locally in the loaded Supabase vehicles array
+    const matchedVehicles = allVehicles.filter(vehicle => 
+        vehicle.title.toLowerCase().includes(cleanKeyword)
+    );
+
+    if (matchedVehicles.length > 0) {
+        renderVehicleGrid(matchedVehicles);
+        if (resultsCount) {
+            resultsCount.textContent = `Found ${matchedVehicles.length} local results for "${cleanKeyword}"`;
+        }
+    } else {
+        // 2. Zero local results: Generate lowercase external live search URL & WhatsApp order link
+        const formattedKeyword = encodeURIComponent(cleanKeyword); // e.g., "honda+fit" or "nissan+note"
+        const liveSearchUrl = `https://www.beforward.jp/stocklist/keyword=${formattedKeyword}`;
+        const whatsappMsg = encodeURIComponent(`Hi Mbare Marketplace, I am looking for a ${cleanKeyword}. Do you have this available for import?`);
+
+        vehiclesGrid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 48px 16px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px;">
+                <h3 style="font-size: 1.25rem; color: #1e293b; margin-bottom: 8px;">
+                    No local preview matches for "${cleanKeyword}"
+                </h3>
+                <p style="color: #64748b; margin-bottom: 20px;">
+                    We have direct access to live Japanese auctions and export stock.
+                </p>
+                <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                    <a 
+                        href="https://wa.me/263700000000?text=${whatsappMsg}" 
+                        target="_blank" 
+                        style="padding: 10px 20px; background: #25D366; color: #fff; border-radius: 6px; text-decoration: none; font-weight: 600;"
+                    >
+                        📲 Order "${cleanKeyword}" via WhatsApp
+                    </a>
+                    <a 
+                        href="${liveSearchUrl}" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        style="padding: 10px 20px; background: #0284c7; color: #fff; border-radius: 6px; text-decoration: none; font-weight: 600;"
+                    >
+                        🔍 Search Live Japan Stock for "${cleanKeyword}"
+                    </a>
+                </div>
+            </div>
+        `;
+    }
+}
 
     <!-- VEHICLE PAGE TAB & DISPLAY ENGINE -->
     <script>
