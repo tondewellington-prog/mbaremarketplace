@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Japan Imports Search | Mbare Marketplace</title>
+    <title>Japan Imports | Mbare Marketplace</title>
     <link rel="stylesheet" href="styles.css">
     <style>
         .japan-search-box {
@@ -131,8 +131,9 @@
         async function fetchScrapedVehicles() {
             const grid = document.getElementById('vehiclesGrid');
             try {
+                // FIXED: Changed table from 'japan_imports' to 'vehicles'
                 const { data: vehicles, error } = await window.supabaseClient
-                    .from('japan_imports')
+                    .from('vehicles')
                     .select('*')
                     .order('created_at', { ascending: false });
 
@@ -195,7 +196,6 @@
                 if (result.success && result.vehicles.length > 0) {
                     status.style.color = '#28a745';
                     status.innerText = `✅ Found ${result.count} vehicles! Saved to database and updated below.`;
-                    // Immediately re-render with new results
                     renderVehicles(result.vehicles);
                 } else if (result.success && result.vehicles.length === 0) {
                     status.style.color = '#f90';
