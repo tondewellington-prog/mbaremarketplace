@@ -11,7 +11,7 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Public stock list URL
+// Public stock list URLs
 const TARGET_URL = 'https://www.beforward.jp/stocklist';
 
 async function runScraper() {
