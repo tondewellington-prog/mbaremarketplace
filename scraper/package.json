@@ -1,0 +1,13 @@
+{
+  "name": "mbare-marketplace-scraper",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node scrape.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "axios": "^1.6.7",
+    "cheerio": "^1.0.0-rc.12"
+  }
+}
