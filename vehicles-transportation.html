@@ -71,46 +71,6 @@
             text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
         }
 
-        /* --- VEHICLE SOURCE TABS --- */
-        .vehicle-tabs-container {
-            background: #1a2533;
-            padding: 12px 0;
-            border-bottom: 2px solid #232f3e;
-        }
-
-        .vehicle-tabs {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-        }
-
-        .tab-btn {
-            background: rgba(255, 255, 255, 0.08);
-            color: #d1d5db;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 10px 22px;
-            border-radius: 25px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.25s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .tab-btn:hover {
-            background: rgba(255, 255, 255, 0.18);
-            color: white;
-        }
-
-        .tab-btn.active {
-            background: #f90;
-            color: #1a2533;
-            border-color: #f90;
-            box-shadow: 0 2px 10px rgba(255, 153, 0, 0.4);
-        }
-
         .filter-bar {
             background: white;
             padding: 15px 0;
@@ -132,115 +92,6 @@
         .category-breadcrumb a { color: #232f3e; text-decoration: none; }
         .category-breadcrumb a:hover { color: #f90; }
 
-        /* --- PRODUCT CARD STYLES --- */
-        .product-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 20px;
-            padding: 25px 0;
-        }
-
-        .product-card {
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            transition: transform 0.2s, box-shadow 0.2s;
-            position: relative;
-        }
-
-        .product-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.08);
-        }
-
-        .product-badge {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            z-index: 5;
-            color: white;
-        }
-
-        .badge-local { background: #28a745; }
-        .badge-import { background: #007bff; }
-
-        .product-card-img {
-            width: 100%;
-            height: 170px;
-            object-fit: cover;
-            background: #f1f5f9;
-        }
-
-        .product-card-body {
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            flex: 1;
-        }
-
-        .product-card-title {
-            font-size: 15px;
-            font-weight: 600;
-            color: #1e293b;
-            margin: 0 0 8px 0;
-            line-height: 1.3;
-        }
-
-        .product-specs {
-            font-size: 12px;
-            color: #64748b;
-            margin-bottom: 12px;
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .spec-item {
-            background: #f8fafc;
-            padding: 2px 6px;
-            border-radius: 4px;
-            border: 1px solid #e2e8f0;
-        }
-
-        .product-card-price {
-            font-size: 18px;
-            font-weight: 700;
-            color: #232f3e;
-            margin-top: auto;
-            margin-bottom: 12px;
-        }
-
-        .btn-enquire {
-            width: 100%;
-            padding: 10px;
-            background: #25D366;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            text-decoration: none;
-            font-size: 13px;
-        }
-
-        .btn-enquire:hover {
-            background: #20ba5a;
-        }
-
-        /* --- MODAL STYLES --- */
         .contact-modal {
             display: none;
             position: fixed;
@@ -260,6 +111,8 @@
             border-radius: 8px;
             width: 90%;
             max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
             position: relative;
             animation: slideDown 0.3s ease-out;
             box-shadow: 0 4px 20px rgba(0,0,0,0.2);
@@ -276,6 +129,10 @@
             font-weight: bold;
             color: #666;
             cursor: pointer;
+            z-index: 10;
+        }
+        .close-contact-modal:hover {
+            color: #000;
         }
         .info-row {
             display: flex;
@@ -296,24 +153,60 @@
             justify-content: center;
             margin-right: 15px;
             flex-shrink: 0;
-            font-size: 14px;
-            font-weight: bold;
         }
-        .info-text { flex: 1; min-width: 0; }
-        .info-label { font-size: 12px; color: #666; margin-bottom: 3px; }
-        .info-value { font-size: 16px; font-weight: 500; color: #232f3e; }
-        .contact-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .info-text {
+            flex: 1;
+            min-width: 0;
+        }
+        .info-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 3px;
+        }
+        .info-value {
+            font-size: 16px;
+            font-weight: 500;
+            color: #232f3e;
+            word-wrap: break-word;
+        }
+        .contact-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
         .contact-btn {
             flex: 1;
-            padding: 12px;
+            min-width: 120px;
+            padding: 14px 12px;
+            border: none;
             border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
             font-weight: 600;
             text-align: center;
             text-decoration: none;
+            transition: opacity 0.2s;
+        }
+        .contact-btn:hover {
+            opacity: 0.9;
+        }
+        .call-btn {
+            background: #28a745;
             color: white;
         }
-        .call-btn { background: #28a745; }
-        .whatsapp-btn { background: #25D366; }
+        .whatsapp-btn {
+            background: #25D366;
+            color: white;
+        }
+        .product-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #232f3e;
+            padding-right: 30px;
+        }
 
         .header-top .container {
             display: flex;
@@ -321,14 +214,76 @@
             justify-content: space-between;
             gap: 15px;
         }
+        
+        @media (max-width: 1024px) {
+            .header-top .container {
+                flex-wrap: nowrap;
+            }
+            .search-bar {
+                flex: 1;
+                min-width: 0;
+                display: flex;
+                gap: 5px;
+            }
+            .search-bar .search-input {
+                flex: 1;
+                min-width: 0;
+            }
+        }
 
         @media (max-width: 768px) {
+            .header-top .container {
+                flex-wrap: nowrap;
+                gap: 8px;
+            }
+            .search-bar {
+                flex: 1;
+                min-width: 0;
+                padding: 0;
+                margin: 0;
+                display: flex;
+                gap: 3px;
+            }
+            .search-bar .search-category {
+                display: none;
+            }
+            .search-bar .search-input {
+                flex: 1;
+                min-width: 0;
+                padding: 8px 10px;
+                font-size: 13px;
+            }
+            .search-bar .search-btn {
+                padding: 8px 10px;
+            }
+            .header-right {
+                flex-shrink: 0;
+            }
             .slider-container { grid-template-columns: repeat(3, 1fr) !important; }
             .slide-panel:nth-child(4) { display: none; }
             .slide-panel { height: 140px; }
             .category-header h1 { font-size: 18px; }
             .product-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-            .tab-btn { flex: 1; padding: 8px 10px; font-size: 12px; justify-content: center; }
+            .contact-actions { flex-direction: column; }
+            .contact-btn { width: 100%; }
+        }
+        
+        @media (max-width: 480px) {
+            .header-top .container {
+                gap: 5px;
+            }
+            .search-bar .search-input {
+                padding: 7px 8px;
+                font-size: 12px;
+            }
+            .search-bar .search-btn {
+                padding: 7px 8px;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .slider-container { grid-template-columns: repeat(4, 1fr); }
+            .slide-panel:nth-child(4) { display: block; }
         }
     </style>
 </head>
@@ -378,7 +333,11 @@
     </header>
 
     <div class="category-breadcrumb">
-        <div class="container"><a href="index.html">Home</a> > <span>Vehicles & Transportation</span></div>
+        <div class="container">
+            <a href="index.html">Home</a> &gt; 
+            <span>Vehicles &amp; Transportation</span> | 
+            <a href="japan-imports.html">Japan Imports</a>
+        </div>
     </div>
 
     <section class="category-header">
@@ -397,20 +356,6 @@
         </div>
     </section>
 
-    <!-- VEHICLE TAB TOGGLE BAR -->
-    <div class="vehicle-tabs-container">
-        <div class="container">
-            <div class="vehicle-tabs">
-                <button class="tab-btn active" id="tabLocal" onclick="switchVehicleTab('local')">
-                    Local Stock
-                </button>
-                <button class="tab-btn" id="tabImport" onclick="switchVehicleTab('import_japan')">
-                    Import on Order (Japan)
-                </button>
-            </div>
-        </div>
-    </div>
-
     <div class="filter-bar">
         <div class="container">
             <div class="results-count" id="resultsCount">Loading products...</div>
@@ -428,227 +373,10 @@
         </div>
     </main>
 
-    <!-- GLOBAL CORE SCRIPTS -->
     <script src="api.js"></script>
     <script src="auth-check.js"></script>
+    
     <script src="js/category-config.js"></script>
     <script src="js/category-page.js"></script>
-    // Function to handle search input
-function handleVehicleSearch() {
-    const rawQuery = document.getElementById('searchInput')?.value || '';
-    
-    // Normalize keyword to lowercase and trim spaces
-    const cleanKeyword = rawQuery.trim().toLowerCase();
-
-    if (!cleanKeyword) {
-        renderVehicleGrid(allVehicles); // Reset grid if search is cleared
-        return;
-    }
-
-    // 1. Search locally in the loaded Supabase vehicles array
-    const matchedVehicles = allVehicles.filter(vehicle => 
-        vehicle.title.toLowerCase().includes(cleanKeyword)
-    );
-
-    if (matchedVehicles.length > 0) {
-        renderVehicleGrid(matchedVehicles);
-        if (resultsCount) {
-            resultsCount.textContent = `Found ${matchedVehicles.length} local results for "${cleanKeyword}"`;
-        }
-    } else {
-        // 2. Zero local results: Generate lowercase external live search URL & WhatsApp order link
-        const formattedKeyword = encodeURIComponent(cleanKeyword); // e.g., "honda+fit" or "nissan+note"
-        const liveSearchUrl = `https://www.beforward.jp/stocklist/keyword=${formattedKeyword}`;
-        const whatsappMsg = encodeURIComponent(`Hi Mbare Marketplace, I am looking for a ${cleanKeyword}. Do you have this available for import?`);
-
-        vehiclesGrid.innerHTML = `
-            <div style="grid-column: 1 / -1; text-align: center; padding: 48px 16px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px;">
-                <h3 style="font-size: 1.25rem; color: #1e293b; margin-bottom: 8px;">
-                    No local preview matches for "${cleanKeyword}"
-                </h3>
-                <p style="color: #64748b; margin-bottom: 20px;">
-                    We have direct access to live Japanese auctions and export stock.
-                </p>
-                <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-                    <a 
-                        href="https://wa.me/263700000000?text=${whatsappMsg}" 
-                        target="_blank" 
-                        style="padding: 10px 20px; background: #25D366; color: #fff; border-radius: 6px; text-decoration: none; font-weight: 600;"
-                    >
-                        📲 Order "${cleanKeyword}" via WhatsApp
-                    </a>
-                    <a 
-                        href="${liveSearchUrl}" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        style="padding: 10px 20px; background: #0284c7; color: #fff; border-radius: 6px; text-decoration: none; font-weight: 600;"
-                    >
-                        🔍 Search Live Japan Stock for "${cleanKeyword}"
-                    </a>
-                </div>
-            </div>
-        `;
-    }
-}
-
-    <!-- VEHICLE PAGE TAB & DISPLAY ENGINE -->
-    <script>
-        let currentSource = 'local';
-        let currentVehicles = [];
-
-        // Temporary Mock Data to test UI until Supabase & Scraper are connected
-        const mockVehicles = [
-            {
-                id: '1',
-                title: '2016 Toyota GD6 Hilux Double Cab',
-                price_usd: 24500,
-                listing_source: 'local',
-                year: 2016,
-                mileage: '112,000 km',
-                transmission: 'Automatic',
-                main_image: 'vehicles/1.jpg'
-            },
-            {
-                id: '2',
-                title: '2015 Honda Fit Hybrid (GP5)',
-                price_usd: 3400,
-                listing_source: 'import_japan',
-                year: 2015,
-                mileage: '68,000 km',
-                transmission: 'Automatic',
-                main_image: 'https://bf-images.beforward.jp/stock/202402/3120141/BG3120141_1_800.jpg'
-            },
-            {
-                id: '3',
-                title: '2017 Nissan X-Trail 4WD',
-                price_usd: 12800,
-                listing_source: 'local',
-                year: 2017,
-                mileage: '85,000 km',
-                transmission: 'Automatic',
-                main_image: 'vehicles/2.jpg'
-            },
-            {
-                id: '4',
-                title: '2014 Toyota Passo 1.0X',
-                price_usd: 2150,
-                listing_source: 'import_japan',
-                year: 2014,
-                mileage: '54,000 km',
-                transmission: 'Automatic',
-                main_image: 'https://bf-images.beforward.jp/stock/202402/3120142/BG3120142_1_800.jpg'
-            }
-        ];
-
-        document.addEventListener('DOMContentLoaded', () => {
-            loadVehiclesData();
-        });
-
-        function switchVehicleTab(source) {
-            currentSource = source;
-            
-            document.getElementById('tabLocal').classList.toggle('active', source === 'local');
-            document.getElementById('tabImport').classList.toggle('active', source === 'import_japan');
-
-            loadVehiclesData();
-        }
-
-        async function loadVehiclesData() {
-            const grid = document.getElementById('vehiclesGrid');
-            const countLabel = document.getElementById('resultsCount');
-            
-            if (!grid) return;
-
-            grid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding: 40px; color:#666;">Loading vehicles...</div>';
-
-            currentVehicles = mockVehicles.filter(v => v.listing_source === currentSource);
-
-            if (countLabel) {
-                countLabel.textContent = `Showing ${currentVehicles.length} ${currentSource === 'local' ? 'Local' : 'Import'} Vehicles`;
-            }
-
-            if (currentVehicles.length === 0) {
-                grid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 40px; color:#666;">No ${currentSource === 'local' ? 'local stock' : 'Japanese import stock'} found at the moment.</div>`;
-                return;
-            }
-
-            renderVehicles(currentVehicles);
-        }
-
-        function renderVehicles(vehicles) {
-            const grid = document.getElementById('vehiclesGrid');
-            grid.innerHTML = '';
-
-            vehicles.forEach(vehicle => {
-                const badgeClass = vehicle.listing_source === 'local' ? 'badge-local' : 'badge-import';
-                const badgeText = vehicle.listing_source === 'local' ? 'Local' : 'Import Order';
-
-                const cardHtml = `
-                    <div class="product-card">
-                        <span class="product-badge ${badgeClass}">${badgeText}</span>
-                        <img src="${vehicle.main_image}" alt="${vehicle.title}" class="product-card-img" onerror="this.src='vehicles/1.jpg';">
-                        
-                        <div class="product-card-body">
-                            <h3 class="product-card-title">${vehicle.title}</h3>
-                            
-                            <div class="product-specs">
-                                <span class="spec-item">${vehicle.year}</span>
-                                <span class="spec-item">${vehicle.mileage}</span>
-                                <span class="spec-item">${vehicle.transmission}</span>
-                            </div>
-
-                            <div class="product-card-price">$${vehicle.price_usd.toLocaleString()} ${vehicle.listing_source === 'import_japan' ? '<span style="font-size:11px; font-weight:normal; color:#666;">FOB/Est</span>' : ''}</div>
-
-                            <button class="btn-enquire" onclick="openContactModal('${vehicle.title}', '${vehicle.price_usd}', '${vehicle.listing_source}')">
-                                Enquire on WhatsApp
-                            </button>
-                        </div>
-                    </div>
-                `;
-                grid.innerHTML += cardHtml;
-            });
-        }
-
-        function openContactModal(title, price, source) {
-            const modal = document.getElementById('sellerContactModal');
-            const content = document.getElementById('sellerContactContent');
-            
-            const adminPhone = "263770000000";
-            const message = encodeURIComponent(`Hi Mbare Marketplace, I am interested in ordering/inquiring about the ${title} priced at $${price} (${source === 'import_japan' ? 'Import Stock' : 'Local Stock'}). Is it available?`);
-            
-            content.innerHTML = `
-                <div class="product-title">${title}</div>
-                <div class="info-row">
-                    <div class="info-icon">$</div>
-                    <div class="info-text">
-                        <div class="info-label">Listed Price</div>
-                        <div class="info-value">$${Number(price).toLocaleString()} USD</div>
-                    </div>
-                </div>
-                <div class="info-row">
-                    <div class="info-icon">Type</div>
-                    <div class="info-text">
-                        <div class="info-label">Stock Type</div>
-                        <div class="info-value">${source === 'import_japan' ? 'Japan Direct Import' : 'Local Zimbabwean Seller'}</div>
-                    </div>
-                </div>
-                <div class="contact-actions">
-                    <a href="https://wa.me/${adminPhone}?text=${message}" target="_blank" class="contact-btn whatsapp-btn">Continue to WhatsApp</a>
-                </div>
-            `;
-            
-            modal.style.display = 'block';
-        }
-
-        function sortProducts() {
-            const val = document.getElementById('sortSelect').value;
-            if (val === 'price_low') {
-                currentVehicles.sort((a, b) => a.price_usd - b.price_usd);
-            } else if (val === 'price_high') {
-                currentVehicles.sort((a, b) => b.price_usd - a.price_usd);
-            }
-            renderVehicles(currentVehicles);
-        }
-    </script>
 </body>
 </html>
