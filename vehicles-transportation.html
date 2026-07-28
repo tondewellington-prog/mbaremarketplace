@@ -428,9 +428,13 @@
         </div>
     </main>
 
+    <!-- GLOBAL CORE SCRIPTS -->
     <script src="api.js"></script>
     <script src="auth-check.js"></script>
-    
+    <script src="js/category-config.js"></script>
+    <script src="js/category-page.js"></script>
+
+    <!-- VEHICLE PAGE TAB & DISPLAY ENGINE -->
     <script>
         let currentSource = 'local';
         let currentVehicles = [];
@@ -445,8 +449,7 @@
                 year: 2016,
                 mileage: '112,000 km',
                 transmission: 'Automatic',
-                main_image: 'vehicles/1.jpg',
-                phone: '+263770000000'
+                main_image: 'vehicles/1.jpg'
             },
             {
                 id: '2',
@@ -456,8 +459,7 @@
                 year: 2015,
                 mileage: '68,000 km',
                 transmission: 'Automatic',
-                main_image: 'https://bf-images.beforward.jp/stock/202402/3120141/BG3120141_1_800.jpg',
-                phone: '+263770000000'
+                main_image: 'https://bf-images.beforward.jp/stock/202402/3120141/BG3120141_1_800.jpg'
             },
             {
                 id: '3',
@@ -467,8 +469,7 @@
                 year: 2017,
                 mileage: '85,000 km',
                 transmission: 'Automatic',
-                main_image: 'vehicles/2.jpg',
-                phone: '+263770000000'
+                main_image: 'vehicles/2.jpg'
             },
             {
                 id: '4',
@@ -478,8 +479,7 @@
                 year: 2014,
                 mileage: '54,000 km',
                 transmission: 'Automatic',
-                main_image: 'https://bf-images.beforward.jp/stock/202402/3120142/BG3120142_1_800.jpg',
-                phone: '+263770000000'
+                main_image: 'https://bf-images.beforward.jp/stock/202402/3120142/BG3120142_1_800.jpg'
             }
         ];
 
@@ -500,11 +500,15 @@
             const grid = document.getElementById('vehiclesGrid');
             const countLabel = document.getElementById('resultsCount');
             
+            if (!grid) return;
+
             grid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding: 40px; color:#666;">Loading vehicles...</div>';
 
             currentVehicles = mockVehicles.filter(v => v.listing_source === currentSource);
 
-            countLabel.textContent = `Showing ${currentVehicles.length} ${currentSource === 'local' ? 'Local' : 'Import'} Vehicles`;
+            if (countLabel) {
+                countLabel.textContent = `Showing ${currentVehicles.length} ${currentSource === 'local' ? 'Local' : 'Import'} Vehicles`;
+            }
 
             if (currentVehicles.length === 0) {
                 grid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 40px; color:#666;">No ${currentSource === 'local' ? 'local stock' : 'Japanese import stock'} found at the moment.</div>`;
