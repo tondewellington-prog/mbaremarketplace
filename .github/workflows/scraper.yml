@@ -2,9 +2,8 @@ name: Vehicle Scraper Automation
 
 on:
   schedule:
-    # Runs automatically every 6 hours
     - cron: '0 */6 * * *'
-  workflow_dispatch: # Allows you to manually trigger it from GitHub UI anytime
+  workflow_dispatch:
 
 jobs:
   scrape-and-sync:
@@ -17,7 +16,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 22
 
       - name: Install Scraper Dependencies
         run: |
@@ -30,4 +29,4 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           cd scraper
-          npm start
+          node scrape.js
