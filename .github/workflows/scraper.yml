@@ -2,7 +2,7 @@ name: Vehicle Scraper Automation
 
 on:
   schedule:
-    # Runs every 6 hours automatically
+    # Runs every 6 hours automaticall
     - cron: '0 */6 * * *'
   workflow_dispatch:
 
