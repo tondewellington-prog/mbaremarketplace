@@ -9,9 +9,12 @@ if (!supabaseUrl || !supabaseKey) {
     process.exit(1);
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = createClient(supabaseUrl, supabaseKey, {
+    auth: { persistSession: false },
+    realtime: { timeout: 0 }
+});
 
-// Public stock list URLs
+// Public stock list URL
 const TARGET_URL = 'https://www.beforward.jp/stocklist';
 
 async function runScraper() {
@@ -43,7 +46,7 @@ async function runScraper() {
             .catch(() => console.log('Selector timeout reached. Proceeding with DOM evaluation...'));
 
         // Extract vehicles directly inside browser execution context
-        const vehicles = await page.evaluate(() => {
+        const rawVehicles = await page.evaluate(() => {
             const items = [];
             
             // Query all possible table rows or grid cards containing vehicles
@@ -101,24 +104,28 @@ async function runScraper() {
             return items;
         });
 
-        console.log(`Successfully extracted ${vehicles.length} vehicle listings.`);
+        console.log(`Successfully extracted ${rawVehicles.length} raw vehicle listings.`);
 
-        if (vehicles.length > 0) {
-            console.log('Pushing extracted items to Supabase database...');
-            
-            // Upsert array to Supabase using external_url as conflict target
+        if (rawVehicles.length > 0) {
+            // Deduplicate array based on external_url to prevent PostgreSQL ON CONFLICT DO UPDATE crashes
+            const uniqueVehicles = Array.from(
+                new Map(rawVehicles.map(v => [v.external_url, v])).values()
+            );
+
+            console.log(`Pushing ${uniqueVehicles.length} unique items to Supabase database...`);
+
             const { data, error } = await supabase
                 .from('vehicles')
-                .upsert(vehicles, { onConflict: 'external_url' });
+                .upsert(uniqueVehicles, { onConflict: 'external_url' });
 
             if (error) {
                 console.error('Supabase Upsert Error:', error.message);
                 process.exit(1);
             } else {
-                console.log(`Success! Upserted ${vehicles.length} vehicle records into Supabase.`);
+                console.log(`Success! Upserted ${uniqueVehicles.length} vehicle records into Supabase.`);
             }
         } else {
-            console.warn('WARNING: 0 vehicles extracted. Check if page layout or URL structure has updated.');
+            console.warn('WARNING: 0 vehicles extracted.');
         }
 
     } catch (err) {
