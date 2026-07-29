@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Japan Imports - Mbare Marketplace</title>
-  <!-- Supabase JS Client CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
@@ -17,7 +16,6 @@
       --border-color: #e2e8f0;
       --radius: 12px;
       --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-      --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
     }
 
     * {
@@ -41,7 +39,6 @@
 
     .header {
       margin-bottom: 2rem;
-      text-align: left;
     }
 
     .header h1 {
@@ -56,14 +53,12 @@
       font-size: 0.95rem;
     }
 
-    /* Grid Layout */
     .cars-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
       gap: 1.5rem;
     }
 
-    /* Card Styling */
     .car-card {
       background: var(--card-bg);
       border-radius: var(--radius);
@@ -72,12 +67,6 @@
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .car-card:hover {
-      transform: translateY(-4px);
-      box-shadow: var(--shadow-hover);
     }
 
     .card-image-container {
@@ -105,7 +94,6 @@
       font-weight: 600;
       padding: 4px 8px;
       border-radius: 6px;
-      backdrop-filter: blur(4px);
       text-transform: capitalize;
     }
 
@@ -121,10 +109,6 @@
       font-weight: 600;
       color: var(--primary-color);
       margin-bottom: 0.5rem;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
       min-height: 2.75rem;
     }
 
@@ -135,7 +119,6 @@
       font-size: 0.85rem;
       color: var(--text-muted);
       margin-bottom: 0.75rem;
-      align-items: center;
     }
 
     .specs-row span {
@@ -163,27 +146,28 @@
       border-radius: 8px;
       font-size: 0.9rem;
       font-weight: 600;
-      transition: background-color 0.2s ease;
     }
 
     .btn-listing:hover {
       background-color: #0f172a;
     }
 
-    /* States */
-    .loading-spinner, .error-msg, .empty-msg {
+    .status-msg {
       grid-column: 1 / -1;
-      text-align: center;
-      padding: 3rem 1rem;
-      color: var(--text-muted);
-      font-size: 1rem;
+      padding: 1.5rem;
+      border-radius: var(--radius);
+      font-size: 0.95rem;
     }
 
-    .error-msg {
-      color: #dc2626;
-      background: #fef2f2;
+    .status-msg.error {
+      color: #991b1b;
+      background-color: #fef2f2;
       border: 1px solid #fecaca;
-      border-radius: var(--radius);
+    }
+
+    .status-msg.info {
+      color: var(--text-muted);
+      text-align: center;
     }
   </style>
 </head>
@@ -195,113 +179,87 @@
       <p>Browse live vehicle listings updated directly from our import feeds.</p>
     </div>
 
-    <!-- Container where cards will render -->
     <div id="cars-container" class="cars-grid">
-      <div class="loading-spinner">Loading available vehicles...</div>
+      <div class="status-msg info">Loading vehicles from database...</div>
     </div>
   </div>
 
   <script>
-    // 1. Initialize Supabase Client
-    // Replace with your actual Supabase URL and Anon Key
+    // Replace with your actual Supabase Project details
     const SUPABASE_URL = 'https://YOUR_SUPABASE_PROJECT_ID.supabase.co';
     const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
-    
+    const TABLE_NAME = 'cars'; // Change if your Supabase table has a different name
+
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // 2. Fetch and Render Available Imports
-    async function fetchJapanImports() {
+    async function loadCars() {
       const container = document.getElementById('cars-container');
 
       try {
-        // Querying your Supabase table using your exact column schema:
-        // id, title, price_usd, listing_source, year, mileage, transmission, main_image, external_url, created_at
         const { data: cars, error } = await supabaseClient
-          .from('cars') // ⚠️ Replace 'cars' with your exact Supabase table name if different
+          .from(TABLE_NAME)
           .select('id, title, price_usd, listing_source, year, mileage, transmission, main_image, external_url, created_at')
           .order('created_at', { ascending: false });
 
-        if (error) throw error;
+        if (error) {
+          throw error;
+        }
 
         if (!cars || cars.length === 0) {
-          container.innerHTML = `<div class="empty-msg">No vehicles available at the moment. Please check back later.</div>`;
+          container.innerHTML = `<div class="status-msg info">No vehicles found in table "${TABLE_NAME}".</div>`;
           return;
         }
 
-        // Clear loading state
         container.innerHTML = '';
 
-        // Render each vehicle card
         cars.forEach(car => {
-          const cardHtml = createCarCard(car);
-          container.insertAdjacentHTML('beforeend', cardHtml);
+          let priceText = 'Contact for Price';
+          if (car.price_usd !== null && car.price_usd !== undefined && car.price_usd !== '') {
+            const num = Number(car.price_usd);
+            priceText = !isNaN(num) ? '$' + num.toLocaleString() : '$' + car.price_usd;
+          }
+
+          const card = document.createElement('div');
+          card.className = 'car-card';
+
+          card.innerHTML = `
+            <div class="card-image-container">
+              ${car.main_image ? `<img src="${car.main_image}" alt="${car.title || 'Vehicle'}" />` : ''}
+              ${car.listing_source ? `<span class="badge-source">${car.listing_source}</span>` : ''}
+            </div>
+            <div class="card-body">
+              <h2 class="card-title">${car.title || 'Import Vehicle'}</h2>
+              <div class="specs-row">
+                ${car.year ? `<span>Year: ${car.year}</span>` : ''}
+                ${car.transmission ? `<span>${car.transmission}</span>` : ''}
+                ${car.mileage ? `<span>${car.mileage}</span>` : ''}
+              </div>
+              <div class="price-tag">${priceText}</div>
+              <a href="${car.external_url || '#'}" class="btn-listing" target="_blank" rel="noopener noreferrer">
+                View Original Listing
+              </a>
+            </div>
+          `;
+
+          container.appendChild(card);
         });
 
       } catch (err) {
-        console.error('Failed to load cars:', err);
+        console.error('Supabase Error:', err);
         container.innerHTML = `
-          <div class="error-msg">
-            Unable to load vehicle listings. Please check your Supabase credentials or table permissions.
+          <div class="status-msg error">
+            <strong>Error loading data:</strong> ${err.message || JSON.stringify(err)}
+            <br><br>
+            Please check:
+            1. Your SUPABASE_URL and SUPABASE_ANON_KEY credentials.
+            2. That table "${TABLE_NAME}" exists in Supabase.
+            3. That Row Level Security (RLS) policies allow SELECT queries on the table.
           </div>
         `;
       }
     }
 
-    // Helper function to build HTML card structure
-    function createCarCard(car) {
-      // Format Price from price_usd
-      let formattedPrice = 'Contact for Price';
-      if (car.price_usd !== null && car.price_usd !== undefined && car.price_usd !== '') {
-        const numPrice = Number(car.price_usd);
-        formattedPrice = !isNaN(numPrice) ? `$${numPrice.toLocaleString()}` : `$${car.price_usd}`;
-      }
-
-      // Map exact database fields
-      const title = car.title || 'Import Vehicle';
-      const imageUrl = car.main_image || '';
-      const year = car.year ? car.year : null;
-      const transmission = car.transmission ? car.transmission : null;
-      const mileage = car.mileage ? car.mileage : null;
-      const listingSource = car.listing_source || '';
-      const externalUrl = car.external_url || '#';
-
-      return `
-        <div class="car-card">
-          <div class="card-image-container">
-            ${imageUrl ? `<img src="${imageUrl}" alt="${escapeHtml(title)}" loading="lazy" />` : ''}
-            ${listingSource ? `<span class="badge-source">${escapeHtml(listingSource)}</span>` : ''}
-          </div>
-          <div class="card-body">
-            <h2 class="card-title">${escapeHtml(title)}</h2>
-            
-            <div class="specs-row">
-              ${year ? `<span>Year: ${escapeHtml(String(year))}</span>` : ''}
-              ${transmission ? `<span>${escapeHtml(String(transmission))}</span>` : ''}
-              ${mileage ? `<span>${escapeHtml(String(mileage))}</span>` : ''}
-            </div>
-
-            <div class="price-tag">${formattedPrice}</div>
-
-            <a href="${externalUrl}" class="btn-listing" target="_blank" rel="noopener noreferrer">
-              View Original Listing
-            </a>
-          </div>
-        </div>
-      `;
-    }
-
-    // XSS Sanitization helper
-    function escapeHtml(str) {
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    }
-
-    // Run on page load
-    document.addEventListener('DOMContentLoaded', fetchJapanImports);
+    document.addEventListener('DOMContentLoaded', loadCars);
   </script>
 </body>
 </html>
