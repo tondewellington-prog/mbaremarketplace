@@ -1,265 +1,236 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Japan Imports - Mbare Marketplace</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    :root {
-      --primary-color: #0f172a;
-      --accent-color: #16a34a;
-      --bg-color: #f8fafc;
-      --card-bg: #ffffff;
-      --text-main: #1e293b;
-      --text-muted: #64748b;
-      --border-color: #e2e8f0;
-      --radius: 12px;
-      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
-
-    body {
-      background-color: var(--bg-color);
-      color: var(--text-main);
-      padding: 2rem 1rem;
-      line-height: 1.5;
-    }
-
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .header {
-      margin-bottom: 2rem;
-    }
-
-    .header h1 {
-      font-size: 1.875rem;
-      font-weight: 700;
-      color: var(--primary-color);
-      margin-bottom: 0.5rem;
-    }
-
-    .header p {
-      color: var(--text-muted);
-      font-size: 0.95rem;
-    }
-
-    .cars-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 1.5rem;
-    }
-
-    .car-card {
-      background: var(--card-bg);
-      border-radius: var(--radius);
-      border: 1px solid var(--border-color);
-      box-shadow: var(--shadow);
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .card-image-container {
-      position: relative;
-      width: 100%;
-      height: 200px;
-      background-color: #f1f5f9;
-      overflow: hidden;
-    }
-
-    .card-image-container img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-
-    .badge-source {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      background: rgba(15, 23, 42, 0.85);
-      color: #fff;
-      font-size: 0.75rem;
-      font-weight: 600;
-      padding: 4px 8px;
-      border-radius: 6px;
-      text-transform: capitalize;
-    }
-
-    .card-body {
-      padding: 1.25rem;
-      display: flex;
-      flex-direction: column;
-      flex-grow: 1;
-    }
-
-    .card-title {
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: var(--primary-color);
-      margin-bottom: 0.5rem;
-      min-height: 2.75rem;
-    }
-
-    .specs-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      margin-bottom: 0.75rem;
-    }
-
-    .specs-row span {
-      background: #f1f5f9;
-      padding: 2px 8px;
-      border-radius: 4px;
-    }
-
-    .price-tag {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: var(--accent-color);
-      margin-top: auto;
-      margin-bottom: 1rem;
-    }
-
-    .btn-listing {
-      display: inline-block;
-      width: 100%;
-      text-align: center;
-      background-color: #1e293b;
-      color: #ffffff;
-      text-decoration: none;
-      padding: 0.65rem 1rem;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      font-weight: 600;
-    }
-
-    .btn-listing:hover {
-      background-color: #0f172a;
-    }
-
-    .status-msg {
-      grid-column: 1 / -1;
-      padding: 1.5rem;
-      border-radius: var(--radius);
-      font-size: 0.95rem;
-    }
-
-    .status-msg.error {
-      color: #991b1b;
-      background-color: #fef2f2;
-      border: 1px solid #fecaca;
-    }
-
-    .status-msg.info {
-      color: var(--text-muted);
-      text-align: center;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Japan Imports Search | Mbare Marketplace</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .japan-search-box {
+            background: #1a2533;
+            color: white;
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .search-form {
+            display: flex;
+            max-width: 600px;
+            margin: 15px auto 0 auto;
+            gap: 10px;
+        }
+        .search-input {
+            flex: 1;
+            padding: 12px 15px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 15px;
+        }
+        .search-btn {
+            background: #f90;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .search-btn:hover { background: #e08800; }
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .product-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+        }
+        .product-card img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            background: #f1f5f9;
+        }
+        .product-card-body {
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+        .product-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #1a2533;
+        }
+        .product-details {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 10px;
+        }
+        .product-price {
+            font-size: 18px;
+            font-weight: 700;
+            color: #28a745;
+            margin-bottom: 12px;
+        }
+        .view-btn {
+            margin-top: auto;
+            display: block;
+            text-align: center;
+            background: #232f3e;
+            color: white;
+            padding: 10px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .view-btn:hover { background: #f90; }
+    </style>
 </head>
 <body>
 
-  <div class="container">
-    <div class="header">
-      <h1>Available Imports</h1>
-      <p>Browse live vehicle listings updated directly from our import feeds.</p>
+    <div class="container">
+        <!-- Live Vehicle Search Bar -->
+        <div class="japan-search-box">
+            <h2>Search Japanese Vehicles</h2>
+            <p>Type a car name (e.g., <em>Toyota Fit, Nissan Dualis, Demio</em>) to fetch live stock directly into our database.</p>
+            <form class="search-form" onsubmit="handleLiveSearch(event)">
+                <input 
+                    type="text" 
+                    id="searchQueryInput" 
+                    class="search-input" 
+                    placeholder="Search vehicle model..." 
+                    required
+                >
+                <button type="submit" id="searchSubmitBtn" class="search-btn">Search Stock</button>
+            </form>
+            <div id="searchStatus" style="margin-top: 12px; font-size: 14px;"></div>
+        </div>
+
+        <h2>Available Imports</h2>
+        <div class="product-grid" id="vehiclesGrid">
+            <p>Loading database stock...</p>
+        </div>
     </div>
 
-    <div id="cars-container" class="cars-grid">
-      <div class="status-msg info">Loading vehicles from database...</div>
-    </div>
-  </div>
+    <!-- Supabase SDK & API config -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="api.js"></script>
 
-  <script>
-    // Replace with your actual Supabase Project details
-    const SUPABASE_URL = 'https://YOUR_SUPABASE_PROJECT_ID.supabase.co';
-    const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
-    const TABLE_NAME = 'cars'; // Change if your Supabase table has a different name
+    <script>
+        const FALLBACK_IMG = 'https://placehold.co/400x250?text=No+Image+Available';
 
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    async function loadCars() {
-      const container = document.getElementById('cars-container');
-
-      try {
-        const { data: cars, error } = await supabaseClient
-          .from(TABLE_NAME)
-          .select('id, title, price_usd, listing_source, year, mileage, transmission, main_image, external_url, created_at')
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          throw error;
+        function sanitizeUrl(url) {
+            if (!url) return FALLBACK_IMG;
+            return url.replace('bf-images.beforward.jp', 'cdn.beforward.jp');
         }
 
-        if (!cars || cars.length === 0) {
-          container.innerHTML = `<div class="status-msg info">No vehicles found in table "${TABLE_NAME}".</div>`;
-          return;
+        // Load existing database stock on page load
+        async function fetchScrapedVehicles() {
+            const grid = document.getElementById('vehiclesGrid');
+            try {
+                const { data: vehicles, error } = await window.supabaseClient
+                    .from('vehicles')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                if (!vehicles || vehicles.length === 0) {
+                    grid.innerHTML = '<p>No Japanese imports found. Use the search bar above to fetch vehicles live!</p>';
+                    return;
+                }
+
+                renderVehicles(vehicles);
+            } catch (err) {
+                console.error('Error fetching stored cars:', err);
+                grid.innerHTML = '<p style="color: red;">Failed to connect to database. Make sure Row Level Security (RLS) allows select queries.</p>';
+            }
         }
 
-        container.innerHTML = '';
+        function renderVehicles(vehicles) {
+            const grid = document.getElementById('vehiclesGrid');
+            grid.innerHTML = vehicles.map(vehicle => {
+                const img = sanitizeUrl(vehicle.main_image);
+                
+                let formattedPrice = 'Contact for Price';
+                if (vehicle.price_usd !== null && vehicle.price_usd !== undefined && vehicle.price_usd !== '') {
+                    const num = Number(vehicle.price_usd);
+                    formattedPrice = !isNaN(num) ? '$' + num.toLocaleString() : '$' + vehicle.price_usd;
+                }
 
-        cars.forEach(car => {
-          let priceText = 'Contact for Price';
-          if (car.price_usd !== null && car.price_usd !== undefined && car.price_usd !== '') {
-            const num = Number(car.price_usd);
-            priceText = !isNaN(num) ? '$' + num.toLocaleString() : '$' + car.price_usd;
-          }
+                const year = vehicle.year ? `Year: ${vehicle.year}` : '';
+                const trans = vehicle.transmission ? `${vehicle.transmission}` : '';
+                const mileage = vehicle.mileage ? `${vehicle.mileage}` : '';
+                const details = [year, trans, mileage].filter(Boolean).join(' | ');
 
-          const card = document.createElement('div');
-          card.className = 'car-card';
+                return `
+                    <div class="product-card">
+                        <img 
+                            src="${img}" 
+                            alt="${vehicle.title || 'Japanese Import'}"
+                            onerror="this.onerror=null; this.src='${FALLBACK_IMG}';"
+                        >
+                        <div class="product-card-body">
+                            <div class="product-title">${vehicle.title || 'Japanese Vehicle'}</div>
+                            ${details ? `<div class="product-details">${details}</div>` : ''}
+                            <div class="product-price">${formattedPrice}</div>
+                            <a href="${vehicle.external_url || '#'}" target="_blank" class="view-btn">View Original Listing</a>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
 
-          card.innerHTML = `
-            <div class="card-image-container">
-              ${car.main_image ? `<img src="${car.main_image}" alt="${car.title || 'Vehicle'}" />` : ''}
-              ${car.listing_source ? `<span class="badge-source">${car.listing_source}</span>` : ''}
-            </div>
-            <div class="card-body">
-              <h2 class="card-title">${car.title || 'Import Vehicle'}</h2>
-              <div class="specs-row">
-                ${car.year ? `<span>Year: ${car.year}</span>` : ''}
-                ${car.transmission ? `<span>${car.transmission}</span>` : ''}
-                ${car.mileage ? `<span>${car.mileage}</span>` : ''}
-              </div>
-              <div class="price-tag">${priceText}</div>
-              <a href="${car.external_url || '#'}" class="btn-listing" target="_blank" rel="noopener noreferrer">
-                View Original Listing
-              </a>
-            </div>
-          `;
+        // Live Search Handler
+        async function handleLiveSearch(event) {
+            event.preventDefault();
+            const input = document.getElementById('searchQueryInput');
+            const btn = document.getElementById('searchSubmitBtn');
+            const status = document.getElementById('searchStatus');
+            const keyword = input.value.trim();
 
-          container.appendChild(card);
-        });
+            status.style.color = '#fff';
+            status.innerText = `Searching live Japanese inventory for "${keyword}"...`;
+            btn.disabled = true;
 
-      } catch (err) {
-        console.error('Supabase Error:', err);
-        container.innerHTML = `
-          <div class="status-msg error">
-            <strong>Error loading data:</strong> ${err.message || JSON.stringify(err)}
-            <br><br>
-            Please check:
-            1. Your SUPABASE_URL and SUPABASE_ANON_KEY credentials.
-            2. That table "${TABLE_NAME}" exists in Supabase.
-            3. That Row Level Security (RLS) policies allow SELECT queries on the table.
-          </div>
-        `;
-      }
-    }
+            try {
+                const response = await fetch('/api/search-and-scrape-japan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ keyword })
+                });
 
-    document.addEventListener('DOMContentLoaded', loadCars);
-  </script>
+                const result = await response.json();
+
+                if (result.success && result.vehicles.length > 0) {
+                    status.style.color = '#28a745';
+                    status.innerText = `Found ${result.count} vehicles! Saved to database and updated below.`;
+                    renderVehicles(result.vehicles);
+                } else if (result.success && result.vehicles.length === 0) {
+                    status.style.color = '#f90';
+                    status.innerText = `No stock matched "${keyword}". Try a broader term like "Toyota" or "Nissan".`;
+                } else {
+                    status.style.color = '#ff6b6b';
+                    status.innerText = 'Error: ' + (result.error || 'Failed to retrieve stock.');
+                }
+            } catch (err) {
+                console.error('Search request error:', err);
+                status.style.color = '#ff6b6b';
+                status.innerText = 'Server connection failed.';
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', fetchScrapedVehicles);
+    </script>
 </body>
 </html>
