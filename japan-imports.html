@@ -133,21 +133,38 @@
     <script src="api.js"></script>
 
     <script>
-        // Wait up to 3 seconds for window.supabaseClient to become available
+        function resolveSupabaseClient() {
+            if (typeof window.supabaseClient !== 'undefined') {
+                return window.supabaseClient;
+            }
+            if (typeof supabaseClient !== 'undefined') {
+                return supabaseClient;
+            }
+            if (typeof supabase !== 'undefined' && typeof SUPABASE_URL !== 'undefined' && typeof SUPABASE_ANON_KEY !== 'undefined') {
+                return supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            }
+            if (typeof window.supabase !== 'undefined' && typeof window.SUPABASE_URL !== 'undefined' && typeof window.SUPABASE_ANON_KEY !== 'undefined') {
+                return window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+            }
+            return null;
+        }
+
         function waitForSupabase() {
             return new Promise((resolve, reject) => {
-                if (window.supabaseClient) {
-                    return resolve(window.supabaseClient);
+                let client = resolveSupabaseClient();
+                if (client) {
+                    return resolve(client);
                 }
                 let attempts = 0;
                 const interval = setInterval(() => {
                     attempts++;
-                    if (window.supabaseClient) {
+                    client = resolveSupabaseClient();
+                    if (client) {
                         clearInterval(interval);
-                        resolve(window.supabaseClient);
+                        resolve(client);
                     } else if (attempts >= 30) {
                         clearInterval(interval);
-                        reject(new Error('window.supabaseClient was not initialized after waiting. Check your api.js file.'));
+                        reject(new Error('No Supabase client instance found. Check variable declarations in api.js.'));
                     }
                 }, 100);
             });
@@ -158,9 +175,9 @@
             const grid = document.getElementById('vehiclesGrid');
 
             try {
-                const supabaseClient = await waitForSupabase();
+                const client = await waitForSupabase();
 
-                const { data: vehicles, error } = await supabaseClient
+                const { data: vehicles, error } = await client
                     .from('vehicles')
                     .select('*')
                     .order('created_at', { ascending: false });
