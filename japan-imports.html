@@ -92,6 +92,14 @@
             font-size: 14px;
         }
         .view-btn:hover { background: #f90; }
+        .error-msg {
+            color: #721c24;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 15px;
+            border-radius: 6px;
+            grid-column: 1 / -1;
+        }
     </style>
 </head>
 <body>
@@ -127,6 +135,16 @@
     <script>
         const FALLBACK_IMG = 'https://placehold.co/400x250?text=No+Image+Available';
 
+        function getSupabaseClient() {
+            if (window.supabaseClient) {
+                return window.supabaseClient;
+            }
+            if (typeof supabase !== 'undefined' && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
+                return supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+            }
+            return null;
+        }
+
         function sanitizeUrl(url) {
             if (!url) return FALLBACK_IMG;
             return url.replace('bf-images.beforward.jp', 'cdn.beforward.jp');
@@ -135,8 +153,20 @@
         // Load existing database stock on page load
         async function fetchScrapedVehicles() {
             const grid = document.getElementById('vehiclesGrid');
+            const client = getSupabaseClient();
+
+            if (!client) {
+                grid.innerHTML = `
+                    <div class="error-msg">
+                        <strong>Supabase Client Error:</strong> Could not initialize Supabase. 
+                        Ensure <code>api.js</code> defines <code>window.supabaseClient</code> or contains valid <code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code>.
+                    </div>
+                `;
+                return;
+            }
+
             try {
-                const { data: vehicles, error } = await window.supabaseClient
+                const { data: vehicles, error } = await client
                     .from('vehicles')
                     .select('*')
                     .order('created_at', { ascending: false });
@@ -144,14 +174,22 @@
                 if (error) throw error;
 
                 if (!vehicles || vehicles.length === 0) {
-                    grid.innerHTML = '<p>No Japanese imports found. Use the search bar above to fetch vehicles live!</p>';
+                    grid.innerHTML = '<p>No Japanese imports found in the "vehicles" table. Use the search bar above to fetch vehicles live!</p>';
                     return;
                 }
 
                 renderVehicles(vehicles);
             } catch (err) {
                 console.error('Error fetching stored cars:', err);
-                grid.innerHTML = '<p style="color: red;">Failed to connect to database. Make sure Row Level Security (RLS) allows select queries.</p>';
+                grid.innerHTML = `
+                    <div class="error-msg">
+                        <strong>Database Error:</strong> ${err.message || err.details || JSON.stringify(err)}
+                        <br><br>
+                        <strong>Troubleshooting Step:</strong> If RLS is already disabled, run this SQL command in Supabase SQL Editor to grant public access:
+                        <br>
+                        <code>GRANT SELECT ON public.vehicles TO anon;</code>
+                    </div>
+                `;
             }
         }
 
