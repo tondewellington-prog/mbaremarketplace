@@ -133,40 +133,21 @@
     <script src="api.js"></script>
 
     <script>
-        const FALLBACK_IMG = 'https://placehold.co/400x250?text=No+Image+Available';
-
-        function getSupabaseClient() {
-            if (window.supabaseClient) {
-                return window.supabaseClient;
-            }
-            if (typeof supabase !== 'undefined' && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
-                return supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
-            }
-            return null;
-        }
-
-        function sanitizeUrl(url) {
-            if (!url) return FALLBACK_IMG;
-            return url.replace('bf-images.beforward.jp', 'cdn.beforward.jp');
-        }
-
         // Load existing database stock on page load
         async function fetchScrapedVehicles() {
             const grid = document.getElementById('vehiclesGrid');
-            const client = getSupabaseClient();
 
-            if (!client) {
+            if (!window.supabaseClient) {
                 grid.innerHTML = `
                     <div class="error-msg">
-                        <strong>Supabase Client Error:</strong> Could not initialize Supabase. 
-                        Ensure <code>api.js</code> defines <code>window.supabaseClient</code> or contains valid <code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code>.
+                        <strong>Initialization Error:</strong> <code>window.supabaseClient</code> is not defined in <code>api.js</code>.
                     </div>
                 `;
                 return;
             }
 
             try {
-                const { data: vehicles, error } = await client
+                const { data: vehicles, error } = await window.supabaseClient
                     .from('vehicles')
                     .select('*')
                     .order('created_at', { ascending: false });
@@ -174,7 +155,7 @@
                 if (error) throw error;
 
                 if (!vehicles || vehicles.length === 0) {
-                    grid.innerHTML = '<p>No Japanese imports found in the "vehicles" table. Use the search bar above to fetch vehicles live!</p>';
+                    grid.innerHTML = '<p>No Japanese imports found in database.</p>';
                     return;
                 }
 
@@ -184,10 +165,6 @@
                 grid.innerHTML = `
                     <div class="error-msg">
                         <strong>Database Error:</strong> ${err.message || err.details || JSON.stringify(err)}
-                        <br><br>
-                        <strong>Troubleshooting Step:</strong> If RLS is already disabled, run this SQL command in Supabase SQL Editor to grant public access:
-                        <br>
-                        <code>GRANT SELECT ON public.vehicles TO anon;</code>
                     </div>
                 `;
             }
@@ -196,31 +173,22 @@
         function renderVehicles(vehicles) {
             const grid = document.getElementById('vehiclesGrid');
             grid.innerHTML = vehicles.map(vehicle => {
-                const img = sanitizeUrl(vehicle.main_image);
-                
-                let formattedPrice = 'Contact for Price';
-                if (vehicle.price_usd !== null && vehicle.price_usd !== undefined && vehicle.price_usd !== '') {
-                    const num = Number(vehicle.price_usd);
-                    formattedPrice = !isNaN(num) ? '$' + num.toLocaleString() : '$' + vehicle.price_usd;
-                }
-
                 const year = vehicle.year ? `Year: ${vehicle.year}` : '';
-                const trans = vehicle.transmission ? `${vehicle.transmission}` : '';
-                const mileage = vehicle.mileage ? `${vehicle.mileage}` : '';
+                const trans = vehicle.transmission ? `Trans: ${vehicle.transmission}` : '';
+                const mileage = vehicle.mileage ? `Mileage: ${vehicle.mileage}` : '';
                 const details = [year, trans, mileage].filter(Boolean).join(' | ');
 
                 return `
                     <div class="product-card">
                         <img 
-                            src="${img}" 
-                            alt="${vehicle.title || 'Japanese Import'}"
-                            onerror="this.onerror=null; this.src='${FALLBACK_IMG}';"
+                            src="${vehicle.main_image}" 
+                            alt="${vehicle.title}"
                         >
                         <div class="product-card-body">
-                            <div class="product-title">${vehicle.title || 'Japanese Vehicle'}</div>
+                            <div class="product-title">${vehicle.title}</div>
                             ${details ? `<div class="product-details">${details}</div>` : ''}
-                            <div class="product-price">${formattedPrice}</div>
-                            <a href="${vehicle.external_url || '#'}" target="_blank" class="view-btn">View Original Listing</a>
+                            <div class="product-price">$${vehicle.price_usd}</div>
+                            <a href="${vehicle.external_url}" target="_blank" class="view-btn">View Original Listing</a>
                         </div>
                     </div>
                 `;
@@ -262,7 +230,7 @@
             } catch (err) {
                 console.error('Search request error:', err);
                 status.style.color = '#ff6b6b';
-                status.innerText = 'Server connection failed.';
+                status.innerText = 'Server connection failed: ' + err.message;
             } finally {
                 btn.disabled = false;
             }
