@@ -1,33 +1,34 @@
-name: Vehicle Scraper Automation
+name: Run Japan Import Scraper
 
 on:
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
   schedule:
-    # Runs every 6 hours automatically
-    - cron: '0 */6 * * *'
-  workflow_dispatch:
+    - cron: '0 0 * * *' # Optional: Runs automatically every day at midnight
 
 jobs:
-  scrape-and-sync:
+  scrape:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Set up Node.js environment
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: scraper/package.json
 
-      - name: Install Scraper Dependencies
+      - name: Install dependencies in scraper directory
         run: |
           cd scraper
           npm install
 
       - name: Execute Scraper
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           cd scraper
           node scrape.js
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
