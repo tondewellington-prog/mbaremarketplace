@@ -133,21 +133,34 @@
     <script src="api.js"></script>
 
     <script>
+        // Wait up to 3 seconds for window.supabaseClient to become available
+        function waitForSupabase() {
+            return new Promise((resolve, reject) => {
+                if (window.supabaseClient) {
+                    return resolve(window.supabaseClient);
+                }
+                let attempts = 0;
+                const interval = setInterval(() => {
+                    attempts++;
+                    if (window.supabaseClient) {
+                        clearInterval(interval);
+                        resolve(window.supabaseClient);
+                    } else if (attempts >= 30) {
+                        clearInterval(interval);
+                        reject(new Error('window.supabaseClient was not initialized after waiting. Check your api.js file.'));
+                    }
+                }, 100);
+            });
+        }
+
         // Load existing database stock on page load
         async function fetchScrapedVehicles() {
             const grid = document.getElementById('vehiclesGrid');
 
-            if (!window.supabaseClient) {
-                grid.innerHTML = `
-                    <div class="error-msg">
-                        <strong>Initialization Error:</strong> <code>window.supabaseClient</code> is not defined in <code>api.js</code>.
-                    </div>
-                `;
-                return;
-            }
-
             try {
-                const { data: vehicles, error } = await window.supabaseClient
+                const supabaseClient = await waitForSupabase();
+
+                const { data: vehicles, error } = await supabaseClient
                     .from('vehicles')
                     .select('*')
                     .order('created_at', { ascending: false });
