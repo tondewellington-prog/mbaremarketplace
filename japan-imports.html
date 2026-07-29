@@ -115,23 +115,31 @@
         </div>
     </div>
 
-    <!-- Load Supabase UMD module & api.js -->
+    <!-- Load Supabase SDK & api.js -->
     <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="api.js"></script>
 
     <script>
         const FALLBACK_IMG = 'https://via.placeholder.com/400x250?text=No+Image+Available';
 
-        // Safe client getter to prevent tracking protection crashes
+        // Safe client getter
         function getSupabase() {
+            // First check if api.js initialized window.supabaseClient
             if (window.supabaseClient) {
                 return window.supabaseClient;
             }
+            
+            // Fallback: Check if global supabase object exists from UMD script
             if (window.supabase && typeof window.supabase.createClient === 'function') {
-                // Adjust keys here if needed, or rely on api.js client initialization
-                const SUPABASE_URL = "YOUR_SUPABASE_URL"; 
-                const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY"; 
+                // IMPORTANT: Replace these two variables with your actual Supabase credentials if api.js doesn't provide window.supabaseClient
+                const SUPABASE_URL = window.SUPABASE_URL || "https://YOUR_PROJECT.supabase.co"; 
+                const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "YOUR_ANON_KEY"; 
                 
+                if (SUPABASE_URL.includes("YOUR_PROJECT")) {
+                    console.warn("Supabase credentials missing in fallback loader.");
+                    return null;
+                }
+
                 window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
                     auth: { persistSession: false }
                 });
@@ -140,10 +148,14 @@
             return null;
         }
 
-        // Sanitizes unresolvable Be Forward image CDN hostnames
+        // Fixes image CDN hostnames and missing protocols
         function sanitizeUrl(url) {
             if (!url) return FALLBACK_IMG;
-            return url.replace('bf-images.beforward.jp', 'cdn.beforward.jp');
+            let cleaned = url.replace('bf-images.beforward.jp', 'cdn.beforward.jp');
+            if (cleaned.startsWith('//')) {
+                cleaned = 'https:' + cleaned;
+            }
+            return cleaned;
         }
 
         // Fetch stored stock from Supabase 'vehicles' table
@@ -153,45 +165,56 @@
 
             if (!supabase) {
                 console.error('Supabase client failed to initialize.');
-                grid.innerHTML = '<p style="color: red;">Database initialization failed. Please check api.js or reload.</p>';
+                grid.innerHTML = '<p style="color: red;">Database connection error. Please verify your Supabase API credentials in api.js.</p>';
                 return;
             }
 
             try {
+                // Fetch vehicles ordered by newest first
                 const { data: vehicles, error } = await supabase
                     .from('vehicles')
                     .select('*')
                     .order('created_at', { ascending: false });
 
-                if (error) throw error;
+                if (error) {
+                    console.error('Supabase Query Error:', error);
+                    throw error;
+                }
 
                 if (!vehicles || vehicles.length === 0) {
-                    grid.innerHTML = '<p>No Japanese imports found. Use the search bar above to fetch vehicles live!</p>';
+                    grid.innerHTML = '<p>No vehicles found in database. Use the search bar above to scrape stock live!</p>';
                     return;
                 }
 
                 renderVehicles(vehicles);
             } catch (err) {
-                console.error('Error fetching stored cars:', err);
-                grid.innerHTML = '<p style="color: red;">Failed to connect to database.</p>';
+                console.error('Error fetching stored cars:', err.message || err);
+                grid.innerHTML = `<p style="color: red;">Failed to load vehicles: ${err.message || 'Check browser console'}</p>`;
             }
         }
 
         function renderVehicles(vehicles) {
             const grid = document.getElementById('vehiclesGrid');
             grid.innerHTML = vehicles.map(vehicle => {
-                const img = sanitizeUrl(vehicle.image_url);
+                // Map fields safely with fallbacks for column name variations
+                const title = vehicle.title || vehicle.name || 'Japanese Import';
+                const price = vehicle.price || 'Contact for Price';
+                const rawImg = vehicle.image_url || vehicle.image || vehicle.img_url;
+                const link = vehicle.original_url || vehicle.link || vehicle.url || '#';
+                
+                const imgSrc = sanitizeUrl(rawImg);
+
                 return `
                     <div class="product-card">
                         <img 
-                            src="${img}" 
-                            alt="${vehicle.title || 'Japanese Import'}"
+                            src="${imgSrc}" 
+                            alt="${title}"
                             onerror="this.onerror=null; this.src='${FALLBACK_IMG}';"
                         >
                         <div class="product-card-body">
-                            <div class="product-title">${vehicle.title || 'Japanese Vehicle'}</div>
-                            <div class="product-price">${vehicle.price || 'Contact for Price'}</div>
-                            <a href="${vehicle.original_url || '#'}" target="_blank" class="view-btn">View Original Listing</a>
+                            <div class="product-title">${title}</div>
+                            <div class="product-price">${price}</div>
+                            <a href="${link}" target="_blank" class="view-btn">View Original Listing</a>
                         </div>
                     </div>
                 `;
@@ -219,13 +242,13 @@
 
                 const result = await response.json();
 
-                if (result.success && result.vehicles.length > 0) {
+                if (result.success && result.vehicles && result.vehicles.length > 0) {
                     status.style.color = '#28a745';
-                    status.innerText = `✅ Found ${result.count} vehicles! Saved to database and updated below.`;
+                    status.innerText = `✅ Found ${result.count} vehicles! Updated stock below.`;
                     renderVehicles(result.vehicles);
                 } else if (result.success && result.vehicles.length === 0) {
                     status.style.color = '#f90';
-                    status.innerText = `No stock matched "${keyword}". Try a broader term like "Toyota" or "Nissan".`;
+                    status.innerText = `No stock matched "${keyword}". Try searching another model.`;
                 } else {
                     status.style.color = '#ff6b6b';
                     status.innerText = '❌ Error: ' + (result.error || 'Failed to retrieve stock.');
@@ -233,7 +256,7 @@
             } catch (err) {
                 console.error('Search request error:', err);
                 status.style.color = '#ff6b6b';
-                status.innerText = '❌ Server connection failed.';
+                status.innerText = '❌ Server connection failed. Ensure backend server is running.';
             } finally {
                 btn.disabled = false;
             }
