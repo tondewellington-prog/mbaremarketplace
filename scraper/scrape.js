@@ -30,32 +30,48 @@ async function scrapeJapanVehicles(keyword = 'Toyota') {
         const $ = cheerio.load(html);
         const scrapedVehicles = [];
 
-        $('.make-val-container, .items-box, .vehicle-card').each((index, element) => {
-            let rawTitle = $(element).find('.vehicle-name, .title, a.title-link, .vehicle-title, h2, h3').first().text().trim();
+        // Target row blocks, items boxes, and stock list containers
+        $('.stocklist-row, .items-box, .vehicle-card, tr[class*="stocklist"]').each((index, element) => {
+            // Target explicit title links or vehicle heading spans
+            let rawTitle = $(element).find('a.vehicle-title, a[class*="title"], .vehicle-name, .title').first().text().trim();
+            
+            // Fallback: If empty, attempt reading from general heading tag within card
+            if (!rawTitle) {
+                rawTitle = $(element).find('h2, h3').first().text().trim();
+            }
+
+            // Clean spacing and multi-lines
             rawTitle = rawTitle.replace(/\s+/g, ' ');
 
-            if (!rawTitle || rawTitle.toLowerCase() === 'mileage' || rawTitle.length < 2) {
+            // Ignore blank or invalid labels
+            if (!rawTitle || rawTitle.toLowerCase() === 'mileage' || rawTitle.length < 3) {
                 return;
             }
 
-            let main_image = $(element).find('img').attr('data-original') || $(element).find('img').attr('src') || '';
+            // Image URL extraction
+            let main_image = $(element).find('img.vehicle-img, img').first().attr('data-original') 
+                          || $(element).find('img').first().attr('src') 
+                          || '';
             if (main_image.startsWith('//')) {
                 main_image = 'https:' + main_image;
             } else if (main_image.startsWith('/')) {
                 main_image = 'https://www.beforward.jp' + main_image;
             }
 
-            let external_url = $(element).find('a.vehicle-url, a.title-link, a').first().attr('href') || '';
+            // Listing external URL
+            let external_url = $(element).find('a.vehicle-title, a[class*="title"], a').first().attr('href') || '';
             if (external_url.startsWith('/')) {
                 external_url = 'https://www.beforward.jp' + external_url;
             }
 
-            const priceText = $(element).find('.price, .vehicle-price, .val-price').text().trim();
+            // Numeric price extraction
+            const priceText = $(element).find('.price, .vehicle-price, [class*="price"]').text().trim();
             const numericPrice = priceText.replace(/[^0-9]/g, '');
 
-            const yearText = $(element).find('.year, .val-year, .spec-year').text().trim();
-            const transText = $(element).find('.trans, .val-trans, .spec-trans').text().trim();
-            const mileageText = $(element).find('.mileage, .val-mileage, .spec-mileage').text().trim();
+            // Specs
+            const yearText = $(element).find('.year, [class*="year"]').text().trim();
+            const transText = $(element).find('.trans, [class*="trans"]').text().trim();
+            const mileageText = $(element).find('.mileage, [class*="mileage"]').text().trim();
 
             scrapedVehicles.push({
                 title: rawTitle,
@@ -75,7 +91,7 @@ async function scrapeJapanVehicles(keyword = 'Toyota') {
             return;
         }
 
-        console.log(`Extracted ${scrapedVehicles.length} vehicles. Inserting into Supabase...`);
+        console.log(`Extracted ${scrapedVehicles.length} clean vehicle records. Inserting into Supabase...`);
 
         const { data, error } = await supabase
             .from('vehicles')
@@ -86,7 +102,7 @@ async function scrapeJapanVehicles(keyword = 'Toyota') {
             throw error;
         }
 
-        console.log(`Successfully saved ${data.length} vehicles to database.`);
+        console.log(`Successfully saved ${data.length} vehicles to Supabase!`);
     } catch (err) {
         console.error('Scraper Execution Error:', err.message || err);
         process.exit(1);
