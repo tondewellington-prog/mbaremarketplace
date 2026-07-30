@@ -40,7 +40,7 @@ async function scrapeJapanVehicles(keyword = 'Toyota') {
                 rawTitle = $(element).find('h2, h3').first().text().trim();
             }
 
-            // Clean spacing and multi-lines
+            // Clean spacing and multi-line
             rawTitle = rawTitle.replace(/\s+/g, ' ');
 
             // Ignore blank or invalid labels
