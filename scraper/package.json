@@ -1,14 +1,10 @@
 {
-  "name": "mbare-marketplace-scraper",
+  "name": "mbare-japan-scraper",
   "version": "1.0.0",
-  "description": "Automated vehicle scraper for Mbare Marketplace using Puppeteer and Supabase",
+  "type": "module",
   "main": "scrape.js",
-  "private": true,
-  "scripts": {
-    "start": "node scrape.js"
-  },
   "dependencies": {
-    "@supabase/supabase-js": "^2.39.0",
-    "puppeteer": "^22.0.0"
+    "@supabase/supabase-js": "^2.45.0",
+    "cheerio": "^1.0.0"
   }
 }
