@@ -41,6 +41,8 @@
         .chat-input button:hover { background: #e68a00; }
         
         .loading { text-align: center; padding: 40px; color: #999; }
+        .error-msg { text-align: center; padding: 40px; color: #d32f2f; background: #ffebee; border-radius: 8px; }
+        .error-msg a { color: #d32f2f; font-weight: 600; }
         
         @media (max-width: 768px) {
             .container { flex-direction: column; padding: 10px; }
@@ -64,51 +66,85 @@
         </div>
     </div>
 
+    <script src="api.js"></script>
     <script>
-        window.SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
-        window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
-
         let currentUserId = null;
         let currentUserToken = null;
         let conversations = [];
         let activeConversationId = null;
         let messages = [];
-        let messageSubscription = null;
+        let pollInterval = null;
 
         async function init() {
-            const session = localStorage.getItem('supabase_session');
-            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-            
-            if (!isLoggedIn || !session) {
-                window.location.href = 'login.html?redirect=messages.html';
-                return;
+            try {
+                const session = localStorage.getItem('supabase_session');
+                const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+                
+                if (!isLoggedIn || !session) {
+                    window.location.href = 'login.html?redirect=messages.html';
+                    return;
+                }
+
+                const sessionData = JSON.parse(session);
+                currentUserId = sessionData.user.id;
+                currentUserToken = sessionData.access_token;
+
+                // Set the token in the API module
+                if (window.api) {
+                    window.api.setToken(currentUserToken);
+                }
+
+                console.log('User ID:', currentUserId);
+                console.log('Token exists:', !!currentUserToken);
+
+                await loadConversations();
+                subscribeToNewMessages();
+            } catch (error) {
+                console.error('Init error:', error);
+                document.getElementById('conversationList').innerHTML = 
+                    '<div class="error-msg">Failed to load. Please <a href="login.html">login again</a>.</div>';
             }
-
-            const sessionData = JSON.parse(session);
-            currentUserId = sessionData.user.id;
-            currentUserToken = sessionData.access_token;
-
-            await loadConversations();
-            subscribeToNewMessages();
         }
 
         async function loadConversations() {
             try {
-                const resp = await fetch(
-                    `${window.SUPABASE_URL}/rest/v1/conversations?or=(buyer_id.eq.${currentUserId},seller_id.eq.${currentUserId})&select=*&order=last_message_at.desc`,
-                    { headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${currentUserToken}` } }
-                );
-                conversations = await resp.json();
+                // Use api.js if available, otherwise fallback to fetch
+                let data;
+                if (window.api && window.api.getConversations) {
+                    data = await window.api.getConversations(currentUserId);
+                } else {
+                    // Fallback to direct fetch
+                    const resp = await fetch(
+                        `${window.SUPABASE_URL}/rest/v1/conversations?or=(buyer_id.eq.${currentUserId},seller_id.eq.${currentUserId})&select=*&order=last_message_at.desc`,
+                        { 
+                            headers: { 
+                                'apikey': window.SUPABASE_ANON_KEY, 
+                                'Authorization': `Bearer ${currentUserToken}` 
+                            } 
+                        }
+                    );
+                    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                    data = await resp.json();
+                }
+                
+                conversations = Array.isArray(data) ? data : [];
                 renderConversationList();
             } catch (e) {
                 console.error('Load conversations error:', e);
+                if (e.message.includes('401')) {
+                    document.getElementById('conversationList').innerHTML = 
+                        '<div class="error-msg">Session expired. Please <a href="login.html">login again</a>.</div>';
+                } else {
+                    document.getElementById('conversationList').innerHTML = 
+                        '<div class="error-msg">Error loading conversations. Please refresh.</div>';
+                }
             }
         }
 
         function renderConversationList() {
             const list = document.getElementById('conversationList');
             
-            if (conversations.length === 0) {
+            if (!conversations || conversations.length === 0) {
                 list.innerHTML = '<div class="loading">No conversations yet.<br><small>Start by contacting a seller about a product.</small></div>';
                 return;
             }
@@ -137,33 +173,50 @@
             renderConversationList();
             
             try {
-                const resp = await fetch(
-                    `${window.SUPABASE_URL}/rest/v1/messages?conversation_id=eq.${convId}&select=*&order=created_at.asc`,
-                    { headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${currentUserToken}` } }
-                );
-                messages = await resp.json();
+                let data;
+                if (window.api && window.api.getMessages) {
+                    data = await window.api.getMessages(convId);
+                } else {
+                    const resp = await fetch(
+                        `${window.SUPABASE_URL}/rest/v1/messages?conversation_id=eq.${convId}&select=*&order=created_at.asc`,
+                        { headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${currentUserToken}` } }
+                    );
+                    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                    data = await resp.json();
+                }
+                
+                messages = Array.isArray(data) ? data : [];
                 
                 // Mark unread messages as read
                 const conv = conversations.find(c => c.id === convId);
                 if (conv) {
-                    if (conv.buyer_id === currentUserId) {
-                        await fetch(`${window.SUPABASE_URL}/rest/v1/conversations?id=eq.${convId}`, {
-                            method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json', 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${currentUserToken}`, 'Prefer': 'return=minimal' },
-                            body: JSON.stringify({ unread_buyer: 0 })
-                        });
+                    const updateField = conv.buyer_id === currentUserId ? 'unread_buyer' : 'unread_seller';
+                    if (window.api && window.api.updateConversation) {
+                        await window.api.updateConversation(convId, { [updateField]: 0 });
                     } else {
                         await fetch(`${window.SUPABASE_URL}/rest/v1/conversations?id=eq.${convId}`, {
                             method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json', 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${currentUserToken}`, 'Prefer': 'return=minimal' },
-                            body: JSON.stringify({ unread_seller: 0 })
-                        });
+                            headers: { 
+                                'Content-Type': 'application/json', 
+                                'apikey': window.SUPABASE_ANON_KEY, 
+                                'Authorization': `Bearer ${currentUserToken}`, 
+                                'Prefer': 'return=minimal' 
+                            },
+                            body: JSON.stringify({ [updateField]: 0 })
+                        }).catch(e => console.warn('Could not mark as read:', e));
                     }
                 }
                 
                 renderChatWindow();
             } catch (e) {
                 console.error('Load messages error:', e);
+                if (e.message.includes('401')) {
+                    document.getElementById('chatWindow').innerHTML = 
+                        '<div class="chat-empty">Session expired. Please <a href="login.html">login again</a>.</div>';
+                } else {
+                    document.getElementById('chatWindow').innerHTML = 
+                        '<div class="chat-empty">Error loading messages.</div>';
+                }
             }
         }
 
@@ -171,11 +224,14 @@
             const chatWindow = document.getElementById('chatWindow');
             const conv = conversations.find(c => c.id === activeConversationId);
             
-            if (!conv) return;
+            if (!conv) {
+                chatWindow.innerHTML = '<div class="chat-empty">Select a conversation to start messaging</div>';
+                return;
+            }
 
             chatWindow.innerHTML = `
                 <div class="chat-header">
-                    <div class="conv-avatar">${conv.subject.charAt(0).toUpperCase()}</div>
+                    <div class="conv-avatar">${conv.subject ? conv.subject.charAt(0).toUpperCase() : 'C'}</div>
                     <strong>${conv.subject || 'Chat'}</strong>
                 </div>
                 <div class="chat-messages" id="chatMessages">
@@ -193,7 +249,6 @@
                 </div>
             `;
 
-            // Scroll to bottom
             setTimeout(() => {
                 const chatMessages = document.getElementById('chatMessages');
                 if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -207,25 +262,46 @@
             if (!message || !activeConversationId) return;
             
             try {
-                await fetch(`${window.SUPABASE_URL}/rest/v1/messages`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${currentUserToken}`, 'Prefer': 'return=minimal' },
-                    body: JSON.stringify({ conversation_id: activeConversationId, sender_id: currentUserId, message })
-                });
+                if (window.api && window.api.sendMessage) {
+                    await window.api.sendMessage(activeConversationId, currentUserId, message);
+                } else {
+                    await fetch(`${window.SUPABASE_URL}/rest/v1/messages`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json', 
+                            'apikey': window.SUPABASE_ANON_KEY, 
+                            'Authorization': `Bearer ${currentUserToken}`, 
+                            'Prefer': 'return=minimal' 
+                        },
+                        body: JSON.stringify({ conversation_id: activeConversationId, sender_id: currentUserId, message })
+                    });
+                }
 
-                // Update last message in conversation
                 const conv = conversations.find(c => c.id === activeConversationId);
-                const isBuyer = conv.buyer_id === currentUserId;
-                await fetch(`${window.SUPABASE_URL}/rest/v1/conversations?id=eq.${activeConversationId}`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json', 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${currentUserToken}`, 'Prefer': 'return=minimal' },
-                    body: JSON.stringify({ 
+                if (conv) {
+                    const isBuyer = conv.buyer_id === currentUserId;
+                    const updateData = { 
                         last_message: message, 
                         last_message_at: new Date().toISOString(),
                         unread_buyer: isBuyer ? 0 : (conv.unread_buyer || 0) + 1,
                         unread_seller: isBuyer ? (conv.unread_seller || 0) + 1 : 0
-                    })
-                });
+                    };
+                    
+                    if (window.api && window.api.updateConversation) {
+                        await window.api.updateConversation(activeConversationId, updateData);
+                    } else {
+                        await fetch(`${window.SUPABASE_URL}/rest/v1/conversations?id=eq.${activeConversationId}`, {
+                            method: 'PATCH',
+                            headers: { 
+                                'Content-Type': 'application/json', 
+                                'apikey': window.SUPABASE_ANON_KEY, 
+                                'Authorization': `Bearer ${currentUserToken}`, 
+                                'Prefer': 'return=minimal' 
+                            },
+                            body: JSON.stringify(updateData)
+                        });
+                    }
+                }
 
                 input.value = '';
                 await openConversation(activeConversationId);
@@ -236,40 +312,75 @@
         }
 
         function subscribeToNewMessages() {
-            // Poll for new messages every 5 seconds
-            setInterval(async () => {
+            if (pollInterval) clearInterval(pollInterval);
+            
+            pollInterval = setInterval(async () => {
                 if (activeConversationId) {
-                    const resp = await fetch(
-                        `${window.SUPABASE_URL}/rest/v1/messages?conversation_id=eq.${activeConversationId}&select=*&order=created_at.asc`,
-                        { headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${currentUserToken}` } }
-                    );
-                    const newMessages = await resp.json();
-                    
-                    if (newMessages.length !== messages.length) {
-                        messages = newMessages;
-                        renderChatWindow();
+                    try {
+                        let data;
+                        if (window.api && window.api.getMessages) {
+                            data = await window.api.getMessages(activeConversationId);
+                        } else {
+                            const resp = await fetch(
+                                `${window.SUPABASE_URL}/rest/v1/messages?conversation_id=eq.${activeConversationId}&select=*&order=created_at.asc`,
+                                { headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${currentUserToken}` } }
+                            );
+                            if (resp.ok) {
+                                data = await resp.json();
+                            }
+                        }
+                        if (Array.isArray(data) && data.length !== messages.length) {
+                            messages = data;
+                            renderChatWindow();
+                        }
+                    } catch (e) {
+                        // silent fail for polling
                     }
                 }
                 await loadConversations();
             }, 5000);
         }
 
-        // Start a new conversation from a product page
         async function startConversation(productId, sellerId, subject) {
             try {
-                const resp = await fetch(`${window.SUPABASE_URL}/rest/v1/conversations`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${currentUserToken}`, 'Prefer': 'return=representation' },
-                    body: JSON.stringify({ product_id: productId, buyer_id: currentUserId, seller_id: sellerId, subject })
-                });
-                const data = await resp.json();
-                if (data.length > 0) {
+                let data;
+                if (window.api && window.api.createConversation) {
+                    data = await window.api.createConversation({
+                        product_id: productId,
+                        buyer_id: currentUserId,
+                        seller_id: sellerId,
+                        subject: subject
+                    });
+                } else {
+                    const resp = await fetch(`${window.SUPABASE_URL}/rest/v1/conversations`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json', 
+                            'apikey': window.SUPABASE_ANON_KEY, 
+                            'Authorization': `Bearer ${currentUserToken}`, 
+                            'Prefer': 'return=representation' 
+                        },
+                        body: JSON.stringify({ product_id: productId, buyer_id: currentUserId, seller_id: sellerId, subject })
+                    });
+                    data = await resp.json();
+                }
+                if (Array.isArray(data) && data.length > 0) {
                     openConversation(data[0].id);
                 }
             } catch (e) {
                 console.error('Start conversation error:', e);
             }
         }
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', function() {
+            if (pollInterval) clearInterval(pollInterval);
+        });
+
+        // Make functions globally accessible
+        window.openConversation = openConversation;
+        window.sendMessage = sendMessage;
+        window.startConversation = startConversation;
 
         init();
     </script>
