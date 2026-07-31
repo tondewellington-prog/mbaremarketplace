@@ -969,6 +969,46 @@
         .login-prompt-overlay.show {
             display: flex;
         }
+
+        /* NEW: messages icon style (non-emoji) */
+        .messages-link {
+            display: inline-flex;
+            align-items: center;
+            color: white;
+            text-decoration: none;
+            margin-right: 12px;
+            padding: 4px 6px;
+            border-radius: 6px;
+            transition: background 0.2s;
+            font-weight: 500;
+            font-size: 13px;
+            gap: 4px;
+        }
+        .messages-link:hover {
+            background: rgba(255,255,255,0.1);
+            color: #f90;
+        }
+        .messages-link svg {
+            width: 26px;
+            height: 26px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .messages-link .msg-label {
+            display: inline;
+        }
+        @media (max-width: 768px) {
+            .messages-link .msg-label {
+                display: none;
+            }
+            .messages-link svg {
+                width: 24px;
+                height: 24px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1105,6 +1145,14 @@
                     </button>
                 </div>
                 <div class="header-right">
+                    <!-- Messages Icon (non-emoji) -->
+                    <a href="messages.html" class="messages-link" aria-label="Messages">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                        <span class="msg-label">Messages</span>
+                    </a>
+                    <!-- end messages icon -->
                     <div class="account-menu" id="accountMenu">
                         <span class="account-label">Hello, Sign in</span>
                         <a href="login.html" class="account-link">Account & Lists</a>
