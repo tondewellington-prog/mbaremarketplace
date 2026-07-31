@@ -230,6 +230,160 @@ async function getSellerContact(productId) {
 // Make getSellerContact available globally
 window.getSellerContact = getSellerContact;
 
+// ============================================
+// MESSAGING FUNCTIONS - ADDED FOR messages.html
+// ============================================
+
+// Get user's conversations
+async function getConversations(userId) {
+    try {
+        const headers = getHeaders(true);
+        const response = await fetch(
+            `${SUPABASE_URL}/rest/v1/conversations?or=(buyer_id.eq.${userId},seller_id.eq.${userId})&select=*&order=last_message_at.desc`,
+            {
+                method: 'GET',
+                headers: headers
+            }
+        );
+        
+        if (!response.ok) {
+            if (response.status === 401) {
+                throw new Error('401 Unauthorized - Please login again');
+            }
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+    } catch (error) {
+        console.error('Get conversations error:', error);
+        throw error;
+    }
+}
+
+// Get messages for a specific conversation
+async function getMessages(conversationId) {
+    try {
+        const headers = getHeaders(true);
+        const response = await fetch(
+            `${SUPABASE_URL}/rest/v1/messages?conversation_id=eq.${conversationId}&select=*&order=created_at.asc`,
+            {
+                method: 'GET',
+                headers: headers
+            }
+        );
+        
+        if (!response.ok) {
+            if (response.status === 401) {
+                throw new Error('401 Unauthorized - Please login again');
+            }
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+    } catch (error) {
+        console.error('Get messages error:', error);
+        throw error;
+    }
+}
+
+// Send a new message
+async function sendMessage(conversationId, senderId, message) {
+    try {
+        const headers = getHeaders(true);
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/messages`, {
+            method: 'POST',
+            headers: {
+                ...headers,
+                'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify({
+                conversation_id: conversationId,
+                sender_id: senderId,
+                message: message,
+                created_at: new Date().toISOString()
+            })
+        });
+        
+        if (!response.ok) {
+            if (response.status === 401) {
+                throw new Error('401 Unauthorized - Please login again');
+            }
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        return { success: true };
+    } catch (error) {
+        console.error('Send message error:', error);
+        throw error;
+    }
+}
+
+// Update a conversation (mark as read, update last message, etc.)
+async function updateConversation(conversationId, updates) {
+    try {
+        const headers = getHeaders(true);
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/conversations?id=eq.${conversationId}`, {
+            method: 'PATCH',
+            headers: {
+                ...headers,
+                'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify(updates)
+        });
+        
+        if (!response.ok) {
+            if (response.status === 401) {
+                throw new Error('401 Unauthorized - Please login again');
+            }
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        return { success: true };
+    } catch (error) {
+        console.error('Update conversation error:', error);
+        throw error;
+    }
+}
+
+// Create a new conversation
+async function createConversation(data) {
+    try {
+        const headers = getHeaders(true);
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/conversations`, {
+            method: 'POST',
+            headers: {
+                ...headers,
+                'Prefer': 'return=representation'
+            },
+            body: JSON.stringify({
+                product_id: data.product_id,
+                buyer_id: data.buyer_id,
+                seller_id: data.seller_id,
+                subject: data.subject || 'New Conversation',
+                last_message: null,
+                last_message_at: new Date().toISOString(),
+                unread_buyer: 0,
+                unread_seller: 0
+            })
+        });
+        
+        if (!response.ok) {
+            if (response.status === 401) {
+                throw new Error('401 Unauthorized - Please login again');
+            }
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        console.error('Create conversation error:', error);
+        throw error;
+    }
+}
+
 const api = {
     async login(email, password) {
         try {
@@ -497,11 +651,28 @@ const api = {
         localStorage.removeItem('user_profile');
         window.location.href = 'index.html';
         return { success: true };
-    }
+    },
+
+    // ============================================
+    // MESSAGING METHODS - ADDED TO API OBJECT
+    // ============================================
+    getConversations: getConversations,
+    getMessages: getMessages,
+    sendMessage: sendMessage,
+    updateConversation: updateConversation,
+    createConversation: createConversation
 };
+
+// Make individual functions available globally
+window.getConversations = getConversations;
+window.getMessages = getMessages;
+window.sendMessage = sendMessage;
+window.updateConversation = updateConversation;
+window.createConversation = createConversation;
 
 // Make api available globally
 window.api = api;
 
 console.log('✅ API.js loaded with phone formatting and correct roles');
 console.log('✅ WhatsApp message includes website URL: https://www.mbaremarketplace.com');
+console.log('✅ Messaging functions added for messages.html');
