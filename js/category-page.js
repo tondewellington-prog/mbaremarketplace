@@ -195,7 +195,7 @@
           var badgeClass = 'distance-badge';
           if (p.distance > 20) badgeClass += ' very-far';
           else if (p.distance > 10) badgeClass += ' far';
-          distanceBadge = '<span class="' + badgeClass + '" style="position:absolute;top:10px;right:10px;background:#28a745;color:white;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;z-index:5;">' + p.distanceDisplay + '</span>';
+          distanceBadge = '<span class="' + badgeClass + '" style="position:absolute;top:10px;right:10px;background:#28a745;color:white;padding:4px 12px;border-radius:20px;font-size:12px;font-wei[...]';
         }
         
         var imageUrl = p.image_url || 'https://via.placeholder.com/300x300?text=' + config.placeholderText;
@@ -211,7 +211,7 @@
           '<h3 class="product-title" onclick="viewProduct(\'' + p.id + '\')" style="cursor: pointer;">' + title + '</h3>' +
           '<div class="product-price">$' + price + '</div>' +
           '<div style="font-size:12px;color:#666;margin:4px 0;">' + sellerLocationDisplay + '</div>' +
-          '<a href="shop.html?seller=' + p.seller_id + '" class="visit-shop-link" onclick="event.stopPropagation()" style="color:#f90;text-decoration:underline;font-size:12px;display:inline-block;margin:5px 0;">Visit Shop</a>' +
+          '<a href="shop.html?seller=' + p.seller_id + '" class="visit-shop-link" onclick="event.stopPropagation()" style="color:#f90;text-decoration:underline;font-size:12px;display:inline-block[...'] +
           '<div class="product-seller">' + sellerName + '</div>' +
           '<div class="seller-rating">' + ratingInfo.display + '</div>' +
           '<div class="product-actions">' +
@@ -231,31 +231,58 @@
 
       var phone = seller.business_phone || 'Not provided';
       var phoneDigits = phone.replace(/\D/g, '');
-      var whatsappMessage = 'Hello! I am interested in ' + product.title + ', I saw it on ' + WEBSITE_URL;
-      var encodedMessage = encodeURIComponent(whatsappMessage);
-      var whatsappLink = phoneDigits ? 'https://wa.me/' + phoneDigits + '?text=' + encodedMessage : '#';
-      var callLink = phoneDigits ? 'tel:' + phoneDigits : '#';
+-      var whatsappMessage = 'Hello! I am interested in ' + product.title + ', I saw it on ' + WEBSITE_URL;
+-      var encodedMessage = encodeURIComponent(whatsappMessage);
+-      var whatsappLink = phoneDigits ? 'https://wa.me/' + phoneDigits + '?text=' + encodedMessage : '#';
++      var callLink = phoneDigits ? 'tel:' + phoneDigits : '#';
++      var whatsappLink = '#';
++      // Replace WhatsApp integration: link to in-app messaging page instead
++      var messagingLink = product.seller_id ? 'messages.html?productId=' + encodeURIComponent(product.id) + '&seller=' + encodeURIComponent(product.seller_id) : 'messages.html';
++      var callLink = phoneDigits ? 'tel:' + phoneDigits : '#';
 
-      var modal = document.getElementById('sellerContactModal');
-      var modalContent = document.getElementById('sellerContactContent');
+-      var callLink = phoneDigits ? 'tel:' + phoneDigits : '#';
+-
+-      var modal = document.getElementById('sellerContactModal');
+-      var modalContent = document.getElementById('sellerContactContent');
+-
+-      modalContent.innerHTML = 
+-        '<div class="product-title">' + product.title + '</div>' +
+-        '<div class="seller-info">' +
+-          '<div class="info-row"><div class="info-icon"></div><div class="info-text"><div class="info-label">Seller</div><div class="info-value">' + (seller.business_name || 'Unknown Seller') + '</div></div></div>' +
+-          '<div class="info-row"><div class="info-icon"></div><div class="info-text"><div class="info-label">Phone Number</div><div class="info-value">' + phone + '</div></div></div>' +
+-          '<div class="info-row"><div class="info-icon"></div><div class="info-text"><div class="info-label">Shop Location</div><div class="info-value">' + (seller.business_address || seller.location_display_name || 'Location not specified') + '</div></div></div>' +
+-          '<div class="info-row"><div class="info-icon"></div><div class="info-text"><div class="info-label">Price</div><div class="info-value">$' + (product.price || 0).toFixed(2) + '</div></div></div>' +
+-        '</div>' +
+-        '<div class="contact-actions">' +
+-          '<a href="' + callLink + '" class="contact-btn call-btn">Call Seller</a>' +
+-          '<a href="' + whatsappLink + '" class="contact-btn whatsapp-btn" target="_blank">WhatsApp</a>' +
+-        '</div>';
+-
+-      modal.style.display = 'block';
++      var modal = document.getElementById('sellerContactModal');
++      var modalContent = document.getElementById('sellerContactContent');
++
++      modalContent.innerHTML = 
++        '<div class="product-title">' + product.title + '</div>' +
++        '<div class="seller-info">' +
++          '<div class="info-row"><div class="info-icon"></div><div class="info-text"><div class="info-label">Seller</div><div class="info-value">' + (seller.business_name || 'Unknown Seller') + '</div></div></div>' +
++          '<div class="info-row"><div class="info-icon"></div><div class="info-text"><div class="info-label">Phone Number</div><div class="info-value">' + phone + '</div></div></div>' +
++          '<div class="info-row"><div class="info-icon"></div><div class="info-text"><div class="info-label">Shop Location</div><div class="info-value">' + (seller.business_address || seller.location_display_name || 'Location not specified') + '</div></div></div>' +
++          '<div class="info-row"><div class="info-icon"></div><div class="info-text"><div class="info-label">Price</div><div class="info-value">$' + (product.price || 0).toFixed(2) + '</div></div></div>' +
++        '</div>' +
++        '<div class="contact-actions">' +
++          '<a href="' + callLink + '" class="contact-btn call-btn">Call Seller</a>' +
++          '<a href="' + messagingLink + '" class="contact-btn send-message-btn">Send a message</a>' +
++        '</div>';
++
++      modal.style.display = 'block';
 
-      modalContent.innerHTML = 
-        '<div class="product-title">' + product.title + '</div>' +
-        '<div class="seller-info">' +
-          '<div class="info-row"><div class="info-icon"></div><div class="info-text"><div class="info-label">Seller</div><div class="info-value">' + (seller.business_name || 'Unknown Seller') + '</div></div></div>' +
-          '<div class="info-row"><div class="info-icon"></div><div class="info-text"><div class="info-label">Phone Number</div><div class="info-value">' + phone + '</div></div></div>' +
-          '<div class="info-row"><div class="info-icon"></div><div class="info-text"><div class="info-label">Shop Location</div><div class="info-value">' + (seller.business_address || seller.location_display_name || 'Location not specified') + '</div></div></div>' +
-          '<div class="info-row"><div class="info-icon"></div><div class="info-text"><div class="info-label">Price</div><div class="info-value">$' + (product.price || 0).toFixed(2) + '</div></div></div>' +
-        '</div>' +
-        '<div class="contact-actions">' +
-          '<a href="' + callLink + '" class="contact-btn call-btn">Call Seller</a>' +
-          '<a href="' + whatsappLink + '" class="contact-btn whatsapp-btn" target="_blank">WhatsApp</a>' +
-        '</div>';
-
-      modal.style.display = 'block';
-      window.onclick = function closeOnOutsideClick(event) {
-        if (event.target === modal) modal.style.display = 'none';
-      };
+-      window.onclick = function closeOnOutsideClick(event) {
+-        if (event.target === modal) modal.style.display = 'none';
+-      };
++      window.onclick = function closeOnOutsideClick(event) {
++        if (event.target === modal) modal.style.display = 'none';
++      };
     };
 
     window.handleSearch = function handleSearch() {
