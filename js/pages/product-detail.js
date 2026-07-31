@@ -87,7 +87,7 @@ let currentProduct = null;
 
         function displayProductDetail(product, seller, ratingInfo) {
             const stars = '';
-            const whatsappNumber = seller?.business_phone || '';
+            const phoneNumber = seller?.business_phone || '';
             const shopLocation = seller?.business_address || 'Location not specified';
             const sellerName = seller?.business_name || 'Unknown Seller';
             
@@ -109,7 +109,7 @@ let currentProduct = null;
                             <h3>Seller Information</h3>
                             <p><strong>Shop:</strong> ${sellerName}</p>
                             <p><strong>Location:</strong> ${shopLocation}</p>
-                            ${whatsappNumber ? `<p><strong>Phone:</strong> ${whatsappNumber}</p>` : ''}
+                            ${phoneNumber ? `<p><strong>Phone:</strong> ${phoneNumber}</p>` : ''}
                             
                             <!-- VIEW SHOP BUTTON - ADDED HERE -->
                             <a href="shop.html?seller=${product.seller_id}" class="view-shop-btn">View Seller's Shop</a>
@@ -132,11 +132,10 @@ let currentProduct = null;
                         
                         <div class="detail-actions">
                             <button class="btn-add-cart-large" onclick="addToBasket('${product.id}')">Add to Basket</button>
-                            ${whatsappNumber ? `
-                                <a href="https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}?text=Hi, I'm interested in ${encodeURIComponent(product.title)}" 
-                                   target="_blank" 
+                            ${product.seller_id ? `
+                                <a href="messages.html?productId=${product.id}&seller=${product.seller_id}" 
                                    class="btn-buy-now-large">
-                                    WhatsApp
+                                    Send a message
                                 </a>
                             ` : `
                                 <button class="btn-buy-now-large" onclick="buyNow('${product.id}')">Buy Now</button>
