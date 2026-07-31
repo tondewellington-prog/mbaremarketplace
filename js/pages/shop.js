@@ -81,7 +81,7 @@ window.SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
 
                 // Load products for this seller - REMOVED status filter to avoid 400 error
                 console.log('Loading products for seller:', sellerId);
-                const prodResp = await fetch(`${window.SUPABASE_URL}/rest/v1/products?seller_id=eq.${sellerId}&select=*&order=created_at.desc`, {
+                const prodResp = await fetch(`${SUPABASE_URL}/rest/v1/products?seller_id=eq.${sellerId}&select=*&order=created_at.desc`, {
                     headers: { 
                         'apikey': window.SUPABASE_ANON_KEY,
                         'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}`
@@ -201,7 +201,7 @@ window.SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
                                         <div class="shop-stat"><div class="num">${uniqueCategories.length}</div><div class="label">Categories</div></div>
                                         <div class="shop-stat"><div class="rating">${ratingDisplay}</div><div class="label">Rating ${ratingText}</div></div>
                                     </div>
-                                    ${sellerPhone ? `<a href="https://wa.me/${sellerPhone.replace(/[^0-9]/g,'')}?text=Hello!%20I%20am%20interested%20in%20your%20products%20on%20Mbare%20Marketplace" target="_blank" class="contact-btn">Contact via WhatsApp</a>` : ''}
+                                    ${sellerPhone ? `<a href="messages.html?seller=${encodeURIComponent(sellerId)}" class="contact-btn">Send a message</a>` : ''}
                                 </div>
                             </div>
                         </div>
@@ -214,7 +214,7 @@ window.SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
                             <div class="sidebar-section">
                                 <h3>Categories</h3>
                                 <ul class="category-list">
-                                    <li class="${selectedCategory === 'All' ? 'active' : ''}" onclick="filterByCategory('All')">All Products <span class="count">(${allProducts.length})</span></li>
+                                    <li class="${selectedCategory === 'All' ? 'active' : ''}" onclick="filterByCategory('All')">All Products <span class="count">(${allProducts.length})</span></li[...]
                                     ${uniqueCategories.map(cat => `
                                         <li class="${selectedCategory === cat ? 'active' : ''}" onclick="filterByCategory('${cat.replace(/'/g, "\\'")}')">${cat} <span class="count">(${categories[cat]})</span></li>
                                     `).join('')}
@@ -232,12 +232,12 @@ window.SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
                             </div>
                         </div>
                         <div class="products-area">
-                            <h2 style="margin-bottom:20px;color:#333;">${selectedCategory === 'All' ? 'All Products' : selectedCategory} <span style="font-size:16px;font-weight:400;color:#999;">(${filteredProducts.length})</span></h2>
+                            <h2 style="margin-bottom:20px;color:#333;">${selectedCategory === 'All' ? 'All Products' : selectedCategory} <span style="font-size:16px;font-weight:400;color:#999;">([...]
                             ${filteredProducts.length > 0 ? `
                                 <div class="products-grid">
                                     ${filteredProducts.map(p => `
                                         <div class="product-card" onclick="viewProduct('${p.id}')">
-                                            <img src="${p.image_url || 'https://placehold.co/400x300?text=No+Image'}" alt="${p.title || 'Product'}" onerror="this.src='https://placehold.co/400x300?text=No+Image'">
+                                            <img src="${p.image_url || 'https://placehold.co/400x300?text=No+Image'}" alt="${p.title || 'Product'}" onerror="this.src='https://placehold.co/400x300[...]
                                             <div class="info">
                                                 <div class="title">${p.title || 'Untitled'}</div>
                                                 <div class="price">$${parseFloat(p.price || 0).toFixed(2)}</div>
