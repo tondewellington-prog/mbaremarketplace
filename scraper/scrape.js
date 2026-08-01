@@ -16,59 +16,68 @@ async function scrapeJapanVehicles(keyword = 'Toyota') {
         console.log(`Starting live scrape for keyword: "${keyword}"...`);
         const targetUrl = `https://www.beforward.jp/stocklist/keyword=${encodeURIComponent(keyword)}`;
 
+        // Full browser header suite to bypass basic bot blocking
         const response = await fetch(targetUrl, {
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webkit,*/;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Referer': 'https://www.beforward.jp/',
+                'Cache-Control': 'no-cache'
             }
         });
+
+        console.log(`HTTP Status: ${response.status}`);
 
         if (!response.ok) {
             throw new Error(`Failed to fetch target page. HTTP Status: ${response.status}`);
         }
 
         const html = await response.text();
+        console.log(`HTML Payload Size: ${html.length} bytes`);
+
         const $ = cheerio.load(html);
         const scrapedVehicles = [];
 
-        // Target row blocks, items boxes, and stock list containers
-        $('.stocklist-row, .items-box, .vehicle-card, tr[class*="stocklist"]').each((index, element) => {
-            // Target explicit title links or vehicle heading spans
-            let rawTitle = $(element).find('a.vehicle-title, a[class*="title"], .vehicle-name, .title').first().text().trim();
+        // Match table rows, cards, and items containers dynamically
+        $('.stocklist-row, .stock-card, tr[class*="stocklist"], .make-val-container, .items-box, tr.stock-item').each((index, element) => {
+            // Extract title specifically from vehicle name headers/anchors
+            let rawTitle = $(element).find('a.vehicle-title, a[class*="title"], .vehicle-name, .title, a[class*="vehicle"]').first().text().trim();
             
-            // Fallback: If empty, attempt reading from general heading tag within card
             if (!rawTitle) {
-                rawTitle = $(element).find('h2, h3').first().text().trim();
+                rawTitle = $(element).find('h2, h3, .make-val-title').first().text().trim();
             }
 
-            // Clean spacing and multi-line
+            // Standardize spaces
             rawTitle = rawTitle.replace(/\s+/g, ' ');
 
-            // Ignore blank or invalid labels
+            // Strict check: Ignore bad elements where title extracted as "Mileage" or empty text
             if (!rawTitle || rawTitle.toLowerCase() === 'mileage' || rawTitle.length < 3) {
                 return;
             }
 
-            // Image URL extraction
-            let main_image = $(element).find('img.vehicle-img, img').first().attr('data-original') 
+            // Extract image URL
+            let main_image = $(element).find('img.vehicle-img, img[data-original], img[src*="beforward"], img').first().attr('data-original') 
                           || $(element).find('img').first().attr('src') 
                           || '';
+                          
             if (main_image.startsWith('//')) {
                 main_image = 'https:' + main_image;
             } else if (main_image.startsWith('/')) {
                 main_image = 'https://www.beforward.jp' + main_image;
             }
 
-            // Listing external URL
-            let external_url = $(element).find('a.vehicle-title, a[class*="title"], a').first().attr('href') || '';
+            // Extract detail page URL
+            let external_url = $(element).find('a.vehicle-title, a[href*="/stocklist/"], a').first().attr('href') || '';
             if (external_url.startsWith('/')) {
                 external_url = 'https://www.beforward.jp' + external_url;
             }
 
-            // Numeric price extraction
-            const priceText = $(element).find('.price, .vehicle-price, [class*="price"]').text().trim();
+            // Extract numeric price
+            const priceText = $(element).find('.price, .ip-price, .vehicle-price, [class*="price"]').text().trim();
             const numericPrice = priceText.replace(/[^0-9]/g, '');
 
-            // Specs
+            // Specs parsing
             const yearText = $(element).find('.year, [class*="year"]').text().trim();
             const transText = $(element).find('.trans, [class*="trans"]').text().trim();
             const mileageText = $(element).find('.mileage, [class*="mileage"]').text().trim();
@@ -87,11 +96,11 @@ async function scrapeJapanVehicles(keyword = 'Toyota') {
         });
 
         if (scrapedVehicles.length === 0) {
-            console.log('No valid vehicle records extracted.');
+            console.log('No valid vehicle records extracted. BeForward may have altered layout structure.');
             return;
         }
 
-        console.log(`Extracted ${scrapedVehicles.length} clean vehicle records. Inserting into Supabase...`);
+        console.log(`Extracted ${scrapedVehicles.length} clean vehicle records! Saving to Supabase...`);
 
         const { data, error } = await supabase
             .from('vehicles')
@@ -109,4 +118,6 @@ async function scrapeJapanVehicles(keyword = 'Toyota') {
     }
 }
 
-scrapeJapanVehicles('Toyota');
+// Allow dynamic command-line arguments (e.g. node scrape.js Honda)
+const keywordArg = process.argv[2] || 'Toyota';
+scrapeJapanVehicles(keywordArg);
