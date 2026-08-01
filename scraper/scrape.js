@@ -120,3 +120,4 @@ async function scrapeJapanVehicles(keyword = 'Toyota') {
 // Accepts command line arguments or defaults to 'Toyota'
 const targetKeyword = process.argv[2] || 'Toyota';
 scrapeJapanVehicles(targetKeyword);
+
