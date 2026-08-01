@@ -37,6 +37,10 @@
             font-weight: 600;
         }
         .search-btn:hover { background: #e08800; }
+        .search-btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
         .product-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -208,54 +212,63 @@
                 const mileage = vehicle.mileage ? `Mileage: ${vehicle.mileage}` : '';
                 const details = [year, trans, mileage].filter(Boolean).join(' | ');
 
+                const formattedPrice = vehicle.price_usd 
+                    ? `$${Number(vehicle.price_usd).toLocaleString()} USD` 
+                    : 'Price on Request';
+
+                const imageSrc = vehicle.main_image || 'https://via.placeholder.com/300x180?text=No+Image';
+
                 return `
                     <div class="product-card">
                         <img 
-                            src="${vehicle.main_image}" 
+                            src="${imageSrc}" 
                             alt="${vehicle.title}"
                         >
                         <div class="product-card-body">
                             <div class="product-title">${vehicle.title}</div>
                             ${details ? `<div class="product-details">${details}</div>` : ''}
-                            <div class="product-price">$${vehicle.price_usd}</div>
-                            <a href="${vehicle.external_url}" target="_blank" class="view-btn">View Original Listing</a>
+                            <div class="product-price">${formattedPrice}</div>
+                            ${vehicle.external_url ? `<a href="${vehicle.external_url}" target="_blank" class="view-btn">View Details →</a>` : ''}
                         </div>
                     </div>
                 `;
             }).join('');
         }
 
-        // Live Search Handler
+        // Live Search Handler calling /api/scrape
         async function handleLiveSearch(event) {
             event.preventDefault();
             const input = document.getElementById('searchQueryInput');
             const btn = document.getElementById('searchSubmitBtn');
             const status = document.getElementById('searchStatus');
-            const keyword = input.value.trim();
+            const query = input.value.trim();
+
+            if (!query) return;
 
             status.style.color = '#fff';
-            status.innerText = `Searching live Japanese inventory for "${keyword}"...`;
+            status.innerText = `Searching live Japanese inventory for "${query}"...`;
             btn.disabled = true;
 
             try {
-                const response = await fetch('/api/search-and-scrape-japan', {
+                // Pointing to our created backend API route
+                const response = await fetch('/api/scrape', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ keyword })
+                    body: JSON.stringify({ query })
                 });
 
                 const result = await response.json();
 
-                if (result.success && result.vehicles.length > 0) {
+                if (result.success && result.vehicles && result.vehicles.length > 0) {
                     status.style.color = '#28a745';
-                    status.innerText = `Found ${result.count} vehicles! Saved to database and updated below.`;
+                    status.innerText = `Found ${result.vehicles.length} vehicles! Saved to database and updated below.`;
                     renderVehicles(result.vehicles);
-                } else if (result.success && result.vehicles.length === 0) {
+                } else if (result.success && result.vehicles && result.vehicles.length === 0) {
                     status.style.color = '#f90';
-                    status.innerText = `No stock matched "${keyword}". Try a broader term like "Toyota" or "Nissan".`;
+                    status.innerText = `No stock matched "${query}". Try a broader search like "Toyota" or "Honda".`;
                 } else {
                     status.style.color = '#ff6b6b';
-                    status.innerText = 'Error: ' + (result.error || 'Failed to retrieve stock.');
+                    status.innerText = 'Error: ' + (result.error || result.message || 'Failed to retrieve stock.');
                 }
             } catch (err) {
                 console.error('Search request error:', err);
