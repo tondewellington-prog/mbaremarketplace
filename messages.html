@@ -16,37 +16,67 @@
         .container { display: flex; flex: 1; max-width: 1200px; margin: 20px auto; width: 100%; gap: 20px; padding: 0 20px; }
         
         .conversation-list { width: 350px; background: white; border-radius: 12px; overflow-y: auto; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .conversation-item { padding: 15px 20px; border-bottom: 1px solid #eee; cursor: pointer; transition: 0.2s; display: flex; gap: 12px; }
+        .conversation-list::-webkit-scrollbar { width: 6px; }
+        .conversation-list::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+        
+        .conversation-item { padding: 15px 20px; border-bottom: 1px solid #eee; cursor: pointer; transition: 0.2s; display: flex; gap: 12px; align-items: center; }
         .conversation-item:hover { background: #f9f9f9; }
         .conversation-item.active { background: #e8f4fd; border-left: 3px solid #f90; }
         .conv-avatar { width: 45px; height: 45px; border-radius: 50%; background: #f90; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
         .conv-info { flex: 1; min-width: 0; }
-        .conv-name { font-weight: 600; font-size: 14px; margin-bottom: 3px; }
-        .conv-last { font-size: 12px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .conv-time { font-size: 11px; color: #999; }
-        .unread-badge { background: #f90; color: white; font-size: 11px; padding: 2px 8px; border-radius: 10px; display: inline-block; margin-top: 5px; }
+        .conv-name { font-weight: 600; font-size: 14px; margin-bottom: 3px; display: flex; justify-content: space-between; align-items: center; }
+        .conv-name .conv-time { font-weight: 400; font-size: 11px; color: #999; }
+        .conv-last { font-size: 13px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .unread-badge { background: #f90; color: white; font-size: 11px; padding: 2px 10px; border-radius: 10px; display: inline-block; margin-top: 3px; font-weight: 600; }
         
         .chat-window { flex: 1; background: white; border-radius: 12px; display: flex; flex-direction: column; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .chat-empty { flex: 1; display: flex; align-items: center; justify-content: center; color: #999; font-size: 14px; }
-        .chat-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 12px; }
-        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .message { max-width: 70%; padding: 10px 15px; border-radius: 12px; font-size: 14px; line-height: 1.4; }
-        .message.sent { background: #f90; color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
-        .message.received { background: #f0f0f0; color: #333; align-self: flex-start; border-bottom-left-radius: 4px; }
-        .message-time { font-size: 10px; opacity: 0.7; margin-top: 4px; }
+        .chat-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #999; font-size: 14px; gap: 10px; }
+        .chat-empty svg { width: 64px; height: 64px; stroke: #ccc; }
+        .chat-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 12px; background: #fafafa; border-radius: 12px 12px 0 0; }
+        .chat-header .conv-avatar { width: 40px; height: 40px; font-size: 16px; }
+        .chat-header strong { font-size: 16px; }
+        .chat-header .online-status { font-size: 12px; color: #28a745; margin-left: 8px; }
         
-        .chat-input { padding: 15px 20px; border-top: 1px solid #eee; display: flex; gap: 10px; }
-        .chat-input input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 24px; font-size: 14px; outline: none; }
-        .chat-input button { background: #f90; color: white; border: none; padding: 12px 20px; border-radius: 24px; cursor: pointer; font-weight: 600; }
+        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background: #fafafa; }
+        .chat-messages::-webkit-scrollbar { width: 6px; }
+        .chat-messages::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+        
+        .message-wrapper { display: flex; flex-direction: column; max-width: 75%; }
+        .message-wrapper.sent { align-self: flex-end; align-items: flex-end; }
+        .message-wrapper.received { align-self: flex-start; align-items: flex-start; }
+        
+        .message { padding: 10px 15px; border-radius: 12px; font-size: 14px; line-height: 1.5; word-wrap: break-word; }
+        .message.sent { background: #f90; color: white; border-bottom-right-radius: 4px; }
+        .message.received { background: white; color: #333; border-bottom-left-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+        .message-time { font-size: 10px; opacity: 0.6; margin-top: 4px; padding: 0 4px; }
+        .message-wrapper.sent .message-time { color: #666; }
+        .message-wrapper.received .message-time { color: #999; }
+        
+        .message-date-divider { text-align: center; color: #999; font-size: 12px; padding: 10px 0; }
+        
+        .chat-input { padding: 15px 20px; border-top: 1px solid #eee; display: flex; gap: 10px; background: white; border-radius: 0 0 12px 12px; }
+        .chat-input input { flex: 1; padding: 12px 16px; border: 1px solid #ddd; border-radius: 24px; font-size: 14px; outline: none; transition: border-color 0.2s; }
+        .chat-input input:focus { border-color: #f90; }
+        .chat-input button { background: #f90; color: white; border: none; padding: 12px 24px; border-radius: 24px; cursor: pointer; font-weight: 600; transition: background 0.2s; }
         .chat-input button:hover { background: #e68a00; }
+        .chat-input button:disabled { opacity: 0.5; cursor: not-allowed; }
         
         .loading { text-align: center; padding: 40px; color: #999; }
+        .loading .spinner { display: inline-block; width: 30px; height: 30px; border: 3px solid #f0f0f0; border-top-color: #f90; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
         .error-msg { text-align: center; padding: 40px; color: #d32f2f; background: #ffebee; border-radius: 8px; }
-        .error-msg a { color: #d32f2f; font-weight: 600; }
+        .error-msg a { color: #d32f2f; font-weight: 600; text-decoration: underline; }
+        
+        .empty-state { text-align: center; padding: 60px 20px; color: #999; }
+        .empty-state svg { width: 80px; height: 80px; stroke: #ddd; margin-bottom: 16px; }
+        .empty-state h3 { color: #333; margin-bottom: 8px; }
         
         @media (max-width: 768px) {
-            .container { flex-direction: column; padding: 10px; }
+            .container { flex-direction: column; padding: 10px; margin: 10px auto; gap: 10px; }
             .conversation-list { width: 100%; max-height: 200px; }
+            .message-wrapper { max-width: 85%; }
+            .header h1 { font-size: 1rem; }
         }
     </style>
 </head>
@@ -59,46 +89,57 @@
 
     <div class="container">
         <div class="conversation-list" id="conversationList">
-            <div class="loading">Loading conversations...</div>
+            <div class="loading"><div class="spinner"></div><br>Loading conversations...</div>
         </div>
         <div class="chat-window" id="chatWindow">
-            <div class="chat-empty">Select a conversation to start messaging</div>
+            <div class="chat-empty">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                <h3>Your Messages</h3>
+                <p>Select a conversation to start messaging</p>
+            </div>
         </div>
     </div>
 
     <script src="api.js"></script>
     <script>
         let currentUserId = null;
-        let currentUserToken = null;
+        let currentUserEmail = null;
         let conversations = [];
         let activeConversationId = null;
         let messages = [];
         let pollInterval = null;
+        let isSending = false;
 
+        // Check login status on load
         async function init() {
             try {
                 const session = localStorage.getItem('supabase_session');
                 const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
                 
+                console.log('Session exists:', !!session);
+                console.log('isLoggedIn:', isLoggedIn);
+                
                 if (!isLoggedIn || !session) {
+                    console.log('Not logged in, redirecting...');
                     window.location.href = 'login.html?redirect=messages.html';
                     return;
                 }
 
                 const sessionData = JSON.parse(session);
                 currentUserId = sessionData.user.id;
-                currentUserToken = sessionData.access_token;
+                currentUserEmail = sessionData.user.email;
+                
+                console.log('✅ User authenticated:', currentUserEmail);
+                console.log('✅ User ID:', currentUserId);
 
-                // Set the token in the API module
-                if (window.api) {
-                    window.api.setToken(currentUserToken);
-                }
-
-                console.log('User ID:', currentUserId);
-                console.log('Token exists:', !!currentUserToken);
-
+                // Load conversations
                 await loadConversations();
-                subscribeToNewMessages();
+                
+                // Start polling for new messages
+                startPolling();
+                
             } catch (error) {
                 console.error('Init error:', error);
                 document.getElementById('conversationList').innerHTML = 
@@ -108,35 +149,46 @@
 
         async function loadConversations() {
             try {
-                // Use api.js if available, otherwise fallback to fetch
+                const listEl = document.getElementById('conversationList');
+                listEl.innerHTML = '<div class="loading"><div class="spinner"></div><br>Loading conversations...</div>';
+                
                 let data;
+                
+                // Use the API from api.js
                 if (window.api && window.api.getConversations) {
+                    console.log('Using api.getConversations...');
                     data = await window.api.getConversations(currentUserId);
                 } else {
-                    // Fallback to direct fetch
-                    const resp = await fetch(
-                        `${window.SUPABASE_URL}/rest/v1/conversations?or=(buyer_id.eq.${currentUserId},seller_id.eq.${currentUserId})&select=*&order=last_message_at.desc`,
-                        { 
-                            headers: { 
-                                'apikey': window.SUPABASE_ANON_KEY, 
-                                'Authorization': `Bearer ${currentUserToken}` 
-                            } 
-                        }
-                    );
-                    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-                    data = await resp.json();
+                    // Fallback: use the global function
+                    console.log('Using window.getConversations...');
+                    data = await window.getConversations(currentUserId);
                 }
                 
                 conversations = Array.isArray(data) ? data : [];
+                console.log(`✅ Loaded ${conversations.length} conversations`);
+                
                 renderConversationList();
-            } catch (e) {
-                console.error('Load conversations error:', e);
-                if (e.message.includes('401')) {
-                    document.getElementById('conversationList').innerHTML = 
-                        '<div class="error-msg">Session expired. Please <a href="login.html">login again</a>.</div>';
+                
+                // If there's an active conversation, refresh it
+                if (activeConversationId) {
+                    const stillExists = conversations.some(c => c.id === activeConversationId);
+                    if (!stillExists) {
+                        activeConversationId = null;
+                        document.getElementById('chatWindow').innerHTML = 
+                            '<div class="chat-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><h3>Conversation ended</h3><p>Select another conversation</p></div>';
+                    } else if (activeConversationId) {
+                        await loadMessages(activeConversationId);
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Load conversations error:', error);
+                const listEl = document.getElementById('conversationList');
+                
+                if (error.message && error.message.includes('401')) {
+                    listEl.innerHTML = '<div class="error-msg">Session expired. Please <a href="login.html">login again</a>.</div>';
                 } else {
-                    document.getElementById('conversationList').innerHTML = 
-                        '<div class="error-msg">Error loading conversations. Please refresh.</div>';
+                    listEl.innerHTML = '<div class="error-msg">Error loading conversations. Please refresh.</div>';
                 }
             }
         }
@@ -145,22 +197,35 @@
             const list = document.getElementById('conversationList');
             
             if (!conversations || conversations.length === 0) {
-                list.innerHTML = '<div class="loading">No conversations yet.<br><small>Start by contacting a seller about a product.</small></div>';
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                        <h3>No conversations yet</h3>
+                        <p>Start by contacting a seller about a product</p>
+                    </div>
+                `;
                 return;
             }
 
             list.innerHTML = conversations.map(conv => {
                 const unreadCount = conv.buyer_id === currentUserId ? conv.unread_buyer : conv.unread_seller;
-                const otherPartyName = conv.buyer_id === currentUserId ? 'You (Buyer)' : 'Seller';
                 const isActive = conv.id === activeConversationId;
+                const displayName = conv.subject || 'Chat';
+                const lastMessage = conv.last_message || 'No messages yet';
+                const time = conv.last_message_at ? new Date(conv.last_message_at) : new Date();
+                const timeStr = formatTime(time);
                 
                 return `
                     <div class="conversation-item ${isActive ? 'active' : ''}" onclick="openConversation('${conv.id}')">
-                        <div class="conv-avatar">${otherPartyName.charAt(0).toUpperCase()}</div>
+                        <div class="conv-avatar">${displayName.charAt(0).toUpperCase()}</div>
                         <div class="conv-info">
-                            <div class="conv-name">${conv.subject || 'Chat'}</div>
-                            <div class="conv-last">${conv.last_message || 'Start a conversation'}</div>
-                            <div class="conv-time">${new Date(conv.last_message_at).toLocaleDateString()}</div>
+                            <div class="conv-name">
+                                <span>${displayName}</span>
+                                <span class="conv-time">${timeStr}</span>
+                            </div>
+                            <div class="conv-last">${lastMessage}</div>
                             ${unreadCount > 0 ? `<span class="unread-badge">${unreadCount} new</span>` : ''}
                         </div>
                     </div>
@@ -168,55 +233,76 @@
             }).join('');
         }
 
+        function formatTime(date) {
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            
+            if (date >= today) {
+                return date.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+            } else if (date >= yesterday) {
+                return 'Yesterday';
+            } else {
+                return date.toLocaleDateString([], {month:'short', day:'numeric'});
+            }
+        }
+
         async function openConversation(convId) {
             activeConversationId = convId;
             renderConversationList();
-            
+            await loadMessages(convId);
+        }
+
+        async function loadMessages(convId) {
             try {
+                const chatWindow = document.getElementById('chatWindow');
+                chatWindow.innerHTML = '<div class="loading"><div class="spinner"></div><br>Loading messages...</div>';
+                
                 let data;
+                
                 if (window.api && window.api.getMessages) {
                     data = await window.api.getMessages(convId);
                 } else {
-                    const resp = await fetch(
-                        `${window.SUPABASE_URL}/rest/v1/messages?conversation_id=eq.${convId}&select=*&order=created_at.asc`,
-                        { headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${currentUserToken}` } }
-                    );
-                    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-                    data = await resp.json();
+                    data = await window.getMessages(convId);
                 }
                 
                 messages = Array.isArray(data) ? data : [];
+                console.log(`✅ Loaded ${messages.length} messages`);
                 
-                // Mark unread messages as read
-                const conv = conversations.find(c => c.id === convId);
-                if (conv) {
-                    const updateField = conv.buyer_id === currentUserId ? 'unread_buyer' : 'unread_seller';
-                    if (window.api && window.api.updateConversation) {
-                        await window.api.updateConversation(convId, { [updateField]: 0 });
-                    } else {
-                        await fetch(`${window.SUPABASE_URL}/rest/v1/conversations?id=eq.${convId}`, {
-                            method: 'PATCH',
-                            headers: { 
-                                'Content-Type': 'application/json', 
-                                'apikey': window.SUPABASE_ANON_KEY, 
-                                'Authorization': `Bearer ${currentUserToken}`, 
-                                'Prefer': 'return=minimal' 
-                            },
-                            body: JSON.stringify({ [updateField]: 0 })
-                        }).catch(e => console.warn('Could not mark as read:', e));
-                    }
-                }
+                // Mark as read
+                await markAsRead(convId);
                 
                 renderChatWindow();
-            } catch (e) {
-                console.error('Load messages error:', e);
-                if (e.message.includes('401')) {
-                    document.getElementById('chatWindow').innerHTML = 
-                        '<div class="chat-empty">Session expired. Please <a href="login.html">login again</a>.</div>';
-                } else {
-                    document.getElementById('chatWindow').innerHTML = 
-                        '<div class="chat-empty">Error loading messages.</div>';
+                
+            } catch (error) {
+                console.error('Load messages error:', error);
+                document.getElementById('chatWindow').innerHTML = 
+                    '<div class="error-msg">Error loading messages. Please refresh.</div>';
+            }
+        }
+
+        async function markAsRead(convId) {
+            try {
+                const conv = conversations.find(c => c.id === convId);
+                if (!conv) return;
+                
+                const isBuyer = conv.buyer_id === currentUserId;
+                const field = isBuyer ? 'unread_buyer' : 'unread_seller';
+                
+                if (conv[field] > 0) {
+                    if (window.api && window.api.updateConversation) {
+                        await window.api.updateConversation(convId, { [field]: 0 });
+                    } else {
+                        await window.updateConversation(convId, { [field]: 0 });
+                    }
+                    
+                    // Update local data
+                    conv[field] = 0;
+                    renderConversationList();
                 }
+            } catch (e) {
+                console.warn('Could not mark as read:', e);
             }
         }
 
@@ -225,93 +311,131 @@
             const conv = conversations.find(c => c.id === activeConversationId);
             
             if (!conv) {
-                chatWindow.innerHTML = '<div class="chat-empty">Select a conversation to start messaging</div>';
+                chatWindow.innerHTML = '<div class="chat-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><h3>Select a conversation</h3></div>';
                 return;
             }
 
+            const displayName = conv.subject || 'Chat';
+
             chatWindow.innerHTML = `
                 <div class="chat-header">
-                    <div class="conv-avatar">${conv.subject ? conv.subject.charAt(0).toUpperCase() : 'C'}</div>
-                    <strong>${conv.subject || 'Chat'}</strong>
+                    <div class="conv-avatar">${displayName.charAt(0).toUpperCase()}</div>
+                    <div>
+                        <strong>${displayName}</strong>
+                        <span class="online-status">● Online</span>
+                    </div>
                 </div>
                 <div class="chat-messages" id="chatMessages">
-                    ${messages.length === 0 ? '<div style="text-align:center;color:#999;padding:40px;">Send the first message to start the conversation</div>' : ''}
-                    ${messages.map(msg => `
-                        <div class="message ${msg.sender_id === currentUserId ? 'sent' : 'received'}">
-                            ${msg.message}
-                            <div class="message-time">${new Date(msg.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div>
-                        </div>
-                    `).join('')}
+                    ${renderMessages()}
                 </div>
                 <div class="chat-input">
-                    <input type="text" id="messageInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendMessage()">
-                    <button onclick="sendMessage()">Send</button>
+                    <input type="text" id="messageInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();sendMessage();}">
+                    <button id="sendBtn" onclick="sendMessage()">Send</button>
                 </div>
             `;
 
+            // Scroll to bottom
             setTimeout(() => {
-                const chatMessages = document.getElementById('chatMessages');
-                if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
+                const container = document.getElementById('chatMessages');
+                if (container) container.scrollTop = container.scrollHeight;
             }, 100);
+        }
+
+        function renderMessages() {
+            if (!messages || messages.length === 0) {
+                return '<div style="text-align:center;color:#999;padding:40px;">Send the first message to start the conversation</div>';
+            }
+
+            let html = '';
+            let lastDate = null;
+
+            messages.forEach(msg => {
+                const msgDate = new Date(msg.created_at);
+                const dateKey = msgDate.toDateString();
+                
+                if (dateKey !== lastDate) {
+                    lastDate = dateKey;
+                    const displayDate = msgDate.toLocaleDateString([], {weekday:'long', month:'long', day:'numeric'});
+                    html += `<div class="message-date-divider">${displayDate}</div>`;
+                }
+                
+                const isSent = msg.sender_id === currentUserId;
+                const timeStr = msgDate.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                
+                html += `
+                    <div class="message-wrapper ${isSent ? 'sent' : 'received'}">
+                        <div class="message ${isSent ? 'sent' : 'received'}">${escapeHtml(msg.message)}</div>
+                        <div class="message-time">${timeStr}</div>
+                    </div>
+                `;
+            });
+
+            return html;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
         async function sendMessage() {
             const input = document.getElementById('messageInput');
+            const sendBtn = document.getElementById('sendBtn');
             const message = input.value.trim();
             
-            if (!message || !activeConversationId) return;
+            if (!message || !activeConversationId || isSending) return;
+            
+            isSending = true;
+            sendBtn.disabled = true;
+            sendBtn.textContent = 'Sending...';
             
             try {
+                // Send the message
                 if (window.api && window.api.sendMessage) {
                     await window.api.sendMessage(activeConversationId, currentUserId, message);
                 } else {
-                    await fetch(`${window.SUPABASE_URL}/rest/v1/messages`, {
-                        method: 'POST',
-                        headers: { 
-                            'Content-Type': 'application/json', 
-                            'apikey': window.SUPABASE_ANON_KEY, 
-                            'Authorization': `Bearer ${currentUserToken}`, 
-                            'Prefer': 'return=minimal' 
-                        },
-                        body: JSON.stringify({ conversation_id: activeConversationId, sender_id: currentUserId, message })
-                    });
+                    await window.sendMessage(activeConversationId, currentUserId, message);
                 }
 
+                // Update conversation last message
                 const conv = conversations.find(c => c.id === activeConversationId);
                 if (conv) {
                     const isBuyer = conv.buyer_id === currentUserId;
                     const updateData = { 
                         last_message: message, 
-                        last_message_at: new Date().toISOString(),
-                        unread_buyer: isBuyer ? 0 : (conv.unread_buyer || 0) + 1,
-                        unread_seller: isBuyer ? (conv.unread_seller || 0) + 1 : 0
+                        last_message_at: new Date().toISOString()
                     };
                     
                     if (window.api && window.api.updateConversation) {
                         await window.api.updateConversation(activeConversationId, updateData);
                     } else {
-                        await fetch(`${window.SUPABASE_URL}/rest/v1/conversations?id=eq.${activeConversationId}`, {
-                            method: 'PATCH',
-                            headers: { 
-                                'Content-Type': 'application/json', 
-                                'apikey': window.SUPABASE_ANON_KEY, 
-                                'Authorization': `Bearer ${currentUserToken}`, 
-                                'Prefer': 'return=minimal' 
-                            },
-                            body: JSON.stringify(updateData)
-                        });
+                        await window.updateConversation(activeConversationId, updateData);
                     }
+                    
+                    // Update local data
+                    conv.last_message = message;
+                    conv.last_message_at = new Date().toISOString();
                 }
 
                 input.value = '';
-                await openConversation(activeConversationId);
+                
+                // Reload messages
+                await loadMessages(activeConversationId);
                 await loadConversations();
-            } catch (e) {
-                console.error('Send message error:', e);
+                
+            } catch (error) {
+                console.error('Send message error:', error);
+                alert('Failed to send message. Please try again.');
+            } finally {
+                isSending = false;
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'Send';
+                input.focus();
             }
         }
 
-        function subscribeToNewMessages() {
+        function startPolling() {
             if (pollInterval) clearInterval(pollInterval);
             
             pollInterval = setInterval(async () => {
@@ -321,55 +445,20 @@
                         if (window.api && window.api.getMessages) {
                             data = await window.api.getMessages(activeConversationId);
                         } else {
-                            const resp = await fetch(
-                                `${window.SUPABASE_URL}/rest/v1/messages?conversation_id=eq.${activeConversationId}&select=*&order=created_at.asc`,
-                                { headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${currentUserToken}` } }
-                            );
-                            if (resp.ok) {
-                                data = await resp.json();
-                            }
+                            data = await window.getMessages(activeConversationId);
                         }
+                        
                         if (Array.isArray(data) && data.length !== messages.length) {
                             messages = data;
                             renderChatWindow();
+                            // Also refresh conversation list for unread counts
+                            await loadConversations();
                         }
                     } catch (e) {
-                        // silent fail for polling
+                        // Silent fail for polling
                     }
                 }
-                await loadConversations();
-            }, 5000);
-        }
-
-        async function startConversation(productId, sellerId, subject) {
-            try {
-                let data;
-                if (window.api && window.api.createConversation) {
-                    data = await window.api.createConversation({
-                        product_id: productId,
-                        buyer_id: currentUserId,
-                        seller_id: sellerId,
-                        subject: subject
-                    });
-                } else {
-                    const resp = await fetch(`${window.SUPABASE_URL}/rest/v1/conversations`, {
-                        method: 'POST',
-                        headers: { 
-                            'Content-Type': 'application/json', 
-                            'apikey': window.SUPABASE_ANON_KEY, 
-                            'Authorization': `Bearer ${currentUserToken}`, 
-                            'Prefer': 'return=representation' 
-                        },
-                        body: JSON.stringify({ product_id: productId, buyer_id: currentUserId, seller_id: sellerId, subject })
-                    });
-                    data = await resp.json();
-                }
-                if (Array.isArray(data) && data.length > 0) {
-                    openConversation(data[0].id);
-                }
-            } catch (e) {
-                console.error('Start conversation error:', e);
-            }
+            }, 3000); // Poll every 3 seconds like Alibaba
         }
 
         // Clean up on page unload
@@ -380,9 +469,9 @@
         // Make functions globally accessible
         window.openConversation = openConversation;
         window.sendMessage = sendMessage;
-        window.startConversation = startConversation;
 
-        init();
+        // Start the app
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
