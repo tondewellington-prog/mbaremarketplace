@@ -112,13 +112,13 @@
         <!-- Live Vehicle Search Bar -->
         <div class="japan-search-box">
             <h2>Search Japanese Vehicles</h2>
-            <p>Type a car name (e.g., <em>Toyota Fit, Nissan Dualis, Demio</em>) to fetch live stock directly into our database.</p>
+            <p>Search Be Forward stock directly from our database, or query live stock automatically.</p>
             <form class="search-form" onsubmit="handleLiveSearch(event)">
                 <input 
                     type="text" 
                     id="searchQueryInput" 
                     class="search-input" 
-                    placeholder="Search vehicle model..." 
+                    placeholder="Search vehicle model (e.g., Fit, Dualis, Demio)..." 
                     required
                 >
                 <button type="submit" id="searchSubmitBtn" class="search-btn">Search Stock</button>
@@ -128,7 +128,7 @@
 
         <h2>Available Imports</h2>
         <div class="product-grid" id="vehiclesGrid">
-            <p>Loading database stock...</p>
+            <p>Loading Be Forward stock...</p>
         </div>
     </div>
 
@@ -235,7 +235,7 @@
             }).join('');
         }
 
-        // Live Search Handler calling /api/scrape
+        // Live Search Handler with JSON validation
         async function handleLiveSearch(event) {
             event.preventDefault();
             const input = document.getElementById('searchQueryInput');
@@ -246,29 +246,34 @@
             if (!query) return;
 
             status.style.color = '#fff';
-            status.innerText = `Searching live Japanese inventory for "${query}"...`;
+            status.innerText = `Searching stock for "${query}"...`;
             btn.disabled = true;
 
             try {
-                // Pointing to our created backend API route
                 const response = await fetch('/api/scrape', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ query })
                 });
 
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error(`Server returned HTML instead of JSON (Status ${response.status}). Check backend API path or server logs.`);
+                }
+
                 const result = await response.json();
 
                 if (result.success && result.vehicles && result.vehicles.length > 0) {
                     status.style.color = '#28a745';
-                    status.innerText = `Found ${result.vehicles.length} vehicles! Saved to database and updated below.`;
+                    const originText = result.source === 'database' ? 'Database Stock' : 'Live Be Forward Search';
+                    status.innerText = `Found ${result.vehicles.length} vehicles via ${originText}!`;
                     renderVehicles(result.vehicles);
-                } else if (result.success && result.vehicles && result.vehicles.length === 0) {
+                } else if (result.success && (!result.vehicles || result.vehicles.length === 0)) {
                     status.style.color = '#f90';
-                    status.innerText = `No stock matched "${query}". Try a broader search like "Toyota" or "Honda".`;
+                    status.innerText = `No stock matched "${query}". Try searching for popular models like "Fit", "Dualis", or "Demio".`;
                 } else {
                     status.style.color = '#ff6b6b';
-                    status.innerText = 'Error: ' + (result.error || result.message || 'Failed to retrieve stock.');
+                    status.innerText = 'Error: ' + (result.error || 'Failed to search stock.');
                 }
             } catch (err) {
                 console.error('Search request error:', err);
