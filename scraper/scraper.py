@@ -1,16 +1,20 @@
 from urllib.parse import quote_plus
 
 from playwright.sync_api import sync_playwright
+
 from config import Config
+from parser import VehicleParser
 
 
 class VehicleScraper:
+
     def __init__(self):
         self.base_url = Config.BASE_URL
         self.headless = Config.HEADLESS
+
+        self.playwright = None
         self.browser = None
         self.page = None
-        self.playwright = None
 
     def start(self):
         self.playwright = sync_playwright().start()
@@ -36,7 +40,7 @@ class VehicleScraper:
 
     def search(self, keyword: str):
         """
-        Searches Be Forward and returns a list of vehicle URLs.
+        Search BE FORWARD for a vehicle.
         """
 
         search_url = (
@@ -53,7 +57,7 @@ class VehicleScraper:
 
     def collect_vehicle_links(self):
         """
-        Collects all vehicle links from the search results page.
+        Collect vehicle detail page URLs.
         """
 
         links = []
@@ -61,6 +65,7 @@ class VehicleScraper:
         anchors = self.page.locator("a").all()
 
         for anchor in anchors:
+
             href = anchor.get_attribute("href")
 
             if not href:
@@ -76,3 +81,51 @@ class VehicleScraper:
                 links.append(href)
 
         return links[:Config.MAX_RESULTS_PER_SEARCH]
+
+    def scrape_vehicle(self, url: str):
+        """
+        Scrape a single vehicle.
+        """
+
+        self.page.goto(
+            url,
+            wait_until="networkidle"
+        )
+
+        html = self.page.content()
+
+        parser = VehicleParser(html)
+
+        vehicle = parser.parse()
+
+        vehicle["vehicle_url"] = url
+
+        return vehicle
+
+    def scrape_search_results(self, keyword: str):
+        """
+        Scrape all vehicles from a search.
+        """
+
+        links = self.search(keyword)
+
+        vehicles = []
+
+        for link in links:
+
+            try:
+
+                vehicle = self.scrape_vehicle(link)
+
+                vehicles.append(vehicle)
+
+            except Exception as error:
+
+                print(f"Failed: {link}")
+
+                print(error)
+
+        return vehicles
+
+    def close(self):
+        self.stop()
