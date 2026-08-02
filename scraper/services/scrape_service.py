@@ -1,44 +1,32 @@
 from scraper import VehicleScraper
-from database import db
+from database import database
 
 
 class ScrapeService:
 
     def __init__(self):
-
         self.scraper = VehicleScraper()
 
-    def search(self, keyword: str):
+    def search(self, keyword):
 
-        try:
+        self.scraper.start()
 
-            self.scraper.start()
+        vehicles = self.scraper.scrape_search_results(keyword)
 
-            vehicles = self.scraper.scrape_search_results(keyword)
+        saved = 0
 
-            saved = 0
+        for vehicle in vehicles:
 
-            for vehicle in vehicles:
+            result = database.save_vehicle(vehicle)
 
-                db.save_vehicle(vehicle)
-
+            if result:
                 saved += 1
 
-            return {
-                "success": True,
-                "keyword": keyword,
-                "count": len(vehicles),
-                "saved": saved,
-                "vehicles": vehicles
-            }
+        self.scraper.stop()
 
-        except Exception as e:
-
-            return {
-                "success": False,
-                "error": str(e)
-            }
-
-        finally:
-
-            self.scraper.stop()
+        return {
+            "keyword": keyword,
+            "count": len(vehicles),
+            "saved": saved,
+            "vehicles": vehicles
+        }
