@@ -1,5 +1,4 @@
 from datetime import datetime
-
 from supabase import create_client
 
 from config import Config
@@ -8,71 +7,86 @@ from config import Config
 class Database:
 
     def __init__(self):
-
-        self.client = create_client(
+        self.supabase = create_client(
             Config.SUPABASE_URL,
             Config.SUPABASE_KEY
         )
 
     def save_vehicle(self, vehicle):
 
-        if not vehicle.get("stock_no"):
-            return None
+        stock_no = vehicle.get("stock_no")
 
-        vehicle["updated_at"] = datetime.utcnow().isoformat()
+        if not stock_no:
+            return False
 
-        existing = self.client.table("vehicles")\
-            .select("id")\
-            .eq("stock_no", vehicle["stock_no"])\
+        existing = (
+            self.supabase
+            .table("vehicles")
+            .select("id")
+            .eq("stock_no", stock_no)
             .execute()
+        )
+
+        data = {
+            "stock_no": vehicle.get("stock_no"),
+            "title": vehicle.get("title"),
+            "make": vehicle.get("make"),
+            "model": vehicle.get("model"),
+            "year": vehicle.get("year"),
+            "price": vehicle.get("price"),
+            "currency": vehicle.get("currency"),
+            "mileage": vehicle.get("mileage"),
+            "fuel": vehicle.get("fuel"),
+            "transmission": vehicle.get("transmission"),
+            "engine_size": vehicle.get("engine_size"),
+            "drive": vehicle.get("drive"),
+            "doors": vehicle.get("doors"),
+            "seats": vehicle.get("seats"),
+            "color": vehicle.get("color"),
+            "steering": vehicle.get("steering"),
+            "location": vehicle.get("location"),
+            "chassis_no": vehicle.get("chassis_no"),
+            "model_code": vehicle.get("model_code"),
+            "image": vehicle.get("image"),
+            "images": vehicle.get("images"),
+            "vehicle_url": vehicle.get("vehicle_url"),
+            "source": "BE FORWARD",
+            "updated_at": datetime.utcnow().isoformat(),
+            "last_scraped": datetime.utcnow().isoformat()
+        }
 
         if existing.data:
 
-            vehicle_id = existing.data[0]["id"]
+            self.supabase.table("vehicles").update(data).eq(
+                "stock_no",
+                stock_no
+            ).execute()
 
-            self.client.table("vehicles")\
-                .update(vehicle)\
-                .eq("id", vehicle_id)\
-                .execute()
-
-            return vehicle_id
+            return "updated"
 
         else:
 
-            vehicle["scraped_at"] = datetime.utcnow().isoformat()
+            data["created_at"] = datetime.utcnow().isoformat()
 
-            result = self.client.table("vehicles")\
-                .insert(vehicle)\
-                .execute()
+            self.supabase.table("vehicles").insert(
+                data
+            ).execute()
 
-            if result.data:
-                return result.data[0]["id"]
+            return "inserted"
 
-            return None
+    def get_vehicles(self, keyword):
 
-    def get_vehicles(self, limit=20):
-
-        result = self.client.table("vehicles")\
-            .select("*")\
-            .order("scraped_at", desc=True)\
-            .limit(limit)\
-            .execute()
-
-        return result.data
-
-    def search_vehicles(self, keyword, limit=20):
-
-        result = self.client.table("vehicles")\
-            .select("*")\
+        return (
+            self.supabase
+            .table("vehicles")
+            .select("*")
             .or_(
                 f"title.ilike.%{keyword}%,"
                 f"make.ilike.%{keyword}%,"
                 f"model.ilike.%{keyword}%"
-            )\
-            .limit(limit)\
+            )
             .execute()
+        )
 
-        return result.data
 
-
-db = Database()
+database = Database()
