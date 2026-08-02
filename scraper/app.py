@@ -1,18 +1,19 @@
 from fastapi import FastAPI
+from routes.search import router as search_router
 
 app = FastAPI(
-    title="Mbare Marketplace Vehicle Scraper",
-    description="Vehicle Scraper API for Mbare Marketplace",
+    title="Mbare Marketplace Vehicle API",
     version="1.0.0"
 )
+
+app.include_router(search_router)
 
 
 @app.get("/")
 def home():
     return {
-        "application": "Mbare Marketplace Vehicle Scraper",
-        "status": "Running",
-        "version": "1.0.0"
+        "application": "Mbare Marketplace Vehicle API",
+        "status": "Running"
     }
 
 
