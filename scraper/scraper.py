@@ -39,30 +39,40 @@ class VehicleScraper:
             self.playwright.stop()
 
     def search(self, keyword: str):
-        """
-        Search BE FORWARD for a vehicle.
-        """
 
         search_url = (
-            f"{self.base_url}/stocklist/"
-            f"?keyword={quote_plus(keyword)}"
+            f"{self.base_url}/stocklist/?keyword={quote_plus(keyword)}"
         )
+
+        print(f"Searching URL: {search_url}")
 
         self.page.goto(
             search_url,
             wait_until="networkidle"
         )
 
-        return self.collect_vehicle_links()
+        print(f"Opened URL: {self.page.url}")
+
+        html = self.page.content()
+
+        with open("search_results.html", "w", encoding="utf-8") as file:
+            file.write(html)
+
+        print("Saved search_results.html")
+
+        links = self.collect_vehicle_links()
+
+        print(f"Collected {len(links)} vehicle links")
+
+        return links
 
     def collect_vehicle_links(self):
-        """
-        Collect vehicle detail page URLs.
-        """
 
         links = []
 
         anchors = self.page.locator("a").all()
+
+        print(f"Found {len(anchors)} anchor tags")
 
         for anchor in anchors:
 
@@ -83,9 +93,8 @@ class VehicleScraper:
         return links[:Config.MAX_RESULTS_PER_SEARCH]
 
     def scrape_vehicle(self, url: str):
-        """
-        Scrape a single vehicle.
-        """
+
+        print(f"Scraping vehicle: {url}")
 
         self.page.goto(
             url,
@@ -103,9 +112,6 @@ class VehicleScraper:
         return vehicle
 
     def scrape_search_results(self, keyword: str):
-        """
-        Scrape all vehicles from a search.
-        """
 
         links = self.search(keyword)
 
@@ -121,8 +127,7 @@ class VehicleScraper:
 
             except Exception as error:
 
-                print(f"Failed: {link}")
-
+                print(f"Failed to scrape: {link}")
                 print(error)
 
         return vehicles
