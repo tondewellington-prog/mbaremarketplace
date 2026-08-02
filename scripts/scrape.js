@@ -1,8 +1,8 @@
 const cheerio = require('cheerio');
 const { createClient } = require('@supabase/supabase-js');
 
-// Initialize Supabase Client using environment variables
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+// Support both NEXT_PUBLIC_SUPABASE_URL and SUPABASE_URL
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
@@ -74,7 +74,7 @@ async function scrapeBeForward(make = 'toyota', pages = 1) {
         if (error) {
           console.error(`Error saving page ${page} to database:`, error.message);
         } else {
-          console.log(`Successfully processed ${data.length} vehicles from page ${page}.`);
+          console.log(`Successfully saved ${data.length} vehicles from page ${page}.`);
         }
       } else {
         console.log(`No vehicle items found on page ${page}.`);
@@ -88,9 +88,4 @@ async function scrapeBeForward(make = 'toyota', pages = 1) {
   console.log('Scrape run completed.');
 }
 
-// Run when executed directly
-if (require.main === module) {
-  scrapeBeForward('toyota', 2);
-}
-
-module.exports = { scrapeBeForward };
+scrapeBeForward('toyota', 2);
