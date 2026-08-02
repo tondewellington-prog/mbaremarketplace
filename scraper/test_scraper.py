@@ -1,58 +1,38 @@
 from scraper import VehicleScraper
-from pprint import pprint
-import os
 
 
 def main():
 
-    keyword = os.getenv("SEARCH_KEYWORD", "Toyota Hilux")
+    keyword = "Toyota Hilux"
 
     scraper = VehicleScraper()
 
     try:
 
         print("=" * 70)
-        print("Mbare Marketplace Vehicle Scraper")
+        print("Starting Scraper")
         print("=" * 70)
-
-        print(f"Searching for: {keyword}")
-        print()
 
         scraper.start()
 
-        vehicles = scraper.scrape_search_results(keyword)
+        print(f"Searching for: {keyword}")
 
-        print("=" * 70)
-        print(f"Vehicles Found: {len(vehicles)}")
-        print("=" * 70)
+        links = scraper.search(keyword)
 
-        for index, vehicle in enumerate(vehicles, start=1):
+        print(f"Vehicle Links Found: {len(links)}")
 
-            print()
-            print("=" * 70)
-            print(f"Vehicle {index}")
-            print("=" * 70)
+        print("\nCurrent URL:")
+        print(scraper.page.url)
 
-            pprint(vehicle)
+        print("\nFirst 5000 characters of HTML:\n")
 
-    except Exception as error:
+        html = scraper.page.content()
 
-        print()
-        print("=" * 70)
-        print("SCRAPER ERROR")
-        print("=" * 70)
-        print(str(error))
-
-        raise
+        print(html[:5000])
 
     finally:
 
         scraper.stop()
-
-        print()
-        print("=" * 70)
-        print("Scraper Finished")
-        print("=" * 70)
 
 
 if __name__ == "__main__":
