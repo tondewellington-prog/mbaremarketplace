@@ -18,14 +18,14 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install dependencies directly
+        run: npm install cheerio @supabase/supabase-js
 
       - name: Execute Scraper Script
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          echo "Starting scheduled scraper task..."
+          echo "Starting scraper execution..."
           node scripts/scrape.js
           echo "Task finished successfully."
