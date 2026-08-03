@@ -519,7 +519,7 @@ function createProductCard(product) {
         </div>
         <div class="product-actions">
             <button class="btn-add-cart" onclick="addToBasket('${product.id}')">Add to Basket</button>
-            <button class="btn-contact-seller" onclick="showSellerContact('${product.id}')" style="background: #25D366; color: white; border: none; padding: 8px; border-radius: 4px; margin-top: 5px; width: 100%; cursor: pointer;">Contact Seller</button>
+            <button class="btn-contact-seller" onclick="showSellerContact('${product.id}')" style="background: #f90; color: white; border: none; padding: 8px; border-radius: 4px; margin-top: 5px; width: 100%; cursor: pointer; font-weight: 600;">✉ Contact Seller</button>
         </div>
     `;
     
@@ -537,6 +537,108 @@ function escapeHtml(text) {
             return m;
         })
         .replace(/[\u{1F300}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
+}
+
+// ============================================
+// CONTACT SELLER - UPDATED TO USE MESSAGES (NO WHATSAPP/CALL)
+// ============================================
+
+async function showSellerContact(productId) {
+    const sessionData = localStorage.getItem('supabase_session');
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    
+    if (!isLoggedIn || !sessionData) {
+        const confirmLogin = confirm('Please login to view seller contact information. Would you like to login now?');
+        if (confirmLogin) {
+            const currentPage = encodeURIComponent(window.location.href);
+            window.location.href = `login.html?redirect=${currentPage}`;
+        }
+        return;
+    }
+    
+    const product = products.find(p => p.id == productId);
+    if (!product) {
+        alert('Product not found');
+        return;
+    }
+    
+    const seller = sellersMap[product.seller_id];
+    if (!seller) {
+        alert('Seller information not available');
+        return;
+    }
+    
+    const phone = seller.business_phone || 'Not provided';
+    
+    let modal = document.getElementById('sellerContactModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'sellerContactModal';
+        modal.className = 'contact-modal';
+        modal.innerHTML = `
+            <div class="contact-modal-content">
+                <span class="close-contact-modal" onclick="document.getElementById('sellerContactModal').style.display='none'">&times;</span>
+                <div id="sellerContactContent"></div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+    
+    const modalContent = document.getElementById('sellerContactContent');
+    modalContent.innerHTML = `
+        <div class="product-title">📦 ${escapeHtml(product.title)}</div>
+        <div class="seller-info">
+            <div class="info-row">
+                <div class="info-icon">🏪</div>
+                <div class="info-text">
+                    <div class="info-label">Seller</div>
+                    <div class="info-value">${escapeHtml(seller.business_name || 'Unknown Seller')}</div>
+                </div>
+            </div>
+            <div class="info-row">
+                <div class="info-icon">📞</div>
+                <div class="info-text">
+                    <div class="info-label">Phone Number</div>
+                    <div class="info-value">${escapeHtml(phone)}</div>
+                </div>
+            </div>
+            <div class="info-row">
+                <div class="info-icon">📍</div>
+                <div class="info-text">
+                    <div class="info-label">Shop Location</div>
+                    <div class="info-value">${escapeHtml(seller.business_address || 'Location not specified')}</div>
+                </div>
+            </div>
+        </div>
+        <!-- UPDATED: Removed Call & WhatsApp, added Send Message link -->
+        <div class="contact-actions">
+            <a href="messages.html" class="contact-btn" style="
+                background: #f90; 
+                color: white; 
+                text-decoration: none; 
+                display: inline-block; 
+                text-align: center; 
+                width: 100%; 
+                padding: 14px; 
+                border-radius: 6px; 
+                font-weight: 600; 
+                font-size: 15px;
+                transition: background 0.2s;
+            " onmouseover="this.style.background='#e08500'" onmouseout="this.style.background='#f90'">
+                ✉ Send Message
+            </a>
+        </div>
+        <div style="margin-top: 12px; font-size: 12px; color: #888; text-align: center;">
+            Your conversation will appear in the Messages section
+        </div>
+    `;
+    
+    modal.style.display = 'block';
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+    };
 }
 
 // ============================================
@@ -570,92 +672,6 @@ function showLoginPrompt() {
 
 function hideLoginPrompt() {
     document.getElementById('loginPromptModal').style.display = 'none';
-}
-
-async function showSellerContact(productId) {
-    const sessionData = localStorage.getItem('supabase_session');
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    
-    if (!isLoggedIn || !sessionData) {
-        const confirmLogin = confirm('Please login to view seller contact information. Would you like to login now?');
-        if (confirmLogin) {
-            const currentPage = encodeURIComponent(window.location.href);
-            window.location.href = `login.html?redirect=${currentPage}`;
-        }
-        return;
-    }
-    
-    const product = products.find(p => p.id == productId);
-    if (!product) {
-        alert('Product not found');
-        return;
-    }
-    
-    const seller = sellersMap[product.seller_id];
-    if (!seller) {
-        alert('Seller information not available');
-        return;
-    }
-    
-    const phone = seller.business_phone || 'Not provided';
-    const phoneDigits = phone.replace(/\D/g, '');
-    const whatsappMessage = `Hello! I am interested in ${product.title}, I saw it on ${WEBSITE_URL}`;
-    const encodedMessage = encodeURIComponent(whatsappMessage);
-    const whatsappLink = phoneDigits ? `https://wa.me/${phoneDigits}?text=${encodedMessage}` : '#';
-    const callLink = phoneDigits ? `tel:${phoneDigits}` : '#';
-    
-    let modal = document.getElementById('sellerContactModal');
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'sellerContactModal';
-        modal.className = 'contact-modal';
-        modal.innerHTML = `
-            <div class="contact-modal-content">
-                <span class="close-contact-modal" onclick="document.getElementById('sellerContactModal').style.display='none'">&times;</span>
-                <div id="sellerContactContent"></div>
-            </div>
-        `;
-        document.body.appendChild(modal);
-    }
-    
-    const modalContent = document.getElementById('sellerContactContent');
-    modalContent.innerHTML = `
-        <div class="product-title">${escapeHtml(product.title)}</div>
-        <div class="seller-info">
-            <div class="info-row">
-                <div class="info-icon">🏪</div>
-                <div class="info-text">
-                    <div class="info-label">Seller</div>
-                    <div class="info-value">${escapeHtml(seller.business_name || 'Unknown Seller')}</div>
-                </div>
-            </div>
-            <div class="info-row">
-                <div class="info-icon">📞</div>
-                <div class="info-text">
-                    <div class="info-label">Phone Number</div>
-                    <div class="info-value">${escapeHtml(phone)}</div>
-                </div>
-            </div>
-            <div class="info-row">
-                <div class="info-icon">📍</div>
-                <div class="info-text">
-                    <div class="info-label">Shop Location</div>
-                    <div class="info-value">${escapeHtml(seller.business_address || 'Location not specified')}</div>
-                </div>
-            </div>
-        </div>
-        <div class="contact-actions">
-            <a href="${callLink}" class="contact-btn call-btn">Call Seller</a>
-            <a href="${whatsappLink}" class="contact-btn whatsapp-btn" target="_blank">WhatsApp</a>
-        </div>
-    `;
-    
-    modal.style.display = 'block';
-    window.onclick = function(event) {
-        if (event.target == modal) {
-            modal.style.display = 'none';
-        }
-    };
 }
 
 async function addToBasket(productId, quantity = 1) {
