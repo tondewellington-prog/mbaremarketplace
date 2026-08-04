@@ -1,4 +1,4 @@
-// ==================== SAFETY CHECK ====================
+// ==================== SAFETY CHECKs ====================
 // Ensure SUPABASE_URL is defined (fallback if api.js didn't load)
 if (typeof window.SUPABASE_URL === 'undefined') {
     console.warn('⚠️ SUPABASE_URL not defined, setting fallback...');
