@@ -991,3 +991,16 @@ window.hideLoginPrompt = hideLoginPrompt;
 window.moveCarousel = moveCarousel;
 window.goToSlide = goToSlide;
 window.handleSearch = handleSearch;
+// ============================================
+// PASSWORD RESET DETECTION
+// ============================================
+
+(function() {
+    // Check if URL has access_token hash (from password reset)
+    const hash = window.location.hash;
+    if (hash && hash.includes('access_token=')) {
+        console.log('Password reset token detected, redirecting to reset-password.html');
+        // Preserve the hash and redirect
+        window.location.href = '/reset-password.html' + hash;
+    }
+})();
