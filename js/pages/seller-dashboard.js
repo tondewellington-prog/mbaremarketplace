@@ -986,25 +986,49 @@ async function loadProductsFromSupabase(retries = 1) {
 }
 
 async function saveProductToSupabase(pd) {
-    const session = JSON.parse(localStorage.getItem('supabase_session'));
-    const token = session?.access_token || currentAccessToken;
-    const r = await fetch(`${window.SUPABASE_URL}/rest/v1/products`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Prefer': 'return=representation' },
-        body: JSON.stringify({
+    try {
+        const session = JSON.parse(localStorage.getItem('supabase_session'));
+        const token = session?.access_token || currentAccessToken;
+        
+        const productData = {
             seller_id: String(currentSellerId),
             title: pd.title,
             description: pd.description || '',
             price: pd.price,
             category: pd.category,
-            stock: pd.stock,
+            stock: pd.stock || 0,
             image_url: pd.image_url,
             paused: pd.paused || false,
             created_at: new Date().toISOString()
-        })
-    });
-    if (r.ok) return await r.json();
-    throw new Error((await r.json()).message || 'Save failed');
+        };
+        
+        console.log('Saving product:', productData);
+        
+        const r = await fetch(`${window.SUPABASE_URL}/rest/v1/products`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json', 
+                'apikey': window.SUPABASE_ANON_KEY, 
+                'Authorization': `Bearer ${token}`, 
+                'Prefer': 'return=representation' 
+            },
+            body: JSON.stringify(productData)
+        });
+        
+        if (!r.ok) {
+            const errorData = await r.json();
+            console.error('Save error:', errorData);
+            throw new Error(errorData.message || 'Failed to save product');
+        }
+        
+        const result = await r.json();
+        console.log('Product saved successfully:', result);
+        return result;
+        
+    } catch (error) {
+        console.error('SaveProductToSupabase error:', error);
+        throw error;
+    }
 }
 
 async function deleteProductFromSupabase(id) {
@@ -1070,13 +1094,11 @@ function renderTiers() {
         let buttonText = isCurrent ? (subscriptionStatus === 'paused' ? 'Paused' : 'Current Plan') :
                          (isDowngrade ? 'Cannot Downgrade' : 'Subscribe');
 
-        // Build the badge HTML with star indicator for free tier
         let badgeHtml = '';
         if (d.badge) {
             badgeHtml = `<span class="badge-pro">${d.badge}</span>`;
         }
         if (d.isFree && isCurrent) {
-            // Professional star badge for free tier - no emojis
             badgeHtml = `
                 <span class="badge-free" style="
                     background: #8B5CF6; 
@@ -1097,7 +1119,6 @@ function renderTiers() {
                 </span>
             `;
         } else if (d.isFree && !isCurrent) {
-            // Show subtle star for free tier even when not active
             badgeHtml = `
                 <span class="badge-free-inactive" style="
                     background: #E9E6FF; 
@@ -1118,7 +1139,6 @@ function renderTiers() {
             `;
         }
 
-        // Determine if subscription is active (for paid plans)
         let statusIndicator = '';
         if (isCurrent && !d.isFree) {
             if (subscriptionStatus === 'paused') {
@@ -1351,49 +1371,101 @@ window.openCamera = function() {
     i.click();
 };
 
+// ==================== FIXED: HANDLE ADD PRODUCT ====================
 window.handleAddProduct = async function() {
     const ed = document.getElementById('submitProductBtn').getAttribute('data-editing');
     const activeProducts = sellerProducts.filter(p => !p.paused);
     const max = getCurrentLimit();
+    
+    // Check if editing or adding new
     if (!ed && activeProducts.length >= max) {
         alert(`Limit reached! You have ${activeProducts.length} active products out of ${max} allowed for your ${currentTier} plan. Please upgrade or delete some products.`);
         showUpgradeOptions();
         return;
     }
+    
+    // Get form values
     const t = document.getElementById('prodTitle').value.trim();
     const pr = parseFloat(document.getElementById('prodPrice').value);
-    const st = parseInt(document.getElementById('prodStock').value);
+    const st = parseInt(document.getElementById('prodStock').value) || 0;
     const cat = document.getElementById('prodCategory').value;
     const desc = document.getElementById('prodDescription').value.trim();
     let img = document.getElementById('prodImage').value.trim();
-    if (!t || isNaN(pr) || isNaN(st) || !cat) return alert('Please fill all required fields');
+    
+    // Validate required fields
+    if (!t) {
+        alert('Please enter a product title.');
+        return;
+    }
+    if (isNaN(pr) || pr <= 0) {
+        alert('Please enter a valid price.');
+        return;
+    }
+    if (!cat) {
+        alert('Please select a category.');
+        return;
+    }
+    
     const btn = document.getElementById('submitProductBtn');
+    
+    // Handle image upload
     if (selectedImageFile) {
-        btn.disabled = true; btn.innerText = 'Uploading...';
-        try { img = await uploadImageToImgBB(selectedImageFile); } catch (e) {
-            alert('Upload failed: ' + e.message);
+        btn.disabled = true;
+        btn.innerText = 'Uploading Image...';
+        try {
+            img = await uploadImageToImgBB(selectedImageFile);
+            console.log('Image uploaded successfully:', img);
+        } catch (e) {
+            alert('Image upload failed: ' + e.message);
             btn.disabled = false;
             btn.innerText = ed ? 'Update' : 'Add Product';
             return;
         }
     }
-    if (!img) return alert('Please upload a product image');
-    btn.disabled = true; btn.innerText = 'Saving...';
+    
+    // If no image URL and no uploaded file, show error
+    if (!img) {
+        alert('Please upload a product image or provide an image URL.');
+        btn.disabled = false;
+        btn.innerText = ed ? 'Update' : 'Add Product';
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.innerText = 'Saving...';
+    
+    // Determine if product should be paused
     const isPaused = (!ed && activeProducts.length >= max);
-    const pd = { title: t, description: desc, price: pr, category: cat, stock: st, image_url: img, paused: isPaused };
+    
+    const pd = { 
+        title: t, 
+        description: desc, 
+        price: pr, 
+        category: cat, 
+        stock: st, 
+        image_url: img, 
+        paused: isPaused 
+    };
+    
     try {
         const sv = await saveProductToSupabase(pd);
-        const newProduct = { id: sv?.[0]?.id || Date.now().toString(), ...pd };
+        const newProduct = { 
+            id: sv?.[0]?.id || Date.now().toString(), 
+            ...pd 
+        };
         sellerProducts.unshift(newProduct);
         saveProductsLocal();
         renderProducts();
         updateStatsAndLimits();
+        
         if (isPaused) {
             showToast('Product added but paused because you have reached your limit. Upgrade to activate it.', true);
             enforceProductLimit();
         } else {
             showToast('Product added successfully!');
         }
+        
+        // Reset form
         toggleProductForm();
         document.getElementById('productForm').reset();
         removeImage();
@@ -1401,43 +1473,14 @@ window.handleAddProduct = async function() {
         btn.disabled = false;
         btn.innerText = 'Add Product';
         btn.removeAttribute('data-editing');
+        
     } catch (e) {
-        alert('Failed to save product: ' + e.message);
+        console.error('Save product error:', e);
+        alert('Failed to save product: ' + (e.message || 'Unknown error'));
         btn.disabled = false;
         btn.innerText = ed ? 'Update' : 'Add Product';
     }
 };
-
-(function() {
-    const a = document.getElementById('uploadArea');
-    if (!a) return;
-    a.addEventListener('dragover', e => { e.preventDefault(); a.classList.add('dragover'); });
-    a.addEventListener('dragleave', () => a.classList.remove('dragover'));
-    a.addEventListener('drop', e => { e.preventDefault(); a.classList.remove('dragover'); if (e.dataTransfer.files.length > 0) handleImageFile(e.dataTransfer.files[0]); });
-})();
-
-// Analytics button with subscription check
-const analyticsBtn = document.getElementById('analyticsNavBtn');
-if (analyticsBtn) {
-    analyticsBtn.addEventListener('click', () => {
-        if (currentTier === 'free' || subscriptionStatus === 'expired' || subscriptionStatus === 'inactive') {
-            alert('You need an active subscription to access analytics. Please subscribe first.');
-            showUpgradeOptions();
-            return;
-        }
-        window.location.href = 'seller-analytics.html';
-    });
-}
-
-function startExpiryChecker() {
-    if (renewalCheckInterval) clearInterval(renewalCheckInterval);
-    renewalCheckInterval = setInterval(async () => {
-        if (currentTier === 'free' || !subscriptionExpiry) return;
-        if (new Date(subscriptionExpiry) < new Date() && subscriptionStatus === 'active') {
-            handleExpiredSubscription();
-        }
-    }, 60000);
-}
 
 // ==================== SHOW UPGRADE OPTIONS ====================
 function showUpgradeOptions() {
