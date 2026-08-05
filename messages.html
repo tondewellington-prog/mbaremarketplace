@@ -35,7 +35,6 @@
         .chat-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 12px; background: #fafafa; border-radius: 12px 12px 0 0; }
         .chat-header .conv-avatar { width: 40px; height: 40px; font-size: 16px; }
         .chat-header strong { font-size: 16px; }
-        .chat-header .online-status { font-size: 12px; color: #28a745; margin-left: 8px; }
         
         .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background: #fafafa; }
         .chat-messages::-webkit-scrollbar { width: 6px; }
@@ -111,6 +110,13 @@
         let messages = [];
         let pollInterval = null;
         let isSending = false;
+        let initialLoadDone = false;
+
+        // Get conversation ID from URL
+        function getConversationIdFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('conversation');
+        }
 
         // Check login status on load
         async function init() {
@@ -136,6 +142,16 @@
 
                 // Load conversations
                 await loadConversations();
+                
+                // Check for conversation ID in URL
+                const convId = getConversationIdFromURL();
+                if (convId) {
+                    console.log('Opening conversation from URL:', convId);
+                    // Wait a moment for the list to render, then open the conversation
+                    setTimeout(() => {
+                        openConversation(convId);
+                    }, 500);
+                }
                 
                 // Start polling for new messages
                 startPolling();
@@ -180,6 +196,8 @@
                         await loadMessages(activeConversationId);
                     }
                 }
+                
+                initialLoadDone = true;
                 
             } catch (error) {
                 console.error('Load conversations error:', error);
@@ -252,6 +270,11 @@
             activeConversationId = convId;
             renderConversationList();
             await loadMessages(convId);
+            
+            // Update URL without reloading the page
+            const url = new URL(window.location);
+            url.searchParams.set('conversation', convId);
+            window.history.pushState({}, '', url);
         }
 
         async function loadMessages(convId) {
@@ -322,7 +345,6 @@
                     <div class="conv-avatar">${displayName.charAt(0).toUpperCase()}</div>
                     <div>
                         <strong>${displayName}</strong>
-                        <span class="online-status">● Online</span>
                     </div>
                 </div>
                 <div class="chat-messages" id="chatMessages">
@@ -458,7 +480,7 @@
                         // Silent fail for polling
                     }
                 }
-            }, 3000); // Poll every 3 seconds like Alibaba
+            }, 3000); // Poll every 3 seconds
         }
 
         // Clean up on page unload
