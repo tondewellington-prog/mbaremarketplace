@@ -1351,49 +1351,73 @@ window.openCamera = function() {
     i.click();
 };
 
+// ==================== FIXED: handleAddProduct ====================
 window.handleAddProduct = async function() {
     const ed = document.getElementById('submitProductBtn').getAttribute('data-editing');
     const activeProducts = sellerProducts.filter(p => !p.paused);
     const max = getCurrentLimit();
+    
+    // Check if limit is reached
     if (!ed && activeProducts.length >= max) {
-        alert(`Limit reached! You have ${activeProducts.length} active products out of ${max} allowed for your ${currentTier} plan. Please upgrade or delete some products.`);
+        showToast(`Limit reached! You have ${activeProducts.length} active products out of ${max} allowed.`, true);
         showUpgradeOptions();
         return;
     }
+    
+    // Validate form fields
     const t = document.getElementById('prodTitle').value.trim();
     const pr = parseFloat(document.getElementById('prodPrice').value);
     const st = parseInt(document.getElementById('prodStock').value);
     const cat = document.getElementById('prodCategory').value;
     const desc = document.getElementById('prodDescription').value.trim();
     let img = document.getElementById('prodImage').value.trim();
-    if (!t || isNaN(pr) || isNaN(st) || !cat) return alert('Please fill all required fields');
+    
+    if (!t || isNaN(pr) || isNaN(st) || !cat) {
+        showToast('Please fill all required fields', true);
+        return;
+    }
+    
     const btn = document.getElementById('submitProductBtn');
-    if (selectedImageFile) {
-        btn.disabled = true; btn.innerText = 'Uploading...';
-        try { img = await uploadImageToImgBB(selectedImageFile); } catch (e) {
-            alert('Upload failed: ' + e.message);
+    btn.disabled = true;
+    btn.textContent = 'Processing...';
+    
+    try {
+        // Upload image if new file selected
+        if (selectedImageFile) {
+            try {
+                img = await uploadImageToImgBB(selectedImageFile);
+            } catch (e) {
+                showToast('Image upload failed: ' + e.message, true);
+                btn.disabled = false;
+                btn.innerText = ed ? 'Update' : 'Add Product';
+                return;
+            }
+        }
+        
+        if (!img) {
+            showToast('Please upload a product image', true);
             btn.disabled = false;
             btn.innerText = ed ? 'Update' : 'Add Product';
             return;
         }
-    }
-    if (!img) return alert('Please upload a product image');
-    btn.disabled = true; btn.innerText = 'Saving...';
-    const isPaused = (!ed && activeProducts.length >= max);
-    const pd = { title: t, description: desc, price: pr, category: cat, stock: st, image_url: img, paused: isPaused };
-    try {
+        
+        const isPaused = (!ed && activeProducts.length >= max);
+        const pd = { title: t, description: desc, price: pr, category: cat, stock: st, image_url: img, paused: isPaused };
+        
         const sv = await saveProductToSupabase(pd);
         const newProduct = { id: sv?.[0]?.id || Date.now().toString(), ...pd };
         sellerProducts.unshift(newProduct);
         saveProductsLocal();
         renderProducts();
         updateStatsAndLimits();
+        
         if (isPaused) {
-            showToast('Product added but paused because you have reached your limit. Upgrade to activate it.', true);
+            showToast('Product added but paused - limit reached. Upgrade to activate.', true);
             enforceProductLimit();
         } else {
             showToast('Product added successfully!');
         }
+        
         toggleProductForm();
         document.getElementById('productForm').reset();
         removeImage();
@@ -1401,8 +1425,10 @@ window.handleAddProduct = async function() {
         btn.disabled = false;
         btn.innerText = 'Add Product';
         btn.removeAttribute('data-editing');
+        
     } catch (e) {
-        alert('Failed to save product: ' + e.message);
+        console.error('Add product error:', e);
+        showToast('Failed to save product: ' + e.message, true);
         btn.disabled = false;
         btn.innerText = ed ? 'Update' : 'Add Product';
     }
