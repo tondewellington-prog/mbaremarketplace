@@ -110,7 +110,6 @@
         let messages = [];
         let pollInterval = null;
         let isSending = false;
-        let initialLoadDone = false;
 
         // Get conversation ID from URL
         function getConversationIdFromURL() {
@@ -137,8 +136,8 @@
                 currentUserId = sessionData.user.id;
                 currentUserEmail = sessionData.user.email;
                 
-                console.log('✅ User authenticated:', currentUserEmail);
-                console.log('✅ User ID:', currentUserId);
+                console.log('User authenticated:', currentUserEmail);
+                console.log('User ID:', currentUserId);
 
                 // Load conversations
                 await loadConversations();
@@ -148,9 +147,9 @@
                 if (convId) {
                     console.log('Opening conversation from URL:', convId);
                     // Wait a moment for the list to render, then open the conversation
-                    setTimeout(() => {
+                    setTimeout(function() {
                         openConversation(convId);
-                    }, 500);
+                    }, 600);
                 }
                 
                 // Start polling for new messages
@@ -175,13 +174,12 @@
                     console.log('Using api.getConversations...');
                     data = await window.api.getConversations(currentUserId);
                 } else {
-                    // Fallback: use the global function
                     console.log('Using window.getConversations...');
                     data = await window.getConversations(currentUserId);
                 }
                 
                 conversations = Array.isArray(data) ? data : [];
-                console.log(`✅ Loaded ${conversations.length} conversations`);
+                console.log('Loaded ' + conversations.length + ' conversations');
                 
                 renderConversationList();
                 
@@ -196,8 +194,6 @@
                         await loadMessages(activeConversationId);
                     }
                 }
-                
-                initialLoadDone = true;
                 
             } catch (error) {
                 console.error('Load conversations error:', error);
@@ -227,7 +223,7 @@
                 return;
             }
 
-            list.innerHTML = conversations.map(conv => {
+            list.innerHTML = conversations.map(function(conv) {
                 const unreadCount = conv.buyer_id === currentUserId ? conv.unread_buyer : conv.unread_seller;
                 const isActive = conv.id === activeConversationId;
                 const displayName = conv.subject || 'Chat';
@@ -244,7 +240,7 @@
                                 <span class="conv-time">${timeStr}</span>
                             </div>
                             <div class="conv-last">${lastMessage}</div>
-                            ${unreadCount > 0 ? `<span class="unread-badge">${unreadCount} new</span>` : ''}
+                            ${unreadCount > 0 ? '<span class="unread-badge">' + unreadCount + ' new</span>' : ''}
                         </div>
                     </div>
                 `;
@@ -291,7 +287,7 @@
                 }
                 
                 messages = Array.isArray(data) ? data : [];
-                console.log(`✅ Loaded ${messages.length} messages`);
+                console.log('Loaded ' + messages.length + ' messages');
                 
                 // Mark as read
                 await markAsRead(convId);
@@ -307,7 +303,7 @@
 
         async function markAsRead(convId) {
             try {
-                const conv = conversations.find(c => c.id === convId);
+                const conv = conversations.find(function(c) { return c.id === convId; });
                 if (!conv) return;
                 
                 const isBuyer = conv.buyer_id === currentUserId;
@@ -331,7 +327,7 @@
 
         function renderChatWindow() {
             const chatWindow = document.getElementById('chatWindow');
-            const conv = conversations.find(c => c.id === activeConversationId);
+            const conv = conversations.find(function(c) { return c.id === activeConversationId; });
             
             if (!conv) {
                 chatWindow.innerHTML = '<div class="chat-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><h3>Select a conversation</h3></div>';
@@ -357,7 +353,7 @@
             `;
 
             // Scroll to bottom
-            setTimeout(() => {
+            setTimeout(function() {
                 const container = document.getElementById('chatMessages');
                 if (container) container.scrollTop = container.scrollHeight;
             }, 100);
@@ -371,14 +367,14 @@
             let html = '';
             let lastDate = null;
 
-            messages.forEach(msg => {
+            messages.forEach(function(msg) {
                 const msgDate = new Date(msg.created_at);
                 const dateKey = msgDate.toDateString();
                 
                 if (dateKey !== lastDate) {
                     lastDate = dateKey;
                     const displayDate = msgDate.toLocaleDateString([], {weekday:'long', month:'long', day:'numeric'});
-                    html += `<div class="message-date-divider">${displayDate}</div>`;
+                    html += '<div class="message-date-divider">' + displayDate + '</div>';
                 }
                 
                 const isSent = msg.sender_id === currentUserId;
@@ -421,7 +417,7 @@
                 }
 
                 // Update conversation last message
-                const conv = conversations.find(c => c.id === activeConversationId);
+                const conv = conversations.find(function(c) { return c.id === activeConversationId; });
                 if (conv) {
                     const isBuyer = conv.buyer_id === currentUserId;
                     const updateData = { 
@@ -460,7 +456,7 @@
         function startPolling() {
             if (pollInterval) clearInterval(pollInterval);
             
-            pollInterval = setInterval(async () => {
+            pollInterval = setInterval(async function() {
                 if (activeConversationId) {
                     try {
                         let data;
@@ -480,7 +476,7 @@
                         // Silent fail for polling
                     }
                 }
-            }, 3000); // Poll every 3 seconds
+            }, 3000);
         }
 
         // Clean up on page unload
