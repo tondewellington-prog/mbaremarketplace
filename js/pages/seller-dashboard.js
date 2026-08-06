@@ -1351,17 +1351,23 @@ window.openCamera = function() {
     i.click();
 };
 
-// ==================== FIXED: handleAddProduct ====================
+// ==================== FIXED: handleAddProduct with TIER-BASED LIMIT CHECK ====================
 window.handleAddProduct = async function() {
     console.log('🔄 handleAddProduct called');
+    console.log('Current Tier:', currentTier);
+    console.log('Total Products:', sellerProducts.length);
     
     const ed = document.getElementById('submitProductBtn').getAttribute('data-editing');
-    const activeProducts = sellerProducts.filter(p => !p.paused);
-    const max = getCurrentLimit();
     
-    // Check if limit is reached
-    if (!ed && activeProducts.length >= max) {
-        showToast(`Limit reached! You have ${activeProducts.length} active products out of ${max} allowed.`, true);
+    // Get the correct product limit based on current tier
+    const max = getCurrentLimit();
+    const activeProducts = sellerProducts.filter(p => !p.paused);
+    const activeCount = activeProducts.length;
+    
+    // Check if user is at or above their tier limit
+    if (!ed && activeCount >= max) {
+        const tierName = tierMap[currentTier]?.name || 'Free';
+        showToast(`Product limit reached! You have ${activeCount} active products out of ${max} allowed for your ${tierName}.`, true);
         showUpgradeOptions();
         return;
     }
@@ -1403,7 +1409,8 @@ window.handleAddProduct = async function() {
             return;
         }
         
-        const isPaused = (!ed && activeProducts.length >= max);
+        // Check again for pause condition (after upload)
+        const isPaused = (!ed && activeCount >= max);
         const pd = { title: t, description: desc, price: pr, category: cat, stock: st, image_url: img, paused: isPaused };
         
         const sv = await saveProductToSupabase(pd);
@@ -1414,10 +1421,10 @@ window.handleAddProduct = async function() {
         updateStatsAndLimits();
         
         if (isPaused) {
-            showToast('Product added but paused - limit reached. Upgrade to activate.', true);
+            showToast(`Product added but paused - you have reached your ${tierMap[currentTier]?.name || 'Free'} limit of ${max} products. Upgrade to activate.`, true);
             enforceProductLimit();
         } else {
-            showToast('Product added successfully!');
+            showToast(`Product added successfully! (${activeCount + 1}/${max} used)`);
         }
         
         toggleProductForm();
@@ -1570,7 +1577,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Fix Cancel button
-    const cancelBtn = document.querySelector('#addProductForm .btn-secondary');
+    const cancelBtn = document.getElementById('cancelProductBtn');
     if (cancelBtn) {
         cancelBtn.onclick = null;
         const newCancelBtn = cancelBtn.cloneNode(true);
@@ -1581,6 +1588,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.toggleProductForm();
             }
         });
+        console.log('✅ Cancel button attached');
     }
     
     console.log('✅ All event listeners set up');
