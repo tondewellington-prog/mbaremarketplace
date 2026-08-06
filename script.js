@@ -1,4 +1,3 @@
-// ============================================
 // Mbare Marketplace - Main JavaScript (Connected to Backend)
 // ============================================
 
