@@ -3,7 +3,7 @@
 // ============================================
 
 // Add warning message at the very beginning
-console.log('%c🔒 WARNING: Unauthorized access to this console is prohibited by Mbare Marketplace CEO, Tonderai Wellington Nyamandi. This activity is illegal and will be prosecuted.', 
+console.log('%c WARNING: Unauthorized access to this console is prohibited by Mbare Marketplace CEO, Tonderai Wellington Nyamandi. This activity is illegal and will be prosecuted.', 
     'background: #232f3e; color: #ff9900; font-size: 14px; font-weight: bold; padding: 10px; border-radius: 5px;');
 
 // Product Data - Will be loaded from API
@@ -13,9 +13,11 @@ let ratingsCache = {};
 
 // Website URL constant
 const WEBSITE_URL = 'https://www.mbaremarketplace.com';
+const SUPABASE_URL = window.SUPABASE_URL || 'https://fnncerdxfhwlrdopswpx.supabase.co';
+const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
 
 // ============================================
-// CATEGORY MAPPINGS (UPDATED WITH NEW CATEGORIES)
+// CATEGORY MAPPINGS
 // ============================================
 
 const CATEGORY_MATCHES = {
@@ -36,10 +38,9 @@ const CATEGORY_MATCHES = {
 // FUNCTION DEFINITIONS
 // ============================================
 
-// Generic function to load products by category with ratings
 async function loadProductsByCategory(category, containerId, limit = 6) {
     try {
-        console.log(`📦 Loading ${category} products...`);
+        console.log('Loading ' + category + ' products...');
         
         const possibleCategories = CATEGORY_MATCHES[category] || [category];
         
@@ -49,24 +50,23 @@ async function loadProductsByCategory(category, containerId, limit = 6) {
             )
         );
         
-        console.log(`✅ Found ${filteredProducts.length} products for ${category}`);
+        console.log('Found ' + filteredProducts.length + ' products for ' + category);
         
         const topProducts = filteredProducts.slice(0, limit);
         if (document.getElementById(containerId)) {
             await loadProductsWithRatings(containerId, topProducts);
         } else {
-            console.warn(`⚠️ Container not found: ${containerId}`);
+            console.warn('Container not found: ' + containerId);
         }
     } catch (error) {
-        console.error(`❌ Error loading ${category}:`, error);
+        console.error('Error loading ' + category + ':', error);
     }
 }
 
-// Load products and fetch ratings for ALL of them
 async function loadProductsWithRatings(containerId, productList) {
     const container = document.getElementById(containerId);
     if (!container) {
-        console.warn(`⚠️ Container not found: ${containerId}`);
+        console.warn('Container not found: ' + containerId);
         return;
     }
     
@@ -85,19 +85,18 @@ async function loadProductsWithRatings(containerId, productList) {
     await fetchRatingsForProducts(productList);
 }
 
-// Fetch ratings for a list of products
 async function fetchRatingsForProducts(productList) {
     for (const product of productList) {
         if (product.seller_id) {
             try {
                 const ratingInfo = await getSellerRatings(product.seller_id);
-                const ratingElement = document.getElementById(`rating-${product.id}`);
+                const ratingElement = document.getElementById('rating-' + product.id);
                 if (ratingElement) {
                     ratingElement.innerHTML = ratingInfo.display;
                 }
             } catch (error) {
-                console.warn(`⚠️ Failed to fetch rating for product ${product.id}:`, error);
-                const ratingElement = document.getElementById(`rating-${product.id}`);
+                console.warn('Failed to fetch rating for product ' + product.id + ':', error);
+                const ratingElement = document.getElementById('rating-' + product.id);
                 if (ratingElement) {
                     ratingElement.innerHTML = '<span style="color: #999;">Rating unavailable</span>';
                 }
@@ -106,7 +105,6 @@ async function fetchRatingsForProducts(productList) {
     }
 }
 
-// Load Best Sellers sections
 async function loadBestSellersElectronics() {
     await loadProductsByCategory('Electronic Devices', 'bestSellersElectronics', 6);
 }
@@ -143,46 +141,42 @@ async function loadBestSellersBeautyCosmetics() {
     await loadProductsByCategory('Beauty & Cosmetics', 'bestSellersBeautyCosmetics', 6);
 }
 
-// FIXED: Renamed to match the call in initialization
 async function loadBestSellersHardwareProducts() {
     await loadProductsByCategory('Hardware', 'bestSellersHardware', 6);
 }       
-    
-// Load Today's Deals
+
 async function loadTodaysDeals() {
     try {
-        console.log('📦 Loading Today\'s Deals...');
+        console.log('Loading Today\'s Deals...');
         if (document.getElementById('todaysDeals')) {
             const deals = products.slice(0, 5);
             await loadProductsWithRatings('todaysDeals', deals);
         }
     } catch (error) {
-        console.error('❌ Error loading deals:', error);
+        console.error('Error loading deals:', error);
     }
 }
 
-// Load Recommended Products
 async function loadRecommendedProducts() {
     try {
-        console.log('📦 Loading Recommended products...');
+        console.log('Loading Recommended products...');
         if (document.getElementById('recommended')) {
             const recommended = products.slice(8, 16);
             await loadProductsWithRatings('recommended', recommended);
         }
     } catch (error) {
-        console.error('❌ Error loading recommendations:', error);
+        console.error('Error loading recommendations:', error);
     }
 }
 
-// Load All Products
 async function loadAllProductsSection() {
     try {
-        console.log('📦 Loading All products...');
+        console.log('Loading All products...');
         if (document.getElementById('allProducts')) {
             await loadProductsWithRatings('allProducts', products);
         }
     } catch (error) {
-        console.error('❌ Error loading all products:', error);
+        console.error('Error loading all products:', error);
     }
 }
 
@@ -192,22 +186,21 @@ async function loadAllProductsSection() {
 
 document.addEventListener('DOMContentLoaded', async function() {
     try {
-        console.log('🚀 DOM loaded, initializing...');
+        console.log('DOM loaded, initializing...');
         
         if (!window.api) {
             await new Promise(resolve => setTimeout(resolve, 500));
         }
         
         await loadSellersFromAPI();
-        console.log('👥 Sellers loaded:', Object.keys(sellersMap).length);
+        console.log('Sellers loaded:', Object.keys(sellersMap).length);
         
         await loadProductsFromAPI();
-        console.log('📦 Products loaded:', products.length);
-        console.log('🏷️ Product categories:', [...new Set(products.map(p => p.category))]);
+        console.log('Products loaded:', products.length);
+        console.log('Product categories:', [...new Set(products.map(p => p.category))]);
         
         await loadUserBasket();
         
-        // Load all sections
         await loadTodaysDeals();
         await loadBestSellersElectronics();
         await loadBestSellersClothing();
@@ -245,10 +238,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             });
         }
         
-        console.log('✅ Initialization complete!');
+        console.log('Initialization complete!');
         
     } catch (error) {
-        console.error('❌ Initialization error:', error);
+        console.error('Initialization error:', error);
         loadFallbackProducts();
     }
 });
@@ -259,13 +252,10 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 async function loadSellersFromAPI() {
     try {
-        const SUPABASE_URL = window.SUPABASE_URL;
-        const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
-        
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/sellers?select=*`, {
+        const response = await fetch(SUPABASE_URL + '/rest/v1/sellers?select=*', {
             headers: {
                 'apikey': SUPABASE_ANON_KEY,
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
             }
         });
         
@@ -285,13 +275,10 @@ async function loadSellersFromAPI() {
 
 async function loadProductsFromAPI() {
     try {
-        const SUPABASE_URL = window.SUPABASE_URL;
-        const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
-        
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
+        const response = await fetch(SUPABASE_URL + '/rest/v1/products?select=*&order=created_at.desc', {
             headers: {
                 'apikey': SUPABASE_ANON_KEY,
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
             }
         });
         
@@ -329,7 +316,7 @@ async function loadUserBasket() {
             const userId = session.user?.id;
             
             if (userId) {
-                const basketKey = `basket_${userId}`;
+                const basketKey = 'basket_' + userId;
                 const userBasket = JSON.parse(localStorage.getItem(basketKey)) || [];
                 updateBasketCount(userBasket.reduce((sum, item) => sum + (item.quantity || 0), 0));
             } else {
@@ -404,13 +391,10 @@ async function getSellerRatings(sellerId) {
     }
     
     try {
-        const SUPABASE_URL = window.SUPABASE_URL;
-        const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
-        
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/ratings?seller_id=eq.${sellerId}&select=rating`, {
+        const response = await fetch(SUPABASE_URL + '/rest/v1/ratings?seller_id=eq.' + sellerId + '&select=rating', {
             headers: {
                 'apikey': SUPABASE_ANON_KEY,
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
             }
         });
         
@@ -424,13 +408,13 @@ async function getSellerRatings(sellerId) {
                 average: average,
                 count: ratings.length,
                 stars: generateRatingStars(average),
-                display: `<span style="color: #f90;">${generateRatingStars(average)}</span> <span style="color: #666; margin-left: 5px;">(${ratings.length} ${ratings.length === 1 ? 'rating' : 'ratings'})</span>`
+                display: '<span style="color: #f90;">' + generateRatingStars(average) + '</span> <span style="color: #666; margin-left: 5px;">(' + ratings.length + ' ' + (ratings.length === 1 ? 'rating' : 'ratings') + ')</span>'
             };
         } else {
             result = {
                 average: 0,
                 count: 0,
-                stars: '☆☆☆☆☆',
+                stars: '.....',
                 display: '<span style="color: #999;">No ratings yet</span>'
             };
         }
@@ -441,7 +425,7 @@ async function getSellerRatings(sellerId) {
         return {
             average: 0,
             count: 0,
-            stars: '☆☆☆☆☆',
+            stars: '.....',
             display: '<span style="color: #999;">No ratings yet</span>'
         };
     }
@@ -500,8 +484,8 @@ function createProductCard(product) {
     const imageUrl = product.image_url || product.image || 'https://via.placeholder.com/300x300?text=Product';
     
     card.innerHTML = `
-        <img src="${imageUrl}" alt="${product.title}" class="product-image" onclick="checkLoginAndNavigate(${product.id})" style="cursor: pointer;" onerror="this.src='https://via.placeholder.com/300x300?text=Product'">
-        <h3 class="product-title" onclick="checkLoginAndNavigate(${product.id})" style="cursor: pointer;">${escapeHtml(product.title)}</h3>
+        <img src="${imageUrl}" alt="${product.title}" class="product-image" onclick="checkLoginAndNavigate('${product.id}')" style="cursor: pointer;" onerror="this.src='https://via.placeholder.com/300x300?text=Product'">
+        <h3 class="product-title" onclick="checkLoginAndNavigate('${product.id}')" style="cursor: pointer;">${escapeHtml(product.title)}</h3>
         <div class="product-rating">
             <span class="stars">${stars}</span>
             <span class="rating-count">(${product.reviews})</span>
@@ -509,7 +493,6 @@ function createProductCard(product) {
         <div class="product-price">
             <span class="currency">$</span>${product.price.toFixed(2)}
         </div>
-        <!-- VISIT SHOP LINK -->
         <a href="shop.html?seller=${product.seller_id}" class="visit-shop-link" onclick="event.stopPropagation()" style="color:#f90;text-decoration:underline;font-size:12px;display:inline-block;margin:5px 0;">Visit Shop</a>
         <div class="product-seller" style="font-size: 12px; color: #666; margin: 5px 0;">
             Seller: ${escapeHtml(sellerName)}
@@ -519,14 +502,13 @@ function createProductCard(product) {
         </div>
         <div class="product-actions">
             <button class="btn-add-cart" onclick="addToBasket('${product.id}')">Add to Basket</button>
-            <button class="btn-contact-seller" onclick="showSellerContact('${product.id}')" style="background: #f90; color: white; border: none; padding: 8px; border-radius: 4px; margin-top: 5px; width: 100%; cursor: pointer; font-weight: 600;">✉ Contact Seller</button>
+            <button class="btn-contact-seller" onclick="showSellerContact('${product.id}')" style="background: #f90; color: white; border: none; padding: 8px; border-radius: 4px; margin-top: 5px; width: 100%; cursor: pointer; font-weight: 600;">Contact Seller</button>
         </div>
     `;
     
     return card;
 }
 
-// Helper function to escape HTML and remove emojis
 function escapeHtml(text) {
     if (!text) return '';
     return text
@@ -535,12 +517,11 @@ function escapeHtml(text) {
             if (m === '<') return '&lt;';
             if (m === '>') return '&gt;';
             return m;
-        })
-        .replace(/[\u{1F300}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
+        });
 }
 
 // ============================================
-// CONTACT SELLER - UPDATED TO USE MESSAGES (NO WHATSAPP/CALL)
+// CONTACT SELLER - UPDATED TO CREATE CONVERSATION
 // ============================================
 
 async function showSellerContact(productId) {
@@ -548,97 +529,111 @@ async function showSellerContact(productId) {
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
     
     if (!isLoggedIn || !sessionData) {
-        const confirmLogin = confirm('Please login to view seller contact information. Would you like to login now?');
+        const confirmLogin = confirm('Please login to contact the seller. Would you like to login now?');
         if (confirmLogin) {
-            const currentPage = encodeURIComponent(window.location.href);
-            window.location.href = `login.html?redirect=${currentPage}`;
+            window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.href);
         }
         return;
     }
     
-    const product = products.find(p => p.id == productId);
-    if (!product) {
-        alert('Product not found');
-        return;
-    }
-    
-    const seller = sellersMap[product.seller_id];
-    if (!seller) {
-        alert('Seller information not available');
-        return;
-    }
-    
-    const phone = seller.business_phone || 'Not provided';
-    
-    let modal = document.getElementById('sellerContactModal');
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'sellerContactModal';
-        modal.className = 'contact-modal';
-        modal.innerHTML = `
-            <div class="contact-modal-content">
-                <span class="close-contact-modal" onclick="document.getElementById('sellerContactModal').style.display='none'">&times;</span>
-                <div id="sellerContactContent"></div>
-            </div>
-        `;
-        document.body.appendChild(modal);
-    }
-    
-    const modalContent = document.getElementById('sellerContactContent');
-    modalContent.innerHTML = `
-        <div class="product-title">📦 ${escapeHtml(product.title)}</div>
-        <div class="seller-info">
-            <div class="info-row">
-                <div class="info-icon">🏪</div>
-                <div class="info-text">
-                    <div class="info-label">Seller</div>
-                    <div class="info-value">${escapeHtml(seller.business_name || 'Unknown Seller')}</div>
-                </div>
-            </div>
-            <div class="info-row">
-                <div class="info-icon">📞</div>
-                <div class="info-text">
-                    <div class="info-label">Phone Number</div>
-                    <div class="info-value">${escapeHtml(phone)}</div>
-                </div>
-            </div>
-            <div class="info-row">
-                <div class="info-icon">📍</div>
-                <div class="info-text">
-                    <div class="info-label">Shop Location</div>
-                    <div class="info-value">${escapeHtml(seller.business_address || 'Location not specified')}</div>
-                </div>
-            </div>
-        </div>
-        <!-- UPDATED: Removed Call & WhatsApp, added Send Message link -->
-        <div class="contact-actions">
-            <a href="messages.html" class="contact-btn" style="
-                background: #f90; 
-                color: white; 
-                text-decoration: none; 
-                display: inline-block; 
-                text-align: center; 
-                width: 100%; 
-                padding: 14px; 
-                border-radius: 6px; 
-                font-weight: 600; 
-                font-size: 15px;
-                transition: background 0.2s;
-            " onmouseover="this.style.background='#e08500'" onmouseout="this.style.background='#f90'">
-                ✉ Send Message
-            </a>
-        </div>
-        <div style="margin-top: 12px; font-size: 12px; color: #888; text-align: center;">
-            Your conversation will appear in the Messages section
-        </div>
-    `;
-    
-    modal.style.display = 'block';
-    window.onclick = function(event) {
-        if (event.target == modal) {
-            modal.style.display = 'none';
+    try {
+        const session = JSON.parse(sessionData);
+        const userId = session.user?.id;
+        const accessToken = session.access_token;
+        
+        if (!userId) {
+            alert('User session error. Please login again.');
+            return;
         }
-    };
+        
+        // Get product info
+        const product = products.find(p => p.id == productId);
+        if (!product) {
+            alert('Product not found');
+            return;
+        }
+        
+        const sellerId = product.seller_id;
+        const productName = product.title;
+        
+        if (!sellerId) {
+            alert('Seller information not available');
+            return;
+        }
+        
+        console.log('Creating conversation for product:', productName, 'Seller:', sellerId, 'Buyer:', userId);
+        
+        // Check if conversation already exists
+        let existingConv = null;
+        try {
+            const convResponse = await fetch(SUPABASE_URL + '/rest/v1/conversations?buyer_id=eq.' + userId + '&seller_id=eq.' + sellerId + '&select=id', {
+                headers: {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': 'Bearer ' + accessToken
+                }
+            });
+            const convData = await convResponse.json();
+            if (convData && convData.length > 0) {
+                existingConv = convData[0];
+            }
+        } catch (e) {
+            console.log('Check existing conversation error:', e);
+        }
+        
+        let conversationId = existingConv?.id;
+        
+        // If no conversation exists, create one
+        if (!conversationId) {
+            console.log('Creating new conversation...');
+            
+            const convData = {
+                product_id: productId,
+                buyer_id: userId,
+                seller_id: sellerId,
+                subject: productName,
+                last_message: null,
+                last_message_at: new Date().toISOString(),
+                unread_buyer: 0,
+                unread_seller: 0
+            };
+            
+            const createResponse = await fetch(SUPABASE_URL + '/rest/v1/conversations', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': 'Bearer ' + accessToken,
+                    'Prefer': 'return=representation'
+                },
+                body: JSON.stringify(convData)
+            });
+            
+            if (createResponse.ok) {
+                const result = await createResponse.json();
+                if (result && result.length > 0) {
+                    conversationId = result[0].id;
+                    console.log('Conversation created:', conversationId);
+                }
+            } else {
+                console.error('Failed to create conversation:', await createResponse.text());
+            }
+        }
+        
+        // Redirect to messages page with conversation ID
+        if (conversationId) {
+            console.log('Redirecting to messages.html?conversation=' + conversationId);
+            window.location.href = 'messages.html?conversation=' + conversationId;
+        } else {
+            // Fallback: just go to messages page
+            console.warn('No conversation ID, going to messages page');
+            window.location.href = 'messages.html';
+        }
+        
+    } catch (error) {
+        console.error('Error in showSellerContact:', error);
+        alert('Could not start conversation. Please try again.');
+        window.location.href = 'messages.html';
+    }
 }
 
 // ============================================
@@ -653,7 +648,7 @@ function checkLoginAndNavigate(productId) {
         if (!loginModal) {
             const confirmLogin = confirm('Please login to view product details. Would you like to login now?');
             if (confirmLogin) {
-                window.location.href = `login.html?redirect=product-detail.html?id=${productId}`;
+                window.location.href = 'login.html?redirect=product-detail.html?id=' + productId;
             }
             return false;
         }
@@ -662,7 +657,7 @@ function checkLoginAndNavigate(productId) {
         return false;
     }
     
-    window.location.href = `product-detail.html?id=${productId}`;
+    window.location.href = 'product-detail.html?id=' + productId;
     return true;
 }
 
@@ -700,7 +695,7 @@ async function addToBasket(productId, quantity = 1) {
             return;
         }
         
-        const basketKey = `basket_${userId}`;
+        const basketKey = 'basket_' + userId;
         let userBasket = JSON.parse(localStorage.getItem(basketKey)) || [];
         const existingItem = userBasket.find(item => item.id == productId);
         
@@ -741,7 +736,7 @@ function updateBasketCount(totalItems) {
                 const session = JSON.parse(sessionData);
                 const userId = session.user?.id;
                 if (userId) {
-                    const basketKey = `basket_${userId}`;
+                    const basketKey = 'basket_' + userId;
                     const userBasket = JSON.parse(localStorage.getItem(basketKey)) || [];
                     const items = userBasket.reduce((sum, item) => sum + (item.quantity || 0), 0);
                     basketCount.textContent = items;
@@ -792,7 +787,7 @@ function moveCarousel(direction) {
     if (currentSlide < 0) currentSlide = totalSlides - 1;
     else if (currentSlide >= totalSlides) currentSlide = 0;
     
-    slides.style.transform = `translateX(-${currentSlide * 100}%)`;
+    slides.style.transform = 'translateX(-' + (currentSlide * 100) + '%)';
     indicators.forEach((indicator, index) => {
         indicator.classList.toggle('active', index === currentSlide);
     });
@@ -824,10 +819,10 @@ function displayProductDetail(product, ratingInfo) {
     const whatsappNumber = seller.business_phone || '';
     const shopLocation = seller.business_address || 'Location not specified';
     const ratingDisplay = ratingInfo ? ratingInfo.display : '<span style="color: #999;">No ratings yet</span>';
-    const whatsappMessage = `Hello! I am interested in ${product.title}, I saw it on ${WEBSITE_URL}`;
+    const whatsappMessage = 'Hello! I am interested in ' + product.title + ', I saw it on ' + WEBSITE_URL;
     const encodedMessage = encodeURIComponent(whatsappMessage);
     const formattedWhatsappNumber = whatsappNumber ? whatsappNumber.replace(/[^0-9]/g, '') : '';
-    const whatsappLink = formattedWhatsappNumber ? `https://wa.me/${formattedWhatsappNumber}?text=${encodedMessage}` : '#';
+    const whatsappLink = formattedWhatsappNumber ? 'https://wa.me/' + formattedWhatsappNumber + '?text=' + encodedMessage : '#';
     
     const detailContainer = document.getElementById('productDetail');
     if (!detailContainer) return;
@@ -846,7 +841,7 @@ function displayProductDetail(product, ratingInfo) {
             <p class="product-detail-description">${escapeHtml(product.description || '')}</p>
             <div class="detail-actions">
                 <button class="btn-add-cart-large" onclick="addToBasket('${product.id}')">Add to Basket</button>
-                ${whatsappNumber ? `<a href="${whatsappLink}" target="_blank" class="btn-buy-now-large" style="display: inline-block; text-decoration: none; background: #25D366; color: white; padding: 12px 30px; border-radius: 4px;">Buy via WhatsApp</a>` : ''}
+                ${whatsappNumber ? '<a href="' + whatsappLink + '" target="_blank" class="btn-buy-now-large" style="display: inline-block; text-decoration: none; background: #25D366; color: white; padding: 12px 30px; border-radius: 4px;">Buy via WhatsApp</a>' : ''}
             </div>
         </div>
     `;
@@ -873,7 +868,7 @@ async function loadBasketPage() {
     const userId = session.user?.id;
     if (!userId) return;
     
-    const basketKey = `basket_${userId}`;
+    const basketKey = 'basket_' + userId;
     const userBasket = JSON.parse(localStorage.getItem(basketKey)) || [];
     
     if (userBasket.length === 0) {
@@ -902,7 +897,7 @@ async function loadBasketPage() {
     
     const basketSummary = document.getElementById('basketSummary');
     if (basketSummary) {
-        basketSummary.innerHTML = `<h3>Total: $${subtotal.toFixed(2)}</h3><button onclick="window.location.href='checkout.html'">Checkout</button>`;
+        basketSummary.innerHTML = '<h3>Total: $' + subtotal.toFixed(2) + '</h3><button onclick="window.location.href=\'checkout.html\'">Checkout</button>';
     }
 }
 
@@ -917,7 +912,7 @@ async function updateBasketQuantity(productId, change, newValue) {
     const userId = session.user?.id;
     if (!userId) return;
     
-    const basketKey = `basket_${userId}`;
+    const basketKey = 'basket_' + userId;
     let userBasket = JSON.parse(localStorage.getItem(basketKey)) || [];
     const item = userBasket.find(i => i.id == productId);
     if (!item) return;
@@ -942,7 +937,7 @@ async function removeFromBasket(productId) {
     const userId = session.user?.id;
     if (!userId) return;
     
-    const basketKey = `basket_${userId}`;
+    const basketKey = 'basket_' + userId;
     let userBasket = JSON.parse(localStorage.getItem(basketKey)) || [];
     userBasket = userBasket.filter(item => item.id != productId);
     localStorage.setItem(basketKey, JSON.stringify(userBasket));
@@ -954,7 +949,7 @@ function handleSearch() {
     const searchInput = document.getElementById('searchInput');
     const query = searchInput ? searchInput.value.trim() : '';
     if (query) {
-        window.location.href = `search-results.html?q=${encodeURIComponent(query)}`;
+        window.location.href = 'search-results.html?q=' + encodeURIComponent(query);
     }
 }
 
@@ -991,16 +986,17 @@ window.hideLoginPrompt = hideLoginPrompt;
 window.moveCarousel = moveCarousel;
 window.goToSlide = goToSlide;
 window.handleSearch = handleSearch;
+
 // ============================================
 // PASSWORD RESET DETECTION
 // ============================================
 
 (function() {
-    // Check if URL has access_token hash (from password reset)
     const hash = window.location.hash;
     if (hash && hash.includes('access_token=')) {
         console.log('Password reset token detected, redirecting to reset-password.html');
-        // Preserve the hash and redirect
         window.location.href = '/reset-password.html' + hash;
     }
 })();
+
+console.log('script.js loaded successfully!');
