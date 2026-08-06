@@ -436,7 +436,7 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
     });
 
     // =====================================================
-    // INSTALL BUTTON HANDLING
+    // INSTALL BUTTON HANDLING - UPDATED FOR AUTOMATIC INSTALL
     // =====================================================
     let deferredPrompt;
     var installButton = document.getElementById('installButton');
@@ -449,24 +449,59 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
     var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
     var wasInstalled = localStorage.getItem('pwa_installed') === 'true';
 
+    // Hide install button if already installed
     if (isStandalone || wasInstalled) {
         if (installButton) installButton.style.display = 'none';
     }
 
+    // Listen for PWA install prompt
     window.addEventListener('beforeinstallprompt', function(e) {
         e.preventDefault();
         deferredPrompt = e;
+        
+        // Show install button on ALL devices that support PWA
         if (!isStandalone && !wasInstalled && installButton) {
             installButton.style.display = 'flex';
+            installButton.innerHTML = '<span class="install-icon">📱</span> Install App';
         }
     });
 
+    // Show install button on mobile if not installed
     if (isMobile && !isStandalone && !wasInstalled && installButton) {
         installButton.style.display = 'flex';
     }
 
+    // INSTALL BUTTON CLICK HANDLER - AUTOMATIC FOR ALL DEVICES
     if (installButton) {
         installButton.addEventListener('click', async function() {
+            // === ANDROID: Automatic PWA Install ===
+            if (isAndroid && deferredPrompt) {
+                deferredPrompt.prompt();
+                var result = await deferredPrompt.userChoice;
+                
+                if (result.outcome === 'accepted') {
+                    recordAppDownload('install_accepted');
+                    localStorage.setItem('pwa_installed', 'true');
+                    installButton.style.display = 'none';
+                    console.log('Android app installed successfully!');
+                } else {
+                    recordAppDownload('install_dismissed');
+                    console.log('Android installation dismissed');
+                }
+                deferredPrompt = null;
+                return;
+            }
+            
+            // === iOS: Show instructions modal ===
+            if (isIOS) {
+                if (iosPrompt) {
+                    iosPrompt.style.display = 'block';
+                    recordAppDownload('ios_install_modal_shown');
+                }
+                return;
+            }
+            
+            // === Desktop PWA: Automatic Install ===
             if (deferredPrompt) {
                 deferredPrompt.prompt();
                 var result = await deferredPrompt.userChoice;
@@ -474,29 +509,30 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
                     recordAppDownload('install_accepted');
                     localStorage.setItem('pwa_installed', 'true');
                     installButton.style.display = 'none';
+                    console.log('Desktop app installed successfully!');
                 } else {
                     recordAppDownload('install_dismissed');
+                    console.log('Desktop installation dismissed');
                 }
                 deferredPrompt = null;
-            } else if (isIOS && iosPrompt) {
-                iosPrompt.style.display = 'block';
-                recordAppDownload('ios_install_modal_shown');
-            } else if (isAndroid) {
-                alert('To install the app:\n\n1. Tap the three dots ⋮ in the top right\n2. Tap "Install app"\n3. Tap "Install"');
-                recordAppDownload('android_manual_install');
-            } else {
-                alert('To install the app:\n\n1. Click the install icon in the address bar\n2. Click "Install"\n\nOr look for "Install app" in the browser menu');
-                recordAppDownload('install_fallback');
+                return;
             }
+            
+            // === Fallback (should rarely happen) ===
+            alert('To install this app, look for the install icon in your browser address bar.');
+            recordAppDownload('install_fallback');
         });
     }
 
+    // Track when app is installed
     window.addEventListener('appinstalled', function() {
         localStorage.setItem('pwa_installed', 'true');
         if (installButton) installButton.style.display = 'none';
         recordAppDownload('pwa_install_complete');
+        console.log('App installed successfully!');
     });
 
+    // Detect standalone mode changes
     window.matchMedia('(display-mode: standalone)').addEventListener('change', function(e) {
         if (e.matches) {
             localStorage.setItem('pwa_installed', 'true');
@@ -504,10 +540,13 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
         }
     });
 
+    // Close iOS prompt
     window.closeIOSPrompt = function() {
         if (iosPrompt) iosPrompt.style.display = 'none';
+        localStorage.setItem('iosPromptDismissed', 'true');
     };
 
+    // Click outside iOS prompt to close
     window.addEventListener('click', function(e) {
         if (e.target === iosPrompt) {
             closeIOSPrompt();
@@ -526,6 +565,134 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
                 })
                 .catch(function(err) { console.log('Service Worker registration failed:', err); });
         });
+    }
+
+    // =====================================================
+    // DESKTOP APP DOWNLOADS (Native apps for Windows/Mac/Linux)
+    // =====================================================
+    function initDesktopDownloads() {
+        const userAgent = navigator.userAgent.toLowerCase();
+        const isWindows = /windows|win32|win64|wow64/i.test(userAgent);
+        const isMac = /macintosh|mac os x|mac_powerpc/i.test(userAgent);
+        const isLinux = /linux/i.test(userAgent) && !/android/i.test(userAgent);
+        const isDesktop = !/android|webos|iphone|ipad|ipod|blackberry|windows phone/i.test(userAgent);
+        
+        console.log('Desktop Download Check:', { isWindows, isMac, isLinux, isDesktop });
+        
+        if (!isDesktop) return; // Only run on desktop
+        
+        // Show desktop download links
+        const downloadLinks = document.querySelectorAll('.download-link');
+        downloadLinks.forEach(el => {
+            if (isWindows && el.id === 'downloadWindowsBtn') {
+                el.style.display = 'inline-block';
+                el.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    downloadDesktopApp('windows');
+                });
+            } else if (isMac && el.id === 'downloadMacBtn') {
+                el.style.display = 'inline-block';
+                el.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    downloadDesktopApp('mac');
+                });
+            } else if (isLinux && el.id === 'downloadLinuxBtn') {
+                el.style.display = 'inline-block';
+                el.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    downloadDesktopApp('linux');
+                });
+            } else if (el.id === 'downloadAndroidBtn' || el.id === 'downloadIOSBtn') {
+                el.style.display = 'none'; // Hide mobile links on desktop
+            }
+        });
+        
+        // Show desktop download badge in header
+        const badge = document.getElementById('desktopDownloadBadge');
+        if (badge) {
+            badge.style.display = 'inline-block';
+            let osName = 'Desktop';
+            if (isWindows) osName = 'Windows';
+            else if (isMac) osName = 'macOS';
+            else if (isLinux) osName = 'Linux';
+            badge.innerHTML = '💻 Download ' + osName + ' App';
+        }
+    }
+    
+    // Download function for native desktop apps
+    window.downloadDesktopApp = function(os) {
+        const downloadUrls = {
+            windows: 'https://www.mbaremarketplace.com/downloads/mbare-marketplace-windows.exe',
+            mac: 'https://www.mbaremarketplace.com/downloads/mbare-marketplace-mac.dmg',
+            linux: 'https://www.mbaremarketplace.com/downloads/mbare-marketplace-linux.AppImage'
+        };
+        
+        const url = downloadUrls[os];
+        if (url) {
+            // Track download
+            recordAppDownload('desktop_download', { os: os });
+            
+            // Start download
+            window.location.href = url;
+            
+            // Show feedback
+            const btn = event && event.target ? event.target.closest('.download-link') : null;
+            if (btn) {
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '⬇️ Downloading...';
+                btn.style.opacity = '0.7';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.opacity = '1';
+                }, 3000);
+            }
+        } else {
+            alert('Download not available for ' + os + ' yet. Please check back soon!');
+        }
+    };
+    
+    // Show desktop download options (scroll to footer)
+    window.showDesktopDownloadOptions = function() {
+        const downloadSection = document.querySelector('.footer-columns:last-child');
+        if (downloadSection) {
+            downloadSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            downloadSection.style.transition = 'background 0.3s';
+            downloadSection.style.background = 'rgba(255, 255, 255, 0.05)';
+            setTimeout(() => {
+                downloadSection.style.background = 'transparent';
+            }, 1500);
+        }
+    };
+
+    // =====================================================
+    // ANDROID APP STORE LINK
+    // =====================================================
+    function initAndroidAppLink() {
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        if (!isAndroid) return;
+        
+        // Show Android Play Store link in footer
+        const androidLink = document.getElementById('downloadAndroidBtn');
+        if (androidLink) {
+            androidLink.style.display = 'inline-block';
+            androidLink.href = 'https://play.google.com/store/apps/details?id=com.mbaremarketplace.app';
+            androidLink.addEventListener('click', function(e) {
+                recordAppDownload('android_play_store_click');
+                // Allow the link to open normally
+            });
+        }
+        
+        // Also update the install button for Android
+        const installBtn = document.getElementById('installButton');
+        if (installBtn && !window.deferredPrompt) {
+            installBtn.addEventListener('click', function() {
+                // If PWA install isn't available, offer Play Store
+                if (!window.deferredPrompt) {
+                    window.open('https://play.google.com/store/apps/details?id=com.mbaremarketplace.app', '_blank');
+                    recordAppDownload('android_play_store_install');
+                }
+            });
+        }
     }
 
     // =====================================================
@@ -560,6 +727,12 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
             var email = getLoggedInUserEmail();
             updateAccountMenu(email);
         }
+        
+        // Initialize desktop downloads
+        initDesktopDownloads();
+        
+        // Initialize Android app link
+        initAndroidAppLink();
         
         console.log('index-2.js: Initialization complete!');
     });
