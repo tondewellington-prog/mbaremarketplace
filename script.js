@@ -519,7 +519,7 @@ function escapeHtml(text) {
 }
 
 // ============================================
-// CONTACT SELLER - UPDATED TO CREATE CONVERSATION
+// CONTACT SELLER - UPDATED TO USE SELLER NAME
 // ============================================
 
 async function showSellerContact(productId) {
@@ -559,7 +559,13 @@ async function showSellerContact(productId) {
             return;
         }
         
-        console.log('Creating conversation for product:', productName, 'Seller:', sellerId, 'Buyer:', userId);
+        // Get seller's business name
+        const seller = sellersMap[sellerId];
+        const sellerName = seller?.business_name || 'Seller';
+        
+        console.log('Creating conversation for product:', productName);
+        console.log('Seller:', sellerId, 'Business Name:', sellerName);
+        console.log('Buyer:', userId);
         
         // Check if conversation already exists
         let existingConv = null;
@@ -580,15 +586,15 @@ async function showSellerContact(productId) {
         
         let conversationId = existingConv?.id;
         
-        // If no conversation exists, create one
+        // If no conversation exists, create one with the seller's business name
         if (!conversationId) {
-            console.log('Creating new conversation...');
+            console.log('Creating new conversation with seller:', sellerName);
             
             const convData = {
                 product_id: productId,
                 buyer_id: userId,
                 seller_id: sellerId,
-                subject: productName,
+                subject: sellerName,
                 last_message: null,
                 last_message_at: new Date().toISOString(),
                 unread_buyer: 0,
@@ -622,7 +628,6 @@ async function showSellerContact(productId) {
             console.log('Redirecting to messages.html?conversation=' + conversationId);
             window.location.href = 'messages.html?conversation=' + conversationId;
         } else {
-            // Fallback: just go to messages page
             console.warn('No conversation ID, going to messages page');
             window.location.href = 'messages.html';
         }
