@@ -103,6 +103,10 @@
 
     <script src="api.js"></script>
     <script>
+        // ============================================
+        // MESSAGES - FULLY FUNCTIONAL LIKE WHATSAPP
+        // ============================================
+        
         let currentUserId = null;
         let currentUserEmail = null;
         let conversations = [];
@@ -110,11 +114,33 @@
         let messages = [];
         let pollInterval = null;
         let isSending = false;
+        let sellersMap = {};
 
         // Get conversation ID from URL
         function getConversationIdFromURL() {
             const urlParams = new URLSearchParams(window.location.search);
             return urlParams.get('conversation');
+        }
+
+        // Load sellers map
+        async function loadSellersMap() {
+            try {
+                const response = await fetch(window.SUPABASE_URL + '/rest/v1/sellers?select=user_id,business_name', {
+                    headers: {
+                        'apikey': window.SUPABASE_ANON_KEY,
+                        'Authorization': 'Bearer ' + window.SUPABASE_ANON_KEY
+                    }
+                });
+                const sellers = await response.json();
+                if (Array.isArray(sellers)) {
+                    sellers.forEach(function(seller) {
+                        sellersMap[seller.user_id] = seller;
+                    });
+                    console.log('Sellers map loaded:', Object.keys(sellersMap).length);
+                }
+            } catch (error) {
+                console.error('Error loading sellers map:', error);
+            }
         }
 
         // Check login status on load
@@ -139,6 +165,9 @@
                 console.log('User authenticated:', currentUserEmail);
                 console.log('User ID:', currentUserId);
 
+                // Load sellers map first
+                await loadSellersMap();
+
                 // Load conversations
                 await loadConversations();
                 
@@ -146,7 +175,6 @@
                 const convId = getConversationIdFromURL();
                 if (convId) {
                     console.log('Opening conversation from URL:', convId);
-                    // Wait a moment for the list to render, then open the conversation
                     setTimeout(function() {
                         openConversation(convId);
                     }, 600);
@@ -169,7 +197,6 @@
                 
                 let data;
                 
-                // Use the API from api.js
                 if (window.api && window.api.getConversations) {
                     console.log('Using api.getConversations...');
                     data = await window.api.getConversations(currentUserId);
@@ -183,7 +210,6 @@
                 
                 renderConversationList();
                 
-                // If there's an active conversation, refresh it
                 if (activeConversationId) {
                     const stillExists = conversations.some(c => c.id === activeConversationId);
                     if (!stillExists) {
@@ -226,7 +252,15 @@
             list.innerHTML = conversations.map(function(conv) {
                 const unreadCount = conv.buyer_id === currentUserId ? conv.unread_buyer : conv.unread_seller;
                 const isActive = conv.id === activeConversationId;
-                const displayName = conv.subject || 'Chat';
+                
+                let displayName = conv.subject || 'Chat';
+                if (conv.seller_id) {
+                    const seller = sellersMap[conv.seller_id];
+                    if (seller && seller.business_name) {
+                        displayName = seller.business_name;
+                    }
+                }
+                
                 const lastMessage = conv.last_message || 'No messages yet';
                 const time = conv.last_message_at ? new Date(conv.last_message_at) : new Date();
                 const timeStr = formatTime(time);
@@ -267,7 +301,6 @@
             renderConversationList();
             await loadMessages(convId);
             
-            // Update URL without reloading the page
             const url = new URL(window.location);
             url.searchParams.set('conversation', convId);
             window.history.pushState({}, '', url);
@@ -289,9 +322,7 @@
                 messages = Array.isArray(data) ? data : [];
                 console.log('Loaded ' + messages.length + ' messages');
                 
-                // Mark as read
                 await markAsRead(convId);
-                
                 renderChatWindow();
                 
             } catch (error) {
@@ -316,7 +347,6 @@
                         await window.updateConversation(convId, { [field]: 0 });
                     }
                     
-                    // Update local data
                     conv[field] = 0;
                     renderConversationList();
                 }
@@ -334,7 +364,13 @@
                 return;
             }
 
-            const displayName = conv.subject || 'Chat';
+            let displayName = conv.subject || 'Chat';
+            if (conv.seller_id) {
+                const seller = sellersMap[conv.seller_id];
+                if (seller && seller.business_name) {
+                    displayName = seller.business_name;
+                }
+            }
 
             chatWindow.innerHTML = `
                 <div class="chat-header">
@@ -352,7 +388,6 @@
                 </div>
             `;
 
-            // Scroll to bottom
             setTimeout(function() {
                 const container = document.getElementById('chatMessages');
                 if (container) container.scrollTop = container.scrollHeight;
@@ -409,17 +444,14 @@
             sendBtn.textContent = 'Sending...';
             
             try {
-                // Send the message
                 if (window.api && window.api.sendMessage) {
                     await window.api.sendMessage(activeConversationId, currentUserId, message);
                 } else {
                     await window.sendMessage(activeConversationId, currentUserId, message);
                 }
 
-                // Update conversation last message
                 const conv = conversations.find(function(c) { return c.id === activeConversationId; });
                 if (conv) {
-                    const isBuyer = conv.buyer_id === currentUserId;
                     const updateData = { 
                         last_message: message, 
                         last_message_at: new Date().toISOString()
@@ -431,14 +463,11 @@
                         await window.updateConversation(activeConversationId, updateData);
                     }
                     
-                    // Update local data
                     conv.last_message = message;
                     conv.last_message_at = new Date().toISOString();
                 }
 
                 input.value = '';
-                
-                // Reload messages
                 await loadMessages(activeConversationId);
                 await loadConversations();
                 
@@ -469,11 +498,10 @@
                         if (Array.isArray(data) && data.length !== messages.length) {
                             messages = data;
                             renderChatWindow();
-                            // Also refresh conversation list for unread counts
                             await loadConversations();
                         }
                     } catch (e) {
-                        // Silent fail for polling
+                        // Silent fail
                     }
                 }
             }, 3000);
