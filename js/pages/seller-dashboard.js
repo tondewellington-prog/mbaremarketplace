@@ -1353,6 +1353,8 @@ window.openCamera = function() {
 
 // ==================== FIXED: handleAddProduct ====================
 window.handleAddProduct = async function() {
+    console.log('🔄 handleAddProduct called');
+    
     const ed = document.getElementById('submitProductBtn').getAttribute('data-editing');
     const activeProducts = sellerProducts.filter(p => !p.paused);
     const max = getCurrentLimit();
@@ -1519,6 +1521,85 @@ function initializeDashboardData() {
     updateViewShopButton();
     console.log('Dashboard fully initialized.');
 }
+
+// ==================== EVENT LISTENER SETUP (No HTML inline JS) ====================
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔧 Setting up dashboard event listeners...');
+    
+    // Fix Add Product button - remove inline onclick and use event listener
+    const addBtn = document.getElementById('submitProductBtn');
+    if (addBtn) {
+        // Remove any inline onclick
+        addBtn.onclick = null;
+        // Remove existing listeners by cloning
+        const newBtn = addBtn.cloneNode(true);
+        addBtn.parentNode.replaceChild(newBtn, addBtn);
+        newBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('✅ Add Product button clicked (event listener)');
+            if (typeof window.handleAddProduct === 'function') {
+                window.handleAddProduct();
+            } else {
+                console.error('❌ handleAddProduct not found!');
+                showToast('Function not ready. Please refresh.', true);
+            }
+        });
+        console.log('✅ Add Product button attached');
+    } else {
+        console.warn('⚠️ submitProductBtn not found in DOM');
+    }
+    
+    // Fix Toggle Form button - remove inline onclick
+    const toggleBtn = document.getElementById('toggleFormBtn');
+    if (toggleBtn) {
+        // Remove inline onclick
+        toggleBtn.onclick = null;
+        // Remove existing listeners by cloning
+        const newToggleBtn = toggleBtn.cloneNode(true);
+        toggleBtn.parentNode.replaceChild(newToggleBtn, toggleBtn);
+        newToggleBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('✅ Toggle Form button clicked');
+            if (typeof window.toggleProductForm === 'function') {
+                window.toggleProductForm();
+            } else {
+                console.error('❌ toggleProductForm not found!');
+            }
+        });
+        console.log('✅ Toggle Form button attached');
+    }
+    
+    // Fix Cancel button
+    const cancelBtn = document.querySelector('#addProductForm .btn-secondary');
+    if (cancelBtn) {
+        cancelBtn.onclick = null;
+        const newCancelBtn = cancelBtn.cloneNode(true);
+        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+        newCancelBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (typeof window.toggleProductForm === 'function') {
+                window.toggleProductForm();
+            }
+        });
+    }
+    
+    console.log('✅ All event listeners set up');
+});
+
+// Ensure all functions are globally available
+window.handleAddProduct = handleAddProduct;
+window.toggleProductForm = toggleProductForm;
+window.editProduct = editProduct;
+window.deleteProduct = deleteProduct;
+window.whatsappInquiry = whatsappInquiry;
+window.removeImage = removeImage;
+window.handleFileSelect = handleFileSelect;
+window.openCamera = openCamera;
+window.initializeDashboardData = initializeDashboardData;
+window.showUpgradeOptions = showUpgradeOptions;
+window.closeModalAndPay = closeModalAndPay;
+
+console.log('✅ All dashboard functions exposed globally');
 
 // ==================== INIT ====================
 async function init() {
