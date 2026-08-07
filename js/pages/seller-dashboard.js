@@ -1351,7 +1351,7 @@ window.openCamera = function() {
     i.click();
 };
 
-// ==================== FIXED: handleAddProduct with TIER-BASED LIMIT CHECK ====================
+// ==================== handleAddProduct with TIER-BASED LIMIT CHECK ====================
 window.handleAddProduct = async function() {
     console.log('🔄 handleAddProduct called');
     console.log('Current Tier:', currentTier);
@@ -1529,21 +1529,26 @@ function initializeDashboardData() {
     console.log('Dashboard fully initialized.');
 }
 
-// ==================== EVENT LISTENER SETUP (No HTML inline JS) ====================
+// ==================== FORCE FIX: Add Product Button ====================
+// This ensures the Add Product button works regardless of HTML structure
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🔧 Setting up dashboard event listeners...');
+    console.log('🔧 Running force fix for Add Product button...');
     
-    // Fix Add Product button - remove inline onclick and use event listener
-    const addBtn = document.getElementById('submitProductBtn');
+    // Find the Add Product button
+    let addBtn = document.getElementById('submitProductBtn');
+    
     if (addBtn) {
-        // Remove any inline onclick
-        addBtn.onclick = null;
-        // Remove existing listeners by cloning
+        // Remove all existing click listeners by cloning
         const newBtn = addBtn.cloneNode(true);
         addBtn.parentNode.replaceChild(newBtn, addBtn);
-        newBtn.addEventListener('click', function(e) {
+        addBtn = newBtn;
+        
+        // Attach the click handler
+        addBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            console.log('✅ Add Product button clicked (event listener)');
+            e.stopPropagation();
+            console.log('🚀 Add Product button clicked (force fix)');
+            
             if (typeof window.handleAddProduct === 'function') {
                 window.handleAddProduct();
             } else {
@@ -1551,47 +1556,39 @@ document.addEventListener('DOMContentLoaded', function() {
                 showToast('Function not ready. Please refresh.', true);
             }
         });
-        console.log('✅ Add Product button attached');
+        
+        console.log('✅ Force fix: Add Product button is now working');
     } else {
-        console.warn('⚠️ submitProductBtn not found in DOM');
+        console.warn('⚠️ Add Product button not found in DOM');
     }
     
-    // Fix Toggle Form button - remove inline onclick
+    // Fix Toggle Form button
     const toggleBtn = document.getElementById('toggleFormBtn');
     if (toggleBtn) {
-        // Remove inline onclick
-        toggleBtn.onclick = null;
-        // Remove existing listeners by cloning
-        const newToggleBtn = toggleBtn.cloneNode(true);
-        toggleBtn.parentNode.replaceChild(newToggleBtn, toggleBtn);
-        newToggleBtn.addEventListener('click', function(e) {
+        const newBtn = toggleBtn.cloneNode(true);
+        toggleBtn.parentNode.replaceChild(newBtn, toggleBtn);
+        newBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            console.log('✅ Toggle Form button clicked');
             if (typeof window.toggleProductForm === 'function') {
                 window.toggleProductForm();
-            } else {
-                console.error('❌ toggleProductForm not found!');
             }
         });
-        console.log('✅ Toggle Form button attached');
+        console.log('✅ Force fix: Toggle Form button attached');
     }
     
     // Fix Cancel button
     const cancelBtn = document.getElementById('cancelProductBtn');
     if (cancelBtn) {
-        cancelBtn.onclick = null;
-        const newCancelBtn = cancelBtn.cloneNode(true);
-        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
-        newCancelBtn.addEventListener('click', function(e) {
+        const newBtn = cancelBtn.cloneNode(true);
+        cancelBtn.parentNode.replaceChild(newBtn, cancelBtn);
+        newBtn.addEventListener('click', function(e) {
             e.preventDefault();
             if (typeof window.toggleProductForm === 'function') {
                 window.toggleProductForm();
             }
         });
-        console.log('✅ Cancel button attached');
+        console.log('✅ Force fix: Cancel button attached');
     }
-    
-    console.log('✅ All event listeners set up');
 });
 
 // Ensure all functions are globally available
@@ -1608,6 +1605,18 @@ window.showUpgradeOptions = showUpgradeOptions;
 window.closeModalAndPay = closeModalAndPay;
 
 console.log('✅ All dashboard functions exposed globally');
+
+// ==================== TEST FUNCTION ====================
+window.testAddProduct = function() {
+    console.log('🧪 Testing Add Product...');
+    if (typeof window.handleAddProduct === 'function') {
+        window.handleAddProduct();
+    } else {
+        console.error('❌ handleAddProduct not available');
+    }
+};
+
+console.log('✅ Force fixes applied. Use testAddProduct() in console to test.');
 
 // ==================== INIT ====================
 async function init() {
