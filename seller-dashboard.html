@@ -227,14 +227,17 @@
             <div class="stats-card"><div class="stats-number" id="totalValue">$0</div><div>Inventory Value</div></div>
         </div>
         <div class="bg-white rounded-xl p-30 mb-30">
-            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px;"><h2>Add New Product</h2><button class="btn-primary" id="toggleFormBtn" onclick="toggleProductForm()">+ Add Product</button></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px;"><h2>Add New Product</h2><button class="btn-primary" id="toggleFormBtn">+ Add Product</button></div>
             <div id="addProductForm" style="display:none;margin-top:25px;">
                 <form id="productForm" onsubmit="return false;">
                     <div class="form-group"><label>Product Image *</label><input type="file" id="imageFileInput" accept="image/*" style="display:none;" onchange="handleFileSelect(event)"><div class="image-upload-area" id="uploadArea" onclick="document.getElementById('imageFileInput').click()"><div id="uploadPlaceholder"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><p style="color:#666;margin-top:10px;">Click to upload or drag & drop</p><p style="color:#999;font-size:12px;">PNG, JPG, GIF up to 10MB</p><div class="upload-actions"><button type="button" class="camera-btn" onclick="event.stopPropagation();openCamera()">Take Photo</button><button type="button" class="camera-btn" onclick="event.stopPropagation();document.getElementById('imageFileInput').click()">Choose File</button></div></div></div><div class="image-preview-container" id="imagePreviewContainer"><img id="imagePreview" src="" alt="Preview"><button type="button" class="remove-image-btn" onclick="removeImage()">X</button></div><div class="upload-progress-bar" id="uploadProgressBar"><div class="upload-progress-fill" id="uploadProgressFill"></div></div><input type="hidden" id="prodImage" required><small style="color:#666;display:block;margin-top:5px;" id="imageStatus"></small></div>
                     <div class="form-row"><div class="form-group"><label>Product Title *</label><input type="text" id="prodTitle" required></div><div class="form-group"><label>Category *</label><select id="prodCategory" required><option value="">Select Category</option><option value="Electronic Devices">Electronic Devices</option><option value="Books">Books</option><option value="Clothing">Clothing</option><option value="Home & Kitchen">Home & Kitchen</option><option value="Pet Supplies">Pet Supplies</option><option value="Pets & Livestock">Pets & Livestock</option><option value="Vehicle Parts & Accessories">Vehicle Parts & Accessories</option><option value="Vehicles & Transportation">Vehicles & Transportation</option><option value="Sports & Outdoors">Sports & Outdoors</option><option value="Bags & Luggage">Bags & Luggage</option><option value="Farm Products">Farm Products</option><option value="Beauty & Cosmetics">Beauty & Cosmetics</option><option value="Hardware">Hardware</option><option value="Other">Other</option></select></div></div>
                     <div class="form-group"><label>Description</label><textarea id="prodDescription" rows="3"></textarea></div>
                     <div class="form-row"><div class="form-group"><label>Price ($) *</label><input type="number" id="prodPrice" step="0.01" min="0" required></div><div class="form-group"><label>Stock Quantity *</label><input type="number" id="prodStock" min="0" required></div></div>
-                    <div style="display:flex;gap:12px;"><button type="button" class="btn-primary" id="submitProductBtn" onclick="handleAddProduct()">Add Product</button><button type="button" class="btn-secondary" onclick="toggleProductForm()">Cancel</button></div>
+                    <div style="display:flex;gap:12px;">
+                        <button type="button" class="btn-primary" id="submitProductBtn">Add Product</button>
+                        <button type="button" class="btn-secondary" id="cancelProductBtn">Cancel</button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -242,64 +245,16 @@
     </div>
     <footer class="footer"><div class="footer-top"><a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="color:white;">Back to top</a></div><div class="footer-bottom"><div class="container">&copy; 2026 Mbare Marketplace</div></div></footer>
 
+    <!-- Remove the inline script that calls /api/subscriptions/ -->
     <script>
-        document.addEventListener("DOMContentLoaded", async () => {
-            const token = localStorage.getItem("seller_session_token");
-            const sellerId = localStorage.getItem("seller_id");
-
-            if (!token || !sellerId) {
-                console.log("Sync skipped: missing seller credentials in localStorage.");
-                return;
-            }
-
-            try {
-                console.log("Initiating server synchronization handshake for seller:", sellerId);
-                await fetch('/api/subscriptions/initiate-sync', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ sellerId: sellerId, currentStatus: 'Pending' })
-                });
-                console.log("Initial handshake completed successfully.");
-            } catch (err) {
-                console.error("Initial handshake pass-through failure:", err);
-            }
-
-            async function checkVerificationLoop() {
-                if (!localStorage.getItem("seller_session_token") || !localStorage.getItem("seller_id")) {
-                    return;
-                }
-
-                try {
-                    console.log("Polling database for subscription verification update...");
-                    const response = await fetch(`/api/subscriptions/status/${sellerId}`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                    if (response.ok) {
-                        const data = await response.json();
-                        console.log("Current verification status caught:", data.status);
-                        
-                        if (data.status === 'Paid') {
-                            console.log("Status confirmed as 'Paid'. Initializing seller profile layout data.");
-                            if (typeof initializeDashboardData === "function") {
-                                initializeDashboardData();
-                            }
-                            return;
-                        }
-                    }
-                } catch (e) {
-                    console.error("Observer synchronization tracking error:", e);
-                }
-                setTimeout(checkVerificationLoop, 4000);
-            }
-
-            checkVerificationLoop();
-        });
+        // REMOVED the server sync code that was calling /api/subscriptions/
+        console.log('Dashboard loaded - using local storage and Supabase directly');
     </script>
-    <!-- Leaflet JS (Free, no API key needed) - REPLACED Google Maps -->
+    
+    <!-- Leaflet JS (Free, no API key needed) -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="api.js"></script>
+    <script src="auth-check.js"></script>
     <script src="js/pages/seller-dashboard.js"></script>
 </body>
 </html>
