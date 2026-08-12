@@ -158,6 +158,23 @@ function getSellerAddress() {
     return currentSeller.business_address || currentSeller.address || currentSeller.location || 'Zimbabwe';
 }
 
+function generateStars(rating) {
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    let stars = '';
+    for (let i = 0; i < fullStars; i++) {
+        stars += '★';
+    }
+    if (hasHalfStar) {
+        stars += '½';
+    }
+    const emptyStars = 5 - Math.ceil(rating);
+    for (let i = 0; i < emptyStars; i++) {
+        stars += '☆';
+    }
+    return stars;
+}
+
 function renderShop() {
     const categories = getCategories();
     const uniqueCategories = Object.keys(categories);
@@ -237,22 +254,19 @@ function renderShop() {
                         <div class="products-grid">
                             ${filteredProducts.map(p => `
                                 <div class="product-card" onclick="viewProduct('${p.id}')">
-                                    <div class="product-image-wrapper">
-                                        <img src="${p.image_url || 'https://placehold.co/400x300?text=No+Image'}" alt="${p.title || 'Product'}" onerror="this.src='https://placehold.co/400x300?text=No+Image'">
-                                    </div>
-                                    <div class="product-details">
-                                        <div class="product-title">${p.title || 'Untitled'}</div>
-                                        <div class="product-price">$${parseFloat(p.price || 0).toFixed(2)}</div>
-                                        <div class="product-stock ${(p.stock || 0) < 5 ? 'low-stock' : ''}">${(p.stock || 0) > 0 ? `Stock: ${p.stock}` : 'Out of Stock'}</div>
-                                        <div class="product-category">${p.category || 'Other'}</div>
-                                        <button class="view-details-btn" onclick="event.stopPropagation();viewProduct('${p.id}')">View Details</button>
+                                    <img src="${p.image_url || 'https://placehold.co/400x300?text=No+Image'}" alt="${p.title || 'Product'}" onerror="this.src='https://placehold.co/400x300?text=No+Image'">
+                                    <div class="info">
+                                        <div class="title">${p.title || 'Untitled'}</div>
+                                        <div class="price">$${parseFloat(p.price || 0).toFixed(2)}</div>
+                                        <div class="stock">Stock: ${p.stock || 0}</div>
+                                        <span class="category-tag">${p.category || 'Other'}</span>
                                     </div>
                                 </div>
                             `).join('')}
                         </div>
                     ` : `
                         <div class="no-products">
-                            <div class="no-products-icon">📦</div>
+                            <div class="icon">📦</div>
                             <h3>No products found</h3>
                             <p>Try changing your search or filter</p>
                         </div>
