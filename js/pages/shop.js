@@ -79,7 +79,7 @@ async function loadShop(sellerId) {
             console.log('Seller loaded:', currentSeller);
         }
 
-        // Load products for this seller - REMOVED status filter to avoid 400 error
+        // Load products for this seller
         console.log('Loading products for seller:', sellerId);
         const prodResp = await fetch(`${window.SUPABASE_URL}/rest/v1/products?seller_id=eq.${sellerId}&select=*&order=created_at.desc`, {
             headers: { 
@@ -237,15 +237,15 @@ function renderShop() {
                         <div class="products-grid">
                             ${filteredProducts.map(p => `
                                 <div class="product-card" onclick="viewProduct('${p.id}')">
-                                    <div class="product-image-container">
+                                    <div class="product-image-wrapper">
                                         <img src="${p.image_url || 'https://placehold.co/400x300?text=No+Image'}" alt="${p.title || 'Product'}" onerror="this.src='https://placehold.co/400x300?text=No+Image'">
-                                        <span class="product-category-tag">${p.category || 'Other'}</span>
                                     </div>
-                                    <div class="product-info">
+                                    <div class="product-details">
                                         <div class="product-title">${p.title || 'Untitled'}</div>
                                         <div class="product-price">$${parseFloat(p.price || 0).toFixed(2)}</div>
-                                        <div class="product-stock ${(p.stock || 0) < 5 ? 'low-stock' : ''}">${(p.stock || 0) > 0 ? `In Stock: ${p.stock}` : 'Out of Stock'}</div>
-                                        <button class="view-product-btn" onclick="event.stopPropagation();viewProduct('${p.id}')">View Details</button>
+                                        <div class="product-stock ${(p.stock || 0) < 5 ? 'low-stock' : ''}">${(p.stock || 0) > 0 ? `Stock: ${p.stock}` : 'Out of Stock'}</div>
+                                        <div class="product-category">${p.category || 'Other'}</div>
+                                        <button class="view-details-btn" onclick="event.stopPropagation();viewProduct('${p.id}')">View Details</button>
                                     </div>
                                 </div>
                             `).join('')}
