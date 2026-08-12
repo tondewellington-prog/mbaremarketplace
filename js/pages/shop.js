@@ -218,7 +218,7 @@ function renderShop() {
                                 <div class="shop-stat"><div class="num">${uniqueCategories.length}</div><div class="label">Categories</div></div>
                                 <div class="shop-stat"><div class="rating">${ratingDisplay}</div><div class="label">Rating ${ratingText}</div></div>
                             </div>
-                            ${sellerPhone ? `<a href="https://wa.me/${sellerPhone.replace(/[^0-9]/g,'')}?text=Hello!%20I%20am%20interested%20in%20your%20products%20on%20Mbare%20Marketplace" target="_blank" class="contact-btn">Contact via WhatsApp</a>` : ''}
+                            ${sellerPhone ? `<a href="messages.html?seller=${encodeURIComponent(sellerId)}" class="contact-btn">Send a message</a>` : ''}
                         </div>
                     </div>
                 </div>
