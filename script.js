@@ -519,7 +519,7 @@ function escapeHtml(text) {
 }
 
 // ============================================
-// CONTACT SELLER - UPDATED TO USE SELLER NAME
+// CONTACT SELLER - FACEBOOK MARKETPLACE STYLE
 // ============================================
 
 async function showSellerContact(productId) {
@@ -553,6 +553,8 @@ async function showSellerContact(productId) {
         
         const sellerId = product.seller_id;
         const productName = product.title;
+        const productPrice = product.price;
+        const productImage = product.image_url || product.image;
         
         if (!sellerId) {
             alert('Seller information not available');
@@ -566,6 +568,18 @@ async function showSellerContact(productId) {
         console.log('Creating conversation for product:', productName);
         console.log('Seller:', sellerId, 'Business Name:', sellerName);
         console.log('Buyer:', userId);
+        
+        // Store product data in sessionStorage for messages page
+        const productData = {
+            id: product.id,
+            title: productName,
+            price: productPrice,
+            image: productImage,
+            seller_id: sellerId,
+            seller_name: sellerName
+        };
+        sessionStorage.setItem('pending_product', JSON.stringify(productData));
+        sessionStorage.setItem('pending_conversation', 'true');
         
         // Check if conversation already exists
         let existingConv = null;
@@ -590,15 +604,17 @@ async function showSellerContact(productId) {
         if (!conversationId) {
             console.log('Creating new conversation with seller:', sellerName);
             
+            const initialMessage = 'Hi, I am interested in your product: ' + productName + ' ($' + productPrice.toFixed(2) + ')';
+            
             const convData = {
                 product_id: productId,
                 buyer_id: userId,
                 seller_id: sellerId,
                 subject: sellerName,
-                last_message: null,
+                last_message: initialMessage,
                 last_message_at: new Date().toISOString(),
                 unread_buyer: 0,
-                unread_seller: 0
+                unread_seller: 1
             };
             
             const createResponse = await fetch(window.SUPABASE_URL + '/rest/v1/conversations', {
@@ -617,19 +633,36 @@ async function showSellerContact(productId) {
                 if (result && result.length > 0) {
                     conversationId = result[0].id;
                     console.log('Conversation created:', conversationId);
+                    
+                    // Send the initial message
+                    await fetch(window.SUPABASE_URL + '/rest/v1/messages', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': window.SUPABASE_ANON_KEY,
+                            'Authorization': 'Bearer ' + accessToken,
+                            'Prefer': 'return=minimal'
+                        },
+                        body: JSON.stringify({
+                            conversation_id: conversationId,
+                            sender_id: userId,
+                            message: initialMessage,
+                            created_at: new Date().toISOString()
+                        })
+                    });
                 }
             } else {
                 console.error('Failed to create conversation:', await createResponse.text());
             }
         }
         
-        // Redirect to messages page with conversation ID
+        // Redirect to messages page with conversation ID and product
         if (conversationId) {
-            console.log('Redirecting to messages.html?conversation=' + conversationId);
-            window.location.href = 'messages.html?conversation=' + conversationId;
+            console.log('Redirecting to messages.html?conversation=' + conversationId + '&product=' + productId);
+            window.location.href = 'messages.html?conversation=' + conversationId + '&product=' + productId;
         } else {
-            console.warn('No conversation ID, going to messages page');
-            window.location.href = 'messages.html';
+            console.warn('No conversation ID, going to messages page with product');
+            window.location.href = 'messages.html?product=' + productId;
         }
         
     } catch (error) {
