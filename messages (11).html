@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messages App - Mbare Marketplace</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: #f0f2f5; height: 100vh; display: flex; flex-direction: column; }
+        
+        .header { 
+            background: #1a1a2e; 
+            color: white; 
+            padding: 12px 20px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .header h1 { font-size: 1.1rem; font-weight: 600; }
+        .back-btn { 
+            color: white; 
+            text-decoration: none; 
+            font-size: 14px; 
+            display: flex; 
+            align-items: center; 
+            gap: 6px;
+            cursor: pointer;
+        }
+        .back-btn:hover { color: #f90; }
+        
+        .container { display: flex; flex: 1; max-width: 1200px; margin: 0 auto; width: 100%; gap: 0; background: white; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
+        
+        .conversation-list { 
+            width: 340px; 
+            background: white; 
+            overflow-y: auto; 
+            border-right: 1px solid #e8e8e8;
+            flex-shrink: 0;
+        }
+        .conversation-list-header {
+            padding: 14px 20px;
+            border-bottom: 1px solid #e8e8e8;
+            font-weight: 600;
+            font-size: 15px;
+            color: #1a1a2e;
+            background: #fafafa;
+        }
+        .conversation-list::-webkit-scrollbar { width: 4px; }
+        .conversation-list::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+        
+        .conversation-item { 
+            padding: 12px 18px; 
+            border-bottom: 1px solid #f0f0f0; 
+            cursor: pointer; 
+            transition: 0.15s; 
+            display: flex; 
+            gap: 12px; 
+            align-items: center; 
+        }
+        .conversation-item:hover { background: #f7f8fa; }
+        .conversation-item.active { background: #e8f4fd; border-left: 3px solid #f90; }
+        .conv-avatar { 
+            width: 44px; 
+            height: 44px; 
+            border-radius: 50%; 
+            background: linear-gradient(135deg, #f90, #e08500); 
+            color: white; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-weight: 700; 
+            flex-shrink: 0;
+            font-size: 16px;
+        }
+        .conv-info { flex: 1; min-width: 0; }
+        .conv-name { 
+            font-weight: 600; 
+            font-size: 14px; 
+            margin-bottom: 2px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        .conv-name .conv-time { font-weight: 400; font-size: 11px; color: #999; }
+        .conv-last { 
+            font-size: 13px; 
+            color: #888; 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+        }
+        .unread-badge { 
+            background: #f90; 
+            color: white; 
+            font-size: 11px; 
+            padding: 2px 9px; 
+            border-radius: 12px; 
+            display: inline-block; 
+            margin-top: 2px; 
+            font-weight: 600;
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        .chat-window { flex: 1; background: #f7f8fa; display: flex; flex-direction: column; }
+        
+        .chat-empty { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            color: #999; 
+            font-size: 14px; 
+            gap: 12px; 
+            background: #f7f8fa;
+        }
+        .chat-empty svg { width: 64px; height: 64px; stroke: #ddd; }
+        .chat-empty h3 { color: #333; font-size: 18px; }
+        
+        .chat-header { 
+            padding: 12px 20px; 
+            border-bottom: 1px solid #e8e8e8; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            background: white; 
+            flex-shrink: 0;
+        }
+        .chat-header .conv-avatar { width: 38px; height: 38px; font-size: 14px; }
+        .chat-header .header-info { flex: 1; min-width: 0; }
+        .chat-header .header-info strong { font-size: 15px; display: block; color: #1a1a2e; }
+        .chat-header .header-info .header-sub { font-size: 12px; color: #888; }
+        
+        .chat-messages { 
+            flex: 1; 
+            padding: 16px 20px; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 4px; 
+            background: #f7f8fa; 
+        }
+        .chat-messages::-webkit-scrollbar { width: 4px; }
+        .chat-messages::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+        
+        .message-date-divider { 
+            text-align: center; 
+            color: #999; 
+            font-size: 11px; 
+            padding: 12px 0 8px; 
+            font-weight: 500;
+        }
+        
+        .message-wrapper { display: flex; flex-direction: column; max-width: 80%; }
+        .message-wrapper.sent { align-self: flex-end; align-items: flex-end; }
+        .message-wrapper.received { align-self: flex-start; align-items: flex-start; }
+        
+        .message { 
+            padding: 10px 14px; 
+            border-radius: 12px; 
+            font-size: 14px; 
+            line-height: 1.6; 
+            word-wrap: break-word;
+            position: relative;
+        }
+        .message.sent { 
+            background: #f90; 
+            color: white; 
+            border-bottom-right-radius: 4px; 
+        }
+        .message.received { 
+            background: white; 
+            color: #333; 
+            border-bottom-left-radius: 4px; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+        }
+        .message-time { 
+            font-size: 10px; 
+            opacity: 0.6; 
+            margin-top: 3px; 
+            padding: 0 4px; 
+        }
+        .message-wrapper.sent .message-time { color: #888; }
+        .message-wrapper.received .message-time { color: #999; }
+        
+        .inquiry-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            max-width: 280px;
+            border: 1px solid #e8e8e8;
+            margin-bottom: 4px;
+        }
+        .inquiry-card .inquiry-header {
+            padding: 10px 14px 6px;
+            font-weight: 600;
+            font-size: 13px;
+            color: #1a1a2e;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .inquiry-card .inquiry-body {
+            padding: 10px 14px 12px;
+        }
+        .inquiry-card .inquiry-body .product-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .inquiry-card .inquiry-body .product-row img {
+            width: 50px;
+            height: 50px;
+            border-radius: 4px;
+            object-fit: cover;
+            background: #f0f0f0;
+            flex-shrink: 0;
+        }
+        .inquiry-card .inquiry-body .product-row .product-info .title {
+            font-weight: 500;
+            font-size: 13px;
+            color: #1a1a2e;
+        }
+        .inquiry-card .inquiry-body .product-row .product-info .price {
+            color: #f90;
+            font-weight: 700;
+            font-size: 14px;
+        }
+        .inquiry-card .inquiry-body .product-row .product-info .min-order {
+            font-size: 11px;
+            color: #888;
+        }
+        .inquiry-card .inquiry-body .details-label {
+            font-size: 12px;
+            color: #888;
+            margin-top: 6px;
+        }
+        .inquiry-card .inquiry-body .details-text {
+            font-size: 13px;
+            color: #333;
+            background: #f7f8fa;
+            padding: 6px 10px;
+            border-radius: 4px;
+            margin-top: 4px;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+        .inquiry-card .inquiry-body .product-id {
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 6px;
+        }
+        .inquiry-card .inquiry-body .view-link {
+            display: inline-block;
+            margin-top: 6px;
+            color: #f90;
+            font-size: 12px;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .inquiry-card .inquiry-body .view-link:hover { text-decoration: underline; }
+        
+        .quick-replies {
+            display: flex;
+            gap: 8px;
+            padding: 6px 20px 10px;
+            flex-wrap: wrap;
+            background: white;
+            border-top: 1px solid #f0f0f0;
+            flex-shrink: 0;
+        }
+        .quick-reply-btn {
+            background: #f7f8fa;
+            border: 1px solid #e8e8e8;
+            border-radius: 20px;
+            padding: 5px 14px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #555;
+            font-weight: 500;
+        }
+        .quick-reply-btn:hover {
+            border-color: #f90;
+            color: #f90;
+            background: #fff8f0;
+        }
+        
+        .chat-input { 
+            padding: 8px 20px 14px; 
+            border-top: 1px solid #e8e8e8; 
+            display: flex; 
+            gap: 10px; 
+            background: white; 
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .chat-input input { 
+            flex: 1; 
+            padding: 10px 16px; 
+            border: 1px solid #e0e0e0; 
+            border-radius: 24px; 
+            font-size: 14px; 
+            outline: none; 
+            transition: border-color 0.2s;
+            background: #f7f8fa;
+        }
+        .chat-input input:focus { 
+            border-color: #f90; 
+            background: white;
+        }
+        .chat-input input::placeholder { color: #aaa; }
+        .chat-input button { 
+            background: #f90; 
+            color: white; 
+            border: none; 
+            padding: 10px 22px; 
+            border-radius: 24px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            transition: background 0.2s;
+            flex-shrink: 0;
+            font-size: 14px;
+        }
+        .chat-input button:hover { background: #e08500; }
+        .chat-input button:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .loading { text-align: center; padding: 40px; color: #999; }
+        .loading .spinner { display: inline-block; width: 30px; height: 30px; border: 3px solid #f0f0f0; border-top-color: #f90; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .error-msg { text-align: center; padding: 40px; color: #d32f2f; background: #ffebee; border-radius: 8px; }
+        .error-msg a { color: #d32f2f; font-weight: 600; text-decoration: underline; }
+        
+        .empty-state { text-align: center; padding: 60px 20px; color: #999; }
+        .empty-state svg { width: 80px; height: 80px; stroke: #ddd; margin-bottom: 16px; }
+        .empty-state h3 { color: #333; margin-bottom: 8px; font-size: 18px; }
+        .empty-state p { font-size: 14px; }
+        
+        @media (max-width: 768px) {
+            .container { flex-direction: column; }
+            .conversation-list { width: 100%; max-height: 200px; border-right: none; border-bottom: 1px solid #e8e8e8; }
+            .message-wrapper { max-width: 90%; }
+            .header h1 { font-size: 1rem; }
+            .chat-header { flex-wrap: wrap; }
+            .quick-replies { justify-content: center; }
+            .chat-input input { font-size: 13px; padding: 8px 14px; }
+            .chat-input button { padding: 8px 16px; font-size: 13px; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <a href="index.html" class="back-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            Back
+        </a>
+        <h1>Messages</h1>
+        <div></div>
+    </header>
+
+    <div class="container">
+        <div class="conversation-list" id="conversationList">
+            <div class="conversation-list-header">Inquiries</div>
+            <div class="loading"><div class="spinner"></div><br>Loading...</div>
+        </div>
+        <div class="chat-window" id="chatWindow">
+            <div class="chat-empty">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                <h3>Your Inquiries</h3>
+                <p>Select a conversation to start messaging</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="api.js"></script>
+    <script>
+        // ============================================
+        // MESSAGES - ALIBABA STYLE
+        // ============================================
+        
+        let currentUserId = null;
+        let currentUserEmail = null;
+        let conversations = [];
+        let activeConversationId = null;
+        let messages = [];
+        let pollInterval = null;
+        let isSending = false;
+        let sellersMap = {};
+        let currentProductData = null;
+
+        // Get conversation ID from URL
+        function getConversationIdFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('conversation');
+        }
+
+        // Load sellers map
+        async function loadSellersMap() {
+            try {
+                const response = await fetch(window.SUPABASE_URL + '/rest/v1/sellers?select=user_id,business_name', {
+                    headers: {
+                        'apikey': window.SUPABASE_ANON_KEY,
+                        'Authorization': 'Bearer ' + window.SUPABASE_ANON_KEY
+                    }
+                });
+                const sellers = await response.json();
+                if (Array.isArray(sellers)) {
+                    sellers.forEach(function(seller) {
+                        sellersMap[seller.user_id] = seller;
+                    });
+                    console.log('Sellers map loaded:', Object.keys(sellersMap).length);
+                }
+                return true;
+            } catch (error) {
+                console.error('Error loading sellers map:', error);
+                return false;
+            }
+        }
+
+        // Check login status on load
+        async function init() {
+            try {
+                console.log('Initializing messages...');
+                
+                const session = localStorage.getItem('supabase_session');
+                const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+                
+                console.log('Session exists:', !!session);
+                console.log('isLoggedIn:', isLoggedIn);
+                
+                if (!isLoggedIn || !session) {
+                    console.log('Not logged in, redirecting...');
+                    window.location.href = 'login.html?redirect=messages.html';
+                    return;
+                }
+
+                const sessionData = JSON.parse(session);
+                currentUserId = sessionData.user.id;
+                currentUserEmail = sessionData.user.email;
+                const accessToken = sessionData.access_token;
+                
+                console.log('User authenticated:', currentUserEmail);
+                console.log('User ID:', currentUserId);
+                console.log('Access token exists:', !!accessToken);
+
+                // Verify token works with a simple test request
+                try {
+                    const testResponse = await fetch(window.SUPABASE_URL + '/rest/v1/conversations?limit=1', {
+                        headers: {
+                            'apikey': window.SUPABASE_ANON_KEY,
+                            'Authorization': 'Bearer ' + accessToken
+                        }
+                    });
+                    console.log('Test API response status:', testResponse.status);
+                    if (!testResponse.ok) {
+                        console.error('API test failed:', testResponse.status, testResponse.statusText);
+                        // Try refreshing session
+                        const refreshed = await refreshSession();
+                        if (refreshed) {
+                            console.log('Session refreshed successfully');
+                        }
+                    }
+                } catch (e) {
+                    console.error('API test error:', e);
+                }
+
+                // Load sellers map
+                await loadSellersMap();
+
+                // Check for product data from sessionStorage
+                const pendingProduct = sessionStorage.getItem('pending_product');
+                if (pendingProduct) {
+                    try {
+                        currentProductData = JSON.parse(pendingProduct);
+                        console.log('Loaded pending product:', currentProductData);
+                    } catch (e) {}
+                }
+
+                // Load conversations
+                await loadConversations();
+                
+                // Check for conversation ID in URL
+                const convId = getConversationIdFromURL();
+                if (convId) {
+                    console.log('Opening conversation from URL:', convId);
+                    setTimeout(function() {
+                        openConversation(convId);
+                    }, 800);
+                }
+                
+                // Start polling for new messages
+                startPolling();
+                
+            } catch (error) {
+                console.error('Init error:', error);
+                document.getElementById('conversationList').innerHTML = 
+                    '<div class="error-msg">Failed to load. Please <a href="login.html">login again</a>.</div>';
+            }
+        }
+
+        // Helper to refresh session
+        async function refreshSession() {
+            try {
+                const sessionStr = localStorage.getItem('supabase_session');
+                if (!sessionStr) return false;
+                const session = JSON.parse(sessionStr);
+                const refreshToken = session.refresh_token;
+                if (!refreshToken) return false;
+
+                const response = await fetch(window.SUPABASE_URL + '/auth/v1/token?grant_type=refresh_token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': window.SUPABASE_ANON_KEY,
+                    },
+                    body: JSON.stringify({ refresh_token: refreshToken }),
+                });
+
+                if (response.ok) {
+                    const newSession = await response.json();
+                    localStorage.setItem('supabase_session', JSON.stringify(newSession));
+                    console.log('Session refreshed successfully');
+                    return true;
+                }
+                return false;
+            } catch (e) {
+                console.error('Session refresh error:', e);
+                return false;
+            }
+        }
+
+        async function loadConversations() {
+            try {
+                const listEl = document.getElementById('conversationList');
+                listEl.innerHTML = '<div class="loading"><div class="spinner"></div><br>Loading conversations...</div>';
+                
+                const session = localStorage.getItem('supabase_session');
+                if (!session) {
+                    throw new Error('No session found');
+                }
+                const sessionData = JSON.parse(session);
+                const accessToken = sessionData.access_token;
+                
+                console.log('Fetching conversations for user:', currentUserId);
+                
+                // Direct fetch with proper headers
+                const response = await fetch(window.SUPABASE_URL + '/rest/v1/conversations?or=(buyer_id.eq.' + currentUserId + ',seller_id.eq.' + currentUserId + ')&select=*&order=last_message_at.desc', {
+                    headers: {
+                        'apikey': window.SUPABASE_ANON_KEY,
+                        'Authorization': 'Bearer ' + accessToken
+                    }
+                });
+                
+                console.log('Conversations response status:', response.status);
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        console.log('401 Unauthorized, trying to refresh session...');
+                        const refreshed = await refreshSession();
+                        if (refreshed) {
+                            // Retry once with new token
+                            const newSession = JSON.parse(localStorage.getItem('supabase_session'));
+                            const newToken = newSession.access_token;
+                            const retryResponse = await fetch(window.SUPABASE_URL + '/rest/v1/conversations?or=(buyer_id.eq.' + currentUserId + ',seller_id.eq.' + currentUserId + ')&select=*&order=last_message_at.desc', {
+                                headers: {
+                                    'apikey': window.SUPABASE_ANON_KEY,
+                                    'Authorization': 'Bearer ' + newToken
+                                }
+                            });
+                            if (!retryResponse.ok) {
+                                throw new Error('Failed after refresh: ' + retryResponse.status);
+                            }
+                            const retryData = await retryResponse.json();
+                            conversations = Array.isArray(retryData) ? retryData : [];
+                        } else {
+                            throw new Error('Session refresh failed');
+                        }
+                    } else {
+                        throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+                    }
+                } else {
+                    const data = await response.json();
+                    conversations = Array.isArray(data) ? data : [];
+                }
+                
+                console.log('Loaded ' + conversations.length + ' conversations');
+                renderConversationList();
+                
+                if (activeConversationId) {
+                    const stillExists = conversations.some(c => c.id === activeConversationId);
+                    if (!stillExists) {
+                        activeConversationId = null;
+                        document.getElementById('chatWindow').innerHTML = 
+                            '<div class="chat-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><h3>Conversation ended</h3><p>Select another conversation</p></div>';
+                    } else if (activeConversationId) {
+                        await loadMessages(activeConversationId);
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Load conversations error:', error);
+                const listEl = document.getElementById('conversationList');
+                
+                if (error.message && error.message.includes('401')) {
+                    listEl.innerHTML = '<div class="error-msg">Session expired. Please <a href="login.html">login again</a>.</div>';
+                } else {
+                    listEl.innerHTML = '<div class="error-msg">Error loading conversations: ' + error.message + '. <a href="javascript:location.reload()">Refresh</a></div>';
+                }
+            }
+        }
+
+        function renderConversationList() {
+            const list = document.getElementById('conversationList');
+            
+            if (!conversations || conversations.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                        <h3>No inquiries yet</h3>
+                        <p>Start by contacting a seller about a product</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = conversations.map(function(conv) {
+                const unreadCount = conv.buyer_id === currentUserId ? conv.unread_buyer : conv.unread_seller;
+                const isActive = conv.id === activeConversationId;
+                
+                let displayName = conv.subject || 'Chat';
+                if (conv.seller_id) {
+                    const seller = sellersMap[conv.seller_id];
+                    if (seller && seller.business_name) {
+                        displayName = seller.business_name;
+                    }
+                }
+                
+                const lastMessage = conv.last_message || 'No messages yet';
+                const time = conv.last_message_at ? new Date(conv.last_message_at) : new Date();
+                const timeStr = formatTime(time);
+                
+                return `
+                    <div class="conversation-item ${isActive ? 'active' : ''}" onclick="openConversation('${conv.id}')">
+                        <div class="conv-avatar">${displayName.charAt(0).toUpperCase()}</div>
+                        <div class="conv-info">
+                            <div class="conv-name">
+                                <span>${displayName}</span>
+                                <span class="conv-time">${timeStr}</span>
+                            </div>
+                            <div class="conv-last">${lastMessage}</div>
+                            ${unreadCount > 0 ? '<span class="unread-badge">' + unreadCount + '</span>' : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function formatTime(date) {
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            
+            if (date >= today) {
+                return date.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+            } else if (date >= yesterday) {
+                return 'Yesterday';
+            } else {
+                return date.toLocaleDateString([], {month:'short', day:'numeric'});
+            }
+        }
+
+        async function openConversation(convId) {
+            activeConversationId = convId;
+            
+            const conv = conversations.find(function(c) { return c.id === convId; });
+            if (conv && conv.product_id) {
+                try {
+                    const session = localStorage.getItem('supabase_session');
+                    if (session) {
+                        const sessionData = JSON.parse(session);
+                        const accessToken = sessionData.access_token || '';
+                        const response = await fetch(window.SUPABASE_URL + '/rest/v1/products?id=eq.' + conv.product_id + '&select=*', {
+                            headers: {
+                                'apikey': window.SUPABASE_ANON_KEY,
+                                'Authorization': 'Bearer ' + accessToken
+                            }
+                        });
+                        if (response.ok) {
+                            const products = await response.json();
+                            if (products && products.length > 0) {
+                                currentProductData = products[0];
+                            }
+                        }
+                    }
+                } catch (e) {}
+            }
+            
+            renderConversationList();
+            await loadMessages(convId);
+            
+            const url = new URL(window.location);
+            url.searchParams.set('conversation', convId);
+            window.history.pushState({}, '', url);
+        }
+
+        async function loadMessages(convId) {
+            try {
+                const chatWindow = document.getElementById('chatWindow');
+                chatWindow.innerHTML = '<div class="loading"><div class="spinner"></div><br>Loading messages...</div>';
+                
+                const session = localStorage.getItem('supabase_session');
+                if (!session) throw new Error('No session');
+                const sessionData = JSON.parse(session);
+                const accessToken = sessionData.access_token;
+                
+                const response = await fetch(window.SUPABASE_URL + '/rest/v1/messages?conversation_id=eq.' + convId + '&select=*&order=created_at.asc', {
+                    headers: {
+                        'apikey': window.SUPABASE_ANON_KEY,
+                        'Authorization': 'Bearer ' + accessToken
+                    }
+                });
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        const refreshed = await refreshSession();
+                        if (refreshed) {
+                            const newSession = JSON.parse(localStorage.getItem('supabase_session'));
+                            const newToken = newSession.access_token;
+                            const retryResponse = await fetch(window.SUPABASE_URL + '/rest/v1/messages?conversation_id=eq.' + convId + '&select=*&order=created_at.asc', {
+                                headers: {
+                                    'apikey': window.SUPABASE_ANON_KEY,
+                                    'Authorization': 'Bearer ' + newToken
+                                }
+                            });
+                            if (!retryResponse.ok) throw new Error('Failed after refresh');
+                            const retryData = await retryResponse.json();
+                            messages = Array.isArray(retryData) ? retryData : [];
+                        } else {
+                            throw new Error('Session refresh failed');
+                        }
+                    } else {
+                        throw new Error('HTTP ' + response.status);
+                    }
+                } else {
+                    const data = await response.json();
+                    messages = Array.isArray(data) ? data : [];
+                }
+                
+                console.log('Loaded ' + messages.length + ' messages');
+                
+                await markAsRead(convId);
+                renderChatWindow();
+                
+            } catch (error) {
+                console.error('Load messages error:', error);
+                document.getElementById('chatWindow').innerHTML = 
+                    '<div class="error-msg">Error loading messages: ' + error.message + '</div>';
+            }
+        }
+
+        async function markAsRead(convId) {
+            try {
+                const conv = conversations.find(function(c) { return c.id === convId; });
+                if (!conv) return;
+                
+                const isBuyer = conv.buyer_id === currentUserId;
+                const field = isBuyer ? 'unread_buyer' : 'unread_seller';
+                
+                if (conv[field] > 0) {
+                    const session = localStorage.getItem('supabase_session');
+                    if (session) {
+                        const sessionData = JSON.parse(session);
+                        const accessToken = sessionData.access_token;
+                        await fetch(window.SUPABASE_URL + '/rest/v1/conversations?id=eq.' + convId, {
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'apikey': window.SUPABASE_ANON_KEY,
+                                'Authorization': 'Bearer ' + accessToken,
+                                'Prefer': 'return=minimal'
+                            },
+                            body: JSON.stringify({ [field]: 0 })
+                        });
+                    }
+                    conv[field] = 0;
+                    renderConversationList();
+                }
+            } catch (e) {}
+        }
+
+        function renderChatWindow() {
+            const chatWindow = document.getElementById('chatWindow');
+            const conv = conversations.find(function(c) { return c.id === activeConversationId; });
+            
+            if (!conv) {
+                chatWindow.innerHTML = '<div class="chat-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><h3>Select a conversation</h3></div>';
+                return;
+            }
+
+            let displayName = conv.subject || 'Chat';
+            if (conv.seller_id) {
+                const seller = sellersMap[conv.seller_id];
+                if (seller && seller.business_name) {
+                    displayName = seller.business_name;
+                }
+            }
+
+            chatWindow.innerHTML = `
+                <div class="chat-header">
+                    <div class="conv-avatar">${displayName.charAt(0).toUpperCase()}</div>
+                    <div class="header-info">
+                        <strong>${displayName}</strong>
+                        <span class="header-sub">Online</span>
+                    </div>
+                </div>
+                <div class="chat-messages" id="chatMessages">
+                    ${renderMessages()}
+                </div>
+                <div class="quick-replies" id="quickReplies">
+                    <button class="quick-reply-btn" onclick="sendQuickReply('Is this still available?')">Is this available?</button>
+                    <button class="quick-reply-btn" onclick="sendQuickReply('Can I see more photos?')">More photos?</button>
+                    <button class="quick-reply-btn" onclick="sendQuickReply('What is your best price?')">Best price?</button>
+                    <button class="quick-reply-btn" onclick="sendQuickReply('I want to buy this')">I want to buy</button>
+                </div>
+                <div class="chat-input">
+                    <input type="text" id="messageInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();sendMessage();}">
+                    <button id="sendBtn" onclick="sendMessage()">Send</button>
+                </div>
+            `;
+
+            setTimeout(function() {
+                const container = document.getElementById('chatMessages');
+                if (container) container.scrollTop = container.scrollHeight;
+            }, 100);
+        }
+
+        function renderMessages() {
+            if (!messages || messages.length === 0) {
+                return '<div style="text-align:center;color:#999;padding:40px;font-size:14px;">Send a message to start the conversation</div>';
+            }
+
+            let html = '';
+            let lastDate = null;
+            let hasInquiryCard = false;
+
+            // Add Alibaba-style Inquiry Card if product data exists and no card yet
+            if (currentProductData && messages.length > 0) {
+                const hasProductRef = messages.some(function(msg) {
+                    return msg.message && msg.message.includes(currentProductData.title);
+                });
+                if (!hasProductRef) {
+                    const product = currentProductData;
+                    const imageUrl = product.image_url || product.image || 'https://via.placeholder.com/50x50?text=P';
+                    html += `
+                        <div class="message-wrapper received">
+                            <div class="inquiry-card">
+                                <div class="inquiry-header">Inquiry</div>
+                                <div class="inquiry-body">
+                                    <div class="product-row">
+                                        <img src="${imageUrl}" alt="${product.title}" onerror="this.src='https://via.placeholder.com/50x50?text=P'">
+                                        <div class="product-info">
+                                            <div class="title">${escapeHtml(product.title)}</div>
+                                            <div class="price">$${parseFloat(product.price).toFixed(2)}</div>
+                                            <div class="min-order">Min. order: 1 Piece</div>
+                                        </div>
+                                    </div>
+                                    <div class="details-label">Detailed requirements</div>
+                                    <div class="details-text">
+                                        Hi, how much is this product<br>
+                                        Quantity: 1.0
+                                    </div>
+                                    <div class="product-id">ID: ${product.id || 'N/A'}</div>
+                                    <a href="product-detail.html?id=${product.id}" target="_blank" class="view-link">View Product →</a>
+                                </div>
+                            </div>
+                            <div class="message-time">Just now</div>
+                        </div>
+                    `;
+                }
+            }
+
+            messages.forEach(function(msg) {
+                const msgDate = new Date(msg.created_at);
+                const dateKey = msgDate.toDateString();
+                
+                if (dateKey !== lastDate) {
+                    lastDate = dateKey;
+                    const displayDate = msgDate.toLocaleDateString([], {weekday:'long', month:'long', day:'numeric'});
+                    html += '<div class="message-date-divider">' + displayDate + '</div>';
+                }
+                
+                const isSent = msg.sender_id === currentUserId;
+                const timeStr = msgDate.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                
+                html += `
+                    <div class="message-wrapper ${isSent ? 'sent' : 'received'}">
+                        <div class="message ${isSent ? 'sent' : 'received'}">${escapeHtml(msg.message)}</div>
+                        <div class="message-time">${timeStr}</div>
+                    </div>
+                `;
+            });
+
+            return html;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const sendBtn = document.getElementById('sendBtn');
+            const message = input.value.trim();
+            
+            if (!message || !activeConversationId || isSending) return;
+            
+            isSending = true;
+            sendBtn.disabled = true;
+            sendBtn.textContent = 'Sending...';
+            
+            try {
+                const session = localStorage.getItem('supabase_session');
+                if (!session) throw new Error('No session');
+                const sessionData = JSON.parse(session);
+                const accessToken = sessionData.access_token;
+                
+                await fetch(window.SUPABASE_URL + '/rest/v1/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': window.SUPABASE_ANON_KEY,
+                        'Authorization': 'Bearer ' + accessToken,
+                        'Prefer': 'return=minimal'
+                    },
+                    body: JSON.stringify({
+                        conversation_id: activeConversationId,
+                        sender_id: currentUserId,
+                        message: message,
+                        created_at: new Date().toISOString()
+                    })
+                });
+
+                const conv = conversations.find(function(c) { return c.id === activeConversationId; });
+                if (conv) {
+                    await fetch(window.SUPABASE_URL + '/rest/v1/conversations?id=eq.' + activeConversationId, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': window.SUPABASE_ANON_KEY,
+                            'Authorization': 'Bearer ' + accessToken,
+                            'Prefer': 'return=minimal'
+                        },
+                        body: JSON.stringify({
+                            last_message: message, 
+                            last_message_at: new Date().toISOString()
+                        })
+                    });
+                    conv.last_message = message;
+                    conv.last_message_at = new Date().toISOString();
+                }
+
+                input.value = '';
+                await loadMessages(activeConversationId);
+                await loadConversations();
+                
+            } catch (error) {
+                console.error('Send message error:', error);
+                alert('Failed to send message. Please try again.');
+            } finally {
+                isSending = false;
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'Send';
+                input.focus();
+            }
+        }
+
+        function sendQuickReply(message) {
+            const input = document.getElementById('messageInput');
+            if (input) {
+                input.value = message;
+                sendMessage();
+            }
+        }
+        window.sendQuickReply = sendQuickReply;
+
+        function startPolling() {
+            if (pollInterval) clearInterval(pollInterval);
+            
+            pollInterval = setInterval(async function() {
+                if (activeConversationId) {
+                    try {
+                        const session = localStorage.getItem('supabase_session');
+                        if (!session) return;
+                        const sessionData = JSON.parse(session);
+                        const accessToken = sessionData.access_token;
+                        
+                        const response = await fetch(window.SUPABASE_URL + '/rest/v1/messages?conversation_id=eq.' + activeConversationId + '&select=*&order=created_at.asc', {
+                            headers: {
+                                'apikey': window.SUPABASE_ANON_KEY,
+                                'Authorization': 'Bearer ' + accessToken
+                            }
+                        });
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (Array.isArray(data) && data.length !== messages.length) {
+                                messages = data;
+                                renderChatWindow();
+                                await loadConversations();
+                            }
+                        }
+                    } catch (e) {}
+                }
+            }, 3000);
+        }
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', function() {
+            if (pollInterval) clearInterval(pollInterval);
+        });
+
+        // Make functions globally accessible
+        window.openConversation = openConversation;
+        window.sendMessage = sendMessage;
+        window.sendQuickReply = sendQuickReply;
+
+        // Start the app
+        document.addEventListener('DOMContentLoaded', init);
+        console.log('Alibaba-style messaging loaded!');
+    </script>
+</body>
+</html>
