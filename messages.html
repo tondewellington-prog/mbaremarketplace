@@ -32,9 +32,53 @@
         .chat-window { flex: 1; background: white; border-radius: 12px; display: flex; flex-direction: column; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .chat-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #999; font-size: 14px; gap: 10px; }
         .chat-empty svg { width: 64px; height: 64px; stroke: #ccc; }
-        .chat-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 12px; background: #fafafa; border-radius: 12px 12px 0 0; }
-        .chat-header .conv-avatar { width: 40px; height: 40px; font-size: 16px; }
-        .chat-header strong { font-size: 16px; }
+        
+        /* Facebook-style chat header with product preview */
+        .chat-header { 
+            padding: 12px 20px; 
+            border-bottom: 1px solid #eee; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            background: #fafafa; 
+            border-radius: 12px 12px 0 0; 
+            flex-wrap: wrap;
+        }
+        .chat-header .conv-avatar { width: 40px; height: 40px; font-size: 16px; flex-shrink: 0; }
+        .chat-header .header-info { flex: 1; min-width: 0; }
+        .chat-header .header-info strong { font-size: 16px; display: block; }
+        .chat-header .header-info .header-sub { font-size: 12px; color: #666; }
+        .chat-header .product-preview {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: white;
+            padding: 6px 12px 6px 6px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            cursor: pointer;
+            transition: box-shadow 0.2s;
+            flex-shrink: 0;
+        }
+        .chat-header .product-preview:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .chat-header .product-preview img {
+            width: 36px;
+            height: 36px;
+            border-radius: 4px;
+            object-fit: cover;
+        }
+        .chat-header .product-preview .product-info {
+            font-size: 12px;
+            line-height: 1.3;
+        }
+        .chat-header .product-preview .product-info .title {
+            font-weight: 500;
+            color: #232f3e;
+        }
+        .chat-header .product-preview .product-info .price {
+            color: #f90;
+            font-weight: 600;
+        }
         
         .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background: #fafafa; }
         .chat-messages::-webkit-scrollbar { width: 6px; }
@@ -51,14 +95,107 @@
         .message-wrapper.sent .message-time { color: #666; }
         .message-wrapper.received .message-time { color: #999; }
         
+        /* Product card in chat (like Facebook Marketplace) */
+        .product-message-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            max-width: 280px;
+            border: 1px solid #eee;
+        }
+        .product-message-card img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+        .product-message-card .product-details {
+            padding: 12px;
+        }
+        .product-message-card .product-details .title {
+            font-weight: 600;
+            font-size: 14px;
+            color: #232f3e;
+            margin-bottom: 2px;
+        }
+        .product-message-card .product-details .price {
+            color: #f90;
+            font-weight: 700;
+            font-size: 16px;
+        }
+        .product-message-card .product-details .view-link {
+            display: inline-block;
+            margin-top: 6px;
+            color: #f90;
+            font-size: 12px;
+            text-decoration: none;
+        }
+        .product-message-card .product-details .view-link:hover { text-decoration: underline; }
+        
         .message-date-divider { text-align: center; color: #999; font-size: 12px; padding: 10px 0; }
         
-        .chat-input { padding: 15px 20px; border-top: 1px solid #eee; display: flex; gap: 10px; background: white; border-radius: 0 0 12px 12px; }
-        .chat-input input { flex: 1; padding: 12px 16px; border: 1px solid #ddd; border-radius: 24px; font-size: 14px; outline: none; transition: border-color 0.2s; }
-        .chat-input input:focus { border-color: #f90; }
-        .chat-input button { background: #f90; color: white; border: none; padding: 12px 24px; border-radius: 24px; cursor: pointer; font-weight: 600; transition: background 0.2s; }
+        /* Facebook-style chat input */
+        .chat-input { 
+            padding: 12px 20px; 
+            border-top: 1px solid #eee; 
+            display: flex; 
+            gap: 10px; 
+            background: white; 
+            border-radius: 0 0 12px 12px; 
+            align-items: center;
+        }
+        .chat-input input { 
+            flex: 1; 
+            padding: 10px 16px; 
+            border: 1px solid #e0e0e0; 
+            border-radius: 20px; 
+            font-size: 14px; 
+            outline: none; 
+            transition: border-color 0.2s;
+            background: #f5f5f5;
+        }
+        .chat-input input:focus { 
+            border-color: #f90; 
+            background: white;
+        }
+        .chat-input button { 
+            background: #f90; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 20px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
         .chat-input button:hover { background: #e68a00; }
         .chat-input button:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        /* Quick reply suggestions (like Facebook) */
+        .quick-replies {
+            display: flex;
+            gap: 8px;
+            padding: 8px 20px 12px;
+            flex-wrap: wrap;
+            background: #fafafa;
+            border-top: 1px solid #f0f0f0;
+        }
+        .quick-reply-btn {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 16px;
+            padding: 6px 14px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #333;
+        }
+        .quick-reply-btn:hover {
+            border-color: #f90;
+            color: #f90;
+            background: #fff8f0;
+        }
         
         .loading { text-align: center; padding: 40px; color: #999; }
         .loading .spinner { display: inline-block; width: 30px; height: 30px; border: 3px solid #f0f0f0; border-top-color: #f90; border-radius: 50%; animation: spin 0.8s linear infinite; }
@@ -76,6 +213,9 @@
             .conversation-list { width: 100%; max-height: 200px; }
             .message-wrapper { max-width: 85%; }
             .header h1 { font-size: 1rem; }
+            .chat-header { flex-direction: column; align-items: flex-start; }
+            .chat-header .product-preview { width: 100%; }
+            .quick-replies { justify-content: center; }
         }
     </style>
 </head>
@@ -96,8 +236,7 @@
                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                 </svg>
                 <h3>Your Messages</h3>
-                <p>Select a conversation to start charting
-                </p>
+                <p>Select a conversation to start messaging</p>
             </div>
         </div>
     </div>
@@ -105,7 +244,7 @@
     <script src="api.js"></script>
     <script>
         // ============================================
-        // MESSAGES - FULLY FUNCTIONAL LIKE WHATSAPP
+        // MESSAGES - FACEBOOK MARKETPLACE STYLE
         // ============================================
         
         let currentUserId = null;
@@ -116,11 +255,18 @@
         let pollInterval = null;
         let isSending = false;
         let sellersMap = {};
+        let currentProductData = null;
 
         // Get conversation ID from URL
         function getConversationIdFromURL() {
             const urlParams = new URLSearchParams(window.location.search);
             return urlParams.get('conversation');
+        }
+
+        // Get product ID from URL
+        function getProductIdFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('product');
         }
 
         // Load sellers map
@@ -168,6 +314,17 @@
 
                 // Load sellers map first
                 await loadSellersMap();
+
+                // Check for product data from sessionStorage (from contact seller)
+                const pendingProduct = sessionStorage.getItem('pending_product');
+                if (pendingProduct) {
+                    try {
+                        currentProductData = JSON.parse(pendingProduct);
+                        console.log('Loaded pending product:', currentProductData);
+                    } catch (e) {
+                        console.error('Error parsing pending product:', e);
+                    }
+                }
 
                 // Load conversations
                 await loadConversations();
@@ -299,6 +456,33 @@
 
         async function openConversation(convId) {
             activeConversationId = convId;
+            
+            // Get product data for this conversation
+            const conv = conversations.find(function(c) { return c.id === convId; });
+            if (conv && conv.product_id) {
+                try {
+                    const session = localStorage.getItem('supabase_session');
+                    let accessToken = '';
+                    if (session) {
+                        const sessionData = JSON.parse(session);
+                        accessToken = sessionData.access_token || '';
+                    }
+                    const response = await fetch(window.SUPABASE_URL + '/rest/v1/products?id=eq.' + conv.product_id + '&select=*', {
+                        headers: {
+                            'apikey': window.SUPABASE_ANON_KEY,
+                            'Authorization': 'Bearer ' + accessToken
+                        }
+                    });
+                    const products = await response.json();
+                    if (products && products.length > 0) {
+                        currentProductData = products[0];
+                        console.log('Product data loaded for conversation:', currentProductData);
+                    }
+                } catch (e) {
+                    console.log('Could not fetch product:', e);
+                }
+            }
+            
             renderConversationList();
             await loadMessages(convId);
             
@@ -373,15 +557,38 @@
                 }
             }
 
+            // Build product preview HTML
+            let productPreviewHtml = '';
+            if (currentProductData) {
+                const product = currentProductData;
+                const imageUrl = product.image_url || product.image || 'https://via.placeholder.com/36x36?text=Product';
+                productPreviewHtml = `
+                    <div class="product-preview" onclick="window.open('product-detail.html?id=${product.id}', '_blank')">
+                        <img src="${imageUrl}" alt="${product.title}" onerror="this.src='https://via.placeholder.com/36x36?text=Product'">
+                        <div class="product-info">
+                            <div class="title">${escapeHtml(product.title)}</div>
+                            <div class="price">$${parseFloat(product.price).toFixed(2)}</div>
+                        </div>
+                    </div>
+                `;
+            }
+
             chatWindow.innerHTML = `
                 <div class="chat-header">
                     <div class="conv-avatar">${displayName.charAt(0).toUpperCase()}</div>
-                    <div>
+                    <div class="header-info">
                         <strong>${displayName}</strong>
+                        <div class="header-sub">Seller</div>
                     </div>
+                    ${productPreviewHtml}
                 </div>
                 <div class="chat-messages" id="chatMessages">
                     ${renderMessages()}
+                </div>
+                <div class="quick-replies" id="quickReplies">
+                    <button class="quick-reply-btn" onclick="sendQuickReply('Is this still available?')">Is this still available?</button>
+                    <button class="quick-reply-btn" onclick="sendQuickReply('Can I see more photos?')">More photos?</button>
+                    <button class="quick-reply-btn" onclick="sendQuickReply('What is your best price?')">Best price?</button>
                 </div>
                 <div class="chat-input">
                     <input type="text" id="messageInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();sendMessage();}">
@@ -402,6 +609,39 @@
 
             let html = '';
             let lastDate = null;
+            let hasProductCard = false;
+
+            // Check if the first message contains product info
+            const firstMessage = messages[0];
+            if (firstMessage && firstMessage.message && currentProductData) {
+                if (firstMessage.message.includes(currentProductData.title)) {
+                    hasProductCard = true;
+                }
+            }
+
+            // If no product card yet and we have product data, add it as the first message
+            if (!hasProductCard && currentProductData && messages.length > 0) {
+                const hasProductRef = messages.some(function(msg) {
+                    return msg.message && msg.message.includes(currentProductData.title);
+                });
+                if (!hasProductRef) {
+                    const product = currentProductData;
+                    const imageUrl = product.image_url || product.image || 'https://via.placeholder.com/280x150?text=Product';
+                    html += `
+                        <div class="message-wrapper received">
+                            <div class="product-message-card">
+                                <img src="${imageUrl}" alt="${product.title}" onerror="this.src='https://via.placeholder.com/280x150?text=Product'">
+                                <div class="product-details">
+                                    <div class="title">${escapeHtml(product.title)}</div>
+                                    <div class="price">$${parseFloat(product.price).toFixed(2)}</div>
+                                    <a href="product-detail.html?id=${product.id}" target="_blank" class="view-link">View Product →</a>
+                                </div>
+                            </div>
+                            <div class="message-time">Just now</div>
+                        </div>
+                    `;
+                }
+            }
 
             messages.forEach(function(msg) {
                 const msgDate = new Date(msg.created_at);
@@ -483,6 +723,16 @@
             }
         }
 
+        // Quick reply function
+        function sendQuickReply(message) {
+            const input = document.getElementById('messageInput');
+            if (input) {
+                input.value = message;
+                sendMessage();
+            }
+        }
+        window.sendQuickReply = sendQuickReply;
+
         function startPolling() {
             if (pollInterval) clearInterval(pollInterval);
             
@@ -516,6 +766,7 @@
         // Make functions globally accessible
         window.openConversation = openConversation;
         window.sendMessage = sendMessage;
+        window.sendQuickReply = sendQuickReply;
 
         // Start the app
         document.addEventListener('DOMContentLoaded', init);
