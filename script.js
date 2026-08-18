@@ -519,7 +519,7 @@ function escapeHtml(text) {
 }
 
 // ============================================
-// CONTACT SELLER - FACEBOOK MARKETPLACE STYLE
+// CONTACT SELLER - ALIBABA STYLE
 // ============================================
 
 async function showSellerContact(productId) {
@@ -565,7 +565,7 @@ async function showSellerContact(productId) {
         const seller = sellersMap[sellerId];
         const sellerName = seller?.business_name || 'Seller';
         
-        console.log('Creating conversation for product:', productName);
+        console.log('Creating Alibaba-style inquiry for product:', productName);
         console.log('Seller:', sellerId, 'Business Name:', sellerName);
         console.log('Buyer:', userId);
         
@@ -602,9 +602,10 @@ async function showSellerContact(productId) {
         
         // If no conversation exists, create one with the seller's business name
         if (!conversationId) {
-            console.log('Creating new conversation with seller:', sellerName);
+            console.log('Creating new Alibaba-style inquiry with seller:', sellerName);
             
-            const initialMessage = 'Hi, I am interested in your product: ' + productName + ' ($' + productPrice.toFixed(2) + ')';
+            // Alibaba-style initial message with product details
+            const initialMessage = 'Hi, I am interested in your product: ' + productName + ' ($' + productPrice.toFixed(2) + ')\n\nQuantity: 1.0';
             
             const convData = {
                 product_id: productId,
@@ -634,7 +635,7 @@ async function showSellerContact(productId) {
                     conversationId = result[0].id;
                     console.log('Conversation created:', conversationId);
                     
-                    // Send the initial message
+                    // Send the initial Alibaba-style message
                     await fetch(window.SUPABASE_URL + '/rest/v1/messages', {
                         method: 'POST',
                         headers: {
