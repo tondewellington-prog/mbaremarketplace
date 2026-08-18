@@ -519,7 +519,7 @@ function escapeHtml(text) {
 }
 
 // ============================================
-// CONTACT SELLER - ALIBABA STYLE
+// CONTACT SELLER - ALIBABA STYLE WITH PRODUCT IMAGE
 // ============================================
 
 async function showSellerContact(productId) {
@@ -554,7 +554,7 @@ async function showSellerContact(productId) {
         const sellerId = product.seller_id;
         const productName = product.title;
         const productPrice = product.price;
-        const productImage = product.image_url || product.image;
+        const productImage = product.image_url || product.image || 'https://via.placeholder.com/70x70?text=Product';
         
         if (!sellerId) {
             alert('Seller information not available');
@@ -566,20 +566,23 @@ async function showSellerContact(productId) {
         const sellerName = seller?.business_name || 'Seller';
         
         console.log('Creating Alibaba-style inquiry for product:', productName);
+        console.log('Product Image URL:', productImage);
         console.log('Seller:', sellerId, 'Business Name:', sellerName);
-        console.log('Buyer:', userId);
         
-        // Store product data in sessionStorage for messages page
+        // Store COMPLETE product data in sessionStorage for messages page
         const productData = {
             id: product.id,
             title: productName,
             price: productPrice,
             image: productImage,
+            image_url: productImage,
             seller_id: sellerId,
             seller_name: sellerName
         };
         sessionStorage.setItem('pending_product', JSON.stringify(productData));
         sessionStorage.setItem('pending_conversation', 'true');
+        
+        console.log('Stored product data in sessionStorage:', productData);
         
         // Check if conversation already exists
         let existingConv = null;
@@ -651,6 +654,7 @@ async function showSellerContact(productId) {
                             created_at: new Date().toISOString()
                         })
                     });
+                    console.log('Initial message sent:', initialMessage);
                 }
             } else {
                 console.error('Failed to create conversation:', await createResponse.text());
