@@ -468,8 +468,11 @@
                 if (pendingProduct) {
                     try {
                         currentProductData = JSON.parse(pendingProduct);
-                        console.log('Loaded pending product with image:', currentProductData.image);
-                    } catch (e) {}
+                        console.log('Loaded pending product with image:', currentProductData);
+                        console.log('Product image URL:', currentProductData.image);
+                    } catch (e) {
+                        console.error('Error parsing pending product:', e);
+                    }
                 }
 
                 // Load conversations
@@ -841,10 +844,27 @@
             let lastDate = null;
             let hasInquiryCard = false;
 
-            // Check if inquiry card already exists
-            if (currentProductData && messages.length > 0) {
+            // Check if we have product data from sessionStorage
+            let productData = null;
+            const pendingProduct = sessionStorage.getItem('pending_product');
+            if (pendingProduct) {
+                try {
+                    productData = JSON.parse(pendingProduct);
+                    console.log('Product data from sessionStorage:', productData);
+                } catch (e) {
+                    console.error('Error parsing pending product:', e);
+                }
+            }
+
+            // If no product data from sessionStorage, use currentProductData
+            if (!productData && currentProductData) {
+                productData = currentProductData;
+            }
+
+            // Check if inquiry card already exists in messages
+            if (productData && messages.length > 0) {
                 const hasProductRef = messages.some(function(msg) {
-                    return msg.message && msg.message.includes(currentProductData.title);
+                    return msg.message && msg.message.includes(productData.title);
                 });
                 if (hasProductRef) {
                     hasInquiryCard = true;
@@ -852,10 +872,14 @@
             }
 
             // Add Alibaba-style Inquiry Card with product image if not present
-            if (!hasInquiryCard && currentProductData) {
-                const product = currentProductData;
-                const imageUrl = product.image_url || product.image || 'https://via.placeholder.com/70x70?text=P';
+            if (!hasInquiryCard && productData) {
+                const product = productData;
+                const imageUrl = product.image_url || product.image || 'https://via.placeholder.com/70x70?text=Product';
                 const productPrice = parseFloat(product.price).toFixed(2);
+                const productTitle = product.title || 'Product';
+                const productId = product.id || 'N/A';
+                
+                console.log('Adding inquiry card with image:', imageUrl);
                 
                 html += `
                     <div class="message-wrapper received">
@@ -863,9 +887,9 @@
                             <div class="inquiry-header">Inquiry</div>
                             <div class="inquiry-body">
                                 <div class="product-row">
-                                    <img src="${imageUrl}" alt="${product.title}" onerror="this.src='https://via.placeholder.com/70x70?text=Product'">
+                                    <img src="${imageUrl}" alt="${productTitle}" onerror="this.src='https://via.placeholder.com/70x70?text=Product'">
                                     <div class="product-info">
-                                        <div class="title">${escapeHtml(product.title)}</div>
+                                        <div class="title">${escapeHtml(productTitle)}</div>
                                         <div class="price">$${productPrice}</div>
                                         <div class="min-order">Min. order: 1 Piece</div>
                                     </div>
@@ -875,13 +899,17 @@
                                     Hi, how much is this product<br>
                                     Quantity: 1.0
                                 </div>
-                                <div class="product-id">ID: ${product.id || 'N/A'}</div>
+                                <div class="product-id">ID: ${productId}</div>
                                 <a href="product-detail.html?id=${product.id}" target="_blank" class="view-link">View Product →</a>
                             </div>
                         </div>
                         <div class="message-time">Just now</div>
                     </div>
                 `;
+                
+                // Clear sessionStorage after displaying the card
+                sessionStorage.removeItem('pending_product');
+                sessionStorage.removeItem('pending_conversation');
             }
 
             messages.forEach(function(msg) {
