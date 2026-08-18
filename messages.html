@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Messages App - Mbare Marketplace</title>
+    <title>Messages - Mbare Marketplace</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
@@ -186,12 +186,13 @@
         .message-wrapper.sent .message-time { color: #888; }
         .message-wrapper.received .message-time { color: #999; }
         
+        /* Alibaba-style Inquiry Card with Product Image */
         .inquiry-card {
             background: white;
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-            max-width: 280px;
+            max-width: 300px;
             border: 1px solid #e8e8e8;
             margin-bottom: 4px;
         }
@@ -203,59 +204,68 @@
             border-bottom: 1px solid #f0f0f0;
         }
         .inquiry-card .inquiry-body {
-            padding: 10px 14px 12px;
+            padding: 12px 14px 14px;
         }
         .inquiry-card .inquiry-body .product-row {
             display: flex;
-            gap: 10px;
-            align-items: center;
-            margin-bottom: 8px;
+            gap: 12px;
+            align-items: flex-start;
+            margin-bottom: 10px;
         }
         .inquiry-card .inquiry-body .product-row img {
-            width: 50px;
-            height: 50px;
-            border-radius: 4px;
+            width: 70px;
+            height: 70px;
+            border-radius: 6px;
             object-fit: cover;
             background: #f0f0f0;
             flex-shrink: 0;
+            border: 1px solid #eee;
+        }
+        .inquiry-card .inquiry-body .product-row .product-info {
+            flex: 1;
         }
         .inquiry-card .inquiry-body .product-row .product-info .title {
             font-weight: 500;
-            font-size: 13px;
+            font-size: 14px;
             color: #1a1a2e;
+            margin-bottom: 2px;
+            line-height: 1.3;
         }
         .inquiry-card .inquiry-body .product-row .product-info .price {
             color: #f90;
             font-weight: 700;
-            font-size: 14px;
+            font-size: 15px;
         }
         .inquiry-card .inquiry-body .product-row .product-info .min-order {
             font-size: 11px;
             color: #888;
+            margin-top: 2px;
         }
         .inquiry-card .inquiry-body .details-label {
             font-size: 12px;
             color: #888;
-            margin-top: 6px;
+            margin-top: 8px;
+            font-weight: 500;
         }
         .inquiry-card .inquiry-body .details-text {
             font-size: 13px;
             color: #333;
             background: #f7f8fa;
-            padding: 6px 10px;
-            border-radius: 4px;
+            padding: 8px 12px;
+            border-radius: 6px;
             margin-top: 4px;
-            line-height: 1.5;
+            line-height: 1.6;
             word-break: break-word;
+            border: 1px solid #f0f0f0;
         }
         .inquiry-card .inquiry-body .product-id {
             font-size: 11px;
             color: #aaa;
-            margin-top: 6px;
+            margin-top: 8px;
         }
         .inquiry-card .inquiry-body .view-link {
             display: inline-block;
-            margin-top: 6px;
+            margin-top: 8px;
             color: #f90;
             font-size: 12px;
             text-decoration: none;
@@ -349,6 +359,8 @@
             .quick-replies { justify-content: center; }
             .chat-input input { font-size: 13px; padding: 8px 14px; }
             .chat-input button { padding: 8px 16px; font-size: 13px; }
+            .inquiry-card { max-width: 100%; }
+            .inquiry-card .inquiry-body .product-row img { width: 55px; height: 55px; }
         }
     </style>
 </head>
@@ -381,7 +393,7 @@
     <script src="api.js"></script>
     <script>
         // ============================================
-        // MESSAGES - ALIBABA STYLE
+        // MESSAGES - ALIBABA STYLE WITH PRODUCT IMAGE
         // ============================================
         
         let currentUserId = null;
@@ -426,7 +438,7 @@
         // Check login status on load
         async function init() {
             try {
-                console.log('Initializing messages...');
+                console.log('Initializing Alibaba-style messages...');
                 
                 const session = localStorage.getItem('supabase_session');
                 const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
@@ -447,28 +459,6 @@
                 
                 console.log('User authenticated:', currentUserEmail);
                 console.log('User ID:', currentUserId);
-                console.log('Access token exists:', !!accessToken);
-
-                // Verify token works with a simple test request
-                try {
-                    const testResponse = await fetch(window.SUPABASE_URL + '/rest/v1/conversations?limit=1', {
-                        headers: {
-                            'apikey': window.SUPABASE_ANON_KEY,
-                            'Authorization': 'Bearer ' + accessToken
-                        }
-                    });
-                    console.log('Test API response status:', testResponse.status);
-                    if (!testResponse.ok) {
-                        console.error('API test failed:', testResponse.status, testResponse.statusText);
-                        // Try refreshing session
-                        const refreshed = await refreshSession();
-                        if (refreshed) {
-                            console.log('Session refreshed successfully');
-                        }
-                    }
-                } catch (e) {
-                    console.error('API test error:', e);
-                }
 
                 // Load sellers map
                 await loadSellersMap();
@@ -478,7 +468,7 @@
                 if (pendingProduct) {
                     try {
                         currentProductData = JSON.parse(pendingProduct);
-                        console.log('Loaded pending product:', currentProductData);
+                        console.log('Loaded pending product with image:', currentProductData.image);
                     } catch (e) {}
                 }
 
@@ -549,7 +539,6 @@
                 
                 console.log('Fetching conversations for user:', currentUserId);
                 
-                // Direct fetch with proper headers
                 const response = await fetch(window.SUPABASE_URL + '/rest/v1/conversations?or=(buyer_id.eq.' + currentUserId + ',seller_id.eq.' + currentUserId + ')&select=*&order=last_message_at.desc', {
                     headers: {
                         'apikey': window.SUPABASE_ANON_KEY,
@@ -564,7 +553,6 @@
                         console.log('401 Unauthorized, trying to refresh session...');
                         const refreshed = await refreshSession();
                         if (refreshed) {
-                            // Retry once with new token
                             const newSession = JSON.parse(localStorage.getItem('supabase_session'));
                             const newToken = newSession.access_token;
                             const retryResponse = await fetch(window.SUPABASE_URL + '/rest/v1/conversations?or=(buyer_id.eq.' + currentUserId + ',seller_id.eq.' + currentUserId + ')&select=*&order=last_message_at.desc', {
@@ -698,6 +686,7 @@
                             const products = await response.json();
                             if (products && products.length > 0) {
                                 currentProductData = products[0];
+                                console.log('Product data loaded for conversation:', currentProductData);
                             }
                         }
                     }
@@ -852,40 +841,47 @@
             let lastDate = null;
             let hasInquiryCard = false;
 
-            // Add Alibaba-style Inquiry Card if product data exists and no card yet
+            // Check if inquiry card already exists
             if (currentProductData && messages.length > 0) {
                 const hasProductRef = messages.some(function(msg) {
                     return msg.message && msg.message.includes(currentProductData.title);
                 });
-                if (!hasProductRef) {
-                    const product = currentProductData;
-                    const imageUrl = product.image_url || product.image || 'https://via.placeholder.com/50x50?text=P';
-                    html += `
-                        <div class="message-wrapper received">
-                            <div class="inquiry-card">
-                                <div class="inquiry-header">Inquiry</div>
-                                <div class="inquiry-body">
-                                    <div class="product-row">
-                                        <img src="${imageUrl}" alt="${product.title}" onerror="this.src='https://via.placeholder.com/50x50?text=P'">
-                                        <div class="product-info">
-                                            <div class="title">${escapeHtml(product.title)}</div>
-                                            <div class="price">$${parseFloat(product.price).toFixed(2)}</div>
-                                            <div class="min-order">Min. order: 1 Piece</div>
-                                        </div>
-                                    </div>
-                                    <div class="details-label">Detailed requirements</div>
-                                    <div class="details-text">
-                                        Hi, how much is this product<br>
-                                        Quantity: 1.0
-                                    </div>
-                                    <div class="product-id">ID: ${product.id || 'N/A'}</div>
-                                    <a href="product-detail.html?id=${product.id}" target="_blank" class="view-link">View Product →</a>
-                                </div>
-                            </div>
-                            <div class="message-time">Just now</div>
-                        </div>
-                    `;
+                if (hasProductRef) {
+                    hasInquiryCard = true;
                 }
+            }
+
+            // Add Alibaba-style Inquiry Card with product image if not present
+            if (!hasInquiryCard && currentProductData) {
+                const product = currentProductData;
+                const imageUrl = product.image_url || product.image || 'https://via.placeholder.com/70x70?text=P';
+                const productPrice = parseFloat(product.price).toFixed(2);
+                
+                html += `
+                    <div class="message-wrapper received">
+                        <div class="inquiry-card">
+                            <div class="inquiry-header">Inquiry</div>
+                            <div class="inquiry-body">
+                                <div class="product-row">
+                                    <img src="${imageUrl}" alt="${product.title}" onerror="this.src='https://via.placeholder.com/70x70?text=Product'">
+                                    <div class="product-info">
+                                        <div class="title">${escapeHtml(product.title)}</div>
+                                        <div class="price">$${productPrice}</div>
+                                        <div class="min-order">Min. order: 1 Piece</div>
+                                    </div>
+                                </div>
+                                <div class="details-label">Detailed requirements</div>
+                                <div class="details-text">
+                                    Hi, how much is this product<br>
+                                    Quantity: 1.0
+                                </div>
+                                <div class="product-id">ID: ${product.id || 'N/A'}</div>
+                                <a href="product-detail.html?id=${product.id}" target="_blank" class="view-link">View Product →</a>
+                            </div>
+                        </div>
+                        <div class="message-time">Just now</div>
+                    </div>
+                `;
             }
 
             messages.forEach(function(msg) {
@@ -1036,7 +1032,7 @@
 
         // Start the app
         document.addEventListener('DOMContentLoaded', init);
-        console.log('Alibaba-style messaging loaded!');
+        console.log('Alibaba-style messaging with product images loaded!');
     </script>
 </body>
 </html>
