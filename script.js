@@ -13,8 +13,6 @@ let ratingsCache = {};
 
 // Website URL constant
 const WEBSITE_URL = 'https://www.mbaremarketplace.com';
-const SUPABASE_URL = window.SUPABASE_URL || 'https://fnncerdxfhwlrdopswpx.supabase.co';
-const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
 
 // ============================================
 // CATEGORY MAPPINGS
@@ -252,10 +250,11 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 async function loadSellersFromAPI() {
     try {
-        const response = await fetch(SUPABASE_URL + '/rest/v1/sellers?select=*', {
+        // Use window.SUPABASE_URL (defined in api.js)
+        const response = await fetch(window.SUPABASE_URL + '/rest/v1/sellers?select=*', {
             headers: {
-                'apikey': SUPABASE_ANON_KEY,
-                'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+                'apikey': window.SUPABASE_ANON_KEY,
+                'Authorization': 'Bearer ' + window.SUPABASE_ANON_KEY
             }
         });
         
@@ -275,10 +274,11 @@ async function loadSellersFromAPI() {
 
 async function loadProductsFromAPI() {
     try {
-        const response = await fetch(SUPABASE_URL + '/rest/v1/products?select=*&order=created_at.desc', {
+        // Use window.SUPABASE_URL (defined in api.js)
+        const response = await fetch(window.SUPABASE_URL + '/rest/v1/products?select=*&order=created_at.desc', {
             headers: {
-                'apikey': SUPABASE_ANON_KEY,
-                'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+                'apikey': window.SUPABASE_ANON_KEY,
+                'Authorization': 'Bearer ' + window.SUPABASE_ANON_KEY
             }
         });
         
@@ -391,10 +391,10 @@ async function getSellerRatings(sellerId) {
     }
     
     try {
-        const response = await fetch(SUPABASE_URL + '/rest/v1/ratings?seller_id=eq.' + sellerId + '&select=rating', {
+        const response = await fetch(window.SUPABASE_URL + '/rest/v1/ratings?seller_id=eq.' + sellerId + '&select=rating', {
             headers: {
-                'apikey': SUPABASE_ANON_KEY,
-                'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+                'apikey': window.SUPABASE_ANON_KEY,
+                'Authorization': 'Bearer ' + window.SUPABASE_ANON_KEY
             }
         });
         
@@ -571,7 +571,7 @@ async function showSellerContact(productId) {
         console.log('Product Image URL:', productImage);
         console.log('Seller:', sellerId, 'Business Name:', sellerName);
         
-        // Store COMPLETE product data in sessionStorage for messages page
+        // Store COMPLETE product data in localStorage and sessionStorage
         const productData = {
             id: product.id,
             title: productName,
@@ -582,19 +582,18 @@ async function showSellerContact(productId) {
             seller_name: sellerName
         };
         
-        // Store in both localStorage and sessionStorage to ensure it persists
         localStorage.setItem('pending_product', JSON.stringify(productData));
         sessionStorage.setItem('pending_product', JSON.stringify(productData));
         sessionStorage.setItem('pending_conversation', 'true');
         
-        console.log('Stored product data in sessionStorage:', productData);
+        console.log('Stored product data in localStorage/sessionStorage:', productData);
         
         // Check if conversation already exists
         let existingConv = null;
         try {
-            const convResponse = await fetch(SUPABASE_URL + '/rest/v1/conversations?buyer_id=eq.' + userId + '&seller_id=eq.' + sellerId + '&select=id', {
+            const convResponse = await fetch(window.SUPABASE_URL + '/rest/v1/conversations?buyer_id=eq.' + userId + '&seller_id=eq.' + sellerId + '&select=id', {
                 headers: {
-                    'apikey': SUPABASE_ANON_KEY,
+                    'apikey': window.SUPABASE_ANON_KEY,
                     'Authorization': 'Bearer ' + accessToken
                 }
             });
@@ -612,7 +611,6 @@ async function showSellerContact(productId) {
         if (!conversationId) {
             console.log('Creating new Alibaba-style inquiry with seller:', sellerName);
             
-            // Alibaba-style initial message with product details
             const initialMessage = 'Hi, I am interested in your product: ' + productName + ' ($' + productPrice.toFixed(2) + ')\n\nQuantity: 1.0';
             
             const convData = {
@@ -626,11 +624,11 @@ async function showSellerContact(productId) {
                 unread_seller: 1
             };
             
-            const createResponse = await fetch(SUPABASE_URL + '/rest/v1/conversations', {
+            const createResponse = await fetch(window.SUPABASE_URL + '/rest/v1/conversations', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'apikey': SUPABASE_ANON_KEY,
+                    'apikey': window.SUPABASE_ANON_KEY,
                     'Authorization': 'Bearer ' + accessToken,
                     'Prefer': 'return=representation'
                 },
@@ -643,12 +641,11 @@ async function showSellerContact(productId) {
                     conversationId = result[0].id;
                     console.log('Conversation created:', conversationId);
                     
-                    // Send the initial Alibaba-style message
-                    await fetch(SUPABASE_URL + '/rest/v1/messages', {
+                    await fetch(window.SUPABASE_URL + '/rest/v1/messages', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'apikey': SUPABASE_ANON_KEY,
+                            'apikey': window.SUPABASE_ANON_KEY,
                             'Authorization': 'Bearer ' + accessToken,
                             'Prefer': 'return=minimal'
                         },
