@@ -250,7 +250,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 async function loadSellersFromAPI() {
     try {
-        // Use window.SUPABASE_URL (defined in api.js)
         const response = await fetch(window.SUPABASE_URL + '/rest/v1/sellers?select=*', {
             headers: {
                 'apikey': window.SUPABASE_ANON_KEY,
@@ -274,7 +273,6 @@ async function loadSellersFromAPI() {
 
 async function loadProductsFromAPI() {
     try {
-        // Use window.SUPABASE_URL (defined in api.js)
         const response = await fetch(window.SUPABASE_URL + '/rest/v1/products?select=*&order=created_at.desc', {
             headers: {
                 'apikey': window.SUPABASE_ANON_KEY,
