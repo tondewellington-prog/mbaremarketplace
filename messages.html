@@ -412,6 +412,77 @@
             return urlParams.get('conversation');
         }
 
+        // Helper function to get product data from storage
+        function getProductData() {
+            let productData = null;
+            
+            // Try localStorage first
+            const pendingProductLocal = localStorage.getItem('pending_product');
+            if (pendingProductLocal) {
+                try {
+                    productData = JSON.parse(pendingProductLocal);
+                    console.log('Product data from localStorage:', productData);
+                    return productData;
+                } catch (e) {}
+            }
+            
+            // Try sessionStorage
+            const pendingProductSession = sessionStorage.getItem('pending_product');
+            if (pendingProductSession) {
+                try {
+                    productData = JSON.parse(pendingProductSession);
+                    console.log('Product data from sessionStorage:', productData);
+                    return productData;
+                } catch (e) {}
+            }
+            
+            // Use currentProductData as fallback
+            if (currentProductData) {
+                return currentProductData;
+            }
+            
+            return null;
+        }
+
+        // Helper function to render the inquiry card
+        function renderInquiryCard(productData) {
+            if (!productData) return '';
+            
+            const product = productData;
+            const imageUrl = product.image_url || product.image || 'https://via.placeholder.com/70x70?text=Product';
+            const productPrice = parseFloat(product.price).toFixed(2);
+            const productTitle = product.title || 'Product';
+            const productId = product.id || 'N/A';
+            
+            console.log('Rendering inquiry card with image URL:', imageUrl);
+            
+            return `
+                <div class="message-wrapper received">
+                    <div class="inquiry-card">
+                        <div class="inquiry-header">Inquiry</div>
+                        <div class="inquiry-body">
+                            <div class="product-row">
+                                <img src="${imageUrl}" alt="${productTitle}" onerror="this.src='https://via.placeholder.com/70x70?text=Product'">
+                                <div class="product-info">
+                                    <div class="title">${escapeHtml(productTitle)}</div>
+                                    <div class="price">$${productPrice}</div>
+                                    <div class="min-order">Min. order: 1 Piece</div>
+                                </div>
+                            </div>
+                            <div class="details-label">Detailed requirements</div>
+                            <div class="details-text">
+                                Hi, how much is this product<br>
+                                Quantity: 1.0
+                            </div>
+                            <div class="product-id">ID: ${productId}</div>
+                            <a href="product-detail.html?id=${product.id}" target="_blank" class="view-link">View Product →</a>
+                        </div>
+                    </div>
+                    <div class="message-time">Just now</div>
+                </div>
+            `;
+        }
+
         // Load sellers map
         async function loadSellersMap() {
             try {
@@ -462,18 +533,6 @@
 
                 // Load sellers map
                 await loadSellersMap();
-
-                // Check for product data from sessionStorage
-                const pendingProduct = sessionStorage.getItem('pending_product');
-                if (pendingProduct) {
-                    try {
-                        currentProductData = JSON.parse(pendingProduct);
-                        console.log('Loaded pending product with image:', currentProductData);
-                        console.log('Product image URL:', currentProductData.image);
-                    } catch (e) {
-                        console.error('Error parsing pending product:', e);
-                    }
-                }
 
                 // Load conversations
                 await loadConversations();
@@ -837,6 +896,11 @@
 
         function renderMessages() {
             if (!messages || messages.length === 0) {
+                // Show a placeholder with the inquiry card when no messages exist
+                let productData = getProductData();
+                if (productData) {
+                    return renderInquiryCard(productData);
+                }
                 return '<div style="text-align:center;color:#999;padding:40px;font-size:14px;">Send a message to start the conversation</div>';
             }
 
@@ -844,22 +908,8 @@
             let lastDate = null;
             let hasInquiryCard = false;
 
-            // Check if we have product data from sessionStorage
-            let productData = null;
-            const pendingProduct = sessionStorage.getItem('pending_product');
-            if (pendingProduct) {
-                try {
-                    productData = JSON.parse(pendingProduct);
-                    console.log('Product data from sessionStorage:', productData);
-                } catch (e) {
-                    console.error('Error parsing pending product:', e);
-                }
-            }
-
-            // If no product data from sessionStorage, use currentProductData
-            if (!productData && currentProductData) {
-                productData = currentProductData;
-            }
+            // Check if we have product data
+            let productData = getProductData();
 
             // Check if inquiry card already exists in messages
             if (productData && messages.length > 0) {
@@ -871,47 +921,7 @@
                 }
             }
 
-            // Add Alibaba-style Inquiry Card with product image if not present
-            if (!hasInquiryCard && productData) {
-                const product = productData;
-                const imageUrl = product.image_url || product.image || 'https://via.placeholder.com/70x70?text=Product';
-                const productPrice = parseFloat(product.price).toFixed(2);
-                const productTitle = product.title || 'Product';
-                const productId = product.id || 'N/A';
-                
-                console.log('Adding inquiry card with image:', imageUrl);
-                
-                html += `
-                    <div class="message-wrapper received">
-                        <div class="inquiry-card">
-                            <div class="inquiry-header">Inquiry</div>
-                            <div class="inquiry-body">
-                                <div class="product-row">
-                                    <img src="${imageUrl}" alt="${productTitle}" onerror="this.src='https://via.placeholder.com/70x70?text=Product'">
-                                    <div class="product-info">
-                                        <div class="title">${escapeHtml(productTitle)}</div>
-                                        <div class="price">$${productPrice}</div>
-                                        <div class="min-order">Min. order: 1 Piece</div>
-                                    </div>
-                                </div>
-                                <div class="details-label">Detailed requirements</div>
-                                <div class="details-text">
-                                    Hi, how much is this product<br>
-                                    Quantity: 1.0
-                                </div>
-                                <div class="product-id">ID: ${productId}</div>
-                                <a href="product-detail.html?id=${product.id}" target="_blank" class="view-link">View Product →</a>
-                            </div>
-                        </div>
-                        <div class="message-time">Just now</div>
-                    </div>
-                `;
-                
-                // Clear sessionStorage after displaying the card
-                sessionStorage.removeItem('pending_product');
-                sessionStorage.removeItem('pending_conversation');
-            }
-
+            // Build messages HTML
             messages.forEach(function(msg) {
                 const msgDate = new Date(msg.created_at);
                 const dateKey = msgDate.toDateString();
@@ -932,6 +942,18 @@
                     </div>
                 `;
             });
+
+            // If no inquiry card yet and we have product data, add it at the top
+            if (!hasInquiryCard && productData && messages.length > 0) {
+                // Check if any message contains the product title
+                const hasProductRef = messages.some(function(msg) {
+                    return msg.message && msg.message.includes(productData.title);
+                });
+                if (!hasProductRef) {
+                    // Add inquiry card at the beginning (before all messages)
+                    html = renderInquiryCard(productData) + html;
+                }
+            }
 
             return html;
         }
