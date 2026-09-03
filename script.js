@@ -519,7 +519,7 @@ function escapeHtml(text) {
 }
 
 // ============================================
-// CONTACT SELLER - ALIBABA STYLE WITH PRODUCT IMAGE
+// CONTACT SELLER - WITH CHOICE MODAL (UPDATED)
 // ============================================
 
 async function showSellerContact(productId) {
@@ -561,15 +561,12 @@ async function showSellerContact(productId) {
             return;
         }
         
-        // Get seller's business name
+        // Get seller's business name and phone
         const seller = sellersMap[sellerId];
         const sellerName = seller?.business_name || 'Seller';
+        const sellerPhone = seller?.business_phone || '';
         
-        console.log('Creating Alibaba-style inquiry for product:', productName);
-        console.log('Product Image URL:', productImage);
-        console.log('Seller:', sellerId, 'Business Name:', sellerName);
-        
-        // Store COMPLETE product data in localStorage and sessionStorage
+        // Store product data for later use
         const productData = {
             id: product.id,
             title: productName,
@@ -577,19 +574,207 @@ async function showSellerContact(productId) {
             image: productImage,
             image_url: productImage,
             seller_id: sellerId,
-            seller_name: sellerName
+            seller_name: sellerName,
+            seller_phone: sellerPhone
         };
         
         localStorage.setItem('pending_product', JSON.stringify(productData));
         sessionStorage.setItem('pending_product', JSON.stringify(productData));
-        sessionStorage.setItem('pending_conversation', 'true');
         
-        console.log('Stored product data in localStorage/sessionStorage:', productData);
+        // SHOW CHOICE MODAL instead of going directly to messages
+        showContactChoiceModal(productData);
         
-        // Check if conversation already exists
+    } catch (error) {
+        console.error('Error in showSellerContact:', error);
+        alert('Could not start conversation. Please try again.');
+    }
+}
+
+// ============================================
+// CONTACT CHOICE MODAL
+// ============================================
+
+function showContactChoiceModal(productData) {
+    // Check if modal already exists
+    let modal = document.getElementById('contactChoiceModal');
+    
+    if (!modal) {
+        // Create modal
+        modal = document.createElement('div');
+        modal.id = 'contactChoiceModal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 30000;
+            padding: 20px;
+            animation: fadeIn 0.3s ease;
+        `;
+        
+        modal.innerHTML = `
+            <div style="
+                background: white;
+                border-radius: 20px;
+                max-width: 450px;
+                width: 100%;
+                padding: 35px 30px;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                animation: slideUp 0.3s ease;
+                position: relative;
+            ">
+                <button onclick="closeContactChoiceModal()" style="
+                    position: absolute;
+                    top: 15px;
+                    right: 20px;
+                    background: none;
+                    border: none;
+                    font-size: 28px;
+                    cursor: pointer;
+                    color: #999;
+                ">✕</button>
+                
+                <div style="text-align: center; margin-bottom: 25px;">
+                    <div style="
+                        width: 70px;
+                        height: 70px;
+                        background: #f0f7ff;
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin: 0 auto 15px;
+                        font-size: 30px;
+                    ">💬</div>
+                    <h2 style="color: #232f3e; font-size: 22px; margin: 0 0 8px 0;">Contact Seller</h2>
+                    <p style="color: #666; margin: 0; font-size: 14px;">Choose how you'd like to communicate with <strong>${escapeHtml(productData.seller_name)}</strong></p>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <!-- Mbare Messenger Option -->
+                    <button onclick="chooseMbareMessenger()" style="
+                        display: flex;
+                        align-items: center;
+                        gap: 15px;
+                        padding: 16px 20px;
+                        border: 2px solid #232f3e;
+                        border-radius: 12px;
+                        background: white;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                        width: 100%;
+                        text-align: left;
+                    " onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='white'">
+                        <div style="
+                            width: 44px;
+                            height: 44px;
+                            background: #232f3e;
+                            border-radius: 10px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            color: white;
+                            font-weight: 700;
+                            font-size: 14px;
+                            flex-shrink: 0;
+                        ">MB</div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: #232f3e; font-size: 16px;">Mbare Messenger</div>
+                            <div style="color: #666; font-size: 13px;">Chat directly on our platform</div>
+                        </div>
+                        <div style="color: #232f3e; font-size: 20px;">→</div>
+                    </button>
+                    
+                    <!-- WhatsApp Option -->
+                    <button onclick="chooseWhatsApp()" style="
+                        display: flex;
+                        align-items: center;
+                        gap: 15px;
+                        padding: 16px 20px;
+                        border: 2px solid #25D366;
+                        border-radius: 12px;
+                        background: white;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                        width: 100%;
+                        text-align: left;
+                    " onmouseover="this.style.background='#f0faf4'" onmouseout="this.style.background='white'">
+                        <div style="
+                            width: 44px;
+                            height: 44px;
+                            background: #25D366;
+                            border-radius: 10px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            color: white;
+                            font-weight: 700;
+                            font-size: 22px;
+                            flex-shrink: 0;
+                        ">💬</div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: #25D366; font-size: 16px;">WhatsApp</div>
+                            <div style="color: #666; font-size: 13px;">Chat via WhatsApp (external)</div>
+                        </div>
+                        <div style="color: #25D366; font-size: 20px;">→</div>
+                    </button>
+                </div>
+                
+                <div style="margin-top: 20px; text-align: center;">
+                    <button onclick="closeContactChoiceModal()" style="
+                        background: none;
+                        border: none;
+                        color: #999;
+                        font-size: 13px;
+                        cursor: pointer;
+                        text-decoration: underline;
+                    ">Cancel</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+    }
+    
+    // Store product data for the choice handlers
+    window._pendingContactProduct = productData;
+    
+    // Show modal
+    modal.style.display = 'flex';
+}
+
+// ============================================
+// CONTACT CHOICE HANDLERS
+// ============================================
+
+// Handle Mbare Messenger choice
+window.chooseMbareMessenger = async function() {
+    const productData = window._pendingContactProduct;
+    if (!productData) {
+        alert('Product data not found. Please try again.');
+        return;
+    }
+    
+    closeContactChoiceModal();
+    
+    try {
+        const sessionData = localStorage.getItem('supabase_session');
+        const session = JSON.parse(sessionData);
+        const userId = session.user?.id;
+        const accessToken = session.access_token;
+        
+        // Create conversation for Mbare Messenger
+        const initialMessage = 'Hi, I am interested in your product: ' + productData.title + ' ($' + productData.price.toFixed(2) + ')\n\nQuantity: 1.0';
+        
+        // Check if conversation exists
         let existingConv = null;
         try {
-            const convResponse = await fetch(window.SUPABASE_URL + '/rest/v1/conversations?buyer_id=eq.' + userId + '&seller_id=eq.' + sellerId + '&select=id', {
+            const convResponse = await fetch(window.SUPABASE_URL + '/rest/v1/conversations?buyer_id=eq.' + userId + '&seller_id=eq.' + productData.seller_id + '&select=id', {
                 headers: {
                     'apikey': window.SUPABASE_ANON_KEY,
                     'Authorization': 'Bearer ' + accessToken
@@ -605,17 +790,12 @@ async function showSellerContact(productId) {
         
         let conversationId = existingConv?.id;
         
-        // If no conversation exists, create one with the seller's business name
         if (!conversationId) {
-            console.log('Creating new Alibaba-style inquiry with seller:', sellerName);
-            
-            const initialMessage = 'Hi, I am interested in your product: ' + productName + ' ($' + productPrice.toFixed(2) + ')\n\nQuantity: 1.0';
-            
             const convData = {
-                product_id: productId,
+                product_id: productData.id,
                 buyer_id: userId,
-                seller_id: sellerId,
-                subject: sellerName,
+                seller_id: productData.seller_id,
+                subject: productData.seller_name,
                 last_message: initialMessage,
                 last_message_at: new Date().toISOString(),
                 unread_buyer: 0,
@@ -637,7 +817,6 @@ async function showSellerContact(productId) {
                 const result = await createResponse.json();
                 if (result && result.length > 0) {
                     conversationId = result[0].id;
-                    console.log('Conversation created:', conversationId);
                     
                     await fetch(window.SUPABASE_URL + '/rest/v1/messages', {
                         method: 'POST',
@@ -654,28 +833,149 @@ async function showSellerContact(productId) {
                             created_at: new Date().toISOString()
                         })
                     });
-                    console.log('Initial message sent:', initialMessage);
                 }
-            } else {
-                console.error('Failed to create conversation:', await createResponse.text());
             }
         }
         
-        // Redirect to messages page with conversation ID and product
+        // Redirect to messages
         if (conversationId) {
-            console.log('Redirecting to messages.html?conversation=' + conversationId + '&product=' + productId);
-            window.location.href = 'messages.html?conversation=' + conversationId + '&product=' + productId;
+            window.location.href = 'messages.html?conversation=' + conversationId + '&product=' + productData.id;
         } else {
-            console.warn('No conversation ID, going to messages page with product');
-            window.location.href = 'messages.html?product=' + productId;
+            window.location.href = 'messages.html?product=' + productData.id;
         }
         
     } catch (error) {
-        console.error('Error in showSellerContact:', error);
+        console.error('Error creating conversation:', error);
         alert('Could not start conversation. Please try again.');
-        window.location.href = 'messages.html';
+    }
+};
+
+// Handle WhatsApp choice
+window.chooseWhatsApp = function() {
+    const productData = window._pendingContactProduct;
+    if (!productData) {
+        alert('Product data not found. Please try again.');
+        return;
+    }
+    
+    closeContactChoiceModal();
+    
+    const sellerPhone = productData.seller_phone;
+    if (!sellerPhone) {
+        alert('Seller phone number not available for WhatsApp contact.');
+        return;
+    }
+    
+    // Format phone number
+    let phone = sellerPhone.toString().replace(/\D/g, '');
+    if (phone.startsWith('0')) phone = phone.substring(1);
+    if (!phone.startsWith('263')) phone = '263' + phone;
+    
+    // Get buyer info
+    let buyerInfo = '';
+    const sessionData = localStorage.getItem('supabase_session');
+    if (sessionData) {
+        try {
+            const session = JSON.parse(sessionData);
+            const userEmail = session.user?.email;
+            if (userEmail) {
+                buyerInfo = `\nBuyer email: ${userEmail}`;
+            }
+        } catch(e) {}
+    }
+    
+    const websiteUrl = 'https://www.mbaremarketplace.com';
+    const message = `Hello! I am interested in ${productData.title}, I saw it on ${websiteUrl}${buyerInfo}`;
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappLink = `https://wa.me/${phone}?text=${encodedMessage}`;
+    
+    // Track WhatsApp click
+    if (window.recordAppDownload) {
+        window.recordAppDownload('whatsapp_contact', { 
+            product_id: productData.id,
+            seller_id: productData.seller_id
+        });
+    }
+    
+    // Open WhatsApp in new tab
+    window.open(whatsappLink, '_blank');
+    
+    // Also log the conversation in Mbare Messenger for history
+    logWhatsAppConversation(productData);
+};
+
+// Log WhatsApp conversation (optional - for history)
+async function logWhatsAppConversation(productData) {
+    try {
+        const sessionData = localStorage.getItem('supabase_session');
+        const session = JSON.parse(sessionData);
+        const userId = session.user?.id;
+        const accessToken = session.access_token;
+        
+        // Create a conversation record with WhatsApp note
+        const convData = {
+            product_id: productData.id,
+            buyer_id: userId,
+            seller_id: productData.seller_id,
+            subject: productData.seller_name + ' (WhatsApp)',
+            last_message: 'Contacted via WhatsApp',
+            last_message_at: new Date().toISOString(),
+            unread_buyer: 0,
+            unread_seller: 0,
+            metadata: { contact_method: 'whatsapp' }
+        };
+        
+        await fetch(window.SUPABASE_URL + '/rest/v1/conversations', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': window.SUPABASE_ANON_KEY,
+                'Authorization': 'Bearer ' + accessToken,
+                'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify(convData)
+        });
+    } catch (e) {
+        console.log('Could not log WhatsApp conversation:', e);
     }
 }
+
+// ============================================
+// CLOSE MODAL
+// ============================================
+
+window.closeContactChoiceModal = function() {
+    const modal = document.getElementById('contactChoiceModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+    window._pendingContactProduct = null;
+};
+
+// Close modal when clicking outside
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('contactChoiceModal');
+    if (modal && e.target === modal) {
+        closeContactChoiceModal();
+    }
+});
+
+// ============================================
+// CSS ANIMATIONS (add to existing styles)
+// ============================================
+
+const contactModalStyles = document.createElement('style');
+contactModalStyles.textContent = `
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    @keyframes slideUp {
+        from { transform: translateY(30px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+`;
+document.head.appendChild(contactModalStyles);
 
 // ============================================
 // REMAINING FUNCTIONS
@@ -1027,6 +1327,9 @@ window.hideLoginPrompt = hideLoginPrompt;
 window.moveCarousel = moveCarousel;
 window.goToSlide = goToSlide;
 window.handleSearch = handleSearch;
+window.chooseMbareMessenger = chooseMbareMessenger;
+window.chooseWhatsApp = chooseWhatsApp;
+window.closeContactChoiceModal = closeContactChoiceModal;
 
 // ============================================
 // PASSWORD RESET DETECTION
