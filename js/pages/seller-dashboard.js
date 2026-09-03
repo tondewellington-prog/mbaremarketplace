@@ -277,7 +277,7 @@ async function activateSubscription(planType, reference) {
     }
 }
 
-// ==================== PAYMENT FLOW (Express Checkout - Mobile Money) ====================
+// ==================== PAYMENT FLOW ====================
 async function openPayNowPayment(planType) {
     const plan = tierMap[planType];
     
@@ -295,27 +295,8 @@ async function openPayNowPayment(planType) {
             return;
         }
 
-        // ============================================================
-        // STEP 1: Ask for EcoCash phone number
-        // ============================================================
-        const phone = prompt("Enter your EcoCash phone number (e.g., 0771 111 111):");
-        if (!phone) {
-            showToast('Phone number is required to proceed.', true);
-            return;
-        }
+        showToast('Connecting to Paynow gateway securely...', false);
 
-        // Basic validation - check if it starts with 07 or 071
-        const cleanPhone = phone.replace(/\s/g, '').replace(/^0+/, '0');
-        if (!cleanPhone.match(/^07[0-9]{8}$/)) {
-            showToast('Please enter a valid EcoCash phone number starting with 07...', true);
-            return;
-        }
-
-        showToast('Connecting to Paynow securely...', false);
-
-        // ============================================================
-        // STEP 2: Send payment request with phone number
-        // ============================================================
         const response = await fetch(`${API_BASE_URL}/initiate-subscription`, {
             method: 'POST',
             headers: {
@@ -324,7 +305,6 @@ async function openPayNowPayment(planType) {
             body: JSON.stringify({
                 sellerId: sellerId,
                 sellerEmail: sellerEmail,
-                phone: cleanPhone,
                 amount: targetAmount,
                 planType: planType
             })
@@ -333,34 +313,15 @@ async function openPayNowPayment(planType) {
         const data = await response.json();
 
         if (!response.ok || !data.success) {
-            throw new Error(data.error || 'Failed to initiate payment.');
+            throw new Error(data.error || 'Failed to initiate secure token connection.');
         }
 
-        // ============================================================
-        // STEP 3: Save pending info for polling
-        // ============================================================
         localStorage.setItem('pending_payment_plan', planType);
         localStorage.setItem('pending_payment_guid', data.reference);
-        localStorage.setItem('pending_poll_url', data.pollUrl);
 
-        // ============================================================
-        // STEP 4: Show instructions to the user
-        // ============================================================
-        showToast('✅ Payment request sent! Check your phone for EcoCash prompt.', false);
-        
-        // Show detailed instructions
-        alert(
-            "📱 Payment Initiated!\n\n" +
-            "1. Check your phone for an EcoCash USSD prompt.\n" +
-            "2. Enter your EcoCash PIN to confirm payment.\n" +
-            "3. Wait for confirmation.\n\n" +
-            "You will receive a notification once the payment is complete."
-        );
+        showToast('Redirecting to Paynow checkout portal...', false);
 
-        // ============================================================
-        // STEP 5: Start polling for payment status
-        // ============================================================
-        pollPaymentStatus(data.reference, planType);
+        window.location.href = data.redirectUrl;
 
     } catch (e) {
         console.error('Payment initialization error:', e);
@@ -401,7 +362,6 @@ async function pollPaymentStatus(reference, planType, attempt = 0) {
                 showToast('Payment timed out. Please contact support.', true);
                 localStorage.removeItem('pending_payment_plan');
                 localStorage.removeItem('pending_payment_guid');
-                localStorage.removeItem('pending_poll_url');
             }
             return;
         }
@@ -409,11 +369,8 @@ async function pollPaymentStatus(reference, planType, attempt = 0) {
         const data = await response.json();
         
         if (data.status === 'active') {
-            showToast('✅ Payment confirmed! Subscription activated!', false);
+            showToast('Payment confirmed! Activating subscription...', false);
             await activateSubscription(planType, reference);
-            localStorage.removeItem('pending_payment_plan');
-            localStorage.removeItem('pending_payment_guid');
-            localStorage.removeItem('pending_poll_url');
         } else if (data.status === 'pending') {
             if (attempt < maxAttempts) {
                 setTimeout(() => pollPaymentStatus(reference, planType, attempt + 1), delay);
@@ -424,7 +381,6 @@ async function pollPaymentStatus(reference, planType, attempt = 0) {
             showToast('Payment failed. Please try again.', true);
             localStorage.removeItem('pending_payment_plan');
             localStorage.removeItem('pending_payment_guid');
-            localStorage.removeItem('pending_poll_url');
         }
         
     } catch (error) {
@@ -1120,6 +1076,7 @@ function renderTiers() {
             badgeHtml = `<span class="badge-pro">${d.badge}</span>`;
         }
         if (d.isFree && isCurrent) {
+            // Professional star badge for free tier - no emojis
             badgeHtml = `
                 <span class="badge-free" style="
                     background: #8B5CF6; 
@@ -1140,6 +1097,7 @@ function renderTiers() {
                 </span>
             `;
         } else if (d.isFree && !isCurrent) {
+            // Show subtle star for free tier even when not active
             badgeHtml = `
                 <span class="badge-free-inactive" style="
                     background: #E9E6FF; 
@@ -1160,6 +1118,7 @@ function renderTiers() {
             `;
         }
 
+        // Determine if subscription is active (for paid plans)
         let statusIndicator = '';
         if (isCurrent && !d.isFree) {
             if (subscriptionStatus === 'paused') {
@@ -1400,10 +1359,12 @@ window.handleAddProduct = async function() {
     
     const ed = document.getElementById('submitProductBtn').getAttribute('data-editing');
     
+    // Get the correct product limit based on current tier
     const max = getCurrentLimit();
     const activeProducts = sellerProducts.filter(p => !p.paused);
     const activeCount = activeProducts.length;
     
+    // Check if user is at or above their tier limit
     if (!ed && activeCount >= max) {
         const tierName = tierMap[currentTier]?.name || 'Free';
         showToast(`Product limit reached! You have ${activeCount} active products out of ${max} allowed for your ${tierName}.`, true);
@@ -1411,6 +1372,7 @@ window.handleAddProduct = async function() {
         return;
     }
     
+    // Validate form fields
     const t = document.getElementById('prodTitle').value.trim();
     const pr = parseFloat(document.getElementById('prodPrice').value);
     const st = parseInt(document.getElementById('prodStock').value);
@@ -1428,6 +1390,7 @@ window.handleAddProduct = async function() {
     btn.textContent = 'Processing...';
     
     try {
+        // Upload image if new file selected
         if (selectedImageFile) {
             try {
                 img = await uploadImageToImgBB(selectedImageFile);
@@ -1446,6 +1409,7 @@ window.handleAddProduct = async function() {
             return;
         }
         
+        // Check again for pause condition (after upload)
         const isPaused = (!ed && activeCount >= max);
         const pd = { title: t, description: desc, price: pr, category: cat, stock: st, image_url: img, paused: isPaused };
         
@@ -1566,16 +1530,20 @@ function initializeDashboardData() {
 }
 
 // ==================== FORCE FIX: Add Product Button ====================
+// This ensures the Add Product button works regardless of HTML structure
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🔧 Running force fix for Add Product button...');
     
+    // Find the Add Product button
     let addBtn = document.getElementById('submitProductBtn');
     
     if (addBtn) {
+        // Remove all existing click listeners by cloning
         const newBtn = addBtn.cloneNode(true);
         addBtn.parentNode.replaceChild(newBtn, addBtn);
         addBtn = newBtn;
         
+        // Attach the click handler
         addBtn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
@@ -1594,6 +1562,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.warn('⚠️ Add Product button not found in DOM');
     }
     
+    // Fix Toggle Form button
     const toggleBtn = document.getElementById('toggleFormBtn');
     if (toggleBtn) {
         const newBtn = toggleBtn.cloneNode(true);
@@ -1607,6 +1576,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('✅ Force fix: Toggle Form button attached');
     }
     
+    // Fix Cancel button
     const cancelBtn = document.getElementById('cancelProductBtn');
     if (cancelBtn) {
         const newBtn = cancelBtn.cloneNode(true);
@@ -1621,6 +1591,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// Ensure all functions are globally available
 window.handleAddProduct = handleAddProduct;
 window.toggleProductForm = toggleProductForm;
 window.editProduct = editProduct;
@@ -1635,6 +1606,7 @@ window.closeModalAndPay = closeModalAndPay;
 
 console.log('✅ All dashboard functions exposed globally');
 
+// ==================== TEST FUNCTION ====================
 window.testAddProduct = function() {
     console.log('🧪 Testing Add Product...');
     if (typeof window.handleAddProduct === 'function') {
@@ -1651,15 +1623,19 @@ async function init() {
     if (!await checkAuth()) return;
     console.log('Dashboard initializing...');
     try {
+        // Check payment return
         checkLocalStoragePaymentStatus();
+        // Fetch subscription (retries internally)
         const sub = await fetchSubscription(1);
         currentTier = sub || localStorage.getItem(`mbare_tier_${currentSellerId}`) || 'free';
         localStorage.setItem(`mbare_tier_${currentSellerId}`, currentTier);
         console.log('Current tier after init:', currentTier);
+        // Load products
         await loadProductsFromSupabase(1);
         if (!sellerProducts.length) {
             sellerProducts = JSON.parse(localStorage.getItem(`mbare_products_${currentSellerId}`) || '[]');
         }
+        // Render everything
         renderTiers();
         updateExpiryBanner();
         updateSubscriptionControls();
@@ -1672,6 +1648,7 @@ async function init() {
         console.log('Dashboard fully initialized.');
     } catch (e) {
         console.error('Init error:', e);
+        // Only redirect if session is missing
         if (!localStorage.getItem('supabase_session')) {
             window.location.href = 'login.html';
         }
