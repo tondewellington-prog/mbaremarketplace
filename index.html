@@ -59,7 +59,7 @@
         }
 
         /* ============================================================
-           CATEGORY OVERLAY – full screen, glass, like search overlay
+           CATEGORY OVERLAY – full screen, glass
            ============================================================ */
         #categoryOverlay {
             position: fixed;
@@ -67,27 +67,25 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(20px);
+            background: linear-gradient(135deg, rgba(80,20,120,0.92), rgba(40,10,80,0.96));
+            backdrop-filter: blur(30px);
             z-index: 30000;
             display: none;
             align-items: center;
             justify-content: center;
             padding: 20px;
         }
-        #categoryOverlay.active {
-            display: flex;
-        }
+        #categoryOverlay.active { display: flex; }
         #categoryOverlay .overlay-content {
             max-width: 500px;
             width: 100%;
-            background: rgba(10, 22, 40, 0.95);
-            backdrop-filter: blur(30px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.15);
             border-radius: 32px;
             padding: 35px 30px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-            animation: modalSlideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            animation: modalSlideUp 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
             position: relative;
             max-height: 80vh;
             overflow-y: auto;
@@ -98,14 +96,12 @@
             right: 20px;
             background: none;
             border: none;
-            color: rgba(255, 255, 255, 0.6);
+            color: rgba(255,255,255,0.6);
             font-size: 28px;
             cursor: pointer;
             transition: color 0.3s;
         }
-        #categoryOverlay .overlay-close:hover {
-            color: #fff;
-        }
+        #categoryOverlay .overlay-close:hover { color: #fff; }
         #categoryOverlay h2 {
             color: #fff;
             font-size: 24px;
@@ -120,8 +116,8 @@
         #categoryOverlay .category-grid a {
             display: block;
             padding: 14px 20px;
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
             border-radius: 12px;
             color: #fff;
             text-decoration: none;
@@ -131,23 +127,17 @@
             text-align: center;
         }
         #categoryOverlay .category-grid a:hover {
-            background: rgba(255, 255, 255, 0.12);
+            background: rgba(255,255,255,0.15);
             border-color: #00d4ff;
         }
 
         @keyframes modalSlideUp {
-            from {
-                opacity: 0;
-                transform: translateY(40px) scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
+            from { opacity:0; transform:translateY(40px) scale(0.95); }
+            to { opacity:1; transform:translateY(0) scale(1); }
         }
 
         /* ============================================================
-           SEARCH OVERLAY – dark glass, no white bars (unchanged)
+           SEARCH OVERLAY
            ============================================================ */
         .search-overlay {
             position: fixed;
@@ -155,7 +145,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0,0,0,0.8);
             backdrop-filter: blur(20px);
             z-index: 20000;
             display: none;
@@ -163,19 +153,17 @@
             justify-content: center;
             padding: 20px;
         }
-        .search-overlay.active {
-            display: flex;
-        }
+        .search-overlay.active { display: flex; }
         .search-overlay-content {
             max-width: 500px;
             width: 100%;
-            background: rgba(10, 22, 40, 0.95);
+            background: rgba(10,22,40,0.95);
             backdrop-filter: blur(30px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255,255,255,0.12);
             border-radius: 32px;
             padding: 35px 30px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-            animation: modalSlideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            animation: modalSlideUp 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
             position: relative;
         }
         .search-overlay-close {
@@ -184,14 +172,12 @@
             right: 20px;
             background: none;
             border: none;
-            color: rgba(255, 255, 255, 0.6);
+            color: rgba(255,255,255,0.6);
             font-size: 28px;
             cursor: pointer;
             transition: color 0.3s;
         }
-        .search-overlay-close:hover {
-            color: #fff;
-        }
+        .search-overlay-close:hover { color: #fff; }
         .search-overlay-inner h2 {
             color: #fff;
             font-size: 24px;
@@ -206,8 +192,8 @@
         .search-overlay-bar select,
         .search-overlay-bar input {
             padding: 14px 18px;
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
             border-radius: 12px;
             color: #fff;
             font-size: 15px;
@@ -217,16 +203,11 @@
         .search-overlay-bar select:focus,
         .search-overlay-bar input:focus {
             border-color: #00d4ff;
-            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.15);
-            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 3px rgba(0,212,255,0.15);
+            background: rgba(255,255,255,0.08);
         }
-        .search-overlay-bar select option {
-            background: #0a1628;
-            color: #fff;
-        }
-        .search-overlay-bar input::placeholder {
-            color: rgba(255, 255, 255, 0.5);
-        }
+        .search-overlay-bar select option { background: #0a1628; color: #fff; }
+        .search-overlay-bar input::placeholder { color: rgba(255,255,255,0.5); }
         .search-overlay-bar button {
             padding: 14px;
             background: linear-gradient(135deg, #00d4ff, #7b68ee);
@@ -240,31 +221,19 @@
         }
         .search-overlay-bar button:hover {
             transform: scale(1.02);
-            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.3);
+            box-shadow: 0 4px 20px rgba(0,212,255,0.3);
         }
 
         @media (max-width: 768px) {
-            .search-overlay-content {
-                padding: 25px 20px;
-                border-radius: 24px;
-            }
-            .search-overlay-inner h2 {
-                font-size: 20px;
-                margin-bottom: 20px;
-            }
+            .search-overlay-content { padding: 25px 20px; border-radius: 24px; }
+            .search-overlay-inner h2 { font-size: 20px; margin-bottom: 20px; }
             .search-overlay-bar select,
-            .search-overlay-bar input {
-                padding: 12px 14px;
-                font-size: 14px;
-            }
-            .search-overlay-bar button {
-                padding: 12px;
-                font-size: 14px;
-            }
+            .search-overlay-bar input { padding: 12px 14px; font-size: 14px; }
+            .search-overlay-bar button { padding: 12px; font-size: 14px; }
         }
 
         /* ============================================================
-           CAROUSEL OVERRIDES – ensure slides are visible
+           CAROUSEL OVERRIDES
            ============================================================ */
         .carousel-slides {
             display: flex !important;
@@ -285,7 +254,7 @@
         }
 
         /* ============================================================
-           PRODUCT CARD INLINE OVERRIDES (unchanged)
+           PRODUCT CARD INLINE OVERRIDES
            ============================================================ */
         .product-card img {
             width: 100%;
@@ -295,9 +264,7 @@
             cursor: pointer;
             transition: transform 0.3s ease;
         }
-        .product-card img:hover {
-            transform: scale(1.03);
-        }
+        .product-card img:hover { transform: scale(1.03); }
         .image-modal {
             display: none;
             position: fixed;
@@ -306,7 +273,7 @@
             top: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.9);
+            background-color: rgba(0,0,0,0.9);
         }
         .modal-image {
             margin: auto;
@@ -329,54 +296,38 @@
         }
 
         .login-status-indicator {
-            background-color: rgba(255, 255, 255, 0.1);
+            background-color: rgba(255,255,255,0.1);
             color: #fff;
             padding: 4px 12px;
             border-radius: 20px;
             font-size: 12px;
             font-weight: 500;
             display: inline-block;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255,255,255,0.1);
         }
-        .account-menu.logged-in .account-label {
-            color: rgba(255, 255, 255, 0.6);
-        }
-        .account-menu.logged-in .account-link {
-            color: #fff;
-            font-weight: 600;
-        }
+        .account-menu.logged-in .account-label { color: rgba(255,255,255,0.6); }
+        .account-menu.logged-in .account-link { color: #fff; font-weight: 600; }
 
         #installButton {
             background: linear-gradient(135deg, #00d4ff, #7b68ee) !important;
             border: none !important;
-            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.3) !important;
+            box-shadow: 0 4px 20px rgba(0,212,255,0.3) !important;
         }
         #installButton:hover {
             transform: scale(1.05);
-            box-shadow: 0 8px 30px rgba(0, 212, 255, 0.3) !important;
+            box-shadow: 0 8px 30px rgba(0,212,255,0.3) !important;
         }
 
         @media (max-width: 768px) {
-            .product-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 12px;
-            }
-            .product-card img {
-                height: 140px;
-            }
+            .product-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+            .product-card img { height: 140px; }
         }
         @media (max-width: 480px) {
-            .product-grid {
-                gap: 10px;
-            }
-            .product-card img {
-                height: 120px;
-            }
+            .product-grid { gap: 10px; }
+            .product-card img { height: 120px; }
         }
         @media (max-width: 360px) {
-            .product-card img {
-                height: 100px;
-            }
+            .product-card img { height: 100px; }
         }
     </style>
 </head>
@@ -391,9 +342,7 @@
         <span></span>
     </div>
 
-    <!-- ============================================================
-         CATEGORY OVERLAY (replaces dropdown)
-         ============================================================ -->
+    <!-- ===== CATEGORY OVERLAY ===== -->
     <div id="categoryOverlay">
         <div class="overlay-content">
             <button class="overlay-close" onclick="closeCategoryOverlay()">&times;</button>
@@ -477,7 +426,6 @@
                 <p>Your guide to the platform</p>
             </div>
             <div class="tour-body">
-                <!-- ... (steps unchanged) ... -->
                 <div id="tourStep1" class="tour-step active">
                     <h3>Welcome Aboard!</h3>
                     <p>You're now part of Mbare Marketplace, Zimbabwe's growing online shopping destination. Let's take a quick tour to help you get started.</p>
@@ -616,7 +564,6 @@
                     All
                 </a>
                 <a href="#" class="nav-item">Today's Deals</a>
-                <!-- REPLACED DROPDOWN WITH BUTTON TO OPEN OVERLAY -->
                 <button class="nav-item dropdown-trigger" id="categoryOverlayBtn" style="background:transparent; border:none; color:rgba(255,255,255,0.7); cursor:pointer; font-size:13px; font-weight:500; padding:6px 12px; border-radius:20px; transition:0.3s; display:flex; align-items:center; gap:6px; font-family:inherit;" onmouseover="this.style.background='rgba(255,255,255,0.08)'; this.style.color='#fff'" onmouseout="this.style.background='transparent'; this.style.color='rgba(255,255,255,0.7)'" onclick="openCategoryOverlay()">
                     What do you want to buy today?
                     <span style="font-size:12px; transition:transform 0.2s;">▼</span>
@@ -678,7 +625,9 @@
             </div>
         </section>
 
-        <!-- PRODUCT SECTIONS (unchanged) -->
+        <!-- ============================================================
+             PRODUCT SECTIONS – ALL CONTAINERS INCLUDED
+             ============================================================ -->
         <div class="container">
             <section class="product-section">
                 <div class="section-header">
@@ -687,8 +636,102 @@
                 </div>
                 <div class="product-grid" id="todaysDeals"></div>
             </section>
-            <!-- ... (all other product sections remain as before) ... -->
-            <!-- I'm omitting them to keep the answer readable, but they are identical to your original. -->
+
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>Best Sellers in Electronic Devices</h2>
+                    <a href="electronics.html" class="see-all">See more</a>
+                </div>
+                <div class="product-grid" id="bestSellersElectronics"></div>
+            </section>
+
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>Best Sellers in Clothing</h2>
+                    <a href="clothing.html" class="see-all">See more</a>
+                </div>
+                <div class="product-grid" id="bestSellersClothing"></div>
+            </section>
+
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>Best Sellers in Pet Supplies</h2>
+                    <a href="pet-supplies.html" class="see-all">See more</a>
+                </div>
+                <div class="product-grid" id="bestSellersPetSupplies"></div>
+            </section>
+
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>Best Sellers in Pets & Livestock</h2>
+                    <a href="pets-livestock.html" class="see-all">See more</a>
+                </div>
+                <div class="product-grid" id="bestSellersPetsLivestock"></div>
+            </section>
+
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>Best Sellers in Farm Products</h2>
+                    <a href="farm-products.html" class="see-all">See more</a>
+                </div>
+                <div class="product-grid" id="bestSellersFarmProducts"></div>
+            </section>
+
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>Best Sellers in Hardware</h2>
+                    <a href="hardware.html" class="see-all">See more</a>
+                </div>
+                <div class="product-grid" id="bestSellersHardware"></div>
+            </section>
+
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>Best Sellers in Vehicle Parts & Accessories</h2>
+                    <a href="vehicle-parts.html" class="see-all">See more</a>
+                </div>
+                <div class="product-grid" id="bestSellersVehicleParts&amp;Accessories"></div>
+            </section>
+
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>Best Sellers in Vehicles & Transportation</h2>
+                    <a href="vehicles-transportation.html" class="see-all">See more</a>
+                </div>
+                <div class="product-grid" id="bestSellersVehicle&amp;Transportation"></div>
+            </section>
+
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>Best Sellers in Home & Kitchen</h2>
+                    <a href="home&kitchen.html" class="see-all">See more</a>
+                </div>
+                <div class="product-grid" id="bestSellersHome&amp;Kitchen"></div>
+            </section>
+
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>Best Sellers in Beauty & Cosmetics</h2>
+                    <a href="beauty-cosmetics.html" class="see-all">See more</a>
+                </div>
+                <div class="product-grid" id="bestSellersBeautyCosmetics"></div>
+            </section>
+
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>Recommended for You</h2>
+                    <a href="#" class="see-all">See more</a>
+                </div>
+                <div class="product-grid" id="recommended"></div>
+            </section>
+
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>All Products</h2>
+                    <a href="#" class="see-all">Browse all</a>
+                </div>
+                <div class="product-grid" id="allProducts"></div>
+            </section>
         </div>
     </main>
 
@@ -700,7 +743,46 @@
         <div class="footer-content">
             <div class="container">
                 <div class="footer-columns">
-                    <!-- ... (unchanged) ... -->
+                    <div class="footer-column">
+                        <h3>Get to Know Us</h3>
+                        <ul>
+                            <li><a href="#">Careers</a></li>
+                            <li><a href="#">Blog</a></li>
+                            <li><a href="about.html">About Mbare Marketplace</a></li>
+                            <li><a href="#">Investor Relations</a></li>
+                            <li><a href="#">Mbare Devices</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h3>Make Money with Us</h3>
+                        <ul>
+                            <li><a href="seller-register.html" id="footerSellLink">Sell products on Mbare Marketplace</a></li>
+                            <li><a href="#">Sell on Mbare Business</a></li>
+                            <li><a href="#">Sell apps on Mbare Marketplace</a></li>
+                            <li><a href="affiliates.html" id="footerAffiliateLink">Become an Affiliate</a></li>
+                            <li><a href="#">Advertise Your Products</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h3>Mbare Payment Products</h3>
+                        <ul>
+                            <li><a href="#">Mbare Business Card</a></li>
+                            <li><a href="#">Shop with Points</a></li>
+                            <li><a href="#">Reload Your Balance</a></li>
+                            <li><a href="#">Mbare Currency Converter</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h3>Need Help?</h3>
+                        <ul>
+                            <li><a href="#">COVID-19 and Mbare Marketplace</a></li>
+                            <li><a href="#">Your Account</a></li>
+                            <li><a href="#">Your Orders</a></li>
+                            <li><a href="#">Shipping Rates & Policies</a></li>
+                            <li><a href="#">Returns & Replacements</a></li>
+                            <li><a href="#">Help</a></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
@@ -769,7 +851,6 @@
         (function() {
             'use strict';
 
-            // Wait for everything to load
             setTimeout(function() {
 
                 // ===== CATEGORY OVERLAY =====
@@ -784,7 +865,6 @@
                 };
 
                 if (openBtn) {
-                    // Remove any inline onclick to avoid duplication
                     openBtn.removeAttribute('onclick');
                     openBtn.addEventListener('click', function(e) {
                         e.stopPropagation();
@@ -792,7 +872,6 @@
                     });
                 }
 
-                // Close overlay when clicking outside the content
                 if (overlay) {
                     overlay.addEventListener('click', function(e) {
                         if (e.target === overlay) {
@@ -801,7 +880,6 @@
                     });
                 }
 
-                // Close on ESC key
                 document.addEventListener('keydown', function(e) {
                     if (e.key === 'Escape') {
                         window.closeCategoryOverlay();
