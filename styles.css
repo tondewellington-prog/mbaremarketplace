@@ -311,19 +311,19 @@ body {
     display: flex;
     gap: 25px;
     align-items: center;
-    overflow-x: auto !important;      /* ← enables horizontal scroll */
+    overflow-x: auto !important;      /* enables horizontal scroll */
     overflow-y: visible !important;
-    flex-wrap: nowrap !important;     /* ← prevents wrapping */
+    flex-wrap: nowrap !important;     /* prevents wrapping */
     -webkit-overflow-scrolling: touch;
     padding-bottom: 10px;
     scroll-behavior: smooth;
-    min-width: 100%;                  /* ← ensures container takes full width */
-    width: 100%;                      /* ← prevents shrinking */
+    min-width: 100% !important;       /* ensures container takes full width */
+    width: 100% !important;           /* prevents shrinking */
 }
 
 /* Nav items – prevent shrinking so overflow triggers scroll */
 .nav-item {
-    flex-shrink: 0 !important;        /* ← CRITICAL: items stay at natural width */
+    flex-shrink: 0 !important;        /* CRITICAL: items stay at natural width */
     color: var(--bubble-text-muted);
     text-decoration: none;
     font-size: 13px;
