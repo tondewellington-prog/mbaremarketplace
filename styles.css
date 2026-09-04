@@ -298,7 +298,9 @@ body {
     stroke-linejoin: round;
 }
 
-/* ===== NAV MENU – side scrollable (FIXED) ===== */
+/* ============================================================
+   NAV MENU – HORIZONTALLY SCROLLABLE (FIXED)
+   ============================================================ */
 .nav-menu {
     padding: 8px 0;
     border-top: 1px solid var(--bubble-glass-border);
@@ -309,19 +311,19 @@ body {
     display: flex;
     gap: 25px;
     align-items: center;
-    overflow-x: auto !important;
+    overflow-x: auto !important;      /* ← enables horizontal scroll */
     overflow-y: visible !important;
-    flex-wrap: nowrap !important;
+    flex-wrap: nowrap !important;     /* ← prevents wrapping */
     -webkit-overflow-scrolling: touch;
     padding-bottom: 10px;
     scroll-behavior: smooth;
-    min-width: 100%;      /* FIX: ensures container takes full width */
-    width: 100%;          /* FIX: prevents shrinking */
+    min-width: 100%;                  /* ← ensures container takes full width */
+    width: 100%;                      /* ← prevents shrinking */
 }
 
 /* Nav items – prevent shrinking so overflow triggers scroll */
 .nav-item {
-    flex-shrink: 0 !important;  /* FIX: prevents nav items from shrinking */
+    flex-shrink: 0 !important;        /* ← CRITICAL: items stay at natural width */
     color: var(--bubble-text-muted);
     text-decoration: none;
     font-size: 13px;
@@ -339,6 +341,7 @@ body {
     color: #fff;
 }
 
+/* Scroll hint gradient */
 .nav-menu .container::after {
     content: '';
     position: sticky;
@@ -350,6 +353,7 @@ body {
     flex-shrink: 0;
 }
 
+/* Custom scrollbar */
 .nav-menu .container::-webkit-scrollbar {
     height: 2px;
 }
@@ -1304,6 +1308,7 @@ body {
     .messages-link .msg-label { display:none; }
     .messages-link svg { width:24px; height:24px; }
     .footer-columns { grid-template-columns:repeat(2,1fr); gap:30px; }
+    /* Ensure nav scroll works on mobile */
     .nav-menu,
     .nav-menu .container,
     .custom-category-dropdown { overflow: visible !important; }
