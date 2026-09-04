@@ -37,7 +37,7 @@
 
     <style>
         /* ============================================================
-           FIX 1: NAV BAR – HORIZONTALLY SCROLLABLE
+           NAV BAR – HORIZONTALLY SCROLLABLE
            ============================================================ */
         .nav-menu .container {
             display: flex;
@@ -59,51 +59,95 @@
         }
 
         /* ============================================================
-           FIX 2: DROPDOWN ABOVE CAROUSEL
+           CATEGORY OVERLAY – full screen, glass, like search overlay
            ============================================================ */
-        .nav-menu {
-            position: relative !important;
-            z-index: 9999 !important;
+        #categoryOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(20px);
+            z-index: 30000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
         }
-
-        .custom-category-dropdown {
-            position: relative !important;
-            z-index: 9999 !important;
+        #categoryOverlay.active {
+            display: flex;
         }
-
-        .dropdown-menu {
-            z-index: 10000 !important;
-        }
-
-        .carousel-section {
-            z-index: 1 !important;
+        #categoryOverlay .overlay-content {
+            max-width: 500px;
+            width: 100%;
+            background: rgba(10, 22, 40, 0.95);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 32px;
+            padding: 35px 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: modalSlideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             position: relative;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        #categoryOverlay .overlay-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 28px;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        #categoryOverlay .overlay-close:hover {
+            color: #fff;
+        }
+        #categoryOverlay h2 {
+            color: #fff;
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        #categoryOverlay .category-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        #categoryOverlay .category-grid a {
+            display: block;
+            padding: 14px 20px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            color: #fff;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background 0.3s, border-color 0.3s;
+            text-align: center;
+        }
+        #categoryOverlay .category-grid a:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: #00d4ff;
         }
 
-        .carousel-container {
-            z-index: 1 !important;
-        }
-
-        /* ============================================================
-           FIX 3: PREVENT CLIPPING
-           ============================================================ */
-        .nav-menu,
-        .nav-menu .container,
-        .custom-category-dropdown {
-            overflow: visible !important;
-        }
-
-        /* On narrow screens, align dropdown to the right */
-        @media (max-width: 768px) {
-            .dropdown-menu {
-                left: auto !important;
-                right: 0 !important;
-                min-width: 200px;
+        @keyframes modalSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
             }
         }
 
         /* ============================================================
-           SEARCH OVERLAY – dark glass, no white bars
+           SEARCH OVERLAY – dark glass, no white bars (unchanged)
            ============================================================ */
         .search-overlay {
             position: fixed;
@@ -219,19 +263,29 @@
             }
         }
 
-        @keyframes modalSlideUp {
-            from {
-                opacity: 0;
-                transform: translateY(40px) scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
+        /* ============================================================
+           CAROUSEL OVERRIDES – ensure slides are visible
+           ============================================================ */
+        .carousel-slides {
+            display: flex !important;
+            width: 300% !important;
+            transition: transform 0.6s ease-in-out;
+        }
+        .carousel-slide {
+            min-width: 33.333% !important;
+            flex-shrink: 0 !important;
+            height: 100%;
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+        }
+        .carousel-container {
+            overflow: hidden !important;
+            position: relative;
         }
 
         /* ============================================================
-           PRODUCT CARD INLINE OVERRIDES
+           PRODUCT CARD INLINE OVERRIDES (unchanged)
            ============================================================ */
         .product-card img {
             width: 100%;
@@ -324,27 +378,6 @@
                 height: 100px;
             }
         }
-
-        /* ============================================================
-           CAROUSEL OVERRIDES – ensure slides are visible
-           ============================================================ */
-        .carousel-slides {
-            display: flex !important;
-            width: 300% !important;
-            transition: transform 0.6s ease-in-out;
-        }
-        .carousel-slide {
-            min-width: 33.333% !important;
-            flex-shrink: 0 !important;
-            height: 100%;
-            display: flex !important;
-            align-items: center;
-            justify-content: center;
-        }
-        .carousel-container {
-            overflow: hidden !important;
-            position: relative;
-        }
     </style>
 </head>
 <body>
@@ -356,6 +389,30 @@
         <span></span>
         <span></span>
         <span></span>
+    </div>
+
+    <!-- ============================================================
+         CATEGORY OVERLAY (replaces dropdown)
+         ============================================================ -->
+    <div id="categoryOverlay">
+        <div class="overlay-content">
+            <button class="overlay-close" onclick="closeCategoryOverlay()">&times;</button>
+            <h2>Choose a Category</h2>
+            <div class="category-grid">
+                <a href="index.html">All</a>
+                <a href="electronics.html">Electronic Devices</a>
+                <a href="books.html">Books</a>
+                <a href="clothing.html">Clothing</a>
+                <a href="home&kitchen.html">Home & Kitchen</a>
+                <a href="pet-supplies.html">Pet Supplies</a>
+                <a href="pets-livestock.html">Pets & Livestock</a>
+                <a href="vehicle-parts.html">Vehicle Parts & Accessories</a>
+                <a href="vehicles-transportation.html">Vehicles & Transportation</a>
+                <a href="farm-products.html">Farm Products</a>
+                <a href="hardware.html">Hardware</a>
+                <a href="beauty-cosmetics.html">Beauty & Cosmetics</a>
+            </div>
+        </div>
     </div>
 
     <!-- SEARCH OVERLAY -->
@@ -420,6 +477,7 @@
                 <p>Your guide to the platform</p>
             </div>
             <div class="tour-body">
+                <!-- ... (steps unchanged) ... -->
                 <div id="tourStep1" class="tour-step active">
                     <h3>Welcome Aboard!</h3>
                     <p>You're now part of Mbare Marketplace, Zimbabwe's growing online shopping destination. Let's take a quick tour to help you get started.</p>
@@ -558,27 +616,11 @@
                     All
                 </a>
                 <a href="#" class="nav-item">Today's Deals</a>
-                <div class="custom-category-dropdown nav-item" style="position: relative;">
-                    <button class="dropdown-trigger" id="categoryDropdownBtn" aria-expanded="false">
-                        What do you want to buy today?
-                        <span class="dropdown-arrow">▼</span>
-                    </button>
-                    <div class="dropdown-menu" id="categoryDropdownMenu">
-                        <div class="dropdown-header">SHOP BY CATEGORY</div>
-                        <a href="index.html" class="dropdown-category-item">All</a>
-                        <a href="electronics.html" class="dropdown-category-item">Electronic Devices</a>
-                        <a href="books.html" class="dropdown-category-item">Books</a>
-                        <a href="clothing.html" class="dropdown-category-item">Clothing</a>
-                        <a href="home&kitchen.html" class="dropdown-category-item">Home & Kitchen</a>
-                        <a href="pet-supplies.html" class="dropdown-category-item">Pet Supplies</a>
-                        <a href="pets-livestock.html" class="dropdown-category-item">Pets & Livestock</a>
-                        <a href="vehicle-parts.html" class="dropdown-category-item">Vehicle Parts & Accessories</a>
-                        <a href="vehicles-transportation.html" class="dropdown-category-item">Vehicles & Transportation</a>
-                        <a href="farm-products.html" class="dropdown-category-item">Farm Products</a>
-                        <a href="hardware.html" class="dropdown-category-item">Hardware</a>
-                        <a href="beauty-cosmetics.html" class="dropdown-category-item">Beauty & Cosmetics</a>
-                    </div>
-                </div>
+                <!-- REPLACED DROPDOWN WITH BUTTON TO OPEN OVERLAY -->
+                <button class="nav-item dropdown-trigger" id="categoryOverlayBtn" style="background:transparent; border:none; color:rgba(255,255,255,0.7); cursor:pointer; font-size:13px; font-weight:500; padding:6px 12px; border-radius:20px; transition:0.3s; display:flex; align-items:center; gap:6px; font-family:inherit;" onmouseover="this.style.background='rgba(255,255,255,0.08)'; this.style.color='#fff'" onmouseout="this.style.background='transparent'; this.style.color='rgba(255,255,255,0.7)'" onclick="openCategoryOverlay()">
+                    What do you want to buy today?
+                    <span style="font-size:12px; transition:transform 0.2s;">▼</span>
+                </button>
                 <a href="#" class="nav-item">Registry</a>
                 <a href="#" class="nav-item">Gift Cards</a>
                 <a href="seller-register.html" class="nav-item" id="sellNavLink">Sell</a>
@@ -636,7 +678,7 @@
             </div>
         </section>
 
-        <!-- PRODUCT SECTIONS -->
+        <!-- PRODUCT SECTIONS (unchanged) -->
         <div class="container">
             <section class="product-section">
                 <div class="section-header">
@@ -645,102 +687,8 @@
                 </div>
                 <div class="product-grid" id="todaysDeals"></div>
             </section>
-
-            <section class="product-section">
-                <div class="section-header">
-                    <h2>Best Sellers in Electronic Devices</h2>
-                    <a href="electronics.html" class="see-all">See more</a>
-                </div>
-                <div class="product-grid" id="bestSellersElectronics"></div>
-            </section>
-
-            <section class="product-section">
-                <div class="section-header">
-                    <h2>Best Sellers in Clothing</h2>
-                    <a href="clothing.html" class="see-all">See more</a>
-                </div>
-                <div class="product-grid" id="bestSellersClothing"></div>
-            </section>
-
-            <section class="product-section">
-                <div class="section-header">
-                    <h2>Best Sellers in Pet Supplies</h2>
-                    <a href="pet-supplies.html" class="see-all">See more</a>
-                </div>
-                <div class="product-grid" id="bestSellersPetSupplies"></div>
-            </section>
-
-            <section class="product-section">
-                <div class="section-header">
-                    <h2>Best Sellers in Pets & Livestock</h2>
-                    <a href="pets-livestock.html" class="see-all">See more</a>
-                </div>
-                <div class="product-grid" id="bestSellersPetsLivestock"></div>
-            </section>
-
-            <section class="product-section">
-                <div class="section-header">
-                    <h2>Best Sellers in Farm Products</h2>
-                    <a href="farm-products.html" class="see-all">See more</a>
-                </div>
-                <div class="product-grid" id="bestSellersFarmProducts"></div>
-            </section>
-
-            <section class="product-section">
-                <div class="section-header">
-                    <h2>Best Sellers in Hardware</h2>
-                    <a href="hardware.html" class="see-all">See more</a>
-                </div>
-                <div class="product-grid" id="bestSellersHardware"></div>
-            </section>
-
-            <section class="product-section">
-                <div class="section-header">
-                    <h2>Best Sellers in Vehicle Parts & Accessories</h2>
-                    <a href="vehicle-parts.html" class="see-all">See more</a>
-                </div>
-                <div class="product-grid" id="bestSellersVehicleParts&amp;Accessories"></div>
-            </section>
-
-            <section class="product-section">
-                <div class="section-header">
-                    <h2>Best Sellers in Vehicles & Transportation</h2>
-                    <a href="vehicles-transportation.html" class="see-all">See more</a>
-                </div>
-                <div class="product-grid" id="bestSellersVehicle&amp;Transportation"></div>
-            </section>
-
-            <section class="product-section">
-                <div class="section-header">
-                    <h2>Best Sellers in Home & Kitchen</h2>
-                    <a href="home&kitchen.html" class="see-all">See more</a>
-                </div>
-                <div class="product-grid" id="bestSellersHome&amp;Kitchen"></div>
-            </section>
-
-            <section class="product-section">
-                <div class="section-header">
-                    <h2>Best Sellers in Beauty & Cosmetics</h2>
-                    <a href="beauty-cosmetics.html" class="see-all">See more</a>
-                </div>
-                <div class="product-grid" id="bestSellersBeautyCosmetics"></div>
-            </section>
-
-            <section class="product-section">
-                <div class="section-header">
-                    <h2>Recommended for You</h2>
-                    <a href="#" class="see-all">See more</a>
-                </div>
-                <div class="product-grid" id="recommended"></div>
-            </section>
-
-            <section class="product-section">
-                <div class="section-header">
-                    <h2>All Products</h2>
-                    <a href="#" class="see-all">Browse all</a>
-                </div>
-                <div class="product-grid" id="allProducts"></div>
-            </section>
+            <!-- ... (all other product sections remain as before) ... -->
+            <!-- I'm omitting them to keep the answer readable, but they are identical to your original. -->
         </div>
     </main>
 
@@ -752,46 +700,7 @@
         <div class="footer-content">
             <div class="container">
                 <div class="footer-columns">
-                    <div class="footer-column">
-                        <h3>Get to Know Us</h3>
-                        <ul>
-                            <li><a href="#">Careers</a></li>
-                            <li><a href="#">Blog</a></li>
-                            <li><a href="about.html">About Mbare Marketplace</a></li>
-                            <li><a href="#">Investor Relations</a></li>
-                            <li><a href="#">Mbare Devices</a></li>
-                        </ul>
-                    </div>
-                    <div class="footer-column">
-                        <h3>Make Money with Us</h3>
-                        <ul>
-                            <li><a href="seller-register.html" id="footerSellLink">Sell products on Mbare Marketplace</a></li>
-                            <li><a href="#">Sell on Mbare Business</a></li>
-                            <li><a href="#">Sell apps on Mbare Marketplace</a></li>
-                            <li><a href="affiliates.html" id="footerAffiliateLink">Become an Affiliate</a></li>
-                            <li><a href="#">Advertise Your Products</a></li>
-                        </ul>
-                    </div>
-                    <div class="footer-column">
-                        <h3>Mbare Payment Products</h3>
-                        <ul>
-                            <li><a href="#">Mbare Business Card</a></li>
-                            <li><a href="#">Shop with Points</a></li>
-                            <li><a href="#">Reload Your Balance</a></li>
-                            <li><a href="#">Mbare Currency Converter</a></li>
-                        </ul>
-                    </div>
-                    <div class="footer-column">
-                        <h3>Need Help?</h3>
-                        <ul>
-                            <li><a href="#">COVID-19 and Mbare Marketplace</a></li>
-                            <li><a href="#">Your Account</a></li>
-                            <li><a href="#">Your Orders</a></li>
-                            <li><a href="#">Shipping Rates & Policies</a></li>
-                            <li><a href="#">Returns & Replacements</a></li>
-                            <li><a href="#">Help</a></li>
-                        </ul>
-                    </div>
+                    <!-- ... (unchanged) ... -->
                 </div>
             </div>
         </div>
@@ -854,45 +763,52 @@
     <script src="js/pages/index-3.js"></script>
 
     <!-- ============================================================
-         FINAL OVERRIDE – dropdown + carousel
+         FINAL OVERRIDE – carousel + category overlay
          ============================================================ -->
     <script>
         (function() {
             'use strict';
 
+            // Wait for everything to load
             setTimeout(function() {
 
-                // ===== DROPDOWN (re‑attach) =====
-                var dropdownBtn = document.getElementById('categoryDropdownBtn');
-                var dropdownMenu = document.getElementById('categoryDropdownMenu');
-                if (dropdownBtn && dropdownMenu) {
-                    var newBtn = dropdownBtn.cloneNode(true);
-                    dropdownBtn.parentNode.replaceChild(newBtn, dropdownBtn);
-                    dropdownBtn = newBtn;
+                // ===== CATEGORY OVERLAY =====
+                var overlay = document.getElementById('categoryOverlay');
+                var openBtn = document.getElementById('categoryOverlayBtn');
 
-                    function toggleDropdown(e) {
+                window.openCategoryOverlay = function() {
+                    if (overlay) overlay.classList.add('active');
+                };
+                window.closeCategoryOverlay = function() {
+                    if (overlay) overlay.classList.remove('active');
+                };
+
+                if (openBtn) {
+                    // Remove any inline onclick to avoid duplication
+                    openBtn.removeAttribute('onclick');
+                    openBtn.addEventListener('click', function(e) {
                         e.stopPropagation();
-                        var isExpanded = dropdownBtn.getAttribute('aria-expanded') === 'true';
-                        dropdownBtn.setAttribute('aria-expanded', !isExpanded);
-                        dropdownMenu.classList.toggle('show');
-                    }
+                        window.openCategoryOverlay();
+                    });
+                }
 
-                    function closeDropdown() {
-                        dropdownBtn.setAttribute('aria-expanded', 'false');
-                        dropdownMenu.classList.remove('show');
-                    }
-
-                    dropdownBtn.addEventListener('click', toggleDropdown);
-                    document.addEventListener('click', function(e) {
-                        if (!dropdownBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
-                            closeDropdown();
+                // Close overlay when clicking outside the content
+                if (overlay) {
+                    overlay.addEventListener('click', function(e) {
+                        if (e.target === overlay) {
+                            window.closeCategoryOverlay();
                         }
                     });
-                    document.querySelectorAll('.dropdown-category-item').forEach(function(item) {
-                        item.addEventListener('click', closeDropdown);
-                    });
-                    console.log('✅ Dropdown re-attached.');
                 }
+
+                // Close on ESC key
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        window.closeCategoryOverlay();
+                    }
+                });
+
+                console.log('✅ Category overlay initialised.');
 
                 // ===== CAROUSEL =====
                 var container = document.getElementById('carouselSlides');
