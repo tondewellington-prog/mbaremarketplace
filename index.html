@@ -591,27 +591,147 @@
         </div>
         <button class="ios-got-it-btn">Got it</button>
     </div>
-<script>
-// Dropdown fallback - ensure it works
-(function() {
-    const btn = document.getElementById('categoryDropdownBtn');
-    const menu = document.getElementById('categoryDropdownMenu');
-    if (btn && menu) {
-        btn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            const expanded = this.getAttribute('aria-expanded') === 'true';
-            this.setAttribute('aria-expanded', !expanded);
-            menu.classList.toggle('show');
-        });
-        document.addEventListener('click', function(e) {
-            if (!btn.contains(e.target) && !menu.contains(e.target)) {
-                btn.setAttribute('aria-expanded', 'false');
-                menu.classList.remove('show');
+
+    <!-- ===== FIXED SCRIPTS - Dropdown & Carousel ===== -->
+    <script>
+    // ============================================
+    // FIX 1: DROPDOWN - Ensures "What do you want to buy today?" works
+    // ============================================
+    (function() {
+        var dropdownBtn = document.getElementById('categoryDropdownBtn');
+        var dropdownMenu = document.getElementById('categoryDropdownMenu');
+        
+        if (dropdownBtn && dropdownMenu) {
+            // Remove any existing event listeners by cloning
+            var newBtn = dropdownBtn.cloneNode(true);
+            dropdownBtn.parentNode.replaceChild(newBtn, dropdownBtn);
+            dropdownBtn = newBtn;
+            
+            // Toggle function
+            function toggleDropdown(e) {
+                e.stopPropagation();
+                var isExpanded = dropdownBtn.getAttribute('aria-expanded') === 'true';
+                dropdownBtn.setAttribute('aria-expanded', !isExpanded);
+                dropdownMenu.classList.toggle('show');
             }
+            
+            // Close function
+            function closeDropdown() {
+                dropdownBtn.setAttribute('aria-expanded', 'false');
+                dropdownMenu.classList.remove('show');
+            }
+            
+            // Add click listener
+            dropdownBtn.addEventListener('click', toggleDropdown);
+            
+            // Close on outside click
+            document.addEventListener('click', function(e) {
+                if (!dropdownBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                    closeDropdown();
+                }
+            });
+            
+            // Close on category item click
+            document.querySelectorAll('.dropdown-category-item').forEach(function(item) {
+                item.addEventListener('click', closeDropdown);
+            });
+            
+            console.log('Dropdown fixed!');
+        } else {
+            console.warn('Dropdown elements not found!');
+        }
+    })();
+    </script>
+
+    <script>
+    // ============================================
+    // FIX 2: CAROUSEL - Ensures banner slides properly
+    // ============================================
+    (function() {
+        var slidesContainer = document.querySelector('.carousel-slides');
+        var slides = document.querySelectorAll('.carousel-slide');
+        var indicators = document.querySelectorAll('.indicator');
+        var totalSlides = slides.length;
+        var currentIndex = 0;
+        var autoSlideInterval = null;
+        
+        if (totalSlides === 0 || !slidesContainer) {
+            console.warn('Carousel elements not found!');
+            return;
+        }
+        
+        // Function to go to a specific slide
+        function goToSlide(index) {
+            // Ensure index is within bounds
+            if (index < 0) index = totalSlides - 1;
+            if (index >= totalSlides) index = 0;
+            currentIndex = index;
+            
+            // Apply transform to slide container
+            slidesContainer.style.transform = 'translateX(-' + (index * 100) + '%)';
+            
+            // Update active classes for slides
+            slides.forEach(function(slide, i) {
+                slide.classList.toggle('active', i === index);
+            });
+            
+            // Update active classes for indicators
+            indicators.forEach(function(indicator, i) {
+                indicator.classList.toggle('active', i === index);
+            });
+        }
+        
+        // Function to move carousel
+        function moveCarousel(direction) {
+            goToSlide(currentIndex + direction);
+        }
+        
+        // Start auto-slide
+        function startAutoSlide() {
+            if (autoSlideInterval) clearInterval(autoSlideInterval);
+            autoSlideInterval = setInterval(function() {
+                moveCarousel(1);
+            }, 5000);
+        }
+        
+        // Stop auto-slide
+        function stopAutoSlide() {
+            if (autoSlideInterval) {
+                clearInterval(autoSlideInterval);
+                autoSlideInterval = null;
+            }
+        }
+        
+        // Expose functions globally (overriding any existing ones)
+        window.goToSlide = goToSlide;
+        window.moveCarousel = moveCarousel;
+        
+        // Set initial slide (0)
+        goToSlide(0);
+        
+        // Start auto-slide
+        startAutoSlide();
+        
+        // Pause on hover
+        var carouselContainer = document.querySelector('.carousel-container');
+        if (carouselContainer) {
+            carouselContainer.addEventListener('mouseenter', stopAutoSlide);
+            carouselContainer.addEventListener('mouseleave', startAutoSlide);
+        }
+        
+        // Also attach to indicator clicks (in case they're already in the HTML)
+        indicators.forEach(function(indicator, i) {
+            indicator.addEventListener('click', function() {
+                goToSlide(i);
+                // Restart auto-slide after manual click
+                startAutoSlide();
+            });
         });
-    }
-})();
-</script>
+        
+        console.log('Carousel fixed! Auto-sliding every 5 seconds.');
+    })();
+    </script>
+
     <script src="api.js"></script>
     <script src="script.js"></script>
     <script src="auth-check.js"></script>
