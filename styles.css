@@ -365,7 +365,7 @@ body {
     border-radius: 10px;
 }
 
-/* ===== DROPDOWN – never clipped ===== */
+/* ===== DROPDOWN – never clipped (kept for legacy, but not used anymore) ===== */
 .custom-category-dropdown {
     position: relative;
     overflow: visible !important;
@@ -1257,7 +1257,7 @@ body {
 }
 
 /* ============================================
-   CATEGORY OVERLAY – Deep Purple Glass
+   CATEGORY OVERLAY – Deep Purple Glass (NEW)
    ============================================ */
 #categoryOverlay {
     position: fixed;
