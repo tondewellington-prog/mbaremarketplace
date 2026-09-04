@@ -248,7 +248,7 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
     };
 
     // =====================================================
-    // CAROUSEL – FIXED (applies transform)
+    // CAROUSEL – FIXED (width + transform)
     // =====================================================
     let tourCarouselSlide = 0;
     let tourCarouselInterval = null;
@@ -256,13 +256,17 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
     function setupCarousel() {
         var totalSlides = document.querySelectorAll('.carousel-slide').length;
         if (totalSlides === 0) return;
-        
-        // Set initial slide (ensure transform is applied)
-        goToSlide(0);
-        
+
+        var slidesContainer = document.querySelector('.carousel-slides');
+        if (slidesContainer) {
+            slidesContainer.style.width = (totalSlides * 100) + '%';
+            goToSlide(0);
+        }
+
         // Start auto-advance
+        if (tourCarouselInterval) clearInterval(tourCarouselInterval);
         tourCarouselInterval = setInterval(function() { moveCarousel(1); }, 5000);
-        
+
         var container = document.querySelector('.carousel-container');
         if (container) {
             container.addEventListener('mouseenter', function() {
@@ -286,9 +290,14 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
         var slidesContainer = document.querySelector('.carousel-slides');
         var slides = document.querySelectorAll('.carousel-slide');
         var indicators = document.querySelectorAll('.indicator');
+        var totalSlides = slides.length;
 
         if (slidesContainer) {
-            slidesContainer.style.transform = 'translateX(-' + (index * 100) + '%)';
+            // Set width if not already set
+            if (!slidesContainer.style.width || slidesContainer.style.width === '') {
+                slidesContainer.style.width = (totalSlides * 100) + '%';
+            }
+            slidesContainer.style.transform = 'translateX(-' + (index * 100 / totalSlides) + '%)';
         }
 
         slides.forEach(function(slide, i) {
@@ -556,7 +565,7 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
                 el.style.display = 'inline-block';
                 el.addEventListener('click', function(e) {
                     e.preventDefault();
-                    downloadDesktopApp('windows', e);  // pass event
+                    downloadDesktopApp('windows', e);
                 });
             } else if (isMac && el.id === 'downloadMacBtn') {
                 el.style.display = 'inline-block';
@@ -596,7 +605,6 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
         if (url) {
             recordAppDownload('desktop_download', { os: os });
             window.location.href = url;
-            // Use the passed event to find the button
             const btn = event && event.target ? event.target.closest('.download-link') : null;
             if (btn) {
                 const originalText = btn.innerHTML;
