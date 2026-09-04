@@ -190,7 +190,6 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
         var query = input.value.trim();
         if (query) {
             var cat = category ? category.value : 'All';
-            // Use your original URL: search-results.html
             window.location.href = 'search-results.html?q=' + encodeURIComponent(query) + '&category=' + encodeURIComponent(cat);
         }
     };
@@ -234,7 +233,6 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
                 }
             });
         }
-        // The search button already has onclick="openSearchOverlay()" in HTML
     }
 
     // Keep the old handleSearch for fallback (uses search-results.html)
@@ -542,7 +540,7 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
     });
 
     // =====================================================
-    // DESKTOP APP DOWNLOADS
+    // DESKTOP APP DOWNLOADS – FIXED (event parameter added)
     // =====================================================
     function initDesktopDownloads() {
         const userAgent = navigator.userAgent.toLowerCase();
@@ -558,19 +556,19 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
                 el.style.display = 'inline-block';
                 el.addEventListener('click', function(e) {
                     e.preventDefault();
-                    downloadDesktopApp('windows');
+                    downloadDesktopApp('windows', e);  // pass event
                 });
             } else if (isMac && el.id === 'downloadMacBtn') {
                 el.style.display = 'inline-block';
                 el.addEventListener('click', function(e) {
                     e.preventDefault();
-                    downloadDesktopApp('mac');
+                    downloadDesktopApp('mac', e);
                 });
             } else if (isLinux && el.id === 'downloadLinuxBtn') {
                 el.style.display = 'inline-block';
                 el.addEventListener('click', function(e) {
                     e.preventDefault();
-                    downloadDesktopApp('linux');
+                    downloadDesktopApp('linux', e);
                 });
             } else if (el.id === 'downloadAndroidBtn' || el.id === 'downloadIOSBtn') {
                 el.style.display = 'none';
@@ -587,7 +585,8 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
         }
     }
     
-    window.downloadDesktopApp = function(os) {
+    // FIXED: accepts event parameter
+    window.downloadDesktopApp = function(os, event) {
         const downloadUrls = {
             windows: 'https://www.mbaremarketplace.com/downloads/mbare-marketplace-windows.exe',
             mac: 'https://www.mbaremarketplace.com/downloads/mbare-marketplace-mac.dmg',
@@ -597,6 +596,7 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
         if (url) {
             recordAppDownload('desktop_download', { os: os });
             window.location.href = url;
+            // Use the passed event to find the button
             const btn = event && event.target ? event.target.closest('.download-link') : null;
             if (btn) {
                 const originalText = btn.innerHTML;
