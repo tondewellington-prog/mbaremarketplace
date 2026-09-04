@@ -249,7 +249,7 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
     */
 
     // =====================================================
-    // CAROUSEL FUNCTIONS - Use unique variable name to avoid conflicts
+    // CAROUSEL FUNCTIONS - FIXED to apply CSS transform
     // =====================================================
     let tourCarouselSlide = 0;
     let tourCarouselInterval = null;
@@ -281,14 +281,23 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
         goToSlide(tourCarouselSlide);
     };
 
+    // FIXED: This function now applies the CSS transform to slide the container
     window.goToSlide = function(index) {
         tourCarouselSlide = index;
+        const slidesContainer = document.querySelector('.carousel-slides');
         const slides = document.querySelectorAll('.carousel-slide');
         const indicators = document.querySelectorAll('.indicator');
-        
+
+        // Apply transform to slide the container
+        if (slidesContainer) {
+            slidesContainer.style.transform = 'translateX(-' + (index * 100) + '%)';
+        }
+
+        // Update active classes for slides
         slides.forEach(function(slide, i) {
             slide.classList.toggle('active', i === index);
         });
+        // Update active classes for indicators
         indicators.forEach(function(indicator, i) {
             indicator.classList.toggle('active', i === index);
         });
