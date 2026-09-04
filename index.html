@@ -37,10 +37,8 @@
 
     <style>
         /* ============================================================
-           CRITICAL FIXES – ensure dropdown visibility on all screen sizes
+           FIX 1: NAV BAR – HORIZONTALLY SCROLLABLE
            ============================================================ */
-
-        /* Make nav bar horizontally scrollable */
         .nav-menu .container {
             display: flex;
             gap: 25px;
@@ -55,20 +53,14 @@
             width: 100% !important;
         }
 
-        /* Prevent nav items from shrinking so they stay in a row */
         .nav-item {
             flex-shrink: 0 !important;
             white-space: nowrap;
         }
 
-        /* Ensure dropdown containers never clip the dropdown */
-        .nav-menu,
-        .nav-menu .container,
-        .custom-category-dropdown {
-            overflow: visible !important;
-        }
-
-        /* FORCE DROPDOWN ABOVE CAROUSEL */
+        /* ============================================================
+           FIX 2: DROPDOWN ABOVE CAROUSEL
+           ============================================================ */
         .nav-menu {
             position: relative !important;
             z-index: 9999 !important;
@@ -92,7 +84,16 @@
             z-index: 1 !important;
         }
 
-        /* On narrow screens, align dropdown to the right so it doesn't go off-screen */
+        /* ============================================================
+           FIX 3: PREVENT CLIPPING
+           ============================================================ */
+        .nav-menu,
+        .nav-menu .container,
+        .custom-category-dropdown {
+            overflow: visible !important;
+        }
+
+        /* On narrow screens, align dropdown to the right */
         @media (max-width: 768px) {
             .dropdown-menu {
                 left: auto !important;
@@ -853,7 +854,7 @@
     <script src="js/pages/index-3.js"></script>
 
     <!-- ============================================================
-         FINAL OVERRIDE – dropdown + carousel (z-index forced)
+         FINAL OVERRIDE – dropdown + carousel
          ============================================================ -->
     <script>
         (function() {
