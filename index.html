@@ -19,23 +19,30 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#0a1628">
+    <meta name="theme-color" content="#1a0533">
     <link rel="apple-touch-icon" href="/icons/icon-152.png">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="msapplication-TileColor" content="#0a1628">
+    <meta name="msapplication-TileColor" content="#1a0533">
     <meta name="msapplication-TileImage" content="/icons/icon-144.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Mbare Marketplace - Online Shopping</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E %3C/text%3E%3C/svg%3E">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=2">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
+        /* ============================================================
+           FORCE DEEP PURPLE PAGE BACKGROUND (inline override)
+           ============================================================ */
+        body {
+            background: radial-gradient(ellipse at 20% 50%, #3a0a6b 0%, #1a0533 100%) !important;
+        }
+
         /* ============================================================
            NAV BAR – HORIZONTALLY SCROLLABLE
            ============================================================ */
@@ -67,7 +74,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, rgba(80,20,120,0.92), rgba(40,10,80,0.96));
+            background: linear-gradient(135deg, rgba(80, 20, 120, 0.92), rgba(40, 10, 80, 0.96));
             backdrop-filter: blur(30px);
             z-index: 30000;
             display: none;
@@ -128,7 +135,7 @@
         }
         #categoryOverlay .category-grid a:hover {
             background: rgba(255,255,255,0.15);
-            border-color: #00d4ff;
+            border-color: #b388ff;
         }
 
         @keyframes modalSlideUp {
@@ -202,15 +209,15 @@
         }
         .search-overlay-bar select:focus,
         .search-overlay-bar input:focus {
-            border-color: #00d4ff;
-            box-shadow: 0 0 0 3px rgba(0,212,255,0.15);
+            border-color: #b388ff;
+            box-shadow: 0 0 0 3px rgba(179,136,255,0.15);
             background: rgba(255,255,255,0.08);
         }
-        .search-overlay-bar select option { background: #0a1628; color: #fff; }
+        .search-overlay-bar select option { background: #1a0533; color: #fff; }
         .search-overlay-bar input::placeholder { color: rgba(255,255,255,0.5); }
         .search-overlay-bar button {
             padding: 14px;
-            background: linear-gradient(135deg, #00d4ff, #7b68ee);
+            background: linear-gradient(135deg, #b388ff, #7c4dff);
             border: none;
             border-radius: 50px;
             color: #fff;
@@ -221,7 +228,7 @@
         }
         .search-overlay-bar button:hover {
             transform: scale(1.02);
-            box-shadow: 0 4px 20px rgba(0,212,255,0.3);
+            box-shadow: 0 4px 20px rgba(179,136,255,0.3);
         }
 
         @media (max-width: 768px) {
@@ -309,13 +316,13 @@
         .account-menu.logged-in .account-link { color: #fff; font-weight: 600; }
 
         #installButton {
-            background: linear-gradient(135deg, #00d4ff, #7b68ee) !important;
+            background: linear-gradient(135deg, #b388ff, #7c4dff) !important;
             border: none !important;
-            box-shadow: 0 4px 20px rgba(0,212,255,0.3) !important;
+            box-shadow: 0 4px 20px rgba(179,136,255,0.3) !important;
         }
         #installButton:hover {
             transform: scale(1.05);
-            box-shadow: 0 8px 30px rgba(0,212,255,0.3) !important;
+            box-shadow: 0 8px 30px rgba(179,136,255,0.3) !important;
         }
 
         @media (max-width: 768px) {
@@ -625,9 +632,7 @@
             </div>
         </section>
 
-        <!-- ============================================================
-             PRODUCT SECTIONS – ALL CONTAINERS INCLUDED
-             ============================================================ -->
+        <!-- PRODUCT SECTIONS (ALL CONTAINERS) -->
         <div class="container">
             <section class="product-section">
                 <div class="section-header">
@@ -802,7 +807,7 @@
     </footer>
 
     <!-- INSTALL BUTTON -->
-    <div id="installButton" style="position: fixed; bottom: 20px; right: 20px; padding: 14px 28px; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 20px rgba(0,212,255,0.3); z-index: 9999; display: flex; align-items: center; gap: 10px; font-weight: 600; border: none; font-size: 16px; color: #fff; background: linear-gradient(135deg, #00d4ff, #7b68ee);">
+    <div id="installButton" style="position: fixed; bottom: 20px; right: 20px; padding: 14px 28px; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 20px rgba(179,136,255,0.3); z-index: 9999; display: flex; align-items: center; gap: 10px; font-weight: 600; border: none; font-size: 16px; color: #fff; background: linear-gradient(135deg, #b388ff, #7c4dff);">
         <span>Install App</span>
     </div>
 
@@ -810,7 +815,7 @@
     <div id="iosPromptModal" class="ios-prompt-modal">
         <div class="ios-prompt-close" onclick="closeIOSPrompt()">&#10005;</div>
         <div class="ios-prompt-header">
-            <img src="/icons/icon-152.png" class="ios-prompt-icon" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'50\' height=\'50\' viewBox=\'0 0 50 50\'%3E%3Crect width=\'50\' height=\'50\' fill=\'%230a1628\'/%3E%3Ctext x=\'10\' y=\'35\' fill=\'%2300d4ff\' font-size=\'25\'%3E %3C/text%3E%3C/svg%3E'">
+            <img src="/icons/icon-152.png" class="ios-prompt-icon" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'50\' height=\'50\' viewBox=\'0 0 50 50\'%3E%3Crect width=\'50\' height=\'50\' fill=\'%231a0533\'/%3E%3Ctext x=\'10\' y=\'35\' fill=\'%23b388ff\' font-size=\'25\'%3E %3C/text%3E%3C/svg%3E'">
             <div>
                 <div class="ios-prompt-title">Mbare Marketplace</div>
                 <div style="color: rgba(255,255,255,0.6); font-size: 14px;">Install on your iPhone</div>
@@ -833,9 +838,7 @@
         <button class="ios-got-it-btn">Got it</button>
     </div>
 
-    <!-- ============================================================
-         SCRIPTS
-         ============================================================ -->
+    <!-- SCRIPTS -->
     <script src="api.js"></script>
     <script src="script.js"></script>
     <script src="auth-check.js"></script>
@@ -844,9 +847,7 @@
     <script src="js/pages/index-2.js"></script>
     <script src="js/pages/index-3.js"></script>
 
-    <!-- ============================================================
-         FINAL OVERRIDE – carousel + category overlay
-         ============================================================ -->
+    <!-- FINAL OVERRIDE – carousel + category overlay -->
     <script>
         (function() {
             'use strict';
