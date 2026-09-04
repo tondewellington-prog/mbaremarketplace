@@ -165,7 +165,7 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
     }
 
     // =====================================================
-    // SEARCH OVERLAY FUNCTIONS (NEW)
+    // SEARCH OVERLAY FUNCTIONS (with search-results.html)
     // =====================================================
     window.openSearchOverlay = function() {
         var overlay = document.getElementById('searchOverlay');
@@ -190,7 +190,8 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
         var query = input.value.trim();
         if (query) {
             var cat = category ? category.value : 'All';
-            window.location.href = 'search-result.html?q=' + encodeURIComponent(query) + '&category=' + encodeURIComponent(cat);
+            // Use your original URL: search-results.html
+            window.location.href = 'search-results.html?q=' + encodeURIComponent(query) + '&category=' + encodeURIComponent(cat);
         }
     };
 
@@ -221,12 +222,10 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
     }
 
     // =====================================================
-    // SEARCH HANDLER (kept for compatibility / fallback)
+    // SEARCH HANDLER (for header input, opens overlay)
     // =====================================================
     function setupSearch() {
         var searchInput = document.getElementById('searchInput');
-        // The header search button now uses openSearchOverlay() via onclick
-        // But we still keep the keypress on the input to open overlay on Enter
         if (searchInput) {
             searchInput.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
@@ -235,22 +234,23 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
                 }
             });
         }
+        // The search button already has onclick="openSearchOverlay()" in HTML
     }
 
+    // Keep the old handleSearch for fallback (uses search-results.html)
     window.handleSearch = function() {
-        // Fallback – not used on index, but kept for other pages
         var searchInput = document.getElementById('searchInput');
         var categorySelect = document.getElementById('searchCategorySelect');
         if (!searchInput) return;
         var query = searchInput.value.trim();
         if (query) {
             var category = categorySelect?.value || 'All';
-            window.location.href = 'search-result.html?q=' + encodeURIComponent(query) + '&category=' + encodeURIComponent(category);
+            window.location.href = 'search-results.html?q=' + encodeURIComponent(query) + '&category=' + encodeURIComponent(category);
         }
     };
 
     // =====================================================
-    // CAROUSEL FUNCTIONS – FIXED (applies transform)
+    // CAROUSEL – FIXED (applies transform)
     // =====================================================
     let tourCarouselSlide = 0;
     let tourCarouselInterval = null;
@@ -259,13 +259,12 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
         var totalSlides = document.querySelectorAll('.carousel-slide').length;
         if (totalSlides === 0) return;
         
-        // Set initial slide (in case transform is not set)
+        // Set initial slide (ensure transform is applied)
         goToSlide(0);
         
         // Start auto-advance
         tourCarouselInterval = setInterval(function() { moveCarousel(1); }, 5000);
         
-        // Pause on hover
         var container = document.querySelector('.carousel-container');
         if (container) {
             container.addEventListener('mouseenter', function() {
@@ -284,7 +283,6 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
         goToSlide(tourCarouselSlide);
     };
 
-    // FIXED: applies CSS transform to slide container
     window.goToSlide = function(index) {
         tourCarouselSlide = index;
         var slidesContainer = document.querySelector('.carousel-slides');
@@ -365,7 +363,7 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
     };
 
     // =====================================================
-    // APP INSTALL TRACKING (unchanged)
+    // APP INSTALL TRACKING
     // =====================================================
     window.trackInstallClick = function(source) { 
         recordAppDownload('install_click', { source: source }); 
@@ -444,7 +442,7 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
     });
 
     // =====================================================
-    // INSTALL BUTTON HANDLING (unchanged)
+    // INSTALL BUTTON HANDLING
     // =====================================================
     let deferredPrompt;
     var installButton = document.getElementById('installButton');
@@ -544,11 +542,7 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
     });
 
     // =====================================================
-    // SERVICE WORKER (handled by index-3.js)
-    // =====================================================
-
-    // =====================================================
-    // DESKTOP APP DOWNLOADS (unchanged)
+    // DESKTOP APP DOWNLOADS
     // =====================================================
     function initDesktopDownloads() {
         const userAgent = navigator.userAgent.toLowerCase();
@@ -631,7 +625,7 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
     };
 
     // =====================================================
-    // ANDROID APP STORE LINK (unchanged)
+    // ANDROID APP STORE LINK
     // =====================================================
     function initAndroidAppLink() {
         const isAndroid = /Android/i.test(navigator.userAgent);
