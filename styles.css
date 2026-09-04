@@ -1,5 +1,5 @@
 /* ============================================
-   MBARE MARKETPLACE - WATER BUBBLE THEME
+   MBARE MARKETPLACE - WATER BUBBLE THEME (FINAL)
    ============================================ */
 
 /* ===== CSS VARIABLES ===== */
@@ -371,7 +371,7 @@ body {
 .nav-menu {
     padding: 8px 0;
     border-top: 1px solid var(--bubble-glass-border);
-    overflow: visible;
+    overflow: visible !important; /* ✅ Allow dropdown to overflow */
 }
 
 .nav-menu .container {
@@ -379,7 +379,7 @@ body {
     gap: 25px;
     align-items: center;
     overflow-x: auto;
-    overflow-y: visible;
+    overflow-y: visible !important; /* ✅ Allow dropdown to overflow vertically */
     flex-wrap: nowrap;
     -webkit-overflow-scrolling: touch;
     padding-bottom: 10px;
@@ -424,7 +424,7 @@ body {
 /* ===== DROPDOWN ===== */
 .custom-category-dropdown {
     position: relative;
-    overflow: visible;
+    overflow: visible !important; /* ✅ Ensure dropdown isn't clipped */
 }
 
 .dropdown-trigger {
@@ -1630,7 +1630,7 @@ body {
         font-size: 14px;
     }
     
-    /* Header adjustments */
+    /* ===== HEADER FIXES FOR MOBILE ===== */
     .header-top .container {
         flex-wrap: nowrap;
         gap: 8px;
@@ -1640,45 +1640,42 @@ body {
         font-size: 18px;
     }
     
-    /* Ensure search bar is visible and takes space */
+    /* ✅ SEARCH BAR: force display, take remaining space */
     .search-bar {
         display: flex !important;
-        flex: 1;
-        min-width: 0;
+        flex: 1 1 auto;
+        min-width: 60px;
         max-width: none;
     }
     .search-bar .search-category {
         display: none;
     }
     .search-bar .search-input {
-        padding: 8px 12px;
+        padding: 8px 10px;
         font-size: 13px;
         min-width: 40px;
+        flex: 1;
     }
     .search-bar .search-btn {
-        padding: 8px 14px;
+        padding: 8px 12px;
+        flex-shrink: 0;
     }
     
     .account-label {
         font-size: 10px;
     }
-    
     .account-link {
         font-size: 11px;
     }
-    
     .basket-text {
         display: none;
     }
-    
     .returns {
         display: none;
     }
-    
     .messages-link .msg-label {
         display: none;
     }
-    
     .messages-link svg {
         width: 24px;
         height: 24px;
@@ -1689,22 +1686,16 @@ body {
         gap: 30px;
     }
     
-    /* Ensure dropdown doesn't get clipped on mobile */
-    .nav-menu .container {
-        overflow-x: auto;
-        overflow-y: visible;
-        padding-bottom: 10px;
-    }
+    /* ✅ Ensure dropdown is not clipped */
+    .nav-menu,
+    .nav-menu .container,
     .custom-category-dropdown {
-        overflow: visible;
+        overflow: visible !important;
     }
-
-    /* Login page mobile */
-    .login-container {
-        margin: 30px auto;
-    }
-    .login-box {
-        padding: 30px 20px;
+    .nav-menu .container {
+        padding-bottom: 12px;
+        overflow-x: auto;
+        overflow-y: visible !important;
     }
 }
 
@@ -1829,17 +1820,17 @@ body {
     }
     
     .search-bar .search-input {
-        padding: 7px 8px;
+        padding: 6px 8px;
         font-size: 12px;
+        min-width: 30px;
     }
     .search-bar .search-btn {
-        padding: 7px 8px;
+        padding: 6px 8px;
     }
     
     .account-label {
         font-size: 10px;
     }
-    
     .account-link {
         font-size: 10px;
     }
