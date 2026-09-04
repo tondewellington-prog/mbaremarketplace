@@ -2280,3 +2280,29 @@ body {
     transform: scale(1.02);
     box-shadow: 0 4px 20px rgba(40, 167, 69, 0.3);
 }
+/* ===== Ensure dropdown is never clipped ===== */
+.nav-menu,
+.nav-menu .container,
+.custom-category-dropdown {
+    overflow: visible !important;
+}
+
+.nav-menu .container {
+    overflow-x: auto;       /* allow horizontal scroll for other nav items */
+    overflow-y: visible !important;
+    flex-wrap: nowrap;
+    padding-bottom: 10px;   /* give room for the dropdown */
+}
+
+.dropdown-menu {
+    z-index: 9999 !important;
+}
+
+/* On narrow screens, align dropdown to the right so it doesn't go off-screen */
+@media (max-width: 768px) {
+    .dropdown-menu {
+        left: auto !important;
+        right: 0 !important;
+        min-width: 200px;
+    }
+}
