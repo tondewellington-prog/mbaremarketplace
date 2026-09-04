@@ -1,5 +1,5 @@
 // =====================================================
-// INDEX-1.JS – DROPDOWN FUNCTIONALITY (FIXED)
+// INDEX-1.JS – DROPDOWN (safe, no optional chaining)
 // =====================================================
 
 (function() {
@@ -13,7 +13,7 @@
         return;
     }
 
-    // Remove any existing listeners by cloning (to be safe)
+    // Remove existing listeners by cloning (to be safe)
     var newBtn = dropdownBtn.cloneNode(true);
     dropdownBtn.parentNode.replaceChild(newBtn, dropdownBtn);
     dropdownBtn = newBtn;
@@ -38,11 +38,9 @@
         }
     });
 
-    // Close when a category is clicked
-    var categoryItems = document.querySelectorAll('.dropdown-category-item');
-    categoryItems.forEach(function(item) {
+    document.querySelectorAll('.dropdown-category-item').forEach(function(item) {
         item.addEventListener('click', closeDropdown);
     });
 
-    console.log('Dropdown fixed successfully!');
+    console.log('Dropdown initialised.');
 })();
