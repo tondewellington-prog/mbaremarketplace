@@ -50,11 +50,10 @@
             overflow-y: visible !important;
             flex-wrap: nowrap !important;
             padding-bottom: 10px;
-            min-width: 100% !important;   /* FORCE FULL WIDTH TO ENABLE SCROLL */
+            min-width: 100% !important;
             width: 100% !important;
         }
 
-        /* Prevent nav items from shrinking */
         .nav-item {
             flex-shrink: 0 !important;
         }
@@ -538,7 +537,7 @@
     <!-- MAIN CONTENT -->
     <main class="main-content">
 
-        <!-- WELCOME BANNER (hidden by default) -->
+        <!-- WELCOME BANNER -->
         <div id="welcomeBanner" class="welcome-banner">
             <h1>Welcome to Mbare Marketplace</h1>
             <p>Discover amazing products from sellers across Zimbabwe. Sign in to access your account, manage orders, and unlock exclusive features.</p>
@@ -584,7 +583,7 @@
             </div>
         </section>
 
-        <!-- PRODUCT SECTIONS -->
+        <!-- PRODUCT SECTIONS (unchanged) -->
         <div class="container">
             <section class="product-section">
                 <div class="section-header">
@@ -802,132 +801,68 @@
     <script src="js/pages/index-3.js"></script>
 
     <!-- ============================================================
-         FINAL OVERRIDE – ensures carousel works even if other scripts conflict
+         CAROUSEL FIX – ensures it works even if script.js misses initialisation
          ============================================================ -->
     <script>
-    (function() {
-        console.log('🚀 FINAL OVERRIDE: Forcing carousel and dropdown to work...');
+        (function() {
+            // Wait a moment for everything to load, then fix carousel
+            setTimeout(function() {
+                var container = document.querySelector('.carousel-slides');
+                var slides = document.querySelectorAll('.carousel-slide');
+                var indicators = document.querySelectorAll('.indicator');
+                if (!container || slides.length === 0) return;
 
-        // === DROPDOWN ===
-        var btn = document.getElementById('categoryDropdownBtn');
-        var menu = document.getElementById('categoryDropdownMenu');
-        if (btn && menu) {
-            var newBtn = btn.cloneNode(true);
-            btn.parentNode.replaceChild(newBtn, btn);
-            btn = newBtn;
+                var total = slides.length;
+                var current = 0;
+                var interval = null;
 
-            function toggle(e) {
-                e.stopPropagation();
-                var expanded = btn.getAttribute('aria-expanded') === 'true';
-                btn.setAttribute('aria-expanded', !expanded);
-                menu.classList.toggle('show');
-            }
-            function closeMenu() {
-                btn.setAttribute('aria-expanded', 'false');
-                menu.classList.remove('show');
-            }
-            btn.addEventListener('click', toggle);
-            document.addEventListener('click', function(e) {
-                if (!btn.contains(e.target) && !menu.contains(e.target)) {
-                    closeMenu();
+                // Set container width
+                container.style.width = (total * 100) + '%';
+
+                // Override goToSlide if needed (but we also use the existing one)
+                // Use the global goToSlide if defined, else define our own.
+                var goToSlide = window.goToSlide;
+                var moveCarousel = window.moveCarousel;
+
+                // If global functions are missing, define them.
+                if (typeof goToSlide !== 'function') {
+                    goToSlide = function(index) {
+                        if (index < 0) index = total - 1;
+                        if (index >= total) index = 0;
+                        current = index;
+                        container.style.transform = 'translateX(-' + (index * 100 / total) + '%)';
+                        slides.forEach(function(s, i) {
+                            s.classList.toggle('active', i === index);
+                        });
+                        indicators.forEach(function(ind, i) {
+                            ind.classList.toggle('active', i === index);
+                        });
+                    };
+                    window.goToSlide = goToSlide;
                 }
-            });
-            document.querySelectorAll('.dropdown-category-item').forEach(function(item) {
-                item.addEventListener('click', closeMenu);
-            });
-            console.log('✅ Dropdown final override OK');
-        }
 
-        // === CAROUSEL ===
-        var slidesContainer = document.querySelector('.carousel-slides');
-        var slides = document.querySelectorAll('.carousel-slide');
-        var indicators = document.querySelectorAll('.indicator');
-        if (slidesContainer && slides.length > 0) {
-            var total = slides.length;
-            var current = 0;
-            var interval = null;
-
-            function goToSlide(index) {
-                if (index < 0) index = total - 1;
-                if (index >= total) index = 0;
-                current = index;
-                // Ensure container width is set
-                if (!slidesContainer.style.width || slidesContainer.style.width === '') {
-                    slidesContainer.style.width = (total * 100) + '%';
+                if (typeof moveCarousel !== 'function') {
+                    moveCarousel = function(direction) {
+                        goToSlide(current + direction);
+                    };
+                    window.moveCarousel = moveCarousel;
                 }
-                slidesContainer.style.transform = 'translateX(-' + (index * 100 / total) + '%)';
-                slides.forEach(function(s, i) { s.classList.toggle('active', i === index); });
-                indicators.forEach(function(ind, i) { ind.classList.toggle('active', i === index); });
-            }
 
-            function moveCarousel(dir) {
-                goToSlide(current + dir);
-            }
+                // Set initial slide (0)
+                goToSlide(0);
 
-            function startAuto() {
-                if (interval) clearInterval(interval);
-                interval = setInterval(function() { moveCarousel(1); }, 5000);
-            }
-            function stopAuto() {
-                if (interval) { clearInterval(interval); interval = null; }
-            }
-
-            // Override global functions
-            window.goToSlide = goToSlide;
-            window.moveCarousel = moveCarousel;
-
-            // Force initial slide
-            goToSlide(0);
-            startAuto();
-
-            // Pause on hover
-            var container = document.querySelector('.carousel-container');
-            if (container) {
-                container.addEventListener('mouseenter', stopAuto);
-                container.addEventListener('mouseleave', startAuto);
-            }
-
-            // Indicator clicks
-            indicators.forEach(function(ind, i) {
-                ind.addEventListener('click', function() {
-                    goToSlide(i);
-                    startAuto();
-                });
-            });
-
-            console.log('✅ Carousel final override OK');
-        }
-
-        // === SEARCH OVERLAY ===
-        if (typeof window.openSearchOverlay !== 'function') {
-            window.openSearchOverlay = function() {
-                var ov = document.getElementById('searchOverlay');
-                if (ov) ov.classList.add('active');
-                var inp = document.getElementById('overlaySearchInput');
-                if (inp) setTimeout(function() { inp.focus(); }, 100);
-            };
-        }
-        if (typeof window.closeSearchOverlay !== 'function') {
-            window.closeSearchOverlay = function() {
-                var ov = document.getElementById('searchOverlay');
-                if (ov) ov.classList.remove('active');
-            };
-        }
-        if (typeof window.handleOverlaySearch !== 'function') {
-            window.handleOverlaySearch = function() {
-                var inp = document.getElementById('overlaySearchInput');
-                var cat = document.getElementById('overlayCategorySelect');
-                if (!inp) return;
-                var q = inp.value.trim();
-                if (q) {
-                    var c = cat ? cat.value : 'All';
-                    window.location.href = 'search-results.html?q=' + encodeURIComponent(q) + '&category=' + encodeURIComponent(c);
+                // Start auto‑slide if not already running
+                if (!interval) {
+                    interval = setInterval(function() {
+                        moveCarousel(1);
+                    }, 5000);
+                    // Store interval for potential cleanup (optional)
+                    window.carouselInterval = interval;
                 }
-            };
-        }
 
-        console.log('🎯 Final override complete.');
-    })();
+                console.log('Carousel fix applied.');
+            }, 200);
+        })();
     </script>
 
 </body>
