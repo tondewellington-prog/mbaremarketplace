@@ -292,6 +292,27 @@
                 height: 100px;
             }
         }
+
+        /* ============================================================
+           CAROUSEL OVERRIDES – ensure slides are visible
+           ============================================================ */
+        .carousel-slides {
+            display: flex !important;
+            width: 300% !important; /* 3 slides × 100% */
+            transition: transform 0.6s ease-in-out;
+        }
+        .carousel-slide {
+            min-width: 33.333% !important; /* 100% / 3 */
+            flex-shrink: 0 !important;
+            height: 100%;
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+        }
+        .carousel-container {
+            overflow: hidden !important;
+            position: relative;
+        }
     </style>
 </head>
 <body>
@@ -583,7 +604,7 @@
             </div>
         </section>
 
-        <!-- PRODUCT SECTIONS (unchanged) -->
+        <!-- PRODUCT SECTIONS -->
         <div class="container">
             <section class="product-section">
                 <div class="section-header">
@@ -790,7 +811,7 @@
     </div>
 
     <!-- ============================================================
-         SCRIPTS – all external
+         SCRIPTS
          ============================================================ -->
     <script src="api.js"></script>
     <script src="script.js"></script>
@@ -801,67 +822,118 @@
     <script src="js/pages/index-3.js"></script>
 
     <!-- ============================================================
-         CAROUSEL FIX – ensures it works even if script.js misses initialisation
+         STANDALONE CAROUSEL IMPLEMENTATION (OVERRIDES ANY BROKEN ONE)
          ============================================================ -->
     <script>
         (function() {
-            // Wait a moment for everything to load, then fix carousel
-            setTimeout(function() {
-                var container = document.querySelector('.carousel-slides');
-                var slides = document.querySelectorAll('.carousel-slide');
-                var indicators = document.querySelectorAll('.indicator');
-                if (!container || slides.length === 0) return;
+            'use strict';
 
-                var total = slides.length;
-                var current = 0;
+            // Wait for DOM and for any other scripts to finish
+            setTimeout(function() {
+                var container = document.getElementById('carouselSlides');
+                if (!container) {
+                    console.warn('Carousel container not found');
+                    return;
+                }
+
+                var slides = container.querySelectorAll('.carousel-slide');
+                var totalSlides = slides.length;
+                if (totalSlides === 0) {
+                    console.warn('No carousel slides');
+                    return;
+                }
+
+                var indicators = document.querySelectorAll('.carousel-indicators .indicator');
+                var currentIndex = 0;
                 var interval = null;
 
-                // Set container width
-                container.style.width = (total * 100) + '%';
+                // Make sure the container width is exactly totalSlides * 100%
+                container.style.width = (totalSlides * 100) + '%';
+                container.style.display = 'flex';
+                container.style.transition = 'transform 0.6s ease-in-out';
 
-                // Override goToSlide if needed (but we also use the existing one)
-                // Use the global goToSlide if defined, else define our own.
-                var goToSlide = window.goToSlide;
-                var moveCarousel = window.moveCarousel;
+                // Ensure each slide is 100% / totalSlides wide and not shrinking
+                slides.forEach(function(slide) {
+                    slide.style.minWidth = (100 / totalSlides) + '%';
+                    slide.style.flexShrink = '0';
+                    slide.style.display = 'flex';
+                    slide.style.alignItems = 'center';
+                    slide.style.justifyContent = 'center';
+                });
 
-                // If global functions are missing, define them.
-                if (typeof goToSlide !== 'function') {
-                    goToSlide = function(index) {
-                        if (index < 0) index = total - 1;
-                        if (index >= total) index = 0;
-                        current = index;
-                        container.style.transform = 'translateX(-' + (index * 100 / total) + '%)';
-                        slides.forEach(function(s, i) {
-                            s.classList.toggle('active', i === index);
-                        });
+                // Function to go to a specific slide
+                function goToSlide(index) {
+                    if (index < 0) index = totalSlides - 1;
+                    if (index >= totalSlides) index = 0;
+                    currentIndex = index;
+                    var offset = -index * (100 / totalSlides);
+                    container.style.transform = 'translateX(' + offset + '%)';
+
+                    // Update active classes for slides (optional)
+                    slides.forEach(function(slide, i) {
+                        slide.classList.toggle('active', i === index);
+                    });
+
+                    // Update indicators
+                    if (indicators.length) {
                         indicators.forEach(function(ind, i) {
                             ind.classList.toggle('active', i === index);
                         });
-                    };
-                    window.goToSlide = goToSlide;
+                    }
                 }
 
-                if (typeof moveCarousel !== 'function') {
-                    moveCarousel = function(direction) {
-                        goToSlide(current + direction);
-                    };
-                    window.moveCarousel = moveCarousel;
+                // Move by direction (+1 or -1)
+                function moveCarousel(direction) {
+                    goToSlide(currentIndex + direction);
                 }
+
+                // Start auto-slide
+                function startAutoSlide() {
+                    if (interval) clearInterval(interval);
+                    interval = setInterval(function() {
+                        moveCarousel(1);
+                    }, 5000);
+                }
+
+                // Stop auto-slide
+                function stopAutoSlide() {
+                    if (interval) {
+                        clearInterval(interval);
+                        interval = null;
+                    }
+                }
+
+                // Expose functions globally so that button onclick works
+                window.goToSlide = goToSlide;
+                window.moveCarousel = moveCarousel;
 
                 // Set initial slide (0)
                 goToSlide(0);
 
-                // Start auto‑slide if not already running
-                if (!interval) {
-                    interval = setInterval(function() {
-                        moveCarousel(1);
-                    }, 5000);
-                    // Store interval for potential cleanup (optional)
-                    window.carouselInterval = interval;
+                // Start auto-slide
+                startAutoSlide();
+
+                // Pause on hover
+                var carouselContainer = document.querySelector('.carousel-container');
+                if (carouselContainer) {
+                    carouselContainer.addEventListener('mouseenter', stopAutoSlide);
+                    carouselContainer.addEventListener('mouseleave', startAutoSlide);
                 }
 
-                console.log('Carousel fix applied.');
-            }, 200);
+                // Attach click events to indicators (if they don't already have onclick)
+                if (indicators.length) {
+                    indicators.forEach(function(ind, i) {
+                        // Remove any existing onclick to avoid double firing
+                        ind.removeAttribute('onclick');
+                        ind.addEventListener('click', function() {
+                            goToSlide(i);
+                            startAutoSlide(); // restart timer after manual click
+                        });
+                    });
+                }
+
+                console.log('Standalone carousel initialised successfully.');
+            }, 300); // delay to ensure DOM and other scripts are ready
         })();
     </script>
 
