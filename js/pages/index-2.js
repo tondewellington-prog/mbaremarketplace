@@ -248,65 +248,8 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
     };
 
     // =====================================================
-    // CAROUSEL – FIXED (width + transform)
+    // CAROUSEL – REMOVED (now handled by script.js)
     // =====================================================
-    let tourCarouselSlide = 0;
-    let tourCarouselInterval = null;
-
-    function setupCarousel() {
-        var totalSlides = document.querySelectorAll('.carousel-slide').length;
-        if (totalSlides === 0) return;
-
-        var slidesContainer = document.querySelector('.carousel-slides');
-        if (slidesContainer) {
-            slidesContainer.style.width = (totalSlides * 100) + '%';
-            goToSlide(0);
-        }
-
-        // Start auto-advance
-        if (tourCarouselInterval) clearInterval(tourCarouselInterval);
-        tourCarouselInterval = setInterval(function() { moveCarousel(1); }, 5000);
-
-        var container = document.querySelector('.carousel-container');
-        if (container) {
-            container.addEventListener('mouseenter', function() {
-                clearInterval(tourCarouselInterval);
-            });
-            container.addEventListener('mouseleave', function() {
-                tourCarouselInterval = setInterval(function() { moveCarousel(1); }, 5000);
-            });
-        }
-    }
-
-    window.moveCarousel = function(direction) {
-        var totalSlides = document.querySelectorAll('.carousel-slide').length;
-        if (totalSlides === 0) return;
-        tourCarouselSlide = (tourCarouselSlide + direction + totalSlides) % totalSlides;
-        goToSlide(tourCarouselSlide);
-    };
-
-    window.goToSlide = function(index) {
-        tourCarouselSlide = index;
-        var slidesContainer = document.querySelector('.carousel-slides');
-        var slides = document.querySelectorAll('.carousel-slide');
-        var indicators = document.querySelectorAll('.indicator');
-        var totalSlides = slides.length;
-
-        if (slidesContainer) {
-            // Set width if not already set
-            if (!slidesContainer.style.width || slidesContainer.style.width === '') {
-                slidesContainer.style.width = (totalSlides * 100) + '%';
-            }
-            slidesContainer.style.transform = 'translateX(-' + (index * 100 / totalSlides) + '%)';
-        }
-
-        slides.forEach(function(slide, i) {
-            slide.classList.toggle('active', i === index);
-        });
-        indicators.forEach(function(indicator, i) {
-            indicator.classList.toggle('active', i === index);
-        });
-    };
 
     // =====================================================
     // LOGIN PROMPT
@@ -658,7 +601,7 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
     }
 
     // =====================================================
-    // DOM CONTENT LOADED – INIT
+    // DOM CONTENT LOADED – INIT (carousel removed)
     // =====================================================
     document.addEventListener('DOMContentLoaded', function() {
         console.log('index-2.js: DOM loaded, initializing...');
@@ -667,7 +610,7 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
         setupTourEventListeners();
         updateBasketCount();
         setupSearch();
-        setupCarousel();
+        // setupCarousel(); // REMOVED – carousel now handled by script.js
         setupLoginPrompt();
         
         var isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
@@ -689,7 +632,6 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
     window.endTour = endTour;
     window.showTourStep = showTourStep;
     window.checkUserAndShowTour = checkUserAndShowTour;
-    window.tourCarouselSlide = tourCarouselSlide;
 
     console.log('index-2.js: Tour functions exposed globally!');
 
