@@ -30,11 +30,171 @@
     <title>Mbare Marketplace - Online Shopping</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E %3C/text%3E%3C/svg%3E">
     <link rel="stylesheet" href="styles.css">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
-        /* inline styles */
+        /* ============================================================
+           CRITICAL FIXES – ensure dropdown visibility on all screen sizes
+           ============================================================ */
+        .nav-menu,
+        .nav-menu .container,
+        .custom-category-dropdown {
+            overflow: visible !important;
+        }
+
+        .nav-menu .container {
+            overflow-x: auto;
+            overflow-y: visible !important;
+            flex-wrap: nowrap;
+            padding-bottom: 10px;
+        }
+
+        .dropdown-menu {
+            z-index: 9999 !important;
+        }
+
+        @media (max-width: 768px) {
+            .dropdown-menu {
+                left: auto !important;
+                right: 0 !important;
+                min-width: 200px;
+            }
+        }
+
+        /* ============================================================
+           SEARCH OVERLAY – dark glass, no white bars
+           ============================================================ */
+        .search-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(20px);
+            z-index: 20000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .search-overlay.active {
+            display: flex;
+        }
+        .search-overlay-content {
+            max-width: 500px;
+            width: 100%;
+            background: rgba(10, 22, 40, 0.95);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 32px;
+            padding: 35px 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: modalSlideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+        .search-overlay-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 28px;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        .search-overlay-close:hover {
+            color: #fff;
+        }
+        .search-overlay-inner h2 {
+            color: #fff;
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .search-overlay-bar {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .search-overlay-bar select,
+        .search-overlay-bar input {
+            padding: 14px 18px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 15px;
+            outline: none;
+            transition: border 0.3s, box-shadow 0.3s;
+        }
+        .search-overlay-bar select:focus,
+        .search-overlay-bar input:focus {
+            border-color: #00d4ff;
+            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.15);
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .search-overlay-bar select option {
+            background: #0a1628;
+            color: #fff;
+        }
+        .search-overlay-bar input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        .search-overlay-bar button {
+            padding: 14px;
+            background: linear-gradient(135deg, #00d4ff, #7b68ee);
+            border: none;
+            border-radius: 50px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .search-overlay-bar button:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .search-overlay-content {
+                padding: 25px 20px;
+                border-radius: 24px;
+            }
+            .search-overlay-inner h2 {
+                font-size: 20px;
+                margin-bottom: 20px;
+            }
+            .search-overlay-bar select,
+            .search-overlay-bar input {
+                padding: 12px 14px;
+                font-size: 14px;
+            }
+            .search-overlay-bar button {
+                padding: 12px;
+                font-size: 14px;
+            }
+        }
+
+        @keyframes modalSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* ============================================================
+           PRODUCT CARD INLINE OVERRIDES
+           ============================================================ */
         .product-card img {
             width: 100%;
             height: 200px;
@@ -54,7 +214,7 @@
             top: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0,0,0,0.9);
+            background-color: rgba(0, 0, 0, 0.9);
         }
         .modal-image {
             margin: auto;
@@ -75,37 +235,35 @@
             font-weight: bold;
             cursor: pointer;
         }
-        
+
         .login-status-indicator {
-            background-color: rgba(255,255,255,0.1);
+            background-color: rgba(255, 255, 255, 0.1);
             color: #fff;
             padding: 4px 12px;
             border-radius: 20px;
             font-size: 12px;
             font-weight: 500;
             display: inline-block;
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        
         .account-menu.logged-in .account-label {
-            color: var(--bubble-text-muted);
+            color: rgba(255, 255, 255, 0.6);
         }
-        
         .account-menu.logged-in .account-link {
             color: #fff;
             font-weight: 600;
         }
-        
+
         #installButton {
-            background: linear-gradient(135deg, var(--bubble-accent), var(--bubble-accent2)) !important;
+            background: linear-gradient(135deg, #00d4ff, #7b68ee) !important;
             border: none !important;
-            box-shadow: 0 4px 20px var(--bubble-glow) !important;
+            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.3) !important;
         }
         #installButton:hover {
             transform: scale(1.05);
-            box-shadow: 0 8px 30px var(--bubble-glow) !important;
+            box-shadow: 0 8px 30px rgba(0, 212, 255, 0.3) !important;
         }
-        
+
         @media (max-width: 768px) {
             .product-grid {
                 grid-template-columns: repeat(2, 1fr);
@@ -141,7 +299,9 @@
         <span></span>
     </div>
 
-    <!-- SEARCH OVERLAY -->
+    <!-- ============================================================
+         SEARCH OVERLAY (glass‑morphism, no white bars)
+         ============================================================ -->
     <div id="searchOverlay" class="search-overlay">
         <div class="search-overlay-content">
             <button class="search-overlay-close" onclick="closeSearchOverlay()">&times;</button>
@@ -169,6 +329,7 @@
         </div>
     </div>
 
+    <!-- LOGIN PROMPT MODAL -->
     <div id="loginPromptModal" class="login-prompt-overlay">
         <div class="login-prompt-box">
             <h2>Login Required</h2>
@@ -180,11 +341,13 @@
         </div>
     </div>
 
+    <!-- IMAGE MODAL -->
     <div id="imageModal" class="image-modal" onclick="closeImageModal()">
         <span class="close-modal" onclick="closeImageModal()">&times;</span>
         <img class="modal-image" id="modalImage">
     </div>
 
+    <!-- SELLER CONTACT MODAL -->
     <div id="sellerContactModal" class="contact-modal">
         <div class="contact-modal-content">
             <span class="close-contact-modal" onclick="document.getElementById('sellerContactModal').style.display='none'">&times;</span>
@@ -192,7 +355,7 @@
         </div>
     </div>
 
-    <!-- Tour Overlay -->
+    <!-- TOUR OVERLAY -->
     <div id="tourOverlay" class="tour-overlay">
         <div class="tour-card">
             <div class="tour-header">
@@ -200,12 +363,11 @@
                 <p>Your guide to the platform</p>
             </div>
             <div class="tour-body">
-                <!-- steps ... -->
                 <div id="tourStep1" class="tour-step active">
                     <h3>Welcome Aboard!</h3>
                     <p>You're now part of Mbare Marketplace, Zimbabwe's growing online shopping destination. Let's take a quick tour to help you get started.</p>
                     <div class="highlight-location">
-                        <strong>Your Account:</strong> Top right corner - manage your profile, orders, and settings.
+                        <strong>Your Account:</strong> Top right corner – manage your profile, orders, and settings.
                     </div>
                 </div>
                 <div id="tourStep2" class="tour-step">
@@ -225,7 +387,7 @@
                     <div class="highlight-location">
                         <strong>Where:</strong> In the navigation bar, look for the <strong>"Sell"</strong> link.
                     </div>
-                    <p>You'll get a 1-month free trial of the Merchant Basic plan!</p>
+                    <p>You'll get a 1‑month free trial of the Merchant Basic plan!</p>
                 </div>
                 <div id="tourStep4" class="tour-step">
                     <h3>Track Your Performance</h3>
@@ -247,7 +409,7 @@
                     <h3>Ready to Buy?</h3>
                     <p>Add products to your <strong>Basket</strong> and proceed to checkout when you're ready.</p>
                     <div class="highlight-location">
-                        <strong>Where:</strong> Top right corner - the basket icon shows your item count.
+                        <strong>Where:</strong> Top right corner – the basket icon shows your item count.
                     </div>
                     <p>Happy shopping on Mbare Marketplace!</p>
                 </div>
@@ -267,6 +429,9 @@
         </div>
     </div>
 
+    <!-- ============================================================
+         HEADER
+         ============================================================ -->
     <header class="header">
         <div class="header-top">
             <div class="container">
@@ -326,6 +491,7 @@
                 </div>
             </div>
         </div>
+
         <nav class="nav-menu">
             <div class="container">
                 <a href="#" class="nav-item all-menu">
@@ -366,7 +532,12 @@
         </nav>
     </header>
 
+    <!-- ============================================================
+         MAIN CONTENT
+         ============================================================ -->
     <main class="main-content">
+
+        <!-- WELCOME BANNER (hidden by default) -->
         <div id="welcomeBanner" class="welcome-banner">
             <h1>Welcome to Mbare Marketplace</h1>
             <p>Discover amazing products from sellers across Zimbabwe. Sign in to access your account, manage orders, and unlock exclusive features.</p>
@@ -376,6 +547,7 @@
             </div>
         </div>
 
+        <!-- CAROUSEL -->
         <section class="carousel-section">
             <div class="carousel-container">
                 <button class="carousel-btn prev" onclick="moveCarousel(-1)">&#10094;</button>
@@ -411,6 +583,7 @@
             </div>
         </section>
 
+        <!-- PRODUCT SECTIONS -->
         <div class="container">
             <section class="product-section">
                 <div class="section-header">
@@ -436,10 +609,91 @@
                 <div class="product-grid" id="bestSellersClothing"></div>
             </section>
 
-            <!-- other product sections... (trimmed for brevity) -->
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>Best Sellers in Pet Supplies</h2>
+                    <a href="pet-supplies.html" class="see-all">See more</a>
+                </div>
+                <div class="product-grid" id="bestSellersPetSupplies"></div>
+            </section>
+
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>Best Sellers in Pets & Livestock</h2>
+                    <a href="pets-livestock.html" class="see-all">See more</a>
+                </div>
+                <div class="product-grid" id="bestSellersPetsLivestock"></div>
+            </section>
+
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>Best Sellers in Farm Products</h2>
+                    <a href="farm-products.html" class="see-all">See more</a>
+                </div>
+                <div class="product-grid" id="bestSellersFarmProducts"></div>
+            </section>
+
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>Best Sellers in Hardware</h2>
+                    <a href="hardware.html" class="see-all">See more</a>
+                </div>
+                <div class="product-grid" id="bestSellersHardware"></div>
+            </section>
+
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>Best Sellers in Vehicle Parts & Accessories</h2>
+                    <a href="vehicle-parts.html" class="see-all">See more</a>
+                </div>
+                <div class="product-grid" id="bestSellersVehicleParts&amp;Accessories"></div>
+            </section>
+
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>Best Sellers in Vehicles & Transportation</h2>
+                    <a href="vehicles-transportation.html" class="see-all">See more</a>
+                </div>
+                <div class="product-grid" id="bestSellersVehicle&amp;Transportation"></div>
+            </section>
+
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>Best Sellers in Home & Kitchen</h2>
+                    <a href="home&kitchen.html" class="see-all">See more</a>
+                </div>
+                <div class="product-grid" id="bestSellersHome&amp;Kitchen"></div>
+            </section>
+
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>Best Sellers in Beauty & Cosmetics</h2>
+                    <a href="beauty-cosmetics.html" class="see-all">See more</a>
+                </div>
+                <div class="product-grid" id="bestSellersBeautyCosmetics"></div>
+            </section>
+
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>Recommended for You</h2>
+                    <a href="#" class="see-all">See more</a>
+                </div>
+                <div class="product-grid" id="recommended"></div>
+            </section>
+
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>All Products</h2>
+                    <a href="#" class="see-all">Browse all</a>
+                </div>
+                <div class="product-grid" id="allProducts"></div>
+            </section>
         </div>
     </main>
 
+    <!-- ============================================================
+         FOOTER
+         ============================================================ -->
     <footer class="footer">
         <div class="footer-top">
             <a href="#" class="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">Back to top</a>
@@ -505,17 +759,19 @@
         </div>
     </footer>
 
+    <!-- INSTALL BUTTON -->
     <div id="installButton" style="position: fixed; bottom: 20px; right: 20px; padding: 14px 28px; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 20px rgba(0,212,255,0.3); z-index: 9999; display: flex; align-items: center; gap: 10px; font-weight: 600; border: none; font-size: 16px; color: #fff; background: linear-gradient(135deg, #00d4ff, #7b68ee);">
         <span>Install App</span>
     </div>
 
+    <!-- IOS PROMPT MODAL -->
     <div id="iosPromptModal" class="ios-prompt-modal">
         <div class="ios-prompt-close" onclick="closeIOSPrompt()">&#10005;</div>
         <div class="ios-prompt-header">
             <img src="/icons/icon-152.png" class="ios-prompt-icon" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'50\' height=\'50\' viewBox=\'0 0 50 50\'%3E%3Crect width=\'50\' height=\'50\' fill=\'%230a1628\'/%3E%3Ctext x=\'10\' y=\'35\' fill=\'%2300d4ff\' font-size=\'25\'%3E %3C/text%3E%3C/svg%3E'">
             <div>
                 <div class="ios-prompt-title">Mbare Marketplace</div>
-                <div style="color: var(--bubble-text-muted); font-size: 14px;">Install on your iPhone</div>
+                <div style="color: rgba(255,255,255,0.6); font-size: 14px;">Install on your iPhone</div>
             </div>
         </div>
         <div class="ios-prompt-steps">
@@ -535,7 +791,9 @@
         <button class="ios-got-it-btn">Got it</button>
     </div>
 
-    <!-- ===== SCRIPTS (order matters) ===== -->
+    <!-- ============================================================
+         SCRIPTS – all external, no inline overrides
+         ============================================================ -->
     <script src="api.js"></script>
     <script src="script.js"></script>
     <script src="auth-check.js"></script>
@@ -544,145 +802,5 @@
     <script src="js/pages/index-2.js"></script>
     <script src="js/pages/index-3.js"></script>
 
-    <!-- ===== FINAL OVERRIDE – ensures dropdown and carousel work on all devices ===== -->
-    <script>
-    (function() {
-        console.log('FINAL OVERRIDE: Fixing dropdown and carousel...');
-
-        // === DROPDOWN ===
-        var btn = document.getElementById('categoryDropdownBtn');
-        var menu = document.getElementById('categoryDropdownMenu');
-        if (btn && menu) {
-            // Remove old listeners by cloning
-            var newBtn = btn.cloneNode(true);
-            btn.parentNode.replaceChild(newBtn, btn);
-            btn = newBtn;
-
-            function toggle(e) {
-                e.stopPropagation();
-                var expanded = btn.getAttribute('aria-expanded') === 'true';
-                btn.setAttribute('aria-expanded', !expanded);
-                menu.classList.toggle('show');
-            }
-            function closeMenu() {
-                btn.setAttribute('aria-expanded', 'false');
-                menu.classList.remove('show');
-            }
-            btn.addEventListener('click', toggle);
-            document.addEventListener('click', function(e) {
-                if (!btn.contains(e.target) && !menu.contains(e.target)) {
-                    closeMenu();
-                }
-            });
-            document.querySelectorAll('.dropdown-category-item').forEach(function(item) {
-                item.addEventListener('click', closeMenu);
-            });
-            console.log('Dropdown final override OK');
-        }
-
-        // === CAROUSEL ===
-        var slidesContainer = document.querySelector('.carousel-slides');
-        var slides = document.querySelectorAll('.carousel-slide');
-        var indicators = document.querySelectorAll('.indicator');
-        if (slidesContainer && slides.length > 0) {
-            var total = slides.length;
-            var current = 0;
-            var interval = null;
-
-            function goToSlide(index) {
-                if (index < 0) index = total - 1;
-                if (index >= total) index = 0;
-                current = index;
-                slidesContainer.style.transform = 'translateX(-' + (index * 100) + '%)';
-                slides.forEach(function(s, i) { s.classList.toggle('active', i === index); });
-                indicators.forEach(function(ind, i) { ind.classList.toggle('active', i === index); });
-            }
-
-            function moveCarousel(dir) {
-                goToSlide(current + dir);
-            }
-
-            function startAuto() {
-                if (interval) clearInterval(interval);
-                interval = setInterval(function() { moveCarousel(1); }, 5000);
-            }
-            function stopAuto() {
-                if (interval) { clearInterval(interval); interval = null; }
-            }
-
-            // Override global functions
-            window.goToSlide = goToSlide;
-            window.moveCarousel = moveCarousel;
-
-            // Set initial slide
-            goToSlide(0);
-            startAuto();
-
-            // Pause on hover
-            var container = document.querySelector('.carousel-container');
-            if (container) {
-                container.addEventListener('mouseenter', stopAuto);
-                container.addEventListener('mouseleave', startAuto);
-            }
-
-            // Indicator clicks
-            indicators.forEach(function(ind, i) {
-                ind.addEventListener('click', function() {
-                    goToSlide(i);
-                    startAuto();
-                });
-            });
-
-            console.log('Carousel final override OK');
-        }
-
-        // === SEARCH OVERLAY (ensure functions exist) ===
-        if (typeof window.openSearchOverlay !== 'function') {
-            window.openSearchOverlay = function() {
-                var ov = document.getElementById('searchOverlay');
-                if (ov) ov.classList.add('active');
-                var inp = document.getElementById('overlaySearchInput');
-                if (inp) setTimeout(function() { inp.focus(); }, 100);
-            };
-        }
-        if (typeof window.closeSearchOverlay !== 'function') {
-            window.closeSearchOverlay = function() {
-                var ov = document.getElementById('searchOverlay');
-                if (ov) ov.classList.remove('active');
-            };
-        }
-        if (typeof window.handleOverlaySearch !== 'function') {
-            window.handleOverlaySearch = function() {
-                var inp = document.getElementById('overlaySearchInput');
-                var cat = document.getElementById('overlayCategorySelect');
-                if (!inp) return;
-                var q = inp.value.trim();
-                if (q) {
-                    var c = cat ? cat.value : 'All';
-                    window.location.href = 'search-results.html?q=' + encodeURIComponent(q) + '&category=' + encodeURIComponent(c);
-                }
-            };
-        }
-        // Enter key in overlay input
-        var overlayInput = document.getElementById('overlaySearchInput');
-        if (overlayInput) {
-            overlayInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    window.handleOverlaySearch();
-                }
-            });
-        }
-        // Close on backdrop click
-        var overlay = document.getElementById('searchOverlay');
-        if (overlay) {
-            overlay.addEventListener('click', function(e) {
-                if (e.target === this) window.closeSearchOverlay();
-            });
-        }
-
-        console.log('Final override complete.');
-    })();
-    </script>
 </body>
 </html>
