@@ -185,7 +185,7 @@ body {
 }
 
 .logo a::before {
-    content: '💧 ';
+    content: '  ';
     -webkit-text-fill-color: initial;
 }
 
