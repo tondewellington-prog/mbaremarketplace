@@ -1,32 +1,48 @@
-// Simple dropdown functionality only - NO product interference
-        const dropdownBtn = document.getElementById('categoryDropdownBtn');
-        const dropdownMenu = document.getElementById('categoryDropdownMenu');
-        
-        function toggleDropdown(event) {
-            event.stopPropagation();
-            const isExpanded = dropdownBtn.getAttribute('aria-expanded') === 'true';
-            dropdownBtn.setAttribute('aria-expanded', !isExpanded);
-            dropdownMenu.classList.toggle('show');
+// =====================================================
+// INDEX-1.JS – DROPDOWN FUNCTIONALITY (FIXED)
+// =====================================================
+
+(function() {
+    'use strict';
+
+    var dropdownBtn = document.getElementById('categoryDropdownBtn');
+    var dropdownMenu = document.getElementById('categoryDropdownMenu');
+
+    if (!dropdownBtn || !dropdownMenu) {
+        console.warn('Dropdown elements not found');
+        return;
+    }
+
+    // Remove any existing listeners by cloning (to be safe)
+    var newBtn = dropdownBtn.cloneNode(true);
+    dropdownBtn.parentNode.replaceChild(newBtn, dropdownBtn);
+    dropdownBtn = newBtn;
+
+    function toggleDropdown(e) {
+        e.stopPropagation();
+        var isExpanded = dropdownBtn.getAttribute('aria-expanded') === 'true';
+        dropdownBtn.setAttribute('aria-expanded', !isExpanded);
+        dropdownMenu.classList.toggle('show');
+    }
+
+    function closeDropdown() {
+        dropdownBtn.setAttribute('aria-expanded', 'false');
+        dropdownMenu.classList.remove('show');
+    }
+
+    dropdownBtn.addEventListener('click', toggleDropdown);
+
+    document.addEventListener('click', function(e) {
+        if (!dropdownBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+            closeDropdown();
         }
-        
-        function closeDropdown() {
-            dropdownBtn.setAttribute('aria-expanded', 'false');
-            dropdownMenu.classList.remove('show');
-        }
-        
-        if (dropdownBtn) {
-            dropdownBtn.addEventListener('click', toggleDropdown);
-        }
-        
-        document.addEventListener('click', function(event) {
-            if (!dropdownBtn?.contains(event.target) && !dropdownMenu?.contains(event.target)) {
-                closeDropdown();
-            }
-        });
-        
-        const categoryItems = document.querySelectorAll('.dropdown-category-item');
-        categoryItems.forEach(item => {
-            item.addEventListener('click', function() {
-                closeDropdown();
-            });
-        });
+    });
+
+    // Close when a category is clicked
+    var categoryItems = document.querySelectorAll('.dropdown-category-item');
+    categoryItems.forEach(function(item) {
+        item.addEventListener('click', closeDropdown);
+    });
+
+    console.log('Dropdown fixed successfully!');
+})();
