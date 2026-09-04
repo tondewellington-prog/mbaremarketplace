@@ -211,7 +211,7 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
         const query = searchInput.value.trim();
         if (query) {
             const category = categorySelect?.value || 'All';
-            window.location.href = 'search.html?q=' + encodeURIComponent(query) + '&category=' + encodeURIComponent(category);
+            window.location.href = 'search-results.html?q=' + encodeURIComponent(query) + '&category=' + encodeURIComponent(category);
         }
     };
 
