@@ -298,11 +298,11 @@
            ============================================================ */
         .carousel-slides {
             display: flex !important;
-            width: 300% !important; /* 3 slides × 100% */
+            width: 300% !important;
             transition: transform 0.6s ease-in-out;
         }
         .carousel-slide {
-            min-width: 33.333% !important; /* 100% / 3 */
+            min-width: 33.333% !important;
             flex-shrink: 0 !important;
             height: 100%;
             display: flex !important;
@@ -822,14 +822,59 @@
     <script src="js/pages/index-3.js"></script>
 
     <!-- ============================================================
-         STANDALONE CAROUSEL IMPLEMENTATION (OVERRIDES ANY BROKEN ONE)
+         FINAL OVERRIDE – ensures both DROPDOWN and CAROUSEL work
          ============================================================ -->
     <script>
         (function() {
             'use strict';
 
-            // Wait for DOM and for any other scripts to finish
+            // Wait a moment for everything to load
             setTimeout(function() {
+
+                // ==========================================
+                // 1. DROPDOWN – re‑attach with fresh listeners
+                // ==========================================
+                var dropdownBtn = document.getElementById('categoryDropdownBtn');
+                var dropdownMenu = document.getElementById('categoryDropdownMenu');
+
+                if (dropdownBtn && dropdownMenu) {
+                    // Remove any existing listeners by cloning (to be safe)
+                    var newBtn = dropdownBtn.cloneNode(true);
+                    dropdownBtn.parentNode.replaceChild(newBtn, dropdownBtn);
+                    dropdownBtn = newBtn;
+
+                    function toggleDropdown(e) {
+                        e.stopPropagation();
+                        var isExpanded = dropdownBtn.getAttribute('aria-expanded') === 'true';
+                        dropdownBtn.setAttribute('aria-expanded', !isExpanded);
+                        dropdownMenu.classList.toggle('show');
+                    }
+
+                    function closeDropdown() {
+                        dropdownBtn.setAttribute('aria-expanded', 'false');
+                        dropdownMenu.classList.remove('show');
+                    }
+
+                    dropdownBtn.addEventListener('click', toggleDropdown);
+
+                    document.addEventListener('click', function(e) {
+                        if (!dropdownBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                            closeDropdown();
+                        }
+                    });
+
+                    document.querySelectorAll('.dropdown-category-item').forEach(function(item) {
+                        item.addEventListener('click', closeDropdown);
+                    });
+
+                    console.log('✅ Dropdown re‑attached successfully.');
+                } else {
+                    console.warn('Dropdown elements not found for final override.');
+                }
+
+                // ==========================================
+                // 2. CAROUSEL – standalone implementation
+                // ==========================================
                 var container = document.getElementById('carouselSlides');
                 if (!container) {
                     console.warn('Carousel container not found');
@@ -861,7 +906,6 @@
                     slide.style.justifyContent = 'center';
                 });
 
-                // Function to go to a specific slide
                 function goToSlide(index) {
                     if (index < 0) index = totalSlides - 1;
                     if (index >= totalSlides) index = 0;
@@ -869,12 +913,10 @@
                     var offset = -index * (100 / totalSlides);
                     container.style.transform = 'translateX(' + offset + '%)';
 
-                    // Update active classes for slides (optional)
                     slides.forEach(function(slide, i) {
                         slide.classList.toggle('active', i === index);
                     });
 
-                    // Update indicators
                     if (indicators.length) {
                         indicators.forEach(function(ind, i) {
                             ind.classList.toggle('active', i === index);
@@ -882,12 +924,10 @@
                     }
                 }
 
-                // Move by direction (+1 or -1)
                 function moveCarousel(direction) {
                     goToSlide(currentIndex + direction);
                 }
 
-                // Start auto-slide
                 function startAutoSlide() {
                     if (interval) clearInterval(interval);
                     interval = setInterval(function() {
@@ -895,7 +935,6 @@
                     }, 5000);
                 }
 
-                // Stop auto-slide
                 function stopAutoSlide() {
                     if (interval) {
                         clearInterval(interval);
@@ -903,14 +942,12 @@
                     }
                 }
 
-                // Expose functions globally so that button onclick works
+                // Expose globally so button onclick works
                 window.goToSlide = goToSlide;
                 window.moveCarousel = moveCarousel;
 
-                // Set initial slide (0)
+                // Set initial slide
                 goToSlide(0);
-
-                // Start auto-slide
                 startAutoSlide();
 
                 // Pause on hover
@@ -920,20 +957,20 @@
                     carouselContainer.addEventListener('mouseleave', startAutoSlide);
                 }
 
-                // Attach click events to indicators (if they don't already have onclick)
+                // Attach click events to indicators
                 if (indicators.length) {
                     indicators.forEach(function(ind, i) {
-                        // Remove any existing onclick to avoid double firing
                         ind.removeAttribute('onclick');
                         ind.addEventListener('click', function() {
                             goToSlide(i);
-                            startAutoSlide(); // restart timer after manual click
+                            startAutoSlide();
                         });
                     });
                 }
 
-                console.log('Standalone carousel initialised successfully.');
-            }, 300); // delay to ensure DOM and other scripts are ready
+                console.log('✅ Carousel initialised successfully.');
+
+            }, 300);
         })();
     </script>
 
