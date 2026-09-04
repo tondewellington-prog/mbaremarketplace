@@ -39,44 +39,60 @@
         /* ============================================================
            CRITICAL FIXES – ensure dropdown visibility on all screen sizes
            ============================================================ */
+
+        /* Make nav bar horizontally scrollable */
+        .nav-menu .container {
+            display: flex;
+            gap: 25px;
+            align-items: center;
+            overflow-x: auto !important;
+            overflow-y: visible !important;
+            flex-wrap: nowrap !important;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 10px;
+            scroll-behavior: smooth;
+            min-width: 100% !important;
+            width: 100% !important;
+        }
+
+        /* Prevent nav items from shrinking so they stay in a row */
+        .nav-item {
+            flex-shrink: 0 !important;
+            white-space: nowrap;
+        }
+
+        /* Ensure dropdown containers never clip the dropdown */
         .nav-menu,
         .nav-menu .container,
         .custom-category-dropdown {
             overflow: visible !important;
         }
 
+        /* FORCE DROPDOWN ABOVE CAROUSEL */
         .nav-menu {
-            position: relative;
-            z-index: 1000 !important;  /* ensure it's above carousel */
+            position: relative !important;
+            z-index: 9999 !important;
         }
 
         .custom-category-dropdown {
-            position: relative;
-            z-index: 1001 !important;
+            position: relative !important;
+            z-index: 9999 !important;
         }
 
         .dropdown-menu {
-            z-index: 1002 !important;
-        }
-
-        .nav-menu .container {
-            overflow-x: auto !important;
-            overflow-y: visible !important;
-            flex-wrap: nowrap !important;
-            padding-bottom: 10px;
-            min-width: 100% !important;
-            width: 100% !important;
-        }
-
-        .nav-item {
-            flex-shrink: 0 !important;
+            z-index: 10000 !important;
         }
 
         .carousel-section {
-            z-index: 1;  /* lower than nav */
+            z-index: 1 !important;
             position: relative;
         }
 
+        .carousel-container {
+            z-index: 1 !important;
+        }
+
+        /* On narrow screens, align dropdown to the right so it doesn't go off-screen */
         @media (max-width: 768px) {
             .dropdown-menu {
                 left: auto !important;
@@ -403,7 +419,6 @@
                 <p>Your guide to the platform</p>
             </div>
             <div class="tour-body">
-                <!-- Steps (unchanged) -->
                 <div id="tourStep1" class="tour-step active">
                     <h3>Welcome Aboard!</h3>
                     <p>You're now part of Mbare Marketplace, Zimbabwe's growing online shopping destination. Let's take a quick tour to help you get started.</p>
@@ -620,7 +635,7 @@
             </div>
         </section>
 
-        <!-- PRODUCT SECTIONS (unchanged) -->
+        <!-- PRODUCT SECTIONS -->
         <div class="container">
             <section class="product-section">
                 <div class="section-header">
@@ -630,9 +645,101 @@
                 <div class="product-grid" id="todaysDeals"></div>
             </section>
 
-            <!-- ... (all product sections) ... -->
-            <!-- To keep it short, I won't repeat all sections – they are identical to your original. -->
-            <!-- Just ensure you include all sections as in your original. -->
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>Best Sellers in Electronic Devices</h2>
+                    <a href="electronics.html" class="see-all">See more</a>
+                </div>
+                <div class="product-grid" id="bestSellersElectronics"></div>
+            </section>
+
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>Best Sellers in Clothing</h2>
+                    <a href="clothing.html" class="see-all">See more</a>
+                </div>
+                <div class="product-grid" id="bestSellersClothing"></div>
+            </section>
+
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>Best Sellers in Pet Supplies</h2>
+                    <a href="pet-supplies.html" class="see-all">See more</a>
+                </div>
+                <div class="product-grid" id="bestSellersPetSupplies"></div>
+            </section>
+
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>Best Sellers in Pets & Livestock</h2>
+                    <a href="pets-livestock.html" class="see-all">See more</a>
+                </div>
+                <div class="product-grid" id="bestSellersPetsLivestock"></div>
+            </section>
+
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>Best Sellers in Farm Products</h2>
+                    <a href="farm-products.html" class="see-all">See more</a>
+                </div>
+                <div class="product-grid" id="bestSellersFarmProducts"></div>
+            </section>
+
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>Best Sellers in Hardware</h2>
+                    <a href="hardware.html" class="see-all">See more</a>
+                </div>
+                <div class="product-grid" id="bestSellersHardware"></div>
+            </section>
+
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>Best Sellers in Vehicle Parts & Accessories</h2>
+                    <a href="vehicle-parts.html" class="see-all">See more</a>
+                </div>
+                <div class="product-grid" id="bestSellersVehicleParts&amp;Accessories"></div>
+            </section>
+
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>Best Sellers in Vehicles & Transportation</h2>
+                    <a href="vehicles-transportation.html" class="see-all">See more</a>
+                </div>
+                <div class="product-grid" id="bestSellersVehicle&amp;Transportation"></div>
+            </section>
+
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>Best Sellers in Home & Kitchen</h2>
+                    <a href="home&kitchen.html" class="see-all">See more</a>
+                </div>
+                <div class="product-grid" id="bestSellersHome&amp;Kitchen"></div>
+            </section>
+
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>Best Sellers in Beauty & Cosmetics</h2>
+                    <a href="beauty-cosmetics.html" class="see-all">See more</a>
+                </div>
+                <div class="product-grid" id="bestSellersBeautyCosmetics"></div>
+            </section>
+
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>Recommended for You</h2>
+                    <a href="#" class="see-all">See more</a>
+                </div>
+                <div class="product-grid" id="recommended"></div>
+            </section>
+
+            <section class="product-section">
+                <div class="section-header">
+                    <h2>All Products</h2>
+                    <a href="#" class="see-all">Browse all</a>
+                </div>
+                <div class="product-grid" id="allProducts"></div>
+            </section>
         </div>
     </main>
 
@@ -746,7 +853,7 @@
     <script src="js/pages/index-3.js"></script>
 
     <!-- ============================================================
-         FINAL OVERRIDE – dropdown + carousel (z-index fixed)
+         FINAL OVERRIDE – dropdown + carousel (z-index forced)
          ============================================================ -->
     <script>
         (function() {
@@ -754,7 +861,7 @@
 
             setTimeout(function() {
 
-                // ===== DROPDOWN =====
+                // ===== DROPDOWN (re‑attach) =====
                 var dropdownBtn = document.getElementById('categoryDropdownBtn');
                 var dropdownMenu = document.getElementById('categoryDropdownMenu');
                 if (dropdownBtn && dropdownMenu) {
