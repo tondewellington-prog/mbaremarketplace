@@ -184,11 +184,6 @@ body {
     letter-spacing: -0.5px;
 }
 
-.logo a::before {
-    content: '  ';
-    -webkit-text-fill-color: initial;
-}
-
 /* ===== SEARCH BAR ===== */
 .search-bar {
     flex: 1;
