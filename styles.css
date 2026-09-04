@@ -184,7 +184,7 @@ body {
     letter-spacing: -0.5px;
 }
 
-/* ===== SEARCH BAR ===== */
+/* ===== SEARCH BAR (header) – now mostly decorative, overlay handles search) ===== */
 .search-bar {
     flex: 1;
     display: flex;
@@ -367,11 +367,11 @@ body {
     stroke-linejoin: round;
 }
 
-/* ===== NAV MENU ===== */
+/* ===== NAV MENU – side scrollable ===== */
 .nav-menu {
     padding: 8px 0;
     border-top: 1px solid var(--bubble-glass-border);
-    overflow: visible !important; /* ✅ Allow dropdown to overflow */
+    overflow: visible !important;
 }
 
 .nav-menu .container {
@@ -379,10 +379,23 @@ body {
     gap: 25px;
     align-items: center;
     overflow-x: auto;
-    overflow-y: visible !important; /* ✅ Allow dropdown to overflow vertically */
+    overflow-y: visible !important;
     flex-wrap: nowrap;
     -webkit-overflow-scrolling: touch;
     padding-bottom: 10px;
+    scroll-behavior: smooth;
+}
+
+/* subtle right edge gradient hint for scrolling */
+.nav-menu .container::after {
+    content: '';
+    position: sticky;
+    right: 0;
+    width: 30px;
+    height: 100%;
+    background: linear-gradient(to right, transparent, rgba(10,22,40,0.8));
+    pointer-events: none;
+    flex-shrink: 0;
 }
 
 .nav-menu .container::-webkit-scrollbar {
@@ -421,10 +434,10 @@ body {
     color: #fff;
 }
 
-/* ===== DROPDOWN ===== */
+/* ===== DROPDOWN – never clipped ===== */
 .custom-category-dropdown {
     position: relative;
-    overflow: visible !important; /* ✅ Ensure dropdown isn't clipped */
+    overflow: visible !important;
 }
 
 .dropdown-trigger {
@@ -468,7 +481,7 @@ body {
     border-radius: 16px;
     min-width: 260px;
     box-shadow: var(--bubble-shadow);
-    z-index: 1000;
+    z-index: 9999 !important; /* ensure it's above everything */
     display: none;
     margin-top: 8px;
     overflow: hidden;
@@ -1460,6 +1473,119 @@ body {
 }
 
 /* ============================================
+   SEARCH OVERLAY – full screen, comfortable typing
+   ============================================ */
+.search-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(10, 22, 40, 0.95);
+    backdrop-filter: blur(20px);
+    z-index: 20000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.search-overlay.active {
+    display: flex;
+}
+.search-overlay-content {
+    max-width: 600px;
+    width: 100%;
+    position: relative;
+}
+.search-overlay-close {
+    position: absolute;
+    top: -10px;
+    right: 0;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 36px;
+    cursor: pointer;
+}
+.search-overlay-inner h2 {
+    color: #fff;
+    font-size: 28px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+.search-overlay-bar {
+    display: flex;
+    gap: 10px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 50px;
+    border: 1px solid var(--bubble-glass-border);
+    overflow: hidden;
+}
+.search-overlay-bar select {
+    padding: 16px 18px;
+    background: transparent;
+    border: none;
+    color: var(--bubble-text-muted);
+    font-size: 16px;
+    outline: none;
+    min-width: 140px;
+    cursor: pointer;
+}
+.search-overlay-bar select option {
+    background: #0a1628;
+    color: #fff;
+}
+.search-overlay-bar input {
+    flex: 1;
+    padding: 16px 20px;
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 18px;
+    outline: none;
+}
+.search-overlay-bar input::placeholder {
+    color: var(--bubble-text-muted);
+}
+.search-overlay-bar button {
+    padding: 16px 30px;
+    background: linear-gradient(135deg, var(--bubble-accent), var(--bubble-accent2));
+    border: none;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--bubble-transition);
+}
+.search-overlay-bar button:hover {
+    transform: scale(1.02);
+}
+
+@media (max-width: 768px) {
+    .search-overlay-bar {
+        flex-wrap: wrap;
+        border-radius: 20px;
+        background: rgba(255,255,255,0.06);
+    }
+    .search-overlay-bar select {
+        width: 100%;
+        min-width: unset;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--bubble-glass-border);
+    }
+    .search-overlay-bar input {
+        width: 100%;
+        font-size: 16px;
+        padding: 14px 18px;
+    }
+    .search-overlay-bar button {
+        width: 100%;
+        border-radius: 0 0 20px 20px;
+        padding: 16px;
+    }
+}
+
+/* ============================================
    MOBILE RESPONSIVE - PRODUCT CONTAINER SIZE REDUCTION
    ============================================ */
 
@@ -1640,7 +1766,7 @@ body {
         font-size: 18px;
     }
     
-    /* ✅ SEARCH BAR: force display, take remaining space */
+    /* the header search bar is now a simple input; it can be narrower */
     .search-bar {
         display: flex !important;
         flex: 1 1 auto;
