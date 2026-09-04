@@ -169,7 +169,7 @@
     <div id="tourOverlay" class="tour-overlay">
         <div class="tour-card">
             <div class="tour-header">
-                <h2>💧 Welcome to Mbare Marketplace</h2>
+                <h2>Welcome to Mbare Marketplace</h2>
                 <p>Your guide to the platform</p>
             </div>
             <div class="tour-body">
@@ -591,7 +591,27 @@
         </div>
         <button class="ios-got-it-btn">Got it</button>
     </div>
-
+<script>
+// Dropdown fallback - ensure it works
+(function() {
+    const btn = document.getElementById('categoryDropdownBtn');
+    const menu = document.getElementById('categoryDropdownMenu');
+    if (btn && menu) {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const expanded = this.getAttribute('aria-expanded') === 'true';
+            this.setAttribute('aria-expanded', !expanded);
+            menu.classList.toggle('show');
+        });
+        document.addEventListener('click', function(e) {
+            if (!btn.contains(e.target) && !menu.contains(e.target)) {
+                btn.setAttribute('aria-expanded', 'false');
+                menu.classList.remove('show');
+            }
+        });
+    }
+})();
+</script>
     <script src="api.js"></script>
     <script src="script.js"></script>
     <script src="auth-check.js"></script>
