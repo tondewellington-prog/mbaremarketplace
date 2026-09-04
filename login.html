@@ -29,7 +29,6 @@
             line-height: 1.6;
         }
 
-        /* Purple notification styling */
         .custom-notification.purple {
             background-color: #6b38af !important;
         }
@@ -56,33 +55,40 @@
             to { transform: translate(-50%, -50%); opacity: 1; }
         }
 
-        /* Existing styles */
         .privacy-note {
             margin-top: 15px;
             text-align: center;
             font-size: 12px;
-            color: #666;
+            color: var(--bubble-text-muted);
         }
         .privacy-note a {
-            color: #f90;
+            color: var(--bubble-accent);
             text-decoration: none;
         }
         .privacy-note a:hover {
             text-decoration: underline;
         }
         
-        /* Country dropdown styling */
         #regCountryCode {
-            width: 120px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background-color: white;
+            width: 140px;
+            padding: 12px 16px;
+            border: 1px solid var(--bubble-glass-border);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.06);
+            color: #fff;
             cursor: pointer;
             font-size: 14px;
+            outline: none;
+        }
+        #regCountryCode option {
+            background: #0a1628;
+            color: #fff;
+        }
+        #regCountryCode:focus {
+            border-color: var(--bubble-accent);
+            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.15);
         }
         
-        /* Forgot password link styling */
         .forgot-password-link {
             text-align: right;
             margin-top: 6px;
@@ -90,23 +96,101 @@
         }
         
         .forgot-password-link a {
-            color: #f90;
+            color: var(--bubble-accent);
             text-decoration: none;
         }
         
         .forgot-password-link a:hover {
             text-decoration: underline;
         }
-        
+
+        .login-form input[type="tel"] {
+            flex: 1;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--bubble-glass-border);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 15px;
+            outline: none;
+            transition: var(--bubble-transition);
+        }
+        .login-form input[type="tel"]:focus {
+            border-color: var(--bubble-accent);
+            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.15);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .login-form select {
+            padding: 12px 16px;
+            border: 1px solid var(--bubble-glass-border);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.06);
+            color: #fff;
+            font-size: 15px;
+            outline: none;
+            width: 100%;
+            transition: var(--bubble-transition);
+        }
+        .login-form select option {
+            background: #0a1628;
+            color: #fff;
+        }
+        .login-form select:focus {
+            border-color: var(--bubble-accent);
+            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.15);
+        }
+
+        #registerForm {
+            display: none;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--bubble-glass-border);
+        }
+        #registerForm h2 {
+            margin-bottom: 15px;
+            font-size: 20px;
+            color: #fff;
+        }
+
+        .phone-input-group {
+            display: flex;
+            gap: 10px;
+        }
+        .phone-input-group input {
+            flex: 1;
+        }
+
         @media (max-width: 768px) {
             #regCountryCode {
                 width: 100px;
                 font-size: 12px;
+                padding: 10px 12px;
+            }
+            .phone-input-group {
+                flex-wrap: wrap;
+            }
+            .phone-input-group input {
+                flex: 1 1 100%;
+            }
+            .custom-notification {
+                width: 90%;
+                padding: 20px;
             }
         }
     </style>
 </head>
 <body>
+
+    <!-- ANIMATED BACKGROUND BUBBLES -->
+    <div class="bubble-bg">
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+
     <header class="header">
         <div class="header-top">
             <div class="container">
@@ -114,14 +198,21 @@
                     <a href="index.html">Mbare Marketplace</a>
                 </div>
                 <div class="search-bar">
-                    <select class="search-category">
+                    <select class="search-category" id="searchCategorySelect">
                         <option>All</option>
-                        <option>Electronics</option>
+                        <option>Electronic Devices</option>
                         <option>Books</option>
                         <option>Clothing</option>
                         <option>Home & Kitchen</option>
+                        <option>Pet Supplies</option>
+                        <option>Pets & Livestock</option>
+                        <option>Vehicle Parts & Accessories</option>
+                        <option>Vehicles & Transportation</option>
+                        <option>Farm Products</option>
+                        <option>Hardware</option>
+                        <option>Beauty & Cosmetics</option>
                     </select>
-                    <input type="text" id="searchInput" placeholder="Search Mbare Marketplace" class="search-input">
+                    <input type="text" id="searchInput" placeholder="Search On Mbare Marketplace" class="search-input">
                     <button class="search-btn" onclick="handleSearch()">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                             <circle cx="11" cy="11" r="8"></circle>
@@ -172,280 +263,428 @@
         </nav>
     </header>
 
-    <div class="login-container">
-        <div class="login-box">
-            <h1>Sign in</h1>
-            <form class="login-form" onsubmit="handleLogin(event)">
-                <div class="form-group">
-                    <label>Email or mobile phone number</label>
-                    <input type="text" id="email" required>
-                </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" id="password" required>
-                </div>
-                <!-- Forgot Password Link -->
-                <div class="forgot-password-link">
-                    <a href="forgot-password.html">Forgot Password?</a>
-                </div>
-                <button type="submit" class="btn-login">Sign in</button>
-            </form>
-            <div class="login-divider">
-                New to Mbare Marketplace?
-            </div>
-            <button class="btn-create-account" onclick="showRegisterForm()">Create your Mbare Marketplace account</button>
-
-            <div id="registerForm" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
-                <h2 style="margin-bottom: 15px; font-size: 20px;">Create Account</h2>
-                <form class="login-form" onsubmit="handleRegister(event)">
+    <main class="main-content">
+        <div class="login-container">
+            <div class="login-box">
+                <h1>Sign in</h1>
+                <form class="login-form" onsubmit="handleLogin(event)">
                     <div class="form-group">
-                        <label>Full Name</label>
-                        <input type="text" id="regName" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" id="regEmail" required>
+                        <label>Email or mobile phone number</label>
+                        <input type="text" id="email" required>
                     </div>
                     <div class="form-group">
                         <label>Password</label>
-                        <input type="password" id="regPassword" required minlength="6">
+                        <input type="password" id="password" required>
                     </div>
-                    
-                    <div class="form-group">
-                        <label>Phone Number</label>
-                        <div style="display: flex; gap: 10px;">
-                            <select id="regCountryCode" style="width: 140px; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
-                                <option value="93">Afghanistan (+93)</option>
-                                <option value="355">Albania (+355)</option>
-                                <option value="213">Algeria (+213)</option>
-                                <option value="376">Andorra (+376)</option>
-                                <option value="244">Angola (+244)</option>
-                                <option value="1">Antigua and Barbuda (+1)</option>
-                                <option value="54">Argentina (+54)</option>
-                                <option value="374">Armenia (+374)</option>
-                                <option value="61">Australia (+61)</option>
-                                <option value="43">Austria (+43)</option>
-                                <option value="994">Azerbaijan (+994)</option>
-                                <option value="1">Bahamas (+1)</option>
-                                <option value="973">Bahrain (+973)</option>
-                                <option value="880">Bangladesh (+880)</option>
-                                <option value="1">Barbados (+1)</option>
-                                <option value="375">Belarus (+375)</option>
-                                <option value="32">Belgium (+32)</option>
-                                <option value="501">Belize (+501)</option>
-                                <option value="229">Benin (+229)</option>
-                                <option value="975">Bhutan (+975)</option>
-                                <option value="591">Bolivia (+591)</option>
-                                <option value="387">Bosnia and Herzegovina (+387)</option>
-                                <option value="267">Botswana (+267)</option>
-                                <option value="55">Brazil (+55)</option>
-                                <option value="673">Brunei (+673)</option>
-                                <option value="359">Bulgaria (+359)</option>
-                                <option value="226">Burkina Faso (+226)</option>
-                                <option value="257">Burundi (+257)</option>
-                                <option value="855">Cambodia (+855)</option>
-                                <option value="237">Cameroon (+237)</option>
-                                <option value="1">Canada (+1)</option>
-                                <option value="238">Cape Verde (+238)</option>
-                                <option value="236">Central African Republic (+236)</option>
-                                <option value="235">Chad (+235)</option>
-                                <option value="56">Chile (+56)</option>
-                                <option value="86">China (+86)</option>
-                                <option value="57">Colombia (+57)</option>
-                                <option value="269">Comoros (+269)</option>
-                                <option value="242">Congo (+242)</option>
-                                <option value="243">DR Congo (+243)</option>
-                                <option value="506">Costa Rica (+506)</option>
-                                <option value="225">Cote d'Ivoire (+225)</option>
-                                <option value="385">Croatia (+385)</option>
-                                <option value="53">Cuba (+53)</option>
-                                <option value="357">Cyprus (+357)</option>
-                                <option value="420">Czech Republic (+420)</option>
-                                <option value="45">Denmark (+45)</option>
-                                <option value="253">Djibouti (+253)</option>
-                                <option value="1">Dominica (+1)</option>
-                                <option value="1">Dominican Republic (+1)</option>
-                                <option value="593">Ecuador (+593)</option>
-                                <option value="20">Egypt (+20)</option>
-                                <option value="503">El Salvador (+503)</option>
-                                <option value="240">Equatorial Guinea (+240)</option>
-                                <option value="291">Eritrea (+291)</option>
-                                <option value="372">Estonia (+372)</option>
-                                <option value="251">Ethiopia (+251)</option>
-                                <option value="679">Fiji (+679)</option>
-                                <option value="358">Finland (+358)</option>
-                                <option value="33">France (+33)</option>
-                                <option value="241">Gabon (+241)</option>
-                                <option value="220">Gambia (+220)</option>
-                                <option value="995">Georgia (+995)</option>
-                                <option value="49">Germany (+49)</option>
-                                <option value="233">Ghana (+233)</option>
-                                <option value="30">Greece (+30)</option>
-                                <option value="1">Grenada (+1)</option>
-                                <option value="502">Guatemala (+502)</option>
-                                <option value="224">Guinea (+224)</option>
-                                <option value="245">Guinea-Bissau (+245)</option>
-                                <option value="592">Guyana (+592)</option>
-                                <option value="509">Haiti (+509)</option>
-                                <option value="504">Honduras (+504)</option>
-                                <option value="36">Hungary (+36)</option>
-                                <option value="354">Iceland (+354)</option>
-                                <option value="91">India (+91)</option>
-                                <option value="62">Indonesia (+62)</option>
-                                <option value="98">Iran (+98)</option>
-                                <option value="964">Iraq (+964)</option>
-                                <option value="353">Ireland (+353)</option>
-                                <option value="972">Israel (+972)</option>
-                                <option value="39">Italy (+39)</option>
-                                <option value="1">Jamaica (+1)</option>
-                                <option value="81">Japan (+81)</option>
-                                <option value="962">Jordan (+962)</option>
-                                <option value="7">Kazakhstan (+7)</option>
-                                <option value="254">Kenya (+254)</option>
-                                <option value="686">Kiribati (+686)</option>
-                                <option value="965">Kuwait (+965)</option>
-                                <option value="996">Kyrgyzstan (+996)</option>
-                                <option value="856">Laos (+856)</option>
-                                <option value="371">Latvia (+371)</option>
-                                <option value="961">Lebanon (+961)</option>
-                                <option value="266">Lesotho (+266)</option>
-                                <option value="231">Liberia (+231)</option>
-                                <option value="218">Libya (+218)</option>
-                                <option value="423">Liechtenstein (+423)</option>
-                                <option value="370">Lithuania (+370)</option>
-                                <option value="352">Luxembourg (+352)</option>
-                                <option value="261">Madagascar (+261)</option>
-                                <option value="265">Malawi (+265)</option>
-                                <option value="60">Malaysia (+60)</option>
-                                <option value="960">Maldives (+960)</option>
-                                <option value="223">Mali (+223)</option>
-                                <option value="356">Malta (+356)</option>
-                                <option value="692">Marshall Islands (+692)</option>
-                                <option value="222">Mauritania (+222)</option>
-                                <option value="230">Mauritius (+230)</option>
-                                <option value="52">Mexico (+52)</option>
-                                <option value="691">Micronesia (+691)</option>
-                                <option value="373">Moldova (+373)</option>
-                                <option value="377">Monaco (+377)</option>
-                                <option value="976">Mongolia (+976)</option>
-                                <option value="382">Montenegro (+382)</option>
-                                <option value="212">Morocco (+212)</option>
-                                <option value="258">Mozambique (+258)</option>
-                                <option value="95">Myanmar (+95)</option>
-                                <option value="264">Namibia (+264)</option>
-                                <option value="674">Nauru (+674)</option>
-                                <option value="977">Nepal (+977)</option>
-                                <option value="31">Netherlands (+31)</option>
-                                <option value="64">New Zealand (+64)</option>
-                                <option value="505">Nicaragua (+505)</option>
-                                <option value="227">Niger (+227)</option>
-                                <option value="234">Nigeria (+234)</option>
-                                <option value="389">North Macedonia (+389)</option>
-                                <option value="47">Norway (+47)</option>
-                                <option value="968">Oman (+968)</option>
-                                <option value="92">Pakistan (+92)</option>
-                                <option value="680">Palau (+680)</option>
-                                <option value="970">Palestine (+970)</option>
-                                <option value="507">Panama (+507)</option>
-                                <option value="675">Papua New Guinea (+675)</option>
-                                <option value="595">Paraguay (+595)</option>
-                                <option value="51">Peru (+51)</option>
-                                <option value="63">Philippines (+63)</option>
-                                <option value="48">Poland (+48)</option>
-                                <option value="351">Portugal (+351)</option>
-                                <option value="974">Qatar (+974)</option>
-                                <option value="40">Romania (+40)</option>
-                                <option value="7">Russia (+7)</option>
-                                <option value="250">Rwanda (+250)</option>
-                                <option value="1">Saint Kitts and Nevis (+1)</option>
-                                <option value="1">Saint Lucia (+1)</option>
-                                <option value="1">Saint Vincent and the Grenadines (+1)</option>
-                                <option value="685">Samoa (+685)</option>
-                                <option value="378">San Marino (+378)</option>
-                                <option value="239">Sao Tome and Principe (+239)</option>
-                                <option value="966">Saudi Arabia (+966)</option>
-                                <option value="221">Senegal (+221)</option>
-                                <option value="381">Serbia (+381)</option>
-                                <option value="248">Seychelles (+248)</option>
-                                <option value="232">Sierra Leone (+232)</option>
-                                <option value="65">Singapore (+65)</option>
-                                <option value="421">Slovakia (+421)</option>
-                                <option value="386">Slovenia (+386)</option>
-                                <option value="677">Solomon Islands (+677)</option>
-                                <option value="252">Somalia (+252)</option>
-                                <option value="27">South Africa (+27)</option>
-                                <option value="211">South Sudan (+211)</option>
-                                <option value="34">Spain (+34)</option>
-                                <option value="94">Sri Lanka (+94)</option>
-                                <option value="249">Sudan (+249)</option>
-                                <option value="597">Suriname (+597)</option>
-                                <option value="268">Eswatini (+268)</option>
-                                <option value="46">Sweden (+46)</option>
-                                <option value="41">Switzerland (+41)</option>
-                                <option value="963">Syria (+963)</option>
-                                <option value="886">Taiwan (+886)</option>
-                                <option value="992">Tajikistan (+992)</option>
-                                <option value="255">Tanzania (+255)</option>
-                                <option value="66">Thailand (+66)</option>
-                                <option value="670">Timor-Leste (+670)</option>
-                                <option value="228">Togo (+228)</option>
-                                <option value="676">Tonga (+676)</option>
-                                <option value="1">Trinidad and Tobago (+1)</option>
-                                <option value="216">Tunisia (+216)</option>
-                                <option value="90">Turkey (+90)</option>
-                                <option value="993">Turkmenistan (+993)</option>
-                                <option value="688">Tuvalu (+688)</option>
-                                <option value="256">Uganda (+256)</option>
-                                <option value="380">Ukraine (+380)</option>
-                                <option value="971">United Arab Emirates (+971)</option>
-                                <option value="44">United Kingdom (+44)</option>
-                                <option value="1">United States (+1)</option>
-                                <option value="598">Uruguay (+598)</option>
-                                <option value="998">Uzbekistan (+998)</option>
-                                <option value="678">Vanuatu (+678)</option>
-                                <option value="39">Vatican City (+39)</option>
-                                <option value="58">Venezuela (+58)</option>
-                                <option value="84">Vietnam (+84)</option>
-                                <option value="967">Yemen (+967)</option>
-                                <option value="260">Zambia (+260)</option>
-                                <option value="263" selected>Zimbabwe (+263)</option>
-                            </select>
-                            <input type="tel" id="regPhone" placeholder="Phone number" style="flex: 1;">
-                        </div>
-                        <small style="color: #666; font-size: 11px;">Enter phone number without the country code (e.g., 712345678)</small>
+                    <div class="forgot-password-link">
+                        <a href="forgot-password.html">Forgot Password?</a>
                     </div>
-                    
-                    <div class="form-group">
-                        <label>Account Type</label>
-                        <select id="regRole" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
-                            <option value="customer"> Customer - I want to buy products</option>
-                            <option value="seller"> Seller - I want to sell products</option>
-                        </select>
-                    </div>
-                    
-                    <button type="submit" class="btn-login">Create Account</button>
-                    <button type="button" class="btn-create-account" style="margin-top: 10px;" onclick="hideRegisterForm()">Cancel</button>
-                    
-                    <div class="privacy-note">
-                        By creating an account, you agree to our 
-                        <a href="privacy.html" target="_blank">Privacy Policy</a> and 
-                        <a href="terms.html" target="_blank">Terms of Service</a>.
-                    </div>
+                    <button type="submit" class="btn-login">Sign in</button>
                 </form>
+                <div class="login-divider">
+                    New to Mbare Marketplace?
+                </div>
+                <button class="btn-create-account" onclick="showRegisterForm()">Create your Mbare Marketplace account</button>
+
+                <div id="registerForm">
+                    <h2>Create Account</h2>
+                    <form class="login-form" onsubmit="handleRegister(event)">
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <input type="text" id="regName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="regEmail" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Password</label>
+                            <input type="password" id="regPassword" required minlength="6">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Phone Number</label>
+                            <div class="phone-input-group">
+                                <select id="regCountryCode">
+                                    <option value="93">Afghanistan (+93)</option>
+                                    <option value="355">Albania (+355)</option>
+                                    <option value="213">Algeria (+213)</option>
+                                    <option value="376">Andorra (+376)</option>
+                                    <option value="244">Angola (+244)</option>
+                                    <option value="1">Antigua and Barbuda (+1)</option>
+                                    <option value="54">Argentina (+54)</option>
+                                    <option value="374">Armenia (+374)</option>
+                                    <option value="61">Australia (+61)</option>
+                                    <option value="43">Austria (+43)</option>
+                                    <option value="994">Azerbaijan (+994)</option>
+                                    <option value="1">Bahamas (+1)</option>
+                                    <option value="973">Bahrain (+973)</option>
+                                    <option value="880">Bangladesh (+880)</option>
+                                    <option value="1">Barbados (+1)</option>
+                                    <option value="375">Belarus (+375)</option>
+                                    <option value="32">Belgium (+32)</option>
+                                    <option value="501">Belize (+501)</option>
+                                    <option value="229">Benin (+229)</option>
+                                    <option value="975">Bhutan (+975)</option>
+                                    <option value="591">Bolivia (+591)</option>
+                                    <option value="387">Bosnia and Herzegovina (+387)</option>
+                                    <option value="267">Botswana (+267)</option>
+                                    <option value="55">Brazil (+55)</option>
+                                    <option value="673">Brunei (+673)</option>
+                                    <option value="359">Bulgaria (+359)</option>
+                                    <option value="226">Burkina Faso (+226)</option>
+                                    <option value="257">Burundi (+257)</option>
+                                    <option value="855">Cambodia (+855)</option>
+                                    <option value="237">Cameroon (+237)</option>
+                                    <option value="1">Canada (+1)</option>
+                                    <option value="238">Cape Verde (+238)</option>
+                                    <option value="236">Central African Republic (+236)</option>
+                                    <option value="235">Chad (+235)</option>
+                                    <option value="56">Chile (+56)</option>
+                                    <option value="86">China (+86)</option>
+                                    <option value="57">Colombia (+57)</option>
+                                    <option value="269">Comoros (+269)</option>
+                                    <option value="242">Congo (+242)</option>
+                                    <option value="243">DR Congo (+243)</option>
+                                    <option value="506">Costa Rica (+506)</option>
+                                    <option value="225">Cote d'Ivoire (+225)</option>
+                                    <option value="385">Croatia (+385)</option>
+                                    <option value="53">Cuba (+53)</option>
+                                    <option value="357">Cyprus (+357)</option>
+                                    <option value="420">Czech Republic (+420)</option>
+                                    <option value="45">Denmark (+45)</option>
+                                    <option value="253">Djibouti (+253)</option>
+                                    <option value="1">Dominica (+1)</option>
+                                    <option value="1">Dominican Republic (+1)</option>
+                                    <option value="593">Ecuador (+593)</option>
+                                    <option value="20">Egypt (+20)</option>
+                                    <option value="503">El Salvador (+503)</option>
+                                    <option value="240">Equatorial Guinea (+240)</option>
+                                    <option value="291">Eritrea (+291)</option>
+                                    <option value="372">Estonia (+372)</option>
+                                    <option value="251">Ethiopia (+251)</option>
+                                    <option value="679">Fiji (+679)</option>
+                                    <option value="358">Finland (+358)</option>
+                                    <option value="33">France (+33)</option>
+                                    <option value="241">Gabon (+241)</option>
+                                    <option value="220">Gambia (+220)</option>
+                                    <option value="995">Georgia (+995)</option>
+                                    <option value="49">Germany (+49)</option>
+                                    <option value="233">Ghana (+233)</option>
+                                    <option value="30">Greece (+30)</option>
+                                    <option value="1">Grenada (+1)</option>
+                                    <option value="502">Guatemala (+502)</option>
+                                    <option value="224">Guinea (+224)</option>
+                                    <option value="245">Guinea-Bissau (+245)</option>
+                                    <option value="592">Guyana (+592)</option>
+                                    <option value="509">Haiti (+509)</option>
+                                    <option value="504">Honduras (+504)</option>
+                                    <option value="36">Hungary (+36)</option>
+                                    <option value="354">Iceland (+354)</option>
+                                    <option value="91">India (+91)</option>
+                                    <option value="62">Indonesia (+62)</option>
+                                    <option value="98">Iran (+98)</option>
+                                    <option value="964">Iraq (+964)</option>
+                                    <option value="353">Ireland (+353)</option>
+                                    <option value="972">Israel (+972)</option>
+                                    <option value="39">Italy (+39)</option>
+                                    <option value="1">Jamaica (+1)</option>
+                                    <option value="81">Japan (+81)</option>
+                                    <option value="962">Jordan (+962)</option>
+                                    <option value="7">Kazakhstan (+7)</option>
+                                    <option value="254">Kenya (+254)</option>
+                                    <option value="686">Kiribati (+686)</option>
+                                    <option value="965">Kuwait (+965)</option>
+                                    <option value="996">Kyrgyzstan (+996)</option>
+                                    <option value="856">Laos (+856)</option>
+                                    <option value="371">Latvia (+371)</option>
+                                    <option value="961">Lebanon (+961)</option>
+                                    <option value="266">Lesotho (+266)</option>
+                                    <option value="231">Liberia (+231)</option>
+                                    <option value="218">Libya (+218)</option>
+                                    <option value="423">Liechtenstein (+423)</option>
+                                    <option value="370">Lithuania (+370)</option>
+                                    <option value="352">Luxembourg (+352)</option>
+                                    <option value="261">Madagascar (+261)</option>
+                                    <option value="265">Malawi (+265)</option>
+                                    <option value="60">Malaysia (+60)</option>
+                                    <option value="960">Maldives (+960)</option>
+                                    <option value="223">Mali (+223)</option>
+                                    <option value="356">Malta (+356)</option>
+                                    <option value="692">Marshall Islands (+692)</option>
+                                    <option value="222">Mauritania (+222)</option>
+                                    <option value="230">Mauritius (+230)</option>
+                                    <option value="52">Mexico (+52)</option>
+                                    <option value="691">Micronesia (+691)</option>
+                                    <option value="373">Moldova (+373)</option>
+                                    <option value="377">Monaco (+377)</option>
+                                    <option value="976">Mongolia (+976)</option>
+                                    <option value="382">Montenegro (+382)</option>
+                                    <option value="212">Morocco (+212)</option>
+                                    <option value="258">Mozambique (+258)</option>
+                                    <option value="95">Myanmar (+95)</option>
+                                    <option value="264">Namibia (+264)</option>
+                                    <option value="674">Nauru (+674)</option>
+                                    <option value="977">Nepal (+977)</option>
+                                    <option value="31">Netherlands (+31)</option>
+                                    <option value="64">New Zealand (+64)</option>
+                                    <option value="505">Nicaragua (+505)</option>
+                                    <option value="227">Niger (+227)</option>
+                                    <option value="234">Nigeria (+234)</option>
+                                    <option value="389">North Macedonia (+389)</option>
+                                    <option value="47">Norway (+47)</option>
+                                    <option value="968">Oman (+968)</option>
+                                    <option value="92">Pakistan (+92)</option>
+                                    <option value="680">Palau (+680)</option>
+                                    <option value="970">Palestine (+970)</option>
+                                    <option value="507">Panama (+507)</option>
+                                    <option value="675">Papua New Guinea (+675)</option>
+                                    <option value="595">Paraguay (+595)</option>
+                                    <option value="51">Peru (+51)</option>
+                                    <option value="63">Philippines (+63)</option>
+                                    <option value="48">Poland (+48)</option>
+                                    <option value="351">Portugal (+351)</option>
+                                    <option value="974">Qatar (+974)</option>
+                                    <option value="40">Romania (+40)</option>
+                                    <option value="7">Russia (+7)</option>
+                                    <option value="250">Rwanda (+250)</option>
+                                    <option value="1">Saint Kitts and Nevis (+1)</option>
+                                    <option value="1">Saint Lucia (+1)</option>
+                                    <option value="1">Saint Vincent and the Grenadines (+1)</option>
+                                    <option value="685">Samoa (+685)</option>
+                                    <option value="378">San Marino (+378)</option>
+                                    <option value="239">Sao Tome and Principe (+239)</option>
+                                    <option value="966">Saudi Arabia (+966)</option>
+                                    <option value="221">Senegal (+221)</option>
+                                    <option value="381">Serbia (+381)</option>
+                                    <option value="248">Seychelles (+248)</option>
+                                    <option value="232">Sierra Leone (+232)</option>
+                                    <option value="65">Singapore (+65)</option>
+                                    <option value="421">Slovakia (+421)</option>
+                                    <option value="386">Slovenia (+386)</option>
+                                    <option value="677">Solomon Islands (+677)</option>
+                                    <option value="252">Somalia (+252)</option>
+                                    <option value="27">South Africa (+27)</option>
+                                    <option value="211">South Sudan (+211)</option>
+                                    <option value="34">Spain (+34)</option>
+                                    <option value="94">Sri Lanka (+94)</option>
+                                    <option value="249">Sudan (+249)</option>
+                                    <option value="597">Suriname (+597)</option>
+                                    <option value="268">Eswatini (+268)</option>
+                                    <option value="46">Sweden (+46)</option>
+                                    <option value="41">Switzerland (+41)</option>
+                                    <option value="963">Syria (+963)</option>
+                                    <option value="886">Taiwan (+886)</option>
+                                    <option value="992">Tajikistan (+992)</option>
+                                    <option value="255">Tanzania (+255)</option>
+                                    <option value="66">Thailand (+66)</option>
+                                    <option value="670">Timor-Leste (+670)</option>
+                                    <option value="228">Togo (+228)</option>
+                                    <option value="676">Tonga (+676)</option>
+                                    <option value="1">Trinidad and Tobago (+1)</option>
+                                    <option value="216">Tunisia (+216)</option>
+                                    <option value="90">Turkey (+90)</option>
+                                    <option value="993">Turkmenistan (+993)</option>
+                                    <option value="688">Tuvalu (+688)</option>
+                                    <option value="256">Uganda (+256)</option>
+                                    <option value="380">Ukraine (+380)</option>
+                                    <option value="971">United Arab Emirates (+971)</option>
+                                    <option value="44">United Kingdom (+44)</option>
+                                    <option value="1">United States (+1)</option>
+                                    <option value="598">Uruguay (+598)</option>
+                                    <option value="998">Uzbekistan (+998)</option>
+                                    <option value="678">Vanuatu (+678)</option>
+                                    <option value="39">Vatican City (+39)</option>
+                                    <option value="58">Venezuela (+58)</option>
+                                    <option value="84">Vietnam (+84)</option>
+                                    <option value="967">Yemen (+967)</option>
+                                    <option value="260">Zambia (+260)</option>
+                                    <option value="263" selected>Zimbabwe (+263)</option>
+                                </select>
+                                <input type="tel" id="regPhone" placeholder="Phone number">
+                            </div>
+                            <small style="color: var(--bubble-text-muted); font-size: 11px;">Enter phone number without the country code (e.g., 712345678)</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Account Type</label>
+                            <select id="regRole">
+                                <option value="customer">Customer - I want to buy products</option>
+                                <option value="seller">Seller - I want to sell products</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="btn-login">Create Account</button>
+                        <button type="button" class="btn-create-account" style="margin-top: 10px;" onclick="hideRegisterForm()">Cancel</button>
+                        
+                        <div class="privacy-note">
+                            By creating an account, you agree to our 
+                            <a href="privacy.html" target="_blank">Privacy Policy</a> and 
+                            <a href="terms.html" target="_blank">Terms of Service</a>.
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
-    </div>
+    </main>
 
     <footer class="footer">
+        <div class="footer-top">
+            <a href="#" class="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">Back to top</a>
+        </div>
+        <div class="footer-content">
+            <div class="container">
+                <div class="footer-columns">
+                    <div class="footer-column">
+                        <h3>Get to Know Us</h3>
+                        <ul>
+                            <li><a href="#">Careers</a></li>
+                            <li><a href="#">Blog</a></li>
+                            <li><a href="about.html">About Mbare Marketplace</a></li>
+                            <li><a href="#">Investor Relations</a></li>
+                            <li><a href="#">Mbare Devices</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h3>Make Money with Us</h3>
+                        <ul>
+                            <li><a href="seller-register.html">Sell products on Mbare Marketplace</a></li>
+                            <li><a href="#">Sell on Mbare Business</a></li>
+                            <li><a href="#">Sell apps on Mbare Marketplace</a></li>
+                            <li><a href="affiliates.html">Become an Affiliate</a></li>
+                            <li><a href="#">Advertise Your Products</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h3>Mbare Payment Products</h3>
+                        <ul>
+                            <li><a href="#">Mbare Business Card</a></li>
+                            <li><a href="#">Shop with Points</a></li>
+                            <li><a href="#">Reload Your Balance</a></li>
+                            <li><a href="#">Mbare Currency Converter</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h3>Need Help?</h3>
+                        <ul>
+                            <li><a href="#">COVID-19 and Mbare Marketplace</a></li>
+                            <li><a href="#">Your Account</a></li>
+                            <li><a href="#">Your Orders</a></li>
+                            <li><a href="#">Shipping Rates & Policies</a></li>
+                            <li><a href="#">Returns & Replacements</a></li>
+                            <li><a href="#">Help</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="footer-bottom">
             <div class="container">
                 <div class="footer-logo">Mbare Marketplace</div>
+                <div class="footer-links">
+                    <a href="terms.html">Conditions of Use</a>
+                    <a href="privacy.html">Privacy Notice</a>
+                    <a href="#">Interest-Based Ads</a>
+                </div>
                 <div class="footer-copyright">
                     &copy; 2026, Mbaremarketplace.com, Inc. or its affiliates
                 </div>
             </div>
         </div>
     </footer>
+
+    <script>
+        // Search handler for login page
+        function handleSearch() {
+            var searchInput = document.getElementById('searchInput');
+            var categorySelect = document.getElementById('searchCategorySelect');
+            if (!searchInput) return;
+            var query = searchInput.value.trim();
+            if (query) {
+                var category = categorySelect ? categorySelect.value : 'All';
+                window.location.href = 'search-result.html?q=' + encodeURIComponent(query) + '&category=' + encodeURIComponent(category);
+            }
+        }
+
+        // Login form handler
+        function handleLogin(event) {
+            event.preventDefault();
+            var email = document.getElementById('email').value;
+            var password = document.getElementById('password').value;
+            if (window.api && window.api.login) {
+                window.api.login(email, password)
+                    .then(function(result) {
+                        if (result.success) {
+                            window.location.href = 'index.html';
+                        }
+                    })
+                    .catch(function(err) {
+                        alert('Login failed: ' + err.message);
+                    });
+            } else {
+                alert('API not loaded. Please try again.');
+            }
+        }
+
+        // Register form handler
+        function handleRegister(event) {
+            event.preventDefault();
+            var name = document.getElementById('regName').value;
+            var email = document.getElementById('regEmail').value;
+            var password = document.getElementById('regPassword').value;
+            var countryCode = document.getElementById('regCountryCode').value;
+            var phone = document.getElementById('regPhone').value;
+            var role = document.getElementById('regRole').value;
+
+            if (window.api && window.api.register) {
+                window.api.register({
+                    name: name,
+                    email: email,
+                    password: password,
+                    phone: phone,
+                    country_code: countryCode,
+                    role: role
+                })
+                .then(function(result) {
+                    if (result.success) {
+                        if (result.requiresConfirmation) {
+                            alert('Account created! Please check your email to confirm your account.');
+                            document.getElementById('registerForm').style.display = 'none';
+                        } else {
+                            alert('Account created successfully! Please login.');
+                            document.getElementById('registerForm').style.display = 'none';
+                        }
+                    }
+                })
+                .catch(function(err) {
+                    alert('Registration failed: ' + err.message);
+                });
+            } else {
+                alert('API not loaded. Please try again.');
+            }
+        }
+
+        // Show register form
+        function showRegisterForm() {
+            document.getElementById('registerForm').style.display = 'block';
+        }
+
+        // Hide register form
+        function hideRegisterForm() {
+            document.getElementById('registerForm').style.display = 'none';
+        }
+
+        // Logout function
+        function logout() {
+            if (window.api && window.api.logout) {
+                window.api.logout();
+            } else {
+                localStorage.removeItem('supabase_session');
+                localStorage.removeItem('isLoggedIn');
+                window.location.href = 'index.html';
+            }
+        }
+    </script>
 
     <script src="api.js"></script>
     <script src="script.js"></script>
