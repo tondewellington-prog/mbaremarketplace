@@ -371,6 +371,7 @@ body {
 .nav-menu {
     padding: 8px 0;
     border-top: 1px solid var(--bubble-glass-border);
+    overflow: visible;
 }
 
 .nav-menu .container {
@@ -378,8 +379,10 @@ body {
     gap: 25px;
     align-items: center;
     overflow-x: auto;
+    overflow-y: visible;
     flex-wrap: nowrap;
     -webkit-overflow-scrolling: touch;
+    padding-bottom: 10px;
 }
 
 .nav-menu .container::-webkit-scrollbar {
@@ -421,6 +424,7 @@ body {
 /* ===== DROPDOWN ===== */
 .custom-category-dropdown {
     position: relative;
+    overflow: visible;
 }
 
 .dropdown-trigger {
@@ -1093,7 +1097,7 @@ body {
     font-size: 12px;
 }
 
-/* ===== LOGIN PROMPT ===== */
+/* ===== LOGIN PROMPT (modal) ===== */
 .login-prompt-overlay {
     position: fixed;
     top: 0;
@@ -1170,6 +1174,134 @@ body {
 
 .cancel-btn:hover {
     background: rgba(255, 255, 255, 0.15);
+}
+
+/* ============================================
+   LOGIN / SIGNUP PAGE - FIXED STYLES
+   ============================================ */
+
+.login-container {
+    max-width: 420px;
+    margin: 60px auto;
+    padding: 0 20px;
+}
+
+.login-box {
+    background: var(--bubble-glass);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--bubble-glass-border);
+    border-radius: 32px;
+    padding: 40px 35px;
+    box-shadow: var(--bubble-shadow);
+}
+
+.login-box h1 {
+    font-size: 28px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+.login-form .form-group {
+    margin-bottom: 20px;
+}
+
+.login-form label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--bubble-text-muted);
+    margin-bottom: 6px;
+}
+
+.login-form input {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--bubble-glass-border);
+    border-radius: 12px;
+    color: #fff;
+    font-size: 15px;
+    transition: var(--bubble-transition);
+    outline: none;
+}
+
+.login-form input:focus {
+    border-color: var(--bubble-accent);
+    box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.15);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.login-form input::placeholder {
+    color: var(--bubble-text-muted);
+}
+
+.btn-login {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--bubble-accent), var(--bubble-accent2));
+    border: none;
+    border-radius: 50px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--bubble-transition);
+    margin-top: 10px;
+}
+
+.btn-login:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px var(--bubble-glow);
+}
+
+.login-divider {
+    text-align: center;
+    margin: 24px 0;
+    color: var(--bubble-text-muted);
+    font-size: 13px;
+    position: relative;
+}
+
+.login-divider::before,
+.login-divider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 30%;
+    height: 1px;
+    background: var(--bubble-glass-border);
+}
+
+.login-divider::before {
+    left: 0;
+}
+
+.login-divider::after {
+    right: 0;
+}
+
+.btn-create-account {
+    width: 100%;
+    padding: 14px;
+    background: var(--bubble-glass);
+    border: 1px solid var(--bubble-glass-border);
+    border-radius: 50px;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--bubble-transition);
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+}
+
+.btn-create-account:hover {
+    background: rgba(255, 255, 255, 0.12);
+    transform: translateY(-2px);
 }
 
 /* ===== IOS PROMPT MODAL ===== */
@@ -1508,15 +1640,21 @@ body {
         font-size: 18px;
     }
     
+    /* Ensure search bar is visible and takes space */
+    .search-bar {
+        display: flex !important;
+        flex: 1;
+        min-width: 0;
+        max-width: none;
+    }
     .search-bar .search-category {
         display: none;
     }
-    
     .search-bar .search-input {
         padding: 8px 12px;
         font-size: 13px;
+        min-width: 40px;
     }
-    
     .search-bar .search-btn {
         padding: 8px 14px;
     }
@@ -1549,6 +1687,24 @@ body {
     .footer-columns {
         grid-template-columns: repeat(2, 1fr);
         gap: 30px;
+    }
+    
+    /* Ensure dropdown doesn't get clipped on mobile */
+    .nav-menu .container {
+        overflow-x: auto;
+        overflow-y: visible;
+        padding-bottom: 10px;
+    }
+    .custom-category-dropdown {
+        overflow: visible;
+    }
+
+    /* Login page mobile */
+    .login-container {
+        margin: 30px auto;
+    }
+    .login-box {
+        padding: 30px 20px;
     }
 }
 
@@ -1676,7 +1832,6 @@ body {
         padding: 7px 8px;
         font-size: 12px;
     }
-    
     .search-bar .search-btn {
         padding: 7px 8px;
     }
