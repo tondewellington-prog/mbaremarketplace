@@ -1582,3 +1582,241 @@ body {
     flex: 1;
 }
 .tour-btn-finish:hover { transform: scale(1.02); box-shadow: 0 4px 20px rgba(40,167,69,0.3); }
+/* ============================================
+   SELLER REGISTER PAGE – GLASSMORPHISM
+   ============================================ */
+
+.seller-register-container {
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 0 20px;
+}
+
+.seller-register-container .login-box {
+    background: var(--bubble-glass);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--bubble-glass-border);
+    border-radius: 32px;
+    padding: 40px 35px;
+    box-shadow: var(--bubble-shadow);
+}
+
+.seller-register-container .login-box h1 {
+    color: var(--bubble-text);
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 28px;
+    font-weight: 600;
+}
+
+.seller-register-container .form-group {
+    margin-bottom: 20px;
+}
+
+.seller-register-container .form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--bubble-text-muted);
+    margin-bottom: 6px;
+}
+
+.seller-register-container .form-group input,
+.seller-register-container .form-group select,
+.seller-register-container .form-group textarea {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--bubble-glass-border);
+    border-radius: 12px;
+    color: #fff;
+    font-size: 15px;
+    transition: var(--bubble-transition);
+    outline: none;
+    font-family: inherit;
+}
+
+.seller-register-container .form-group input:focus,
+.seller-register-container .form-group select:focus,
+.seller-register-container .form-group textarea:focus {
+    border-color: var(--bubble-accent);
+    box-shadow: 0 0 0 3px var(--bubble-glow);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.seller-register-container .form-group input::placeholder,
+.seller-register-container .form-group textarea::placeholder {
+    color: var(--bubble-text-muted);
+}
+
+.seller-register-container .form-group select option {
+    background: #0a1628;
+    color: #fff;
+}
+
+.seller-register-container .form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Phone input group */
+.seller-register-container .phone-input-group {
+    display: flex;
+    gap: 10px;
+}
+.seller-register-container .phone-input-group select {
+    width: 140px;
+    flex-shrink: 0;
+}
+.seller-register-container .phone-input-group input {
+    flex: 1;
+}
+
+.seller-register-container .form-group small {
+    color: var(--bubble-text-muted);
+    font-size: 11px;
+}
+
+/* Already registered message */
+.seller-register-container .already-registered {
+    background: rgba(40, 167, 69, 0.12);
+    border: 1px solid rgba(40, 167, 69, 0.25);
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.seller-register-container .already-registered svg {
+    color: #28a745;
+    margin-bottom: 10px;
+}
+
+.seller-register-container .already-registered h2 {
+    color: #28a745;
+    font-size: 22px;
+    margin-bottom: 10px;
+}
+
+.seller-register-container .already-registered p {
+    color: var(--bubble-text-muted);
+    margin-bottom: 20px;
+}
+
+/* Message box */
+.seller-register-container #message {
+    margin-bottom: 20px;
+    padding: 15px 20px;
+    border-radius: 12px;
+    display: none;
+}
+
+.seller-register-container #message.error {
+    display: block;
+    background: rgba(220, 53, 69, 0.12);
+    border: 1px solid rgba(220, 53, 69, 0.25);
+    color: #ff6b6b;
+}
+
+.seller-register-container #message.success {
+    display: block;
+    background: rgba(40, 167, 69, 0.12);
+    border: 1px solid rgba(40, 167, 69, 0.25);
+    color: #28a745;
+}
+
+/* Register button - reuse .btn-login from existing styles */
+.seller-register-container .btn-login {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--bubble-accent), var(--bubble-accent2));
+    border: none;
+    border-radius: 50px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--bubble-transition);
+    margin-top: 10px;
+}
+
+.seller-register-container .btn-login:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px var(--bubble-glow);
+}
+
+.seller-register-container .btn-login:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.seller-register-container .terms-text {
+    text-align: center;
+    margin-top: 20px;
+    color: var(--bubble-text-muted);
+    font-size: 14px;
+}
+
+.seller-register-container .terms-text a {
+    color: var(--bubble-accent);
+    text-decoration: none;
+}
+
+.seller-register-container .terms-text a:hover {
+    text-decoration: underline;
+}
+
+/* Spinner */
+.seller-register-container .spinner {
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    border-top: 4px solid var(--bubble-accent);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+.seller-register-container .spinner-text {
+    margin-top: 20px;
+    color: var(--bubble-text-muted);
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .seller-register-container .phone-input-group {
+        flex-wrap: wrap;
+    }
+    .seller-register-container .phone-input-group select {
+        width: 100%;
+    }
+    .seller-register-container {
+        margin: 30px auto;
+        padding: 0 15px;
+    }
+    .seller-register-container .login-box {
+        padding: 30px 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .seller-register-container .login-box {
+        padding: 20px 15px;
+    }
+    .seller-register-container .login-box h1 {
+        font-size: 22px;
+    }
+    .seller-register-container .form-group input,
+    .seller-register-container .form-group select,
+    .seller-register-container .form-group textarea {
+        padding: 10px 12px;
+        font-size: 14px;
+    }
+}
