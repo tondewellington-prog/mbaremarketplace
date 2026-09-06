@@ -637,7 +637,7 @@ function showContactChoiceModal(productData) {
                     font-size: 28px;
                     cursor: pointer;
                     color: #999;
-                ">✕</button>
+                ">×</button>
                 
                 <div style="text-align: center; margin-bottom: 25px;">
                     <div style="
@@ -879,15 +879,15 @@ window.chooseWhatsApp = function() {
             const session = JSON.parse(sessionData);
             const userEmail = session.user?.email;
             if (userEmail) {
-                buyerInfo = `\nBuyer email: ${userEmail}`;
+                buyerInfo = '\nBuyer email: ' + userEmail;
             }
         } catch(e) {}
     }
     
     const websiteUrl = 'https://www.mbaremarketplace.com';
-    const message = `Hello! I am interested in ${productData.title}, I saw it on ${websiteUrl}${buyerInfo}`;
+    const message = 'Hello! I am interested in ' + productData.title + ', I saw it on ' + websiteUrl + buyerInfo;
     const encodedMessage = encodeURIComponent(message);
-    const whatsappLink = `https://wa.me/${phone}?text=${encodedMessage}`;
+    const whatsappLink = 'https://wa.me/' + phone + '?text=' + encodedMessage;
     
     // Track WhatsApp click
     if (window.recordAppDownload) {
@@ -1332,15 +1332,68 @@ window.chooseWhatsApp = chooseWhatsApp;
 window.closeContactChoiceModal = closeContactChoiceModal;
 
 // ============================================
-// PASSWORD RESET DETECTION
+// AUTHENTICATION REDIRECT DETECTION
 // ============================================
 
 (function() {
     const hash = window.location.hash;
-    if (hash && hash.includes('access_token=')) {
-        console.log('Password reset token detected, redirecting to reset-password.html');
+    
+    if (!hash) return;
+    
+    // If it has 'access_token' and is NOT a signup confirmation, it's a password reset
+    if (hash && hash.includes('access_token=') && !hash.includes('type=signup')) {
+        console.log('Password reset detected - redirecting to reset-password.html');
         window.location.href = '/reset-password.html' + hash;
+    } else if (hash && hash.includes('access_token=') && hash.includes('type=signup')) {
+        // Email confirmation - stay on index and show message
+        console.log('Email confirmation detected - showing welcome message');
+        showEmailConfirmedMessage();
     }
 })();
+
+function showEmailConfirmedMessage() {
+    // Check if message already exists
+    if (document.getElementById('emailConfirmBanner')) return;
+    
+    const banner = document.createElement('div');
+    banner.id = 'emailConfirmBanner';
+    banner.style.cssText = `
+        position: fixed; 
+        top: 0; 
+        left: 0; 
+        right: 0; 
+        background: #28a745; 
+        color: white; 
+        padding: 15px; 
+        text-align: center; 
+        z-index: 9999; 
+        font-weight: 500;
+        font-family: 'Inter', sans-serif;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    `;
+    banner.innerHTML = `
+        Email confirmed successfully! 
+        You can now <a href="login.html" style="color: white; font-weight: 700; text-decoration: underline;">sign in</a> 
+        to start shopping.
+    `;
+    document.body.prepend(banner);
+    
+    // Clean up URL (remove hash)
+    if (window.history && window.history.replaceState) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    
+    // Hide banner after 8 seconds
+    setTimeout(function() {
+        const bannerEl = document.getElementById('emailConfirmBanner');
+        if (bannerEl) {
+            bannerEl.style.transition = 'opacity 0.5s';
+            bannerEl.style.opacity = '0';
+            setTimeout(function() {
+                bannerEl.remove();
+            }, 500);
+        }
+    }, 8000);
+}
 
 console.log('script.js loaded successfully!');
