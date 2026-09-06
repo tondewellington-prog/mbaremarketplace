@@ -5,19 +5,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register as Seller - Mbare Marketplace</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=2">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
 </head>
 <body>
-        <script src="js/pages/seller-register-1.js"></script>
+
+    <!-- ANIMATED BACKGROUND BUBBLES -->
+    <div class="bubble-bg">
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+
     <!-- Header -->
     <header class="header">
         <div class="header-top">
@@ -28,12 +31,19 @@
                 <div class="search-bar">
                     <select class="search-category">
                         <option>All</option>
-                        <option>Electronics</option>
+                        <option>Electronic Devices</option>
                         <option>Books</option>
                         <option>Clothing</option>
                         <option>Home & Kitchen</option>
+                        <option>Pet Supplies</option>
+                        <option>Pets & Livestock</option>
+                        <option>Vehicle Parts & Accessories</option>
+                        <option>Vehicles & Transportation</option>
+                        <option>Farm Products</option>
+                        <option>Hardware</option>
+                        <option>Beauty & Cosmetics</option>
                     </select>
-                    <input type="text" id="searchInput" placeholder="Search Mbare Marketplace" class="search-input">
+                    <input type="text" id="searchInput" placeholder="Search On Mbare Marketplace" class="search-input">
                     <button class="search-btn" onclick="handleSearch()">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                             <circle cx="11" cy="11" r="8"></circle>
@@ -42,9 +52,16 @@
                     </button>
                 </div>
                 <div class="header-right">
-                    <div class="account-menu">
-                        <span class="account-label">Hello,</span>
-                        <a href="login.html" class="account-link">Sign in</a>
+                    <a href="messages.html" class="messages-link" aria-label="Messages">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                        <span class="msg-label">Messages</span>
+                    </a>
+                    <div class="account-menu" id="accountMenu">
+                        <span class="account-label">Hello, Sign in</span>
+                        <a href="login.html" class="account-link">Account & Lists</a>
+                        <button id="logoutBtn" class="logout-btn" onclick="logout()" style="display: none;">Logout</button>
                     </div>
                     <div class="returns">
                         <span class="returns-label">Returns</span>
@@ -84,39 +101,39 @@
     </header>
 
     <!-- Loading Spinner -->
-    <div id="loadingSpinner" style="display: none; text-align: center; padding: 50px;">
-        <div style="border: 4px solid #f3f3f3; border-top: 4px solid #f90; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto;"></div>
-        <p style="margin-top: 20px;">Processing...</p>
+    <div id="loadingSpinner" class="seller-register-container" style="display: none; text-align: center; padding: 50px;">
+        <div class="spinner"></div>
+        <p class="spinner-text">Processing...</p>
     </div>
 
     <!-- Seller Registration Form -->
-    <div id="registrationForm" class="container" style="max-width: 600px; margin: 50px auto; padding: 0 15px;">
-        <div style="background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-            <h1 style="margin-bottom: 30px; text-align: center;">Become a Seller</h1>
-            
+    <div id="registrationForm" class="seller-register-container">
+        <div class="login-box">
+            <h1>Become a Seller</h1>
+
             <!-- Already Registered Message -->
-            <div id="alreadyRegisteredMessage" style="background-color: #d4edda; color: #155724; padding: 20px; border-radius: 4px; margin-bottom: 20px; text-align: center; display: none;">
-                <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="margin-bottom: 10px;">
+            <div id="alreadyRegisteredMessage" class="already-registered" style="display: none;">
+                <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                     <polyline points="22 4 12 14.01 9 11.01"></polyline>
                 </svg>
-                <h2 style="margin-bottom: 10px;">You're Already a Seller!</h2>
-                <p style="margin-bottom: 20px;">Your seller account is already set up and ready to go.</p>
+                <h2>You're Already a Seller!</h2>
+                <p>Your seller account is already set up and ready to go.</p>
                 <button onclick="window.location.href='seller-dashboard.html'" class="btn-login" style="width: auto; padding: 12px 30px;">Go to Your Dashboard</button>
             </div>
-            
-            <div id="message" style="margin-bottom: 20px; padding: 15px; border-radius: 4px; display: none;"></div>
-            
+
+            <div id="message"></div>
+
             <form id="sellerForm" onsubmit="handleSellerRegistration(event)">
-                <div class="form-group" style="margin-bottom: 20px;">
+                <div class="form-group">
                     <label>Store/Business Name *</label>
-                    <input type="text" id="businessName" placeholder="e.g., John's Electronics" required style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
+                    <input type="text" id="businessName" placeholder="e.g., John's Electronics" required>
                 </div>
 
-                <div class="form-group" style="margin-bottom: 20px;">
+                <div class="form-group">
                     <label>Phone Number *</label>
-                    <div style="display: flex; gap: 10px;">
-                        <select id="sellerCountryCode" style="width: 120px; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
+                    <div class="phone-input-group">
+                        <select id="sellerCountryCode">
                             <option value="263">Zimbabwe (+263)</option>
                             <option value="27">South Africa (+27)</option>
                             <option value="44">United Kingdom (+44)</option>
@@ -147,29 +164,29 @@
                             <option value="256">Uganda (+256)</option>
                             <option value="260">Zambia (+260)</option>
                         </select>
-                        <input type="tel" id="businessPhone" placeholder="Phone number (e.g., 712345678)" required style="flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
+                        <input type="tel" id="businessPhone" placeholder="Phone number (e.g., 712345678)" required>
                     </div>
-                    <small style="color: #666; font-size: 12px;">Enter phone number without country code (e.g., 712345678)</small>
+                    <small>Enter phone number without country code (e.g., 712345678)</small>
                 </div>
 
-                <div class="form-group" style="margin-bottom: 20px;">
+                <div class="form-group">
                     <label>Email Address *</label>
-                    <input type="email" id="businessEmail" placeholder="your@email.com" required style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
+                    <input type="email" id="businessEmail" placeholder="your@email.com" required>
                 </div>
 
-                <div class="form-group" style="margin-bottom: 20px;">
+                <div class="form-group">
                     <label>Shop Location/Address *</label>
-                    <textarea id="businessAddress" rows="3" placeholder="Enter your full shop address" required style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+                    <textarea id="businessAddress" rows="3" placeholder="Enter your full shop address" required></textarea>
                 </div>
 
-                <div class="form-group" style="margin-bottom: 20px;">
+                <div class="form-group">
                     <label>Business Description</label>
-                    <textarea id="businessDescription" rows="3" placeholder="Tell us about your business" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+                    <textarea id="businessDescription" rows="3" placeholder="Tell us about your business"></textarea>
                 </div>
 
-                <div class="form-group" style="margin-bottom: 20px;">
+                <div class="form-group">
                     <label>What will you sell? *</label>
-                    <select id="businessType" required style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
+                    <select id="businessType" required>
                         <option value="">Select a category</option>
                         <option value="Electronic Devices">Electronic Devices</option>
                         <option value="Books">Books</option>
@@ -188,10 +205,10 @@
                     </select>
                 </div>
 
-                <button type="submit" class="btn-login" style="width: 100%; padding: 14px; font-size: 16px;">Start Selling</button>
+                <button type="submit" class="btn-login" id="registerBtn">Start Selling</button>
             </form>
 
-            <p style="text-align: center; margin-top: 20px; color: #666;">
+            <p class="terms-text">
                 By registering, you agree to our <a href="#">Terms of Service</a>
             </p>
         </div>
@@ -212,26 +229,26 @@
                             <li><a href="#">Blog</a></li>
                             <li><a href="#">About Mbare Marketplace</a></li>
                             <li><a href="#">Investor Relations</a></li>
-                            <li><a href="#">Mbare Marketplace Devices</a></li>
+                            <li><a href="#">Mbare Devices</a></li>
                         </ul>
                     </div>
                     <div class="footer-column">
                         <h3>Make Money with Us</h3>
                         <ul>
                             <li><a href="#">Sell products on Mbare Marketplace</a></li>
-                            <li><a href="#">Sell on Mbare Marketplace Business</a></li>
+                            <li><a href="#">Sell on Mbare Business</a></li>
                             <li><a href="#">Sell apps on Mbare Marketplace</a></li>
                             <li><a href="#">Become an Affiliate</a></li>
                             <li><a href="#">Advertise Your Products</a></li>
                         </ul>
                     </div>
                     <div class="footer-column">
-                        <h3>Mbare Marketplace Payment Products</h3>
+                        <h3>Mbare Payment Products</h3>
                         <ul>
-                            <li><a href="#">Mbare Marketplace Business Card</a></li>
+                            <li><a href="#">Mbare Business Card</a></li>
                             <li><a href="#">Shop with Points</a></li>
                             <li><a href="#">Reload Your Balance</a></li>
-                            <li><a href="#">Mbare Marketplace Currency Converter</a></li>
+                            <li><a href="#">Mbare Currency Converter</a></li>
                         </ul>
                     </div>
                     <div class="footer-column">
@@ -252,12 +269,12 @@
             <div class="container">
                 <div class="footer-logo">Mbare Marketplace</div>
                 <div class="footer-links">
-                    <a href="#">Conditions of Use</a>
-                    <a href="#">Privacy Notice</a>
+                    <a href="terms.html">Conditions of Use</a>
+                    <a href="privacy.html">Privacy Notice</a>
                     <a href="#">Interest-Based Ads</a>
                 </div>
                 <div class="footer-copyright">
-                    &copy; 2026, Mbare Marketplace.com, Inc. or its affiliates
+                    &copy; 2026, Mbaremarketplace.com, Inc. or its affiliates
                 </div>
             </div>
         </div>
@@ -266,7 +283,8 @@
     <script src="api.js"></script>
     <script src="script.js"></script>
     <script src="auth-check.js"></script>
-        <script src="js/shared/ui-common.js"></script>
+    <script src="js/shared/ui-common.js"></script>
+    <script src="js/pages/seller-register-1.js"></script>
     <script src="js/pages/seller-register-2.js"></script>
 </body>
 </html>
