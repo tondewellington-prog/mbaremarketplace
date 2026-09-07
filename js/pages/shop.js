@@ -227,7 +227,7 @@ function renderProductGrid(products) {
         <div class="products-grid">
             ${products.map(product => {
                 // Check stock quantity properly
-                const stock = product.stock_quantity !== null && product.stock_quantity !== undefined ? parseInt(product.stock_quantity) : 0;
+                const stock = product.stock !== null && product.stock !== undefined ? parseInt(product.stock) : 0;
                 const stockText = stock > 0 ? 'In Stock' : 'Out of Stock';
                 const stockClass = stock > 0 ? 'in-stock' : 'out-of-stock';
                 return `
