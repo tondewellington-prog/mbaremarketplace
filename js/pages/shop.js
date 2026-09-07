@@ -106,7 +106,6 @@ function renderShop(data) {
     const rating = data.rating || 0;
     const ratingCount = data.ratingCount || 0;
 
-    // Build shop URL for sharing
     const shopUrl = window.location.href;
 
     // Get unique categories
@@ -123,7 +122,6 @@ function renderShop(data) {
         }
     });
 
-    // Build the HTML
     let html = `
         <!-- Shop Banner -->
         <div class="shop-banner">
@@ -132,8 +130,8 @@ function renderShop(data) {
                 <div class="shop-header">
                     <div class="shop-avatar">
                         ${seller.logo_url ? 
-                            `<img src="${seller.logo_url}" alt="${seller.business_name}">` :
-                            `<div class="placeholder">${seller.business_name ? seller.business_name.charAt(0).toUpperCase() : 'S'}</div>`
+                            `<img src="${seller.logo_url}" alt="${escapeHtml(seller.business_name)}">` :
+                            `<div class="placeholder">${seller.business_name ? escapeHtml(seller.business_name.charAt(0).toUpperCase()) : 'S'}</div>`
                         }
                     </div>
                     <div class="shop-info">
@@ -141,8 +139,8 @@ function renderShop(data) {
                         ${seller.verified ? '<span class="verified-badge">Verified</span>' : ''}
                         <p class="description">${escapeHtml(seller.business_description || '')}</p>
                         <div class="details">
-                            <span>📍 ${escapeHtml(seller.business_address || 'Location not specified')}</span>
-                            <span>📞 ${escapeHtml(seller.business_phone || '')}</span>
+                            <span>${seller.business_address ? 'Location: ' + escapeHtml(seller.business_address) : 'Location not specified'}</span>
+                            ${seller.business_phone ? `<span>Phone: ${escapeHtml(seller.business_phone)}</span>` : ''}
                         </div>
                         <div class="shop-stats">
                             <div class="shop-stat">
@@ -155,8 +153,8 @@ function renderShop(data) {
                             </div>
                         </div>
                         <div class="shop-actions">
-                            <a href="tel:${seller.business_phone || ''}" class="btn-glass btn-whatsapp">📞 Contact</a>
-                            <button class="btn-glass btn-share" onclick="shareShopLink('${shopUrl}')">📤 Share Shop</button>
+                            ${seller.business_phone ? `<a href="tel:${escapeHtml(seller.business_phone)}" class="btn-glass btn-whatsapp">Contact</a>` : ''}
+                            <button class="btn-glass btn-share" onclick="shareShopLink('${shopUrl}')">Share Shop</button>
                         </div>
                     </div>
                 </div>
@@ -175,7 +173,7 @@ function renderShop(data) {
                         <ul class="category-list" id="categoryList">
                             ${categories.map(cat => `
                                 <li class="${cat === currentCategory ? 'active' : ''}" data-category="${cat}" onclick="filterByCategory('${cat}')">
-                                    ${cat} <span class="count">(${categoryMap[cat] || 0})</span>
+                                    ${escapeHtml(cat)} <span class="count">(${categoryMap[cat] || 0})</span>
                                 </li>
                             `).join('')}
                         </ul>
@@ -183,7 +181,7 @@ function renderShop(data) {
                     <div class="sidebar-section">
                         <h3>Search</h3>
                         <input type="text" class="search-box" id="searchProducts" placeholder="Search products..." oninput="filterProducts()">
-                        <h3>Sort By</h3>
+                        <h3 style="margin-top:16px;">Sort By</h3>
                         <select class="sort-select" id="sortSelect" onchange="sortProducts()">
                             <option value="newest">Newest First</option>
                             <option value="oldest">Oldest First</option>
@@ -217,7 +215,7 @@ function renderProductGrid(products) {
     if (!products || products.length === 0) {
         return `
             <div class="no-products">
-                <div class="icon">📦</div>
+                <span class="icon">&#128230;</span>
                 <p>No products available in this shop.</p>
             </div>
         `;
@@ -233,8 +231,8 @@ function renderProductGrid(products) {
                     <div class="info">
                         <div class="title">${escapeHtml(product.title)}</div>
                         <div class="price">$${parseFloat(product.price).toFixed(2)}</div>
-                        <div class="stock">${product.stock_quantity > 0 ? 'In Stock' : 'Out of Stock'}</div>
-                        ${product.category ? `<div class="category-tag">${escapeHtml(product.category)}</div>` : ''}
+                        <div class="stock ${product.stock_quantity > 0 ? 'in-stock' : 'out-of-stock'}">${product.stock_quantity > 0 ? 'In Stock' : 'Out of Stock'}</div>
+                        ${product.category ? `<span class="category-tag">${escapeHtml(product.category)}</span>` : ''}
                     </div>
                 </div>
             `).join('')}
@@ -249,7 +247,6 @@ function renderProductGrid(products) {
 function filterByCategory(category) {
     currentCategory = category;
     
-    // Update active state in sidebar
     document.querySelectorAll('.category-list li').forEach(el => {
         el.classList.toggle('active', el.dataset.category === category);
     });
@@ -264,12 +261,10 @@ function filterProducts() {
 
     let filtered = [...productsData];
 
-    // Filter by category
     if (currentCategory !== 'All') {
         filtered = filtered.filter(p => p.category === currentCategory);
     }
 
-    // Filter by search
     if (searchTerm) {
         filtered = filtered.filter(p => 
             p.title?.toLowerCase().includes(searchTerm) || 
@@ -277,7 +272,6 @@ function filterProducts() {
         );
     }
 
-    // Sort
     switch (sortValue) {
         case 'newest':
             filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
@@ -315,7 +309,7 @@ function goToProduct(productId) {
 }
 
 // ============================================
-// SHARE FUNCTION (Global)
+// SHARE FUNCTION
 // ============================================
 
 function shareShopLink(shopUrl) {
@@ -323,7 +317,7 @@ function shareShopLink(shopUrl) {
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(url)
-            .then(() => showShareNotification('Shop link copied to clipboard!'))
+            .then(() => showShareNotification('Shop link copied to clipboard'))
             .catch(() => fallbackCopyTextToClipboard(url));
     } else {
         fallbackCopyTextToClipboard(url);
@@ -343,22 +337,22 @@ function fallbackCopyTextToClipboard(text) {
     try {
         const successful = document.execCommand('copy');
         if (successful) {
-            showShareNotification('Shop link copied to clipboard!');
+            showShareNotification('Shop link copied to clipboard');
         } else {
-            showShareNotification('Unable to copy link. Please copy the URL manually.', false);
+            showShareNotification('Unable to copy link. Please copy the URL manually.');
         }
     } catch (err) {
-        showShareNotification('Unable to copy link. Please copy the URL manually.', false);
+        showShareNotification('Unable to copy link. Please copy the URL manually.');
     }
 
     document.body.removeChild(textArea);
 }
 
-function showShareNotification(message, success) {
+function showShareNotification(message) {
     const notification = document.getElementById('shareNotification');
     if (!notification) return;
 
-    notification.innerHTML = (success !== false ? '✓ ' : '') + message;
+    notification.textContent = message;
     notification.classList.add('show');
 
     clearTimeout(notification._timeout);
@@ -393,6 +387,8 @@ async function initShopPage() {
                     <div class="error">
                         <h2>No Shop Selected</h2>
                         <p>Please provide a seller ID to view their shop.</p>
+                        <br>
+                        <a href="index.html" class="btn-home">Return Home</a>
                     </div>
                 </div>
             `;
@@ -407,10 +403,10 @@ async function initShopPage() {
         shopContent.innerHTML = `
             <div class="container" style="padding: 60px 20px; text-align: center;">
                 <div class="error">
-                    <h2>Oops! Something went wrong</h2>
+                    <h2>Something went wrong</h2>
                     <p>${error.message || 'Unable to load shop. Please try again later.'}</p>
                     <br>
-                    <a href="index.html" class="btn-glass" style="display: inline-block; padding: 12px 30px;">Return Home</a>
+                    <a href="index.html" class="btn-home">Return Home</a>
                 </div>
             </div>
         `;
