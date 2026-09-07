@@ -147,9 +147,9 @@ function renderShop(data) {
                                 <div class="label">${ratingCount > 0 ? ratingCount + ' ' + (ratingCount === 1 ? 'rating' : 'ratings') : 'No ratings yet'}</div>
                             </div>
                         </div>
-                        <div>
-                            ${seller.business_phone ? `<a href="tel:${escapeHtml(seller.business_phone)}" class="contact-btn">Contact</a>` : ''}
-                            <button class="share-btn" onclick="shareShopLink('${shopUrl}')">Share Shop</button>
+                        <div class="shop-actions">
+                            ${seller.business_phone ? `<a href="tel:${escapeHtml(seller.business_phone)}" class="btn-glass btn-whatsapp">Contact</a>` : ''}
+                            <button class="btn-glass btn-share" onclick="shareShopLink('${shopUrl}')">Share Shop</button>
                         </div>
                     </div>
                 </div>
@@ -376,7 +376,7 @@ async function initShopPage() {
                         <h2>No Shop Selected</h2>
                         <p>Please provide a seller ID to view their shop.</p>
                         <br>
-                        <a href="index.html" style="display:inline-block;padding:12px 32px;background:linear-gradient(135deg,var(--bubble-accent),var(--bubble-accent2));color:#fff;border-radius:50px;text-decoration:none;font-weight:600;transition:var(--bubble-transition);">Return Home</a>
+                        <a href="index.html" class="btn-home">Return Home</a>
                     </div>
                 </div>
             `;
@@ -394,7 +394,7 @@ async function initShopPage() {
                     <h2>Something went wrong</h2>
                     <p>${error.message || 'Unable to load shop. Please try again later.'}</p>
                     <br>
-                    <a href="index.html" style="display:inline-block;padding:12px 32px;background:linear-gradient(135deg,var(--bubble-accent),var(--bubble-accent2));color:#fff;border-radius:50px;text-decoration:none;font-weight:600;transition:var(--bubble-transition);">Return Home</a>
+                    <a href="index.html" class="btn-home">Return Home</a>
                 </div>
             </div>
         `;
