@@ -31,8 +31,8 @@ function getUrlParams() {
 
 async function fetchShopData(sellerId) {
     try {
-        // Fetch seller details - using id instead of user_id
-        const sellerResponse = await fetch(`${SUPABASE_URL}/rest/v1/sellers?id=eq.${sellerId}&select=*`, {
+        // First get the seller by user_id (the parameter passed in URL)
+        const sellerResponse = await fetch(`${SUPABASE_URL}/rest/v1/sellers?user_id=eq.${sellerId}&select=*`, {
             headers: {
                 'apikey': SUPABASE_ANON_KEY,
                 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
@@ -50,7 +50,7 @@ async function fetchShopData(sellerId) {
 
         const seller = sellers[0];
 
-        // Fetch seller's products - using seller_id to match the seller's id
+        // Now get products using the seller's actual id
         const productsResponse = await fetch(`${SUPABASE_URL}/rest/v1/products?seller_id=eq.${seller.id}&select=*&order=created_at.desc`, {
             headers: {
                 'apikey': SUPABASE_ANON_KEY,
@@ -64,7 +64,7 @@ async function fetchShopData(sellerId) {
 
         const products = await productsResponse.json();
 
-        // Fetch seller ratings - using seller_id
+        // Get ratings using the seller's actual id
         const ratingsResponse = await fetch(`${SUPABASE_URL}/rest/v1/ratings?seller_id=eq.${seller.id}&select=rating`, {
             headers: {
                 'apikey': SUPABASE_ANON_KEY,
@@ -108,6 +108,7 @@ function renderShop(data) {
 
     const shopUrl = window.location.href;
 
+    // Get unique categories
     const categories = ['All'];
     const categoryMap = { All: products.length };
 
@@ -217,7 +218,7 @@ function renderProductGrid(products) {
     return `
         <div class="products-grid">
             ${products.map(product => {
-                // Properly check stock quantity
+                // Check stock quantity properly
                 const stock = product.stock_quantity !== null && product.stock_quantity !== undefined ? parseInt(product.stock_quantity) : 0;
                 const stockText = stock > 0 ? 'In Stock' : 'Out of Stock';
                 const stockClass = stock > 0 ? 'in-stock' : 'out-of-stock';
