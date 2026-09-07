@@ -120,7 +120,9 @@ function renderShop(data) {
 
     let html = `
         <div class="shop-banner">
-            <div class="shop-cover"></div>
+            <div class="shop-cover">
+                ${seller.cover_image_url ? `<img src="${seller.cover_image_url}" alt="${escapeHtml(seller.business_name)}">` : ''}
+            </div>
             <div class="container">
                 <div class="shop-header">
                     <div class="shop-avatar">
@@ -147,7 +149,7 @@ function renderShop(data) {
                                 <div class="label">${ratingCount > 0 ? ratingCount + ' ' + (ratingCount === 1 ? 'rating' : 'ratings') : 'No ratings yet'}</div>
                             </div>
                         </div>
-                        <div>
+                        <div class="action-buttons">
                             ${seller.business_phone ? `<a href="tel:${escapeHtml(seller.business_phone)}" class="contact-btn">Contact</a>` : ''}
                             <button class="share-btn" onclick="shareShopLink('${shopUrl}')">Share Shop</button>
                         </div>
@@ -211,19 +213,24 @@ function renderProductGrid(products) {
 
     return `
         <div class="products-grid">
-            ${products.map(product => `
-                <div class="product-card" onclick="goToProduct('${product.id}')">
-                    <img src="${product.image_url || 'https://via.placeholder.com/300x300?text=Product'}" 
-                         alt="${escapeHtml(product.title)}" 
-                         onerror="this.src='https://via.placeholder.com/300x300?text=Product'">
-                    <div class="info">
-                        <div class="title">${escapeHtml(product.title)}</div>
-                        <div class="price">$${parseFloat(product.price).toFixed(2)}</div>
-                        <div class="stock ${product.stock_quantity > 0 ? 'in-stock' : 'out-of-stock'}">${product.stock_quantity > 0 ? 'In Stock' : 'Out of Stock'}</div>
-                        ${product.category ? `<span class="category-tag">${escapeHtml(product.category)}</span>` : ''}
+            ${products.map(product => {
+                const stock = parseInt(product.stock_quantity) || 0;
+                const stockText = stock > 0 ? 'In Stock' : 'Out of Stock';
+                const stockClass = stock > 0 ? 'in-stock' : 'out-of-stock';
+                return `
+                    <div class="product-card" onclick="goToProduct('${product.id}')">
+                        <img src="${product.image_url || 'https://via.placeholder.com/300x300?text=Product'}" 
+                             alt="${escapeHtml(product.title)}" 
+                             onerror="this.src='https://via.placeholder.com/300x300?text=Product'">
+                        <div class="info">
+                            <div class="title">${escapeHtml(product.title)}</div>
+                            <div class="price">$${parseFloat(product.price).toFixed(2)}</div>
+                            <div class="stock ${stockClass}">${stockText}</div>
+                            ${product.category ? `<span class="category-tag">${escapeHtml(product.category)}</span>` : ''}
+                        </div>
                     </div>
-                </div>
-            `).join('')}
+                `;
+            }).join('')}
         </div>
     `;
 }
