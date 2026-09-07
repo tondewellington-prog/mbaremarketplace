@@ -31,7 +31,7 @@ function getUrlParams() {
 
 async function fetchShopData(sellerId) {
     try {
-        // First get the seller by user_id (the parameter passed in URL)
+        // Fetch seller details using user_id
         const sellerResponse = await fetch(`${SUPABASE_URL}/rest/v1/sellers?user_id=eq.${sellerId}&select=*`, {
             headers: {
                 'apikey': SUPABASE_ANON_KEY,
@@ -50,9 +50,8 @@ async function fetchShopData(sellerId) {
 
         const seller = sellers[0];
 
-        // Now get products using the seller's user_id (not the numeric id)
-        // The products table uses user_id as the foreign key
-        const productsResponse = await fetch(`${SUPABASE_URL}/rest/v1/products?user_id=eq.${seller.user_id}&select=*&order=created_at.desc`, {
+        // Fetch seller's products using seller_id with the UUID
+        const productsResponse = await fetch(`${SUPABASE_URL}/rest/v1/products?seller_id=eq.${sellerId}&select=*&order=created_at.desc`, {
             headers: {
                 'apikey': SUPABASE_ANON_KEY,
                 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
@@ -65,8 +64,8 @@ async function fetchShopData(sellerId) {
 
         const products = await productsResponse.json();
 
-        // Get ratings using the seller's user_id
-        const ratingsResponse = await fetch(`${SUPABASE_URL}/rest/v1/ratings?user_id=eq.${seller.user_id}&select=rating`, {
+        // Fetch seller ratings using seller_id with the UUID
+        const ratingsResponse = await fetch(`${SUPABASE_URL}/rest/v1/ratings?seller_id=eq.${sellerId}&select=rating`, {
             headers: {
                 'apikey': SUPABASE_ANON_KEY,
                 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
@@ -125,9 +124,7 @@ function renderShop(data) {
 
     let html = `
         <div class="shop-banner">
-            <div class="shop-cover">
-                ${seller.cover_image_url ? `<img src="${seller.cover_image_url}" alt="${escapeHtml(seller.business_name)}">` : ''}
-            </div>
+            <div class="shop-cover"></div>
             <div class="container">
                 <div class="shop-header">
                     <div class="shop-avatar">
@@ -154,14 +151,18 @@ function renderShop(data) {
                                 <div class="label">${ratingCount > 0 ? ratingCount + ' ' + (ratingCount === 1 ? 'rating' : 'ratings') : 'No ratings yet'}</div>
                             </div>
                         </div>
-                        <div class="action-buttons">
-                            ${seller.business_phone ? `<a href="tel:${escapeHtml(seller.business_phone)}" class="contact-btn">Contact</a>` : ''}
-                            <button class="share-btn" onclick="shareShopLink('${shopUrl}')">Share Shop</button>
+                        <div class="shop-actions">
+                            ${seller.business_phone ? `<a href="tel:${escapeHtml(seller.business_phone)}" class="btn-glass btn-whatsapp">Contact</a>` : ''}
+                            <button class="btn-glass btn-share" onclick="shareShopLink('${shopUrl}')">Share Shop</button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+    `;
+
+    // Main content area
+    html += `
         <div class="container">
             <div class="main-content">
                 <div class="sidebar">
@@ -178,7 +179,7 @@ function renderShop(data) {
                     <div class="sidebar-section">
                         <h3>Search</h3>
                         <input type="text" class="search-box" id="searchProducts" placeholder="Search products..." oninput="filterProducts()">
-                        <h3 style="margin-top:15px;">Sort By</h3>
+                        <h3 style="margin-top:16px;">Sort By</h3>
                         <select class="sort-select" id="sortSelect" onchange="sortProducts()">
                             <option value="newest">Newest First</option>
                             <option value="oldest">Oldest First</option>
@@ -188,6 +189,7 @@ function renderShop(data) {
                         </select>
                     </div>
                 </div>
+
                 <div class="products-area">
                     <div id="productsContainer">
                         ${renderProductGrid(products)}
@@ -210,7 +212,7 @@ function renderProductGrid(products) {
     if (!products || products.length === 0) {
         return `
             <div class="no-products">
-                <span class="icon">📦</span>
+                <span class="icon">&#128230;</span>
                 <p>No products available in this shop.</p>
             </div>
         `;
@@ -219,8 +221,7 @@ function renderProductGrid(products) {
     return `
         <div class="products-grid">
             ${products.map(product => {
-                // Check stock quantity properly
-                const stock = product.stock_quantity !== null && product.stock_quantity !== undefined ? parseInt(product.stock_quantity) : 0;
+                const stock = parseInt(product.stock_quantity) || 0;
                 const stockText = stock > 0 ? 'In Stock' : 'Out of Stock';
                 const stockClass = stock > 0 ? 'in-stock' : 'out-of-stock';
                 return `
@@ -389,7 +390,7 @@ async function initShopPage() {
                         <h2>No Shop Selected</h2>
                         <p>Please provide a seller ID to view their shop.</p>
                         <br>
-                        <a href="index.html" style="display:inline-block;padding:12px 32px;background:linear-gradient(135deg,var(--bubble-accent),var(--bubble-accent2));color:#fff;border-radius:50px;text-decoration:none;font-weight:600;transition:var(--bubble-transition);">Return Home</a>
+                        <a href="index.html" class="btn-home">Return Home</a>
                     </div>
                 </div>
             `;
@@ -407,7 +408,7 @@ async function initShopPage() {
                     <h2>Something went wrong</h2>
                     <p>${error.message || 'Unable to load shop. Please try again later.'}</p>
                     <br>
-                    <a href="index.html" style="display:inline-block;padding:12px 32px;background:linear-gradient(135deg,var(--bubble-accent),var(--bubble-accent2));color:#fff;border-radius:50px;text-decoration:none;font-weight:600;transition:var(--bubble-transition);">Return Home</a>
+                    <a href="index.html" class="btn-home">Return Home</a>
                 </div>
             </div>
         `;
