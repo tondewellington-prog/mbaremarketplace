@@ -31,6 +31,7 @@ function getUrlParams() {
 
 async function fetchShopData(sellerId) {
     try {
+        // Fetch seller details using user_id
         const sellerResponse = await fetch(`${SUPABASE_URL}/rest/v1/sellers?user_id=eq.${sellerId}&select=*`, {
             headers: {
                 'apikey': SUPABASE_ANON_KEY,
@@ -49,6 +50,7 @@ async function fetchShopData(sellerId) {
 
         const seller = sellers[0];
 
+        // Fetch seller's products using seller_id (UUID)
         const productsResponse = await fetch(`${SUPABASE_URL}/rest/v1/products?seller_id=eq.${sellerId}&select=*&order=created_at.desc`, {
             headers: {
                 'apikey': SUPABASE_ANON_KEY,
@@ -62,6 +64,7 @@ async function fetchShopData(sellerId) {
 
         const products = await productsResponse.json();
 
+        // Fetch seller ratings using seller_id (UUID)
         const ratingsResponse = await fetch(`${SUPABASE_URL}/rest/v1/ratings?seller_id=eq.${sellerId}&select=rating`, {
             headers: {
                 'apikey': SUPABASE_ANON_KEY,
@@ -105,6 +108,7 @@ function renderShop(data) {
 
     const shopUrl = window.location.href;
 
+    // Get unique categories
     const categories = ['All'];
     const categoryMap = { All: products.length };
 
@@ -118,24 +122,34 @@ function renderShop(data) {
         }
     });
 
+    // Get the business name - from seller-dashboard this is stored in business_name or we can use a default
+    const businessName = seller.business_name || 'Shop Name';
+    const shopDescription = seller.shop_description || seller.business_description || '';
+    const locationDisplay = seller.location_display_name || seller.business_address || 'Location not specified';
+    const phoneNumber = seller.business_phone || '';
+    const profileImage = seller.profile_image || seller.logo_url || null;
+    const coverImage = seller.cover_image || seller.cover_image_url || null;
+
     let html = `
         <div class="shop-banner">
-            <div class="shop-cover"></div>
+            <div class="shop-cover">
+                ${coverImage ? `<img src="${coverImage}" alt="${escapeHtml(businessName)}">` : ''}
+            </div>
             <div class="container">
                 <div class="shop-header">
                     <div class="shop-avatar">
-                        ${seller.logo_url ? 
-                            `<img src="${seller.logo_url}" alt="${escapeHtml(seller.business_name)}">` :
-                            `<div class="placeholder">${seller.business_name ? escapeHtml(seller.business_name.charAt(0).toUpperCase()) : 'S'}</div>`
+                        ${profileImage ? 
+                            `<img src="${profileImage}" alt="${escapeHtml(businessName)}">` :
+                            `<div class="placeholder">${businessName ? escapeHtml(businessName.charAt(0).toUpperCase()) : 'S'}</div>`
                         }
                     </div>
                     <div class="shop-info">
-                        <h1>${escapeHtml(seller.business_name || 'Shop Name')}</h1>
+                        <h1>${escapeHtml(businessName)}</h1>
                         ${seller.verified ? '<span class="verified-badge">Verified</span>' : ''}
-                        <p class="description">${escapeHtml(seller.business_description || '')}</p>
+                        <p class="description">${escapeHtml(shopDescription)}</p>
                         <div class="details">
-                            <span>${seller.business_address ? 'Location: ' + escapeHtml(seller.business_address) : 'Location not specified'}</span>
-                            ${seller.business_phone ? `<span>Phone: ${escapeHtml(seller.business_phone)}</span>` : ''}
+                            <span>${escapeHtml(locationDisplay)}</span>
+                            ${phoneNumber ? `<span>Phone: ${escapeHtml(phoneNumber)}</span>` : ''}
                         </div>
                         <div class="shop-stats">
                             <div class="shop-stat">
@@ -148,7 +162,7 @@ function renderShop(data) {
                             </div>
                         </div>
                         <div class="shop-actions">
-                            ${seller.business_phone ? `<a href="tel:${escapeHtml(seller.business_phone)}" class="btn-glass btn-whatsapp">Contact</a>` : ''}
+                            ${phoneNumber ? `<a href="tel:${escapeHtml(phoneNumber)}" class="btn-glass btn-whatsapp">Contact</a>` : ''}
                             <button class="btn-glass btn-share" onclick="shareShopLink('${shopUrl}')">Share Shop</button>
                         </div>
                     </div>
@@ -203,7 +217,7 @@ function renderProductGrid(products) {
     if (!products || products.length === 0) {
         return `
             <div class="no-products">
-                <span class="icon">📦</span>
+                <span class="icon">&#128230;</span>
                 <p>No products available in this shop.</p>
             </div>
         `;
@@ -211,19 +225,25 @@ function renderProductGrid(products) {
 
     return `
         <div class="products-grid">
-            ${products.map(product => `
-                <div class="product-card" onclick="goToProduct('${product.id}')">
-                    <img src="${product.image_url || 'https://via.placeholder.com/300x300?text=Product'}" 
-                         alt="${escapeHtml(product.title)}" 
-                         onerror="this.src='https://via.placeholder.com/300x300?text=Product'">
-                    <div class="info">
-                        <div class="title">${escapeHtml(product.title)}</div>
-                        <div class="price">$${parseFloat(product.price).toFixed(2)}</div>
-                        <div class="stock ${product.stock_quantity > 0 ? 'in-stock' : 'out-of-stock'}">${product.stock_quantity > 0 ? 'In Stock' : 'Out of Stock'}</div>
-                        ${product.category ? `<span class="category-tag">${escapeHtml(product.category)}</span>` : ''}
+            ${products.map(product => {
+                // Check stock quantity properly
+                const stock = product.stock_quantity !== null && product.stock_quantity !== undefined ? parseInt(product.stock_quantity) : 0;
+                const stockText = stock > 0 ? 'In Stock' : 'Out of Stock';
+                const stockClass = stock > 0 ? 'in-stock' : 'out-of-stock';
+                return `
+                    <div class="product-card" onclick="goToProduct('${product.id}')">
+                        <img src="${product.image_url || 'https://via.placeholder.com/300x300?text=Product'}" 
+                             alt="${escapeHtml(product.title)}" 
+                             onerror="this.src='https://via.placeholder.com/300x300?text=Product'">
+                        <div class="info">
+                            <div class="title">${escapeHtml(product.title)}</div>
+                            <div class="price">$${parseFloat(product.price).toFixed(2)}</div>
+                            <div class="stock ${stockClass}">${stockText}</div>
+                            ${product.category ? `<span class="category-tag">${escapeHtml(product.category)}</span>` : ''}
+                        </div>
                     </div>
-                </div>
-            `).join('')}
+                `;
+            }).join('')}
         </div>
     `;
 }
@@ -376,7 +396,7 @@ async function initShopPage() {
                         <h2>No Shop Selected</h2>
                         <p>Please provide a seller ID to view their shop.</p>
                         <br>
-                        <a href="index.html" class="btn-home">Return Home</a>
+                        <a href="index.html" style="display:inline-block;padding:12px 32px;background:linear-gradient(135deg,var(--bubble-accent),var(--bubble-accent2));color:#fff;border-radius:50px;text-decoration:none;font-weight:600;transition:var(--bubble-transition);">Return Home</a>
                     </div>
                 </div>
             `;
@@ -394,7 +414,7 @@ async function initShopPage() {
                     <h2>Something went wrong</h2>
                     <p>${error.message || 'Unable to load shop. Please try again later.'}</p>
                     <br>
-                    <a href="index.html" class="btn-home">Return Home</a>
+                    <a href="index.html" style="display:inline-block;padding:12px 32px;background:linear-gradient(135deg,var(--bubble-accent),var(--bubble-accent2));color:#fff;border-radius:50px;text-decoration:none;font-weight:600;transition:var(--bubble-transition);">Return Home</a>
                 </div>
             </div>
         `;
