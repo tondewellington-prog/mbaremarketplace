@@ -7,7 +7,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* Shop page specific styles */
+        /* Shop page specific styles - these extend the main styles.css */
+        
         .shop-banner {
             position: relative;
             overflow: hidden;
@@ -20,6 +21,12 @@
             background: linear-gradient(135deg, rgba(179,136,255,0.15), rgba(124,77,255,0.08));
             position: relative;
             border-bottom: 1px solid var(--bubble-glass-border);
+        }
+
+        .shop-profile-section {
+            position: relative;
+            margin-top: -50px;
+            padding-bottom: 20px;
         }
 
         .shop-header {
@@ -559,7 +566,7 @@
     </header>
 
     <!-- Shop Content -->
-    <div id="shopContent">
+    <div id="shopContent" class="main-content-wrapper">
         <div class="container">
             <div class="loading">
                 <div class="spinner"></div>
@@ -588,6 +595,6 @@
         </div>
     </footer>
 
-    <script src="js/pages/shop.js"></script>
+    <script src="js/pajes/shop.js"></script>
 </body>
 </html>
