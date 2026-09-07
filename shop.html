@@ -7,65 +7,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* ===== SHOP PAGE SPECIFIC STYLES ===== */
-        /* Only overrides for glassmorphism theme - everything else kept identical */
-        
-        .header {
-            background: rgba(10, 22, 40, 0.85);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--bubble-glass-border);
-            padding: 15px 0;
-        }
-        
-        .header .container {
-            max-width: 1300px;
-            margin: 0 auto;
-            padding: 0 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            text-decoration: none;
-            background: linear-gradient(135deg, var(--bubble-accent), var(--bubble-accent2));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-shadow: 0 0 40px var(--bubble-glow);
-        }
-        
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-        
-        .header-right a {
-            color: var(--bubble-text);
-            text-decoration: none;
-            font-size: 14px;
-            transition: var(--bubble-transition);
-        }
-        
-        .header-right a:hover {
-            color: var(--bubble-accent);
-        }
-        
-        /* Shop Banner */
+        /* Shop page specific styles */
         .shop-banner {
-            background: linear-gradient(135deg, rgba(26, 26, 46, 0.9), rgba(22, 33, 62, 0.9));
-            color: white;
             position: relative;
             overflow: hidden;
+            margin-bottom: 30px;
         }
-        
+
         .shop-cover {
             width: 100%;
             height: 200px;
@@ -73,32 +21,15 @@
             position: relative;
             border-bottom: 1px solid var(--bubble-glass-border);
         }
-        
-        .shop-cover img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        .shop-profile-section {
-            position: relative;
-            margin-top: -50px;
-            padding-bottom: 20px;
-        }
-        
-        .shop-profile-section .container {
-            max-width: 1300px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-        
+
         .shop-header {
             display: flex;
             align-items: flex-end;
-            gap: 20px;
+            gap: 24px;
             flex-wrap: wrap;
+            padding: 20px 0;
         }
-        
+
         .shop-avatar {
             width: 120px;
             height: 120px;
@@ -111,13 +42,13 @@
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
         }
-        
+
         .shop-avatar img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
-        
+
         .shop-avatar .placeholder {
             width: 100%;
             height: 100%;
@@ -129,118 +60,96 @@
             background: var(--bubble-glass);
             font-weight: 700;
         }
-        
+
         .shop-info {
             flex: 1;
             min-width: 200px;
+            padding: 10px 0;
         }
-        
+
         .shop-info h1 {
-            font-size: 1.8rem;
-            margin-bottom: 3px;
-            color: white;
+            font-size: 28px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 4px;
         }
-        
+
         .shop-info .verified-badge {
             background: linear-gradient(135deg, var(--bubble-accent), var(--bubble-accent2));
-            color: white;
-            padding: 2px 12px;
+            color: #fff;
+            padding: 2px 14px;
             border-radius: 20px;
             font-size: 12px;
+            font-weight: 600;
             display: none;
+            margin-left: 8px;
         }
-        
+
         .shop-info .description {
             color: var(--bubble-text-muted);
-            margin: 5px 0;
-            font-size: 14px;
+            margin: 6px 0 8px;
+            font-size: 15px;
+            line-height: 1.6;
         }
-        
+
         .shop-info .details {
             display: flex;
-            gap: 15px;
+            gap: 18px;
             flex-wrap: wrap;
-            margin-top: 5px;
+            margin: 6px 0;
         }
-        
+
         .shop-info .details span {
             color: var(--bubble-text-muted);
             font-size: 14px;
         }
-        
+
         .shop-stats {
             display: flex;
-            gap: 30px;
-            margin-top: 8px;
+            gap: 35px;
+            margin-top: 12px;
             flex-wrap: wrap;
         }
-        
-        .shop-stat .num {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: white;
+
+        .shop-stat {
+            display: flex;
+            flex-direction: column;
         }
-        
+
+        .shop-stat .num {
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+        }
+
         .shop-stat .label {
             font-size: 12px;
             color: var(--bubble-text-muted);
         }
-        
+
         .shop-stat .rating {
-            color: #f90;
-            font-size: 1.3rem;
+            font-size: 22px;
             font-weight: 700;
+            color: #f90;
         }
-        
-        .contact-btn {
+
+        .shop-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+        }
+
+        .btn-whatsapp {
             background: linear-gradient(135deg, #25D366, #128C7E);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-            margin-top: 8px;
-            font-size: 14px;
-            transition: var(--bubble-transition);
+            border-color: #25D366;
         }
-        
-        .contact-btn:hover {
-            transform: translateY(-2px);
+
+        .btn-whatsapp:hover {
+            border-color: #25D366;
             box-shadow: 0 4px 20px rgba(37, 211, 102, 0.3);
         }
-        
-        .share-btn {
-            background: var(--bubble-glass);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid var(--bubble-glass-border);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-            margin-top: 8px;
-            font-size: 14px;
-            transition: var(--bubble-transition);
-        }
-        
-        .share-btn:hover {
-            border-color: var(--bubble-accent);
-            box-shadow: 0 4px 20px var(--bubble-glow);
-            transform: translateY(-2px);
-        }
-        
-        .container {
-            max-width: 1300px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-        
+
         .main-content {
             display: flex;
             gap: 30px;
@@ -248,17 +157,17 @@
             margin-bottom: 50px;
             flex-wrap: wrap;
         }
-        
+
         .sidebar {
             width: 250px;
             flex-shrink: 0;
         }
-        
+
         .products-area {
             flex: 1;
             min-width: 300px;
         }
-        
+
         .sidebar-section {
             background: var(--bubble-glass);
             backdrop-filter: blur(16px);
@@ -269,11 +178,11 @@
             margin-bottom: 20px;
             transition: var(--bubble-transition);
         }
-        
+
         .sidebar-section:hover {
             border-color: rgba(179,136,255,0.2);
         }
-        
+
         .sidebar-section h3 {
             font-size: 16px;
             margin-bottom: 15px;
@@ -281,11 +190,13 @@
             border-bottom: 2px solid var(--bubble-accent);
             padding-bottom: 8px;
         }
-        
+
         .category-list {
             list-style: none;
+            padding: 0;
+            margin: 0;
         }
-        
+
         .category-list li {
             padding: 8px 0;
             cursor: pointer;
@@ -293,22 +204,22 @@
             font-size: 14px;
             transition: var(--bubble-transition);
         }
-        
+
         .category-list li:hover {
             color: #fff;
         }
-        
+
         .category-list li.active {
             color: var(--bubble-accent);
             font-weight: 600;
         }
-        
+
         .category-list li .count {
             color: var(--bubble-text-muted);
             font-size: 12px;
             margin-left: 5px;
         }
-        
+
         .search-box {
             width: 100%;
             padding: 12px;
@@ -321,16 +232,16 @@
             transition: var(--bubble-transition);
             outline: none;
         }
-        
+
         .search-box::placeholder {
             color: var(--bubble-text-muted);
         }
-        
+
         .search-box:focus {
             border-color: var(--bubble-accent);
             box-shadow: 0 0 0 3px var(--bubble-glow);
         }
-        
+
         .sort-select {
             width: 100%;
             padding: 10px;
@@ -349,24 +260,23 @@
             background-position: right 12px center;
             cursor: pointer;
         }
-        
+
         .sort-select option {
             background: #0a1628;
             color: #fff;
         }
-        
+
         .sort-select:focus {
             border-color: var(--bubble-accent);
             box-shadow: 0 0 0 3px var(--bubble-glow);
         }
-        
-        /* PRODUCT GRID - EXACT SAME STRUCTURE */
+
         .products-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
             gap: 20px;
         }
-        
+
         .product-card {
             background: var(--bubble-glass);
             backdrop-filter: blur(16px);
@@ -376,25 +286,33 @@
             overflow: hidden;
             transition: var(--bubble-transition);
             cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
         }
-        
+
         .product-card:hover {
             transform: translateY(-3px);
             border-color: rgba(179,136,255,0.2);
             box-shadow: 0 5px 20px rgba(0,0,0,0.3);
         }
-        
+
         .product-card img {
             width: 100%;
             height: 200px;
             object-fit: cover;
             background: rgba(255,255,255,0.03);
+            transition: var(--bubble-transition);
         }
-        
+
+        .product-card:hover img {
+            transform: scale(1.02);
+        }
+
         .product-card .info {
             padding: 15px;
         }
-        
+
         .product-card .title {
             font-size: 14px;
             font-weight: 500;
@@ -405,27 +323,27 @@
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
-        
+
         .product-card .price {
             font-size: 20px;
             font-weight: 700;
             color: var(--bubble-accent);
         }
-        
+
         .product-card .stock {
             font-size: 12px;
             color: var(--bubble-text-muted);
             margin-top: 3px;
         }
-        
+
         .product-card .stock.in-stock {
             color: #28a745;
         }
-        
+
         .product-card .stock.out-of-stock {
             color: #dc3545;
         }
-        
+
         .product-card .category-tag {
             display: inline-block;
             background: rgba(255,255,255,0.06);
@@ -436,7 +354,7 @@
             margin-top: 5px;
             border: 1px solid var(--bubble-glass-border);
         }
-        
+
         .no-products {
             text-align: center;
             padding: 60px 20px;
@@ -447,18 +365,18 @@
             border: 1px solid var(--bubble-glass-border);
             border-radius: 12px;
         }
-        
+
         .no-products .icon {
-            font-size: 4rem;
+            font-size: 48px;
             margin-bottom: 20px;
             display: block;
         }
-        
+
         .loading {
             text-align: center;
             padding: 40px;
         }
-        
+
         .spinner {
             width: 40px;
             height: 40px;
@@ -468,42 +386,42 @@
             animation: spin 0.8s linear infinite;
             margin: 0 auto 16px;
         }
-        
+
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-        
+
         .error {
             text-align: center;
             padding: 40px;
         }
-        
+
         .error h2 {
             font-size: 24px;
             color: #ff6b6b;
             margin-bottom: 10px;
         }
-        
+
         .error p {
             color: var(--bubble-text-muted);
         }
-        
-        .footer {
-            background: rgba(10,22,40,0.9);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-top: 1px solid var(--bubble-glass-border);
-            color: white;
-            text-align: center;
-            padding: 20px;
-            margin-top: 50px;
-            font-size: 14px;
+
+        .btn-home {
+            display: inline-block;
+            padding: 12px 32px;
+            background: linear-gradient(135deg, var(--bubble-accent), var(--bubble-accent2));
+            color: #fff;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--bubble-transition);
         }
-        
-        .footer p {
-            color: var(--bubble-text-muted);
+
+        .btn-home:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px var(--bubble-glow);
         }
-        
+
         #shareNotification {
             position: fixed;
             bottom: 30px;
@@ -524,13 +442,13 @@
             pointer-events: none;
             box-shadow: 0 8px 32px rgba(0,0,0,0.4);
         }
-        
+
         #shareNotification.show {
             opacity: 1;
             transform: translateX(-50%) translateY(0);
             pointer-events: auto;
         }
-        
+
         @media (max-width: 768px) {
             .main-content {
                 flex-direction: column;
@@ -556,6 +474,47 @@
                 width: 100px;
                 height: 100px;
             }
+            .shop-info h1 {
+                font-size: 22px;
+            }
+            .product-card img {
+                height: 160px;
+            }
+            .shop-cover {
+                height: 120px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .products-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+            .product-card img {
+                height: 120px;
+            }
+            .product-card .info {
+                padding: 10px 12px 12px;
+            }
+            .product-card .title {
+                font-size: 12px;
+            }
+            .product-card .price {
+                font-size: 16px;
+            }
+            .shop-avatar {
+                width: 80px;
+                height: 80px;
+            }
+            .shop-avatar .placeholder {
+                font-size: 28px;
+            }
+            .shop-info h1 {
+                font-size: 18px;
+            }
+            .shop-cover {
+                height: 80px;
+            }
         }
     </style>
 </head>
@@ -566,26 +525,51 @@
         <span></span><span></span><span></span><span></span><span></span>
     </div>
 
+    <!-- Header -->
     <header class="header">
-        <div class="container">
-            <a href="index.html" class="logo">Mbare Marketplace</a>
-            <div class="header-right">
-                <a href="index.html">Home</a>
-                <a href="seller-dashboard.html">Sell</a>
+        <div class="header-top">
+            <div class="container">
+                <div class="logo">
+                    <a href="index.html">Mbare Marketplace</a>
+                </div>
+                <div class="header-right">
+                    <a href="index.html" class="account-link">Home</a>
+                    <a href="seller-dashboard.html" class="account-link">Sell</a>
+                </div>
             </div>
         </div>
     </header>
 
+    <!-- Shop Content -->
     <div id="shopContent">
-        <div class="loading"><div class="spinner"></div><p>Loading shop...</p></div>
+        <div class="container">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading shop...</p>
+            </div>
+        </div>
     </div>
 
+    <!-- Share Notification -->
     <div id="shareNotification">Link copied to clipboard</div>
 
+    <!-- Footer -->
     <footer class="footer">
-        <p>&copy; 2026 Mbare Marketplace. All rights reserved.</p>
+        <div class="footer-content">
+            <div class="container">
+                <div class="footer-bottom">
+                    <div class="container">
+                        <span class="footer-copyright">&copy; 2026 Mbare Marketplace. All rights reserved.</span>
+                        <div class="footer-links">
+                            <a href="index.html">Home</a>
+                            <a href="seller-dashboard.html">Sell</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </footer>
 
-    <script src="js/pages/shop.js"></script>
+    <script src="shop.js"></script>
 </body>
 </html>
