@@ -122,7 +122,7 @@ function renderShop(data) {
         }
     });
 
-    // Get the business name - from seller-dashboard this is stored in business_name
+    // Get seller data with fallbacks
     const businessName = seller.business_name || 'Shop Name';
     const shopDescription = seller.shop_description || seller.business_description || '';
     const locationDisplay = seller.location_display_name || seller.business_address || 'Location not specified';
@@ -162,7 +162,7 @@ function renderShop(data) {
                             </div>
                         </div>
                         <div class="shop-actions">
-                            ${phoneNumber ? `<a href="tel:${escapeHtml(phoneNumber)}" class="btn-glass btn-whatsapp">Contact</a>` : ''}
+                            ${phoneNumber ? `<button class="btn-glass btn-contact" onclick="contactSeller('${escapeHtml(phoneNumber)}', '${escapeHtml(businessName)}')">Contact</button>` : ''}
                             <button class="btn-glass btn-share" onclick="shareShopLink('${shopUrl}')">Share Shop</button>
                         </div>
                     </div>
@@ -226,7 +226,7 @@ function renderProductGrid(products) {
     return `
         <div class="products-grid">
             ${products.map(product => {
-                // Use 'stock' column name (from seller-dashboard), not 'stock_quantity'
+                // Use 'stock' column name (from seller-dashboard)
                 const stock = product.stock !== null && product.stock !== undefined ? parseInt(product.stock) : 0;
                 const stockText = stock > 0 ? 'In Stock' : 'Out of Stock';
                 const stockClass = stock > 0 ? 'in-stock' : 'out-of-stock';
@@ -246,6 +246,221 @@ function renderProductGrid(products) {
             }).join('')}
         </div>
     `;
+}
+
+// ============================================
+// CONTACT SELLER FUNCTION
+// ============================================
+
+function contactSeller(phoneNumber, businessName) {
+    if (!phoneNumber) {
+        showToast('No phone number available for this seller.', true);
+        return;
+    }
+
+    // Clean the phone number (remove spaces, dashes, etc.)
+    let cleanPhone = phoneNumber.replace(/[\s\-\(\)]/g, '');
+    
+    // Check if it's a Zimbabwe number (starts with 0) and format it
+    if (cleanPhone.startsWith('0')) {
+        cleanPhone = '263' + cleanPhone.substring(1);
+    }
+    
+    // Check if it already has country code
+    if (!cleanPhone.startsWith('263') && !cleanPhone.startsWith('+')) {
+        cleanPhone = '263' + cleanPhone;
+    }
+    
+    // Remove any + sign for WhatsApp URL
+    const whatsappNumber = cleanPhone.replace('+', '');
+    
+    // Show contact options modal
+    const modalHtml = `
+        <div class="contact-modal-overlay" id="contactModal">
+            <div class="contact-modal-content">
+                <button class="close-modal" onclick="closeContactModal()">&times;</button>
+                <h3>Contact ${escapeHtml(businessName)}</h3>
+                <p style="color: var(--bubble-text-muted); margin-bottom: 20px;">Choose how you want to contact the seller:</p>
+                <div class="contact-options">
+                    <button class="contact-option-btn" onclick="openWhatsApp('${whatsappNumber}')">
+                        <span class="contact-icon">&#128222;</span>
+                        WhatsApp
+                        <span style="font-size:12px; color: var(--bubble-text-muted); display:block;">Chat via WhatsApp</span>
+                    </button>
+                    <button class="contact-option-btn" onclick="openPhoneCall('${cleanPhone}')">
+                        <span class="contact-icon">&#9742;</span>
+                        Phone Call
+                        <span style="font-size:12px; color: var(--bubble-text-muted); display:block;">Call directly</span>
+                    </button>
+                    <button class="contact-option-btn" onclick="copyPhoneNumber('${phoneNumber}')">
+                        <span class="contact-icon">&#128203;</span>
+                        Copy Number
+                        <span style="font-size:12px; color: var(--bubble-text-muted); display:block;">Copy to clipboard</span>
+                    </button>
+                </div>
+                <button class="btn-glass btn-share" style="width:100%; margin-top:15px;" onclick="closeContactModal()">Cancel</button>
+            </div>
+        </div>
+    `;
+
+    // Remove existing modal if any
+    const existingModal = document.getElementById('contactModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Add styles for the modal if not already present
+    if (!document.getElementById('contactModalStyles')) {
+        const style = document.createElement('style');
+        style.id = 'contactModalStyles';
+        style.textContent = `
+            .contact-modal-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 30000;
+                padding: 20px;
+                animation: fadeIn 0.3s ease;
+            }
+            .contact-modal-content {
+                background: rgba(10,22,40,0.95);
+                backdrop-filter: blur(30px);
+                -webkit-backdrop-filter: blur(30px);
+                border: 1px solid var(--bubble-glass-border);
+                border-radius: 24px;
+                max-width: 420px;
+                width: 100%;
+                padding: 30px;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+                position: relative;
+                animation: slideUp 0.3s ease;
+            }
+            .contact-modal-content h3 {
+                color: #fff;
+                font-size: 22px;
+                margin-bottom: 8px;
+            }
+            .close-modal {
+                position: absolute;
+                top: 15px;
+                right: 20px;
+                background: none;
+                border: none;
+                color: var(--bubble-text-muted);
+                font-size: 28px;
+                cursor: pointer;
+                transition: var(--bubble-transition);
+            }
+            .close-modal:hover {
+                color: #fff;
+            }
+            .contact-options {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                margin: 10px 0;
+            }
+            .contact-option-btn {
+                background: var(--bubble-glass);
+                border: 1px solid var(--bubble-glass-border);
+                border-radius: 16px;
+                padding: 16px 20px;
+                color: #fff;
+                font-size: 16px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: var(--bubble-transition);
+                text-align: left;
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+            }
+            .contact-option-btn:hover {
+                border-color: var(--bubble-accent);
+                background: rgba(179,136,255,0.1);
+                transform: translateX(4px);
+            }
+            .contact-icon {
+                font-size: 22px;
+                margin-right: 12px;
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            @keyframes slideUp {
+                from { transform: translateY(30px); opacity: 0; }
+                to { transform: translateY(0); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
+// ============================================
+// CONTACT HELPER FUNCTIONS
+// ============================================
+
+function openWhatsApp(phoneNumber) {
+    const message = encodeURIComponent('Hello, I saw your products on Mbare Marketplace and I am interested.');
+    window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
+    closeContactModal();
+}
+
+function openPhoneCall(phoneNumber) {
+    window.location.href = `tel:+${phoneNumber}`;
+    closeContactModal();
+}
+
+function copyPhoneNumber(phoneNumber) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(phoneNumber)
+            .then(() => {
+                showToast('Phone number copied to clipboard!');
+                closeContactModal();
+            })
+            .catch(() => {
+                fallbackCopyText(phoneNumber);
+            });
+    } else {
+        fallbackCopyText(phoneNumber);
+    }
+}
+
+function fallbackCopyText(text) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+        document.execCommand('copy');
+        showToast('Phone number copied to clipboard!');
+        closeContactModal();
+    } catch (err) {
+        showToast('Unable to copy. Please copy manually.', true);
+    }
+    document.body.removeChild(textArea);
+}
+
+function closeContactModal() {
+    const modal = document.getElementById('contactModal');
+    if (modal) {
+        modal.remove();
+    }
 }
 
 // ============================================
@@ -369,6 +584,38 @@ function showShareNotification(message) {
     }, 3000);
 }
 
+function showToast(message, isError = false) {
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification' + (isError ? ' error' : '');
+    toast.innerHTML = message;
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--bubble-glass);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--bubble-glass-border);
+        border-radius: 12px;
+        padding: 14px 28px;
+        color: #fff;
+        font-weight: 500;
+        z-index: 99999;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        animation: fadeIn 0.3s ease;
+        max-width: 90%;
+        text-align: center;
+        ${isError ? 'border-color: #dc3545;' : ''}
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
 // ============================================
 // UTILITY FUNCTIONS
 // ============================================
@@ -427,6 +674,12 @@ window.filterProducts = filterProducts;
 window.sortProducts = sortProducts;
 window.goToProduct = goToProduct;
 window.shareShopLink = shareShopLink;
+window.contactSeller = contactSeller;
+window.openWhatsApp = openWhatsApp;
+window.openPhoneCall = openPhoneCall;
+window.copyPhoneNumber = copyPhoneNumber;
+window.closeContactModal = closeContactModal;
+window.showToast = showToast;
 
 // Start the page
 document.addEventListener('DOMContentLoaded', initShopPage);
