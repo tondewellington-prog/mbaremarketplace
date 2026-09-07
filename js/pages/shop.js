@@ -31,7 +31,6 @@ function getUrlParams() {
 
 async function fetchShopData(sellerId) {
     try {
-        // Fetch seller details
         const sellerResponse = await fetch(`${SUPABASE_URL}/rest/v1/sellers?user_id=eq.${sellerId}&select=*`, {
             headers: {
                 'apikey': SUPABASE_ANON_KEY,
@@ -50,7 +49,6 @@ async function fetchShopData(sellerId) {
 
         const seller = sellers[0];
 
-        // Fetch seller's products
         const productsResponse = await fetch(`${SUPABASE_URL}/rest/v1/products?seller_id=eq.${sellerId}&select=*&order=created_at.desc`, {
             headers: {
                 'apikey': SUPABASE_ANON_KEY,
@@ -64,7 +62,6 @@ async function fetchShopData(sellerId) {
 
         const products = await productsResponse.json();
 
-        // Fetch seller ratings
         const ratingsResponse = await fetch(`${SUPABASE_URL}/rest/v1/ratings?seller_id=eq.${sellerId}&select=rating`, {
             headers: {
                 'apikey': SUPABASE_ANON_KEY,
@@ -108,7 +105,6 @@ function renderShop(data) {
 
     const shopUrl = window.location.href;
 
-    // Get unique categories
     const categories = ['All'];
     const categoryMap = { All: products.length };
 
@@ -123,7 +119,6 @@ function renderShop(data) {
     });
 
     let html = `
-        <!-- Shop Banner -->
         <div class="shop-banner">
             <div class="shop-cover"></div>
             <div class="container">
@@ -152,21 +147,16 @@ function renderShop(data) {
                                 <div class="label">${ratingCount > 0 ? ratingCount + ' ' + (ratingCount === 1 ? 'rating' : 'ratings') : 'No ratings yet'}</div>
                             </div>
                         </div>
-                        <div class="shop-actions">
-                            ${seller.business_phone ? `<a href="tel:${escapeHtml(seller.business_phone)}" class="btn-glass btn-whatsapp">Contact</a>` : ''}
-                            <button class="btn-glass btn-share" onclick="shareShopLink('${shopUrl}')">Share Shop</button>
+                        <div>
+                            ${seller.business_phone ? `<a href="tel:${escapeHtml(seller.business_phone)}" class="contact-btn">Contact</a>` : ''}
+                            <button class="share-btn" onclick="shareShopLink('${shopUrl}')">Share Shop</button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    `;
-
-    // Main content area
-    html += `
         <div class="container">
             <div class="main-content">
-                <!-- Sidebar -->
                 <div class="sidebar">
                     <div class="sidebar-section">
                         <h3>Categories</h3>
@@ -181,7 +171,7 @@ function renderShop(data) {
                     <div class="sidebar-section">
                         <h3>Search</h3>
                         <input type="text" class="search-box" id="searchProducts" placeholder="Search products..." oninput="filterProducts()">
-                        <h3 style="margin-top:16px;">Sort By</h3>
+                        <h3 style="margin-top:15px;">Sort By</h3>
                         <select class="sort-select" id="sortSelect" onchange="sortProducts()">
                             <option value="newest">Newest First</option>
                             <option value="oldest">Oldest First</option>
@@ -191,8 +181,6 @@ function renderShop(data) {
                         </select>
                     </div>
                 </div>
-
-                <!-- Products Area -->
                 <div class="products-area">
                     <div id="productsContainer">
                         ${renderProductGrid(products)}
@@ -215,7 +203,7 @@ function renderProductGrid(products) {
     if (!products || products.length === 0) {
         return `
             <div class="no-products">
-                <span class="icon">&#128230;</span>
+                <span class="icon">📦</span>
                 <p>No products available in this shop.</p>
             </div>
         `;
@@ -388,7 +376,7 @@ async function initShopPage() {
                         <h2>No Shop Selected</h2>
                         <p>Please provide a seller ID to view their shop.</p>
                         <br>
-                        <a href="index.html" class="btn-home">Return Home</a>
+                        <a href="index.html" style="display:inline-block;padding:12px 32px;background:linear-gradient(135deg,var(--bubble-accent),var(--bubble-accent2));color:#fff;border-radius:50px;text-decoration:none;font-weight:600;transition:var(--bubble-transition);">Return Home</a>
                     </div>
                 </div>
             `;
@@ -406,7 +394,7 @@ async function initShopPage() {
                     <h2>Something went wrong</h2>
                     <p>${error.message || 'Unable to load shop. Please try again later.'}</p>
                     <br>
-                    <a href="index.html" class="btn-home">Return Home</a>
+                    <a href="index.html" style="display:inline-block;padding:12px 32px;background:linear-gradient(135deg,var(--bubble-accent),var(--bubble-accent2));color:#fff;border-radius:50px;text-decoration:none;font-weight:600;transition:var(--bubble-transition);">Return Home</a>
                 </div>
             </div>
         `;
