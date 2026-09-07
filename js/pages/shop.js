@@ -31,6 +31,7 @@ function getUrlParams() {
 
 async function fetchShopData(sellerId) {
     try {
+        // Fetch seller details
         const sellerResponse = await fetch(`${SUPABASE_URL}/rest/v1/sellers?user_id=eq.${sellerId}&select=*`, {
             headers: {
                 'apikey': SUPABASE_ANON_KEY,
@@ -49,6 +50,7 @@ async function fetchShopData(sellerId) {
 
         const seller = sellers[0];
 
+        // Fetch seller's products
         const productsResponse = await fetch(`${SUPABASE_URL}/rest/v1/products?seller_id=eq.${sellerId}&select=*&order=created_at.desc`, {
             headers: {
                 'apikey': SUPABASE_ANON_KEY,
@@ -62,6 +64,7 @@ async function fetchShopData(sellerId) {
 
         const products = await productsResponse.json();
 
+        // Fetch seller ratings
         const ratingsResponse = await fetch(`${SUPABASE_URL}/rest/v1/ratings?seller_id=eq.${sellerId}&select=rating`, {
             headers: {
                 'apikey': SUPABASE_ANON_KEY,
@@ -105,6 +108,7 @@ function renderShop(data) {
 
     const shopUrl = window.location.href;
 
+    // Get unique categories
     const categories = ['All'];
     const categoryMap = { All: products.length };
 
@@ -119,6 +123,7 @@ function renderShop(data) {
     });
 
     let html = `
+        <!-- Shop Banner -->
         <div class="shop-banner">
             <div class="shop-cover"></div>
             <div class="container">
@@ -155,8 +160,13 @@ function renderShop(data) {
                 </div>
             </div>
         </div>
+    `;
+
+    // Main content area
+    html += `
         <div class="container">
             <div class="main-content">
+                <!-- Sidebar -->
                 <div class="sidebar">
                     <div class="sidebar-section">
                         <h3>Categories</h3>
@@ -171,7 +181,7 @@ function renderShop(data) {
                     <div class="sidebar-section">
                         <h3>Search</h3>
                         <input type="text" class="search-box" id="searchProducts" placeholder="Search products..." oninput="filterProducts()">
-                        <h3 style="margin-top:15px;">Sort By</h3>
+                        <h3 style="margin-top:16px;">Sort By</h3>
                         <select class="sort-select" id="sortSelect" onchange="sortProducts()">
                             <option value="newest">Newest First</option>
                             <option value="oldest">Oldest First</option>
@@ -181,6 +191,8 @@ function renderShop(data) {
                         </select>
                     </div>
                 </div>
+
+                <!-- Products Area -->
                 <div class="products-area">
                     <div id="productsContainer">
                         ${renderProductGrid(products)}
@@ -203,7 +215,7 @@ function renderProductGrid(products) {
     if (!products || products.length === 0) {
         return `
             <div class="no-products">
-                <span class="icon">📦</span>
+                <span class="icon">&#128230;</span>
                 <p>No products available in this shop.</p>
             </div>
         `;
