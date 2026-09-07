@@ -1,314 +1,428 @@
-window.SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
-window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
+// ============================================
+// SHOP PAGE - Mbare Marketplace
+// ============================================
 
-let currentSeller = null;
-let allProducts = [];
-let filteredProducts = [];
-let selectedCategory = 'All';
-let sellerRating = { average: 0, count: 0 };
+// Supabase Configuration
+const SUPABASE_URL = window.SUPABASE_URL || 'https://fnncerdxfhwlrdopswpx.supabase.co';
+const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
 
-// Get seller ID from URL
-const urlParams = new URLSearchParams(window.location.search);
-const sellerId = urlParams.get('seller') || urlParams.get('id');
+// DOM Elements
+const shopContent = document.getElementById('shopContent');
+let shopData = null;
+let productsData = [];
+let currentCategory = 'All';
+let currentSort = 'newest';
 
-console.log('Seller ID from URL:', sellerId);
+// ============================================
+// GET URL PARAMETERS
+// ============================================
 
-if (!sellerId) {
-    document.getElementById('shopContent').innerHTML = `
-        <div class="error" style="padding:80px 20px;">
-            <h2>Seller Not Found</h2>
-            <p>No seller specified. Please go back and try again.</p>
-            <a href="index.html" style="display:inline-block;margin-top:20px;padding:10px 30px;background:#f90;color:white;text-decoration:none;border-radius:8px;">Go Home</a>
-        </div>
-    `;
-} else {
-    loadShop(sellerId);
+function getUrlParams() {
+    const params = new URLSearchParams(window.location.search);
+    return {
+        sellerId: params.get('seller'),
+        productId: params.get('product')
+    };
 }
 
-async function loadShop(sellerId) {
+// ============================================
+// FETCH SHOP DATA
+// ============================================
+
+async function fetchShopData(sellerId) {
     try {
-        console.log('Loading seller data for ID:', sellerId);
-        
-        // Get seller from the sellers table
-        let sellerResp = await fetch(`${window.SUPABASE_URL}/rest/v1/sellers?user_id=eq.${sellerId}&select=*`, {
-            headers: { 
-                'apikey': window.SUPABASE_ANON_KEY,
-                'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}`
+        // Fetch seller details
+        const sellerResponse = await fetch(`${SUPABASE_URL}/rest/v1/sellers?user_id=eq.${sellerId}&select=*`, {
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
             }
         });
-        
-        let sellers = [];
-        if (sellerResp.ok) {
-            sellers = await sellerResp.json();
-            console.log('Sellers found:', sellers);
-        }
-        
-        // If no seller found with user_id, try with id
-        if (!sellers || sellers.length === 0) {
-            console.log('Trying with id field...');
-            sellerResp = await fetch(`${window.SUPABASE_URL}/rest/v1/sellers?id=eq.${sellerId}&select=*`, {
-                headers: { 
-                    'apikey': window.SUPABASE_ANON_KEY,
-                    'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}`
-                }
-            });
-            if (sellerResp.ok) {
-                sellers = await sellerResp.json();
-                console.log('Sellers found with id:', sellers);
-            }
-        }
-        
-        if (!sellers || sellers.length === 0) {
-            console.log('No seller found, creating fallback');
-            currentSeller = {
-                user_id: sellerId,
-                business_name: 'Seller',
-                full_name: 'Seller',
-                business_address: 'Zimbabwe',
-                business_phone: '',
-                business_email: '',
-                email: '',
-                profile_image: '',
-                cover_image: '',
-                shop_description: 'Welcome to my shop! Please check out my products.',
-                shop_verified: false,
-                shop_joined_date: new Date().toISOString()
-            };
-        } else {
-            currentSeller = sellers[0];
-            console.log('Seller loaded:', currentSeller);
+
+        if (!sellerResponse.ok) {
+            throw new Error('Failed to fetch seller data');
         }
 
-        // Load products for this seller
-        console.log('Loading products for seller:', sellerId);
-        const prodResp = await fetch(`${window.SUPABASE_URL}/rest/v1/products?seller_id=eq.${sellerId}&select=*&order=created_at.desc`, {
-            headers: { 
-                'apikey': window.SUPABASE_ANON_KEY,
-                'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}`
+        const sellers = await sellerResponse.json();
+        if (!sellers || sellers.length === 0) {
+            throw new Error('Seller not found');
+        }
+
+        const seller = sellers[0];
+
+        // Fetch seller's products
+        const productsResponse = await fetch(`${SUPABASE_URL}/rest/v1/products?seller_id=eq.${sellerId}&select=*&order=created_at.desc`, {
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
             }
         });
-        
-        if (prodResp.ok) {
-            allProducts = await prodResp.json() || [];
-            console.log('Products loaded:', allProducts.length);
-        } else {
-            console.warn('Failed to load products, status:', prodResp.status);
-            allProducts = [];
+
+        if (!productsResponse.ok) {
+            throw new Error('Failed to fetch products');
         }
-        
-        // Load seller ratings
-        try {
-            const ratingResp = await fetch(`${window.SUPABASE_URL}/rest/v1/ratings?seller_id=eq.${sellerId}&select=rating`, {
-                headers: { 
-                    'apikey': window.SUPABASE_ANON_KEY,
-                    'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}`
-                }
-            });
-            const ratings = ratingResp.ok ? await ratingResp.json() : [];
+
+        const products = await productsResponse.json();
+
+        // Fetch seller ratings
+        const ratingsResponse = await fetch(`${SUPABASE_URL}/rest/v1/ratings?seller_id=eq.${sellerId}&select=rating`, {
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+            }
+        });
+
+        let avgRating = 0;
+        let ratingCount = 0;
+        if (ratingsResponse.ok) {
+            const ratings = await ratingsResponse.json();
             if (ratings && ratings.length > 0) {
-                const sum = ratings.reduce((acc, curr) => acc + curr.rating, 0);
-                sellerRating.average = sum / ratings.length;
-                sellerRating.count = ratings.length;
+                const sum = ratings.reduce((acc, r) => acc + r.rating, 0);
+                avgRating = sum / ratings.length;
+                ratingCount = ratings.length;
             }
-        } catch (e) {
-            console.warn('Failed to load ratings:', e);
         }
-        
-        filteredProducts = [...allProducts];
-        renderShop();
 
-    } catch (e) {
-        console.error('Load error:', e);
-        document.getElementById('shopContent').innerHTML = `
-            <div class="error" style="padding:80px 20px;">
-                <h2>Error Loading Shop</h2>
-                <p>${e.message || 'Please try again later.'}</p>
-                <a href="index.html" style="display:inline-block;margin-top:20px;padding:10px 30px;background:#f90;color:white;text-decoration:none;border-radius:8px;">Go Home</a>
+        return {
+            seller: seller,
+            products: products,
+            rating: avgRating,
+            ratingCount: ratingCount
+        };
+
+    } catch (error) {
+        console.error('Error fetching shop data:', error);
+        throw error;
+    }
+}
+
+// ============================================
+// RENDER SHOP PAGE
+// ============================================
+
+function renderShop(data) {
+    const seller = data.seller;
+    const products = data.products;
+    const rating = data.rating || 0;
+    const ratingCount = data.ratingCount || 0;
+
+    // Build shop URL for sharing
+    const shopUrl = window.location.href;
+
+    // Get unique categories
+    const categories = ['All'];
+    const categoryMap = { All: products.length };
+
+    products.forEach(p => {
+        if (p.category && p.category !== 'Uncategorized') {
+            if (!categoryMap[p.category]) {
+                categories.push(p.category);
+                categoryMap[p.category] = 0;
+            }
+            categoryMap[p.category]++;
+        }
+    });
+
+    // Build the HTML
+    let html = `
+        <!-- Shop Banner -->
+        <div class="shop-banner">
+            <div class="shop-cover"></div>
+            <div class="container">
+                <div class="shop-header">
+                    <div class="shop-avatar">
+                        ${seller.logo_url ? 
+                            `<img src="${seller.logo_url}" alt="${seller.business_name}">` :
+                            `<div class="placeholder">${seller.business_name ? seller.business_name.charAt(0).toUpperCase() : 'S'}</div>`
+                        }
+                    </div>
+                    <div class="shop-info">
+                        <h1>${escapeHtml(seller.business_name || 'Shop Name')}</h1>
+                        ${seller.verified ? '<span class="verified-badge">Verified</span>' : ''}
+                        <p class="description">${escapeHtml(seller.business_description || '')}</p>
+                        <div class="details">
+                            <span>📍 ${escapeHtml(seller.business_address || 'Location not specified')}</span>
+                            <span>📞 ${escapeHtml(seller.business_phone || '')}</span>
+                        </div>
+                        <div class="shop-stats">
+                            <div class="shop-stat">
+                                <div class="num">${products.length}</div>
+                                <div class="label">Products</div>
+                            </div>
+                            <div class="shop-stat">
+                                <div class="rating">${rating > 0 ? '★ ' + rating.toFixed(1) : '★ New'}</div>
+                                <div class="label">${ratingCount > 0 ? ratingCount + ' ' + (ratingCount === 1 ? 'rating' : 'ratings') : 'No ratings yet'}</div>
+                            </div>
+                        </div>
+                        <div class="shop-actions">
+                            <a href="tel:${seller.business_phone || ''}" class="btn-glass btn-whatsapp">📞 Contact</a>
+                            <button class="btn-glass btn-share" onclick="shareShopLink('${shopUrl}')">📤 Share Shop</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Main content area
+    html += `
+        <div class="container">
+            <div class="main-content">
+                <!-- Sidebar -->
+                <div class="sidebar">
+                    <div class="sidebar-section">
+                        <h3>Categories</h3>
+                        <ul class="category-list" id="categoryList">
+                            ${categories.map(cat => `
+                                <li class="${cat === currentCategory ? 'active' : ''}" data-category="${cat}" onclick="filterByCategory('${cat}')">
+                                    ${cat} <span class="count">(${categoryMap[cat] || 0})</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                    <div class="sidebar-section">
+                        <h3>Search</h3>
+                        <input type="text" class="search-box" id="searchProducts" placeholder="Search products..." oninput="filterProducts()">
+                        <h3>Sort By</h3>
+                        <select class="sort-select" id="sortSelect" onchange="sortProducts()">
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                            <option value="price-low">Price: Low to High</option>
+                            <option value="price-high">Price: High to Low</option>
+                            <option value="name">Name A-Z</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Products Area -->
+                <div class="products-area">
+                    <div id="productsContainer">
+                        ${renderProductGrid(products)}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    shopContent.innerHTML = html;
+    shopData = data;
+    productsData = products;
+}
+
+// ============================================
+// RENDER PRODUCT GRID
+// ============================================
+
+function renderProductGrid(products) {
+    if (!products || products.length === 0) {
+        return `
+            <div class="no-products">
+                <div class="icon">📦</div>
+                <p>No products available in this shop.</p>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="products-grid">
+            ${products.map(product => `
+                <div class="product-card" onclick="goToProduct('${product.id}')">
+                    <img src="${product.image_url || 'https://via.placeholder.com/300x300?text=Product'}" 
+                         alt="${escapeHtml(product.title)}" 
+                         onerror="this.src='https://via.placeholder.com/300x300?text=Product'">
+                    <div class="info">
+                        <div class="title">${escapeHtml(product.title)}</div>
+                        <div class="price">$${parseFloat(product.price).toFixed(2)}</div>
+                        <div class="stock">${product.stock_quantity > 0 ? 'In Stock' : 'Out of Stock'}</div>
+                        ${product.category ? `<div class="category-tag">${escapeHtml(product.category)}</div>` : ''}
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+// ============================================
+// FILTERING & SORTING
+// ============================================
+
+function filterByCategory(category) {
+    currentCategory = category;
+    
+    // Update active state in sidebar
+    document.querySelectorAll('.category-list li').forEach(el => {
+        el.classList.toggle('active', el.dataset.category === category);
+    });
+
+    filterProducts();
+}
+
+function filterProducts() {
+    const searchTerm = document.getElementById('searchProducts')?.value?.toLowerCase() || '';
+    const sortValue = document.getElementById('sortSelect')?.value || 'newest';
+    currentSort = sortValue;
+
+    let filtered = [...productsData];
+
+    // Filter by category
+    if (currentCategory !== 'All') {
+        filtered = filtered.filter(p => p.category === currentCategory);
+    }
+
+    // Filter by search
+    if (searchTerm) {
+        filtered = filtered.filter(p => 
+            p.title?.toLowerCase().includes(searchTerm) || 
+            p.description?.toLowerCase().includes(searchTerm)
+        );
+    }
+
+    // Sort
+    switch (sortValue) {
+        case 'newest':
+            filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            break;
+        case 'oldest':
+            filtered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+            break;
+        case 'price-low':
+            filtered.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+            break;
+        case 'price-high':
+            filtered.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
+            break;
+        case 'name':
+            filtered.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+            break;
+    }
+
+    const container = document.getElementById('productsContainer');
+    if (container) {
+        container.innerHTML = renderProductGrid(filtered);
+    }
+}
+
+function sortProducts() {
+    filterProducts();
+}
+
+// ============================================
+// NAVIGATION
+// ============================================
+
+function goToProduct(productId) {
+    window.location.href = `product-detail.html?id=${productId}`;
+}
+
+// ============================================
+// SHARE FUNCTION (Global)
+// ============================================
+
+function shareShopLink(shopUrl) {
+    const url = shopUrl || window.location.href;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url)
+            .then(() => showShareNotification('Shop link copied to clipboard!'))
+            .catch(() => fallbackCopyTextToClipboard(url));
+    } else {
+        fallbackCopyTextToClipboard(url);
+    }
+}
+
+function fallbackCopyTextToClipboard(text) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+            showShareNotification('Shop link copied to clipboard!');
+        } else {
+            showShareNotification('Unable to copy link. Please copy the URL manually.', false);
+        }
+    } catch (err) {
+        showShareNotification('Unable to copy link. Please copy the URL manually.', false);
+    }
+
+    document.body.removeChild(textArea);
+}
+
+function showShareNotification(message, success) {
+    const notification = document.getElementById('shareNotification');
+    if (!notification) return;
+
+    notification.innerHTML = (success !== false ? '✓ ' : '') + message;
+    notification.classList.add('show');
+
+    clearTimeout(notification._timeout);
+    notification._timeout = setTimeout(() => {
+        notification.classList.remove('show');
+    }, 3000);
+}
+
+// ============================================
+// UTILITY FUNCTIONS
+// ============================================
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// ============================================
+// INITIALIZATION
+// ============================================
+
+async function initShopPage() {
+    try {
+        const params = getUrlParams();
+        const sellerId = params.sellerId;
+
+        if (!sellerId) {
+            shopContent.innerHTML = `
+                <div class="container" style="padding: 60px 20px; text-align: center;">
+                    <div class="error">
+                        <h2>No Shop Selected</h2>
+                        <p>Please provide a seller ID to view their shop.</p>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        const data = await fetchShopData(sellerId);
+        renderShop(data);
+
+    } catch (error) {
+        console.error('Shop page error:', error);
+        shopContent.innerHTML = `
+            <div class="container" style="padding: 60px 20px; text-align: center;">
+                <div class="error">
+                    <h2>Oops! Something went wrong</h2>
+                    <p>${error.message || 'Unable to load shop. Please try again later.'}</p>
+                    <br>
+                    <a href="index.html" class="btn-glass" style="display: inline-block; padding: 12px 30px;">Return Home</a>
+                </div>
             </div>
         `;
     }
 }
 
-function getCategories() {
-    const cats = {};
-    allProducts.forEach(p => {
-        const cat = p.category || 'Other';
-        cats[cat] = (cats[cat] || 0) + 1;
-    });
-    return cats;
-}
+// Make functions globally available
+window.filterByCategory = filterByCategory;
+window.filterProducts = filterProducts;
+window.sortProducts = sortProducts;
+window.goToProduct = goToProduct;
+window.shareShopLink = shareShopLink;
 
-function getSellerDisplayName() {
-    if (!currentSeller) return 'Seller Shop';
-    return currentSeller.business_name || currentSeller.full_name || currentSeller.shop_name || 'Seller Shop';
-}
-
-function getSellerPhone() {
-    if (!currentSeller) return '';
-    return currentSeller.business_phone || currentSeller.phone || currentSeller.contact_phone || '';
-}
-
-function getSellerEmail() {
-    if (!currentSeller) return '';
-    return currentSeller.business_email || currentSeller.email || '';
-}
-
-function getSellerAddress() {
-    if (!currentSeller) return 'Zimbabwe';
-    return currentSeller.business_address || currentSeller.address || currentSeller.location || 'Zimbabwe';
-}
-
-function generateStars(rating) {
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 >= 0.5;
-    let stars = '';
-    for (let i = 0; i < fullStars; i++) {
-        stars += '★';
-    }
-    if (hasHalfStar) {
-        stars += '½';
-    }
-    const emptyStars = 5 - Math.ceil(rating);
-    for (let i = 0; i < emptyStars; i++) {
-        stars += '☆';
-    }
-    return stars;
-}
-
-function renderShop() {
-    const categories = getCategories();
-    const uniqueCategories = Object.keys(categories);
-    const sellerName = getSellerDisplayName();
-    const sellerPhone = getSellerPhone();
-    const sellerEmail = getSellerEmail();
-    const sellerAddress = getSellerAddress();
-    const profileImage = currentSeller.profile_image || '';
-    const coverImage = currentSeller.cover_image || '';
-    const shopDescription = currentSeller.shop_description || 'Welcome to my shop! Please check out my products.';
-    const verified = currentSeller.shop_verified || false;
-    const joinedDate = currentSeller.shop_joined_date ? new Date(currentSeller.shop_joined_date).toLocaleDateString() : 'Recently';
-    const ratingDisplay = sellerRating.count > 0 ? sellerRating.average.toFixed(1) : '0.0';
-    const ratingText = sellerRating.count > 0 ? `(${sellerRating.count} ratings)` : '(No ratings)';
-    const avatarLetter = sellerName.charAt(0).toUpperCase();
-    
-    const html = `
-        <div class="shop-banner">
-            <div class="shop-cover">
-                ${coverImage ? `<img src="${coverImage}" alt="Cover">` : ''}
-            </div>
-            <div class="shop-profile-section">
-                <div class="container">
-                    <div class="shop-header">
-                        <div class="shop-avatar">
-                            ${profileImage ? `<img src="${profileImage}" alt="${sellerName}">` : `<div class="placeholder">${avatarLetter}</div>`}
-                        </div>
-                        <div class="shop-info">
-                            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-                                <h1>${sellerName}</h1>
-                                ${verified ? '<span class="verified-badge" style="display:inline-block;">Verified</span>' : ''}
-                            </div>
-                            <p class="description">${shopDescription}</p>
-                            <div class="details">
-                                <span>Location: ${sellerAddress}</span>
-                                ${sellerPhone ? `<span>Phone: ${sellerPhone}</span>` : ''}
-                                <span>Joined: ${joinedDate}</span>
-                            </div>
-                            <div class="shop-stats">
-                                <div class="shop-stat"><div class="num">${allProducts.length}</div><div class="label">Products</div></div>
-                                <div class="shop-stat"><div class="num">${uniqueCategories.length}</div><div class="label">Categories</div></div>
-                                <div class="shop-stat"><div class="rating">${ratingDisplay}</div><div class="label">Rating ${ratingText}</div></div>
-                            </div>
-                            ${sellerPhone ? `<a href="messages.html?seller=${encodeURIComponent(sellerId)}" class="contact-btn">Send a message</a>` : ''}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="container" style="margin-top:20px;">
-            <div class="main-content">
-                <div class="sidebar">
-                    <div class="sidebar-section">
-                        <h3>Categories</h3>
-                        <ul class="category-list">
-                            <li class="${selectedCategory === 'All' ? 'active' : ''}" onclick="filterByCategory('All')">All Products <span class="count">(${allProducts.length})</span></li>
-                            ${uniqueCategories.map(cat => `
-                                <li class="${selectedCategory === cat ? 'active' : ''}" onclick="filterByCategory('${cat.replace(/'/g, "\\'")}')">${cat} <span class="count">(${categories[cat]})</span></li>
-                            `).join('')}
-                        </ul>
-                    </div>
-                    <div class="sidebar-section">
-                        <h3>Search Products</h3>
-                        <input type="text" class="search-box" placeholder="Search in this shop..." id="searchInput" oninput="searchProducts()">
-                        <select class="sort-select" id="sortSelect" onchange="sortProducts()">
-                            <option value="newest">Newest First</option>
-                            <option value="price-low">Price: Low to High</option>
-                            <option value="price-high">Price: High to Low</option>
-                            <option value="name">Name: A-Z</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="products-area">
-                    <h2 style="margin-bottom:20px;color:#333;">${selectedCategory === 'All' ? 'All Products' : selectedCategory} <span style="font-size:16px;font-weight:400;color:#999;">(${filteredProducts.length})</span></h2>
-                    ${filteredProducts.length > 0 ? `
-                        <div class="products-grid">
-                            ${filteredProducts.map(p => `
-                                <div class="product-card" onclick="viewProduct('${p.id}')">
-                                    <img src="${p.image_url || 'https://placehold.co/400x300?text=No+Image'}" alt="${p.title || 'Product'}" onerror="this.src='https://placehold.co/400x300?text=No+Image'">
-                                    <div class="info">
-                                        <div class="title">${p.title || 'Untitled'}</div>
-                                        <div class="price">$${parseFloat(p.price || 0).toFixed(2)}</div>
-                                        <div class="stock">Stock: ${p.stock || 0}</div>
-                                        <span class="category-tag">${p.category || 'Other'}</span>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    ` : `
-                        <div class="no-products">
-                            <div class="icon">📦</div>
-                            <h3>No products found</h3>
-                            <p>Try changing your search or filter</p>
-                        </div>
-                    `}
-                </div>
-            </div>
-        </div>
-    `;
-    
-    document.getElementById('shopContent').innerHTML = html;
-}
-
-function filterByCategory(category) {
-    selectedCategory = category;
-    if (category === 'All') {
-        filteredProducts = [...allProducts];
-    } else {
-        filteredProducts = allProducts.filter(p => p.category === category);
-    }
-    renderShop();
-}
-
-function searchProducts() {
-    const query = document.getElementById('searchInput').value.toLowerCase();
-    const base = selectedCategory === 'All' ? allProducts : allProducts.filter(p => p.category === selectedCategory);
-    if (query) {
-        filteredProducts = base.filter(p => (p.title || '').toLowerCase().includes(query) || (p.description || '').toLowerCase().includes(query));
-    } else {
-        filteredProducts = base;
-    }
-    renderShop();
-}
-
-function sortProducts() {
-    const sort = document.getElementById('sortSelect').value;
-    if (sort === 'newest') filteredProducts.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-    else if (sort === 'price-low') filteredProducts.sort((a, b) => parseFloat(a.price || 0) - parseFloat(b.price || 0));
-    else if (sort === 'price-high') filteredProducts.sort((a, b) => parseFloat(b.price || 0) - parseFloat(a.price || 0));
-    else if (sort === 'name') filteredProducts.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
-    renderShop();
-}
-
-function viewProduct(productId) {
-    window.location.href = `product-detail.html?id=${productId}`;
-}
+// Start the page
+document.addEventListener('DOMContentLoaded', initShopPage);
