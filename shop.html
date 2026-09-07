@@ -140,14 +140,53 @@
             flex-wrap: wrap;
         }
 
-        .btn-whatsapp {
-            background: linear-gradient(135deg, #25D366, #128C7E);
-            border-color: #25D366;
+        /* Purple accent buttons */
+        .btn-glass {
+            padding: 10px 24px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: var(--bubble-transition);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid var(--bubble-glass-border);
+            background: var(--bubble-glass);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: #fff;
         }
 
-        .btn-whatsapp:hover {
-            border-color: #25D366;
-            box-shadow: 0 4px 20px rgba(37, 211, 102, 0.3);
+        .btn-glass:hover {
+            transform: translateY(-2px);
+            border-color: var(--bubble-accent);
+            box-shadow: 0 4px 20px var(--bubble-glow);
+        }
+
+        .btn-contact {
+            background: linear-gradient(135deg, var(--bubble-accent), var(--bubble-accent2));
+            border-color: var(--bubble-accent);
+            color: #fff;
+        }
+
+        .btn-contact:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px var(--bubble-glow);
+            border-color: var(--bubble-accent);
+        }
+
+        .btn-share {
+            background: var(--bubble-glass);
+            border-color: var(--bubble-glass-border);
+            color: #fff;
+        }
+
+        .btn-share:hover {
+            border-color: var(--bubble-accent);
+            box-shadow: 0 4px 20px var(--bubble-glow);
+            transform: translateY(-2px);
         }
 
         .main-content {
