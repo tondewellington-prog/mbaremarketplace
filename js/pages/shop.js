@@ -31,7 +31,7 @@ function getUrlParams() {
 
 async function fetchShopData(sellerId) {
     try {
-        // Fetch seller details using user_id
+        // Fetch seller details
         const sellerResponse = await fetch(`${SUPABASE_URL}/rest/v1/sellers?user_id=eq.${sellerId}&select=*`, {
             headers: {
                 'apikey': SUPABASE_ANON_KEY,
@@ -50,7 +50,7 @@ async function fetchShopData(sellerId) {
 
         const seller = sellers[0];
 
-        // Fetch seller's products using seller_id with the UUID
+        // Fetch seller's products
         const productsResponse = await fetch(`${SUPABASE_URL}/rest/v1/products?seller_id=eq.${sellerId}&select=*&order=created_at.desc`, {
             headers: {
                 'apikey': SUPABASE_ANON_KEY,
@@ -64,7 +64,7 @@ async function fetchShopData(sellerId) {
 
         const products = await productsResponse.json();
 
-        // Fetch seller ratings using seller_id with the UUID
+        // Fetch seller ratings
         const ratingsResponse = await fetch(`${SUPABASE_URL}/rest/v1/ratings?seller_id=eq.${sellerId}&select=rating`, {
             headers: {
                 'apikey': SUPABASE_ANON_KEY,
@@ -106,6 +106,7 @@ function renderShop(data) {
     const rating = data.rating || 0;
     const ratingCount = data.ratingCount || 0;
 
+    // Build shop URL for sharing
     const shopUrl = window.location.href;
 
     // Get unique categories
@@ -122,15 +123,17 @@ function renderShop(data) {
         }
     });
 
+    // Build the HTML
     let html = `
+        <!-- Shop Banner -->
         <div class="shop-banner">
             <div class="shop-cover"></div>
             <div class="container">
                 <div class="shop-header">
                     <div class="shop-avatar">
                         ${seller.logo_url ? 
-                            `<img src="${seller.logo_url}" alt="${escapeHtml(seller.business_name)}">` :
-                            `<div class="placeholder">${seller.business_name ? escapeHtml(seller.business_name.charAt(0).toUpperCase()) : 'S'}</div>`
+                            `<img src="${seller.logo_url}" alt="${seller.business_name}">` :
+                            `<div class="placeholder">${seller.business_name ? seller.business_name.charAt(0).toUpperCase() : 'S'}</div>`
                         }
                     </div>
                     <div class="shop-info">
@@ -138,8 +141,8 @@ function renderShop(data) {
                         ${seller.verified ? '<span class="verified-badge">Verified</span>' : ''}
                         <p class="description">${escapeHtml(seller.business_description || '')}</p>
                         <div class="details">
-                            <span>${seller.business_address ? 'Location: ' + escapeHtml(seller.business_address) : 'Location not specified'}</span>
-                            ${seller.business_phone ? `<span>Phone: ${escapeHtml(seller.business_phone)}</span>` : ''}
+                            <span>📍 ${escapeHtml(seller.business_address || 'Location not specified')}</span>
+                            <span>📞 ${escapeHtml(seller.business_phone || '')}</span>
                         </div>
                         <div class="shop-stats">
                             <div class="shop-stat">
@@ -152,8 +155,8 @@ function renderShop(data) {
                             </div>
                         </div>
                         <div class="shop-actions">
-                            ${seller.business_phone ? `<a href="tel:${escapeHtml(seller.business_phone)}" class="btn-glass btn-whatsapp">Contact</a>` : ''}
-                            <button class="btn-glass btn-share" onclick="shareShopLink('${shopUrl}')">Share Shop</button>
+                            <a href="tel:${seller.business_phone || ''}" class="btn-glass btn-whatsapp">📞 Contact</a>
+                            <button class="btn-glass btn-share" onclick="shareShopLink('${shopUrl}')">📤 Share Shop</button>
                         </div>
                     </div>
                 </div>
@@ -165,13 +168,14 @@ function renderShop(data) {
     html += `
         <div class="container">
             <div class="main-content">
+                <!-- Sidebar -->
                 <div class="sidebar">
                     <div class="sidebar-section">
                         <h3>Categories</h3>
                         <ul class="category-list" id="categoryList">
                             ${categories.map(cat => `
                                 <li class="${cat === currentCategory ? 'active' : ''}" data-category="${cat}" onclick="filterByCategory('${cat}')">
-                                    ${escapeHtml(cat)} <span class="count">(${categoryMap[cat] || 0})</span>
+                                    ${cat} <span class="count">(${categoryMap[cat] || 0})</span>
                                 </li>
                             `).join('')}
                         </ul>
@@ -179,7 +183,7 @@ function renderShop(data) {
                     <div class="sidebar-section">
                         <h3>Search</h3>
                         <input type="text" class="search-box" id="searchProducts" placeholder="Search products..." oninput="filterProducts()">
-                        <h3 style="margin-top:16px;">Sort By</h3>
+                        <h3>Sort By</h3>
                         <select class="sort-select" id="sortSelect" onchange="sortProducts()">
                             <option value="newest">Newest First</option>
                             <option value="oldest">Oldest First</option>
@@ -190,6 +194,7 @@ function renderShop(data) {
                     </div>
                 </div>
 
+                <!-- Products Area -->
                 <div class="products-area">
                     <div id="productsContainer">
                         ${renderProductGrid(products)}
@@ -212,7 +217,7 @@ function renderProductGrid(products) {
     if (!products || products.length === 0) {
         return `
             <div class="no-products">
-                <span class="icon">&#128230;</span>
+                <div class="icon">📦</div>
                 <p>No products available in this shop.</p>
             </div>
         `;
@@ -220,24 +225,19 @@ function renderProductGrid(products) {
 
     return `
         <div class="products-grid">
-            ${products.map(product => {
-                const stock = parseInt(product.stock_quantity) || 0;
-                const stockText = stock > 0 ? 'In Stock' : 'Out of Stock';
-                const stockClass = stock > 0 ? 'in-stock' : 'out-of-stock';
-                return `
-                    <div class="product-card" onclick="goToProduct('${product.id}')">
-                        <img src="${product.image_url || 'https://via.placeholder.com/300x300?text=Product'}" 
-                             alt="${escapeHtml(product.title)}" 
-                             onerror="this.src='https://via.placeholder.com/300x300?text=Product'">
-                        <div class="info">
-                            <div class="title">${escapeHtml(product.title)}</div>
-                            <div class="price">$${parseFloat(product.price).toFixed(2)}</div>
-                            <div class="stock ${stockClass}">${stockText}</div>
-                            ${product.category ? `<span class="category-tag">${escapeHtml(product.category)}</span>` : ''}
-                        </div>
+            ${products.map(product => `
+                <div class="product-card" onclick="goToProduct('${product.id}')">
+                    <img src="${product.image_url || 'https://via.placeholder.com/300x300?text=Product'}" 
+                         alt="${escapeHtml(product.title)}" 
+                         onerror="this.src='https://via.placeholder.com/300x300?text=Product'">
+                    <div class="info">
+                        <div class="title">${escapeHtml(product.title)}</div>
+                        <div class="price">$${parseFloat(product.price).toFixed(2)}</div>
+                        <div class="stock">${product.stock_quantity > 0 ? 'In Stock' : 'Out of Stock'}</div>
+                        ${product.category ? `<div class="category-tag">${escapeHtml(product.category)}</div>` : ''}
                     </div>
-                `;
-            }).join('')}
+                </div>
+            `).join('')}
         </div>
     `;
 }
@@ -249,6 +249,7 @@ function renderProductGrid(products) {
 function filterByCategory(category) {
     currentCategory = category;
     
+    // Update active state in sidebar
     document.querySelectorAll('.category-list li').forEach(el => {
         el.classList.toggle('active', el.dataset.category === category);
     });
@@ -263,10 +264,12 @@ function filterProducts() {
 
     let filtered = [...productsData];
 
+    // Filter by category
     if (currentCategory !== 'All') {
         filtered = filtered.filter(p => p.category === currentCategory);
     }
 
+    // Filter by search
     if (searchTerm) {
         filtered = filtered.filter(p => 
             p.title?.toLowerCase().includes(searchTerm) || 
@@ -274,6 +277,7 @@ function filterProducts() {
         );
     }
 
+    // Sort
     switch (sortValue) {
         case 'newest':
             filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
@@ -311,7 +315,7 @@ function goToProduct(productId) {
 }
 
 // ============================================
-// SHARE FUNCTION
+// SHARE FUNCTION (Global)
 // ============================================
 
 function shareShopLink(shopUrl) {
@@ -319,7 +323,7 @@ function shareShopLink(shopUrl) {
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(url)
-            .then(() => showShareNotification('Shop link copied to clipboard'))
+            .then(() => showShareNotification('Shop link copied to clipboard!'))
             .catch(() => fallbackCopyTextToClipboard(url));
     } else {
         fallbackCopyTextToClipboard(url);
@@ -339,22 +343,22 @@ function fallbackCopyTextToClipboard(text) {
     try {
         const successful = document.execCommand('copy');
         if (successful) {
-            showShareNotification('Shop link copied to clipboard');
+            showShareNotification('Shop link copied to clipboard!');
         } else {
-            showShareNotification('Unable to copy link. Please copy the URL manually.');
+            showShareNotification('Unable to copy link. Please copy the URL manually.', false);
         }
     } catch (err) {
-        showShareNotification('Unable to copy link. Please copy the URL manually.');
+        showShareNotification('Unable to copy link. Please copy the URL manually.', false);
     }
 
     document.body.removeChild(textArea);
 }
 
-function showShareNotification(message) {
+function showShareNotification(message, success) {
     const notification = document.getElementById('shareNotification');
     if (!notification) return;
 
-    notification.textContent = message;
+    notification.innerHTML = (success !== false ? '✓ ' : '') + message;
     notification.classList.add('show');
 
     clearTimeout(notification._timeout);
@@ -389,8 +393,6 @@ async function initShopPage() {
                     <div class="error">
                         <h2>No Shop Selected</h2>
                         <p>Please provide a seller ID to view their shop.</p>
-                        <br>
-                        <a href="index.html" class="btn-home">Return Home</a>
                     </div>
                 </div>
             `;
@@ -405,10 +407,10 @@ async function initShopPage() {
         shopContent.innerHTML = `
             <div class="container" style="padding: 60px 20px; text-align: center;">
                 <div class="error">
-                    <h2>Something went wrong</h2>
+                    <h2>Oops! Something went wrong</h2>
                     <p>${error.message || 'Unable to load shop. Please try again later.'}</p>
                     <br>
-                    <a href="index.html" class="btn-home">Return Home</a>
+                    <a href="index.html" class="btn-glass" style="display: inline-block; padding: 12px 30px;">Return Home</a>
                 </div>
             </div>
         `;
