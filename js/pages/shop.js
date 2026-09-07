@@ -31,8 +31,7 @@ function getUrlParams() {
 
 async function fetchShopData(sellerId) {
     try {
-        // The sellerId from URL is the user_id (UUID)
-        // Query sellers table using user_id column
+        // First get the seller by user_id (the parameter passed in URL)
         const sellerResponse = await fetch(`${SUPABASE_URL}/rest/v1/sellers?user_id=eq.${sellerId}&select=*`, {
             headers: {
                 'apikey': SUPABASE_ANON_KEY,
@@ -51,7 +50,7 @@ async function fetchShopData(sellerId) {
 
         const seller = sellers[0];
 
-        // Now get products using the seller's actual id (primary key)
+        // Now get products using the seller's actual id
         const productsResponse = await fetch(`${SUPABASE_URL}/rest/v1/products?seller_id=eq.${seller.id}&select=*&order=created_at.desc`, {
             headers: {
                 'apikey': SUPABASE_ANON_KEY,
