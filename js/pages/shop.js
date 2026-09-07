@@ -122,7 +122,7 @@ function renderShop(data) {
         }
     });
 
-    // Get the business name - from seller-dashboard this is stored in business_name or we can use a default
+    // Get the business name - from seller-dashboard this is stored in business_name
     const businessName = seller.business_name || 'Shop Name';
     const shopDescription = seller.shop_description || seller.business_description || '';
     const locationDisplay = seller.location_display_name || seller.business_address || 'Location not specified';
@@ -226,7 +226,7 @@ function renderProductGrid(products) {
     return `
         <div class="products-grid">
             ${products.map(product => {
-                // Check stock quantity properly
+                // Use 'stock' column name (from seller-dashboard), not 'stock_quantity'
                 const stock = product.stock !== null && product.stock !== undefined ? parseInt(product.stock) : 0;
                 const stockText = stock > 0 ? 'In Stock' : 'Out of Stock';
                 const stockClass = stock > 0 ? 'in-stock' : 'out-of-stock';
