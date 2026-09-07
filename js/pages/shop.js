@@ -50,8 +50,9 @@ async function fetchShopData(sellerId) {
 
         const seller = sellers[0];
 
-        // Now get products using the seller's actual id
-        const productsResponse = await fetch(`${SUPABASE_URL}/rest/v1/products?seller_id=eq.${seller.id}&select=*&order=created_at.desc`, {
+        // Now get products using the seller's user_id (not the numeric id)
+        // The products table uses user_id as the foreign key
+        const productsResponse = await fetch(`${SUPABASE_URL}/rest/v1/products?user_id=eq.${seller.user_id}&select=*&order=created_at.desc`, {
             headers: {
                 'apikey': SUPABASE_ANON_KEY,
                 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
@@ -64,8 +65,8 @@ async function fetchShopData(sellerId) {
 
         const products = await productsResponse.json();
 
-        // Get ratings using the seller's actual id
-        const ratingsResponse = await fetch(`${SUPABASE_URL}/rest/v1/ratings?seller_id=eq.${seller.id}&select=rating`, {
+        // Get ratings using the seller's user_id
+        const ratingsResponse = await fetch(`${SUPABASE_URL}/rest/v1/ratings?user_id=eq.${seller.user_id}&select=rating`, {
             headers: {
                 'apikey': SUPABASE_ANON_KEY,
                 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
