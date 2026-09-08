@@ -2,39 +2,36 @@
 // CATEGORY PAGE - Mbare Marketplace
 // ============================================
 
-// Safely declare Supabase Configuration - check if already exists
-if (typeof window.SUPABASE_URL === 'undefined') {
-    window.SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
+// Use existing Supabase Configuration or set fallbacks
+// Using var instead of const to avoid redeclaration errors
+if (typeof SUPABASE_URL === 'undefined') {
+    var SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
 }
-if (typeof window.SUPABASE_ANON_KEY === 'undefined') {
-    window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
+if (typeof SUPABASE_ANON_KEY === 'undefined') {
+    var SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
 }
-
-// Use the existing variables or fallback to the ones we set
-const SUPABASE_URL = window.SUPABASE_URL;
-const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
 
 // DOM Elements
-const productsGrid = document.getElementById('productsGrid');
-const categoryTitle = document.getElementById('categoryTitle');
-const categoryDescription = document.getElementById('categoryDescription');
-const loadingSpinner = document.getElementById('loadingSpinner');
-const noProductsMessage = document.getElementById('noProductsMessage');
-const sortSelect = document.getElementById('sortSelect');
-const resultsCount = document.getElementById('resultsCount');
+var productsGrid = document.getElementById('productsGrid');
+var categoryTitle = document.getElementById('categoryTitle');
+var categoryDescription = document.getElementById('categoryDescription');
+var loadingSpinner = document.getElementById('loadingSpinner');
+var noProductsMessage = document.getElementById('noProductsMessage');
+var sortSelect = document.getElementById('sortSelect');
+var resultsCount = document.getElementById('resultsCount');
 
-let currentCategory = '';
-let allProducts = [];
-let filteredProducts = [];
-let currentSort = 'newest';
-let categoryConfig = null;
+var currentCategory = '';
+var allProducts = [];
+var filteredProducts = [];
+var currentSort = 'newest';
+var categoryConfig = null;
 
 // ============================================
 // GET URL PARAMETERS
 // ============================================
 
 function getUrlParams() {
-    const params = new URLSearchParams(window.location.search);
+    var params = new URLSearchParams(window.location.search);
     return {
         category: params.get('category')
     };
@@ -57,7 +54,7 @@ function getCategoryConfig(categorySlug) {
 
 async function fetchCategoryProducts(categorySlug, config) {
     try {
-        let query = `${SUPABASE_URL}/rest/v1/products?`;
+        var query = SUPABASE_URL + '/rest/v1/products?';
 
         if (config.fetchQuery) {
             query += config.fetchQuery;
@@ -65,10 +62,10 @@ async function fetchCategoryProducts(categorySlug, config) {
             query += 'select=*&order=created_at.desc';
         }
 
-        const response = await fetch(query, {
+        var response = await fetch(query, {
             headers: {
                 'apikey': SUPABASE_ANON_KEY,
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
             }
         });
 
@@ -76,19 +73,19 @@ async function fetchCategoryProducts(categorySlug, config) {
             throw new Error('Failed to fetch products');
         }
 
-        let products = await response.json();
+        var products = await response.json();
 
         if (config.filter) {
-            products = products.filter(product => {
-                const categoryMatch = config.filter.categoryKeywords.some(keyword =>
-                    product.category && product.category.toLowerCase().includes(keyword.toLowerCase())
-                );
-                const titleMatch = config.filter.titleKeywords.some(keyword =>
-                    product.title && product.title.toLowerCase().includes(keyword.toLowerCase())
-                );
-                const descMatch = config.filter.descriptionKeywords.some(keyword =>
-                    product.description && product.description.toLowerCase().includes(keyword.toLowerCase())
-                );
+            products = products.filter(function(product) {
+                var categoryMatch = config.filter.categoryKeywords.some(function(keyword) {
+                    return product.category && product.category.toLowerCase().includes(keyword.toLowerCase());
+                });
+                var titleMatch = config.filter.titleKeywords.some(function(keyword) {
+                    return product.title && product.title.toLowerCase().includes(keyword.toLowerCase());
+                });
+                var descMatch = config.filter.descriptionKeywords.some(function(keyword) {
+                    return product.description && product.description.toLowerCase().includes(keyword.toLowerCase());
+                });
                 return categoryMatch || titleMatch || descMatch;
             });
         }
@@ -120,16 +117,16 @@ function renderProducts(products, config) {
     }
 
     if (resultsCount) {
-        resultsCount.textContent = `${products.length} product${products.length > 1 ? 's' : ''} found`;
+        resultsCount.textContent = products.length + ' product' + (products.length > 1 ? 's' : '') + ' found';
     }
 
-    let html = '<div class="products-grid">';
+    var html = '<div class="products-grid">';
 
-    products.forEach(product => {
-        const stock = product.stock !== null && product.stock !== undefined ? parseInt(product.stock) : 0;
-        const stockText = stock > 0 ? 'In Stock' : 'Out of Stock';
-        const stockClass = stock > 0 ? 'in-stock' : 'out-of-stock';
-        const imageUrl = product.image_url || 'https://via.placeholder.com/300x300?text=Product';
+    products.forEach(function(product) {
+        var stock = product.stock !== null && product.stock !== undefined ? parseInt(product.stock) : 0;
+        var stockText = stock > 0 ? 'In Stock' : 'Out of Stock';
+        var stockClass = stock > 0 ? 'in-stock' : 'out-of-stock';
+        var imageUrl = product.image_url || 'https://via.placeholder.com/300x300?text=Product';
 
         html += `
             <div class="product-card" onclick="goToProduct('${product.id}')">
@@ -154,26 +151,38 @@ function renderProducts(products, config) {
 // ============================================
 
 function sortProducts(products, sortType) {
-    const sorted = [...products];
+    var sorted = products.slice();
 
     switch (sortType) {
         case 'newest':
-            sorted.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            sorted.sort(function(a, b) {
+                return new Date(b.created_at) - new Date(a.created_at);
+            });
             break;
         case 'oldest':
-            sorted.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+            sorted.sort(function(a, b) {
+                return new Date(a.created_at) - new Date(b.created_at);
+            });
             break;
         case 'price-low':
-            sorted.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+            sorted.sort(function(a, b) {
+                return parseFloat(a.price) - parseFloat(b.price);
+            });
             break;
         case 'price-high':
-            sorted.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
+            sorted.sort(function(a, b) {
+                return parseFloat(b.price) - parseFloat(a.price);
+            });
             break;
         case 'name':
-            sorted.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+            sorted.sort(function(a, b) {
+                return (a.title || '').localeCompare(b.title || '');
+            });
             break;
         default:
-            sorted.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            sorted.sort(function(a, b) {
+                return new Date(b.created_at) - new Date(a.created_at);
+            });
     }
 
     return sorted;
@@ -186,8 +195,8 @@ function sortProducts(products, sortType) {
 function applyFiltersAndSort() {
     if (!allProducts) return;
 
-    const sortValue = sortSelect ? sortSelect.value : 'newest';
-    const sorted = sortProducts(allProducts, sortValue);
+    var sortValue = sortSelect ? sortSelect.value : 'newest';
+    var sorted = sortProducts(allProducts, sortValue);
     filteredProducts = sorted;
     renderProducts(sorted, categoryConfig);
 }
@@ -197,7 +206,7 @@ function applyFiltersAndSort() {
 // ============================================
 
 function goToProduct(productId) {
-    window.location.href = `product-detail.html?id=${productId}`;
+    window.location.href = 'product-detail.html?id=' + productId;
 }
 
 // ============================================
@@ -206,13 +215,13 @@ function goToProduct(productId) {
 
 function escapeHtml(text) {
     if (!text) return '';
-    const div = document.createElement('div');
+    var div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
 }
 
 function getCategoryDisplayName(slug) {
-    const names = {
+    var names = {
         'books': 'Books',
         'clothing': 'Clothing & Fashion',
         'electronics': 'Electronics',
@@ -225,11 +234,11 @@ function getCategoryDisplayName(slug) {
         'vehicles-transportation': 'Vehicles & Transportation',
         'vehicle-parts': 'Vehicle Parts & Accessories'
     };
-    return names[slug] || slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    return names[slug] || slug.replace(/-/g, ' ').replace(/\b\w/g, function(l) { return l.toUpperCase(); });
 }
 
 function getCategoryDescription(slug) {
-    const descriptions = {
+    var descriptions = {
         'books': 'Discover a wide selection of books, literature, textbooks, novels, and magazines.',
         'clothing': 'Shop the latest fashion trends, apparel, shoes, and accessories.',
         'electronics': 'Find the best electronics, gadgets, computers, phones, and tech products.',
@@ -242,7 +251,7 @@ function getCategoryDescription(slug) {
         'vehicles-transportation': 'Find vehicles, cars, trucks, motorcycles, and transportation services.',
         'vehicle-parts': 'Shop vehicle parts, accessories, spares, and automotive components.'
     };
-    return descriptions[slug] || `Browse ${getCategoryDisplayName(slug)} products on Mbare Marketplace.`;
+    return descriptions[slug] || 'Browse ' + getCategoryDisplayName(slug) + ' products on Mbare Marketplace.';
 }
 
 // ============================================
@@ -251,7 +260,7 @@ function getCategoryDescription(slug) {
 
 async function initCategoryPage() {
     try {
-        const params = getUrlParams();
+        var params = getUrlParams();
         currentCategory = params.category;
 
         if (!currentCategory) {
@@ -286,11 +295,11 @@ async function initCategoryPage() {
             return;
         }
 
-        const displayName = getCategoryDisplayName(currentCategory);
+        var displayName = getCategoryDisplayName(currentCategory);
         if (categoryTitle) categoryTitle.textContent = displayName;
         if (categoryDescription) categoryDescription.textContent = getCategoryDescription(currentCategory);
 
-        const products = await fetchCategoryProducts(currentCategory, categoryConfig);
+        var products = await fetchCategoryProducts(currentCategory, categoryConfig);
         allProducts = products;
 
         applyFiltersAndSort();
