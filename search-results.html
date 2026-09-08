@@ -1,243 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="canonical" href="https://www.mbaremarketplace.com/search-results.html">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Search Results - Mbare Marketplace</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        .search-results-container {
-            max-width: 1200px;
-            margin: 30px auto;
-            padding: 0 20px;
-        }
-
-        .search-results-header {
-            margin-bottom: 30px;
-        }
-
-        .search-results-header h1 {
-            font-size: 24px;
-            color: #232f3e;
-            margin-bottom: 20px;
-        }
-
-        .search-filters {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        .filter-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .filter-group label {
-            font-weight: 500;
-            color: #232f3e;
-            font-size: 14px;
-        }
-
-        .filter-group select {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-            background: white;
-            cursor: pointer;
-        }
-
-        .filter-group select:focus {
-            outline: none;
-            border-color: #f90;
-        }
-
-        .results-info {
-            margin: 20px 0;
-            color: #666;
-            font-size: 14px;
-        }
-
-        .search-results-grid {
+        /* Minimal page-specific styles - everything else comes from styles.css */
+        .products-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
             gap: 20px;
-            min-height: 400px;
-        }
-
-        .product-card {
-            background: white;
-            border-radius: 8px;
-            padding: 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            transition: transform 0.2s, box-shadow 0.2s;
-            cursor: pointer;
-        }
-
-        .product-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
-        }
-
-        .product-card img {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            border-radius: 4px;
-            margin-bottom: 10px;
-        }
-
-        .product-card h3 {
-            font-size: 16px;
-            font-weight: 500;
-            margin: 10px 0;
-            color: #232f3e;
-            line-height: 1.4;
-            height: 44px;
-            overflow: hidden;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-        }
-
-        .product-price {
-            font-size: 20px;
-            font-weight: 600;
-            color: #B12704;
-            margin: 5px 0;
-        }
-
-        .product-seller {
-            font-size: 12px;
-            color: #666;
-            margin: 5px 0;
-        }
-
-        .product-category {
-            font-size: 12px;
-            color: #f90;
-            background: #fff3e0;
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 4px;
-            margin: 5px 0;
-        }
-
-        .no-results {
-            text-align: center;
-            padding: 60px 20px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            grid-column: 1 / -1;
-        }
-
-        .no-results h2 {
-            color: #232f3e;
-            margin-bottom: 15px;
-        }
-
-        .no-results p {
-            color: #666;
-            margin-bottom: 20px;
-        }
-
-        .no-results .btn-shop {
-            display: inline-block;
-            padding: 12px 30px;
-            background: #f90;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-            font-weight: 600;
-        }
-
-        .no-results .btn-shop:hover {
-            background: #e68a00;
-        }
-
-        .loading-spinner {
-            text-align: center;
-            padding: 60px 20px;
-            grid-column: 1 / -1;
-        }
-
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #f90;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .pagination {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 30px;
-        }
-
-        .pagination button {
-            padding: 8px 15px;
-            border: 1px solid #ddd;
-            background: white;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .pagination button:hover {
-            background: #f5f5f5;
-            border-color: #f90;
-        }
-
-        .pagination button.active {
-            background: #f90;
-            color: white;
-            border-color: #f90;
-        }
-
-        .pagination button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
         }
 
         @media (max-width: 768px) {
-            .search-filters {
-                flex-direction: column;
-                align-items: stretch;
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                gap: 12px;
             }
-            
-            .filter-group {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .search-results-grid {
-                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        }
+
+        @media (max-width: 480px) {
+            .products-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
             }
         }
     </style>
 </head>
-<body>
+<body class="search-results">
+
+    <!-- Background Bubbles -->
+    <div class="bubble-bg">
+        <span></span><span></span><span></span><span></span><span></span>
+    </div>
+
     <!-- Header -->
     <header class="header">
         <div class="header-top">
@@ -245,171 +43,369 @@
                 <div class="logo">
                     <a href="index.html">Mbare Marketplace</a>
                 </div>
-                <div class="search-bar">
-                    <select class="search-category" id="searchCategory">
-                        <option value="all">All</option>
-                        <option value="Electronics">Electronics</option>
-                        <option value="Books">Books</option>
-                        <option value="Clothing">Clothing</option>
-                        <option value="Home & Kitchen">Home & Kitchen</option>
-                    </select>
-                    <input type="text" id="searchInput" placeholder="Search Mbare Marketplace" class="search-input">
-                    <button class="search-btn" onclick="handleSearch()">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <path d="m21 21-4.35-4.35"></path>
-                        </svg>
-                    </button>
-                </div>
                 <div class="header-right">
-                    <div class="account-menu">
-                        <span class="account-label" id="accountLabel">Hello, Sign in</span>
-                        <a href="login.html" class="account-link" id="accountLink">Account & Lists</a>
-                        <button id="logoutBtn" onclick="logout()" style="display: none; background: none; border: 1px solid #fff; color: #fff; cursor: pointer; margin-left: 10px; padding: 5px 15px; border-radius: 4px;">Logout</button>
-                    </div>
-                    <div class="returns">
-                        <span class="returns-label">Returns</span>
-                        <span class="returns-link">& Orders</span>
-                    </div>
-                    <a href="Basket.html" class="basket">
-                        <div class="basket-icon">
-                            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-                                <line x1="3" y1="6" x2="21" y2="6"></line>
-                                <path d="M16 10a4 4 0 0 1-8 0"></path>
-                            </svg>
-                            <span class="basket-count" id="basketCount">0</span>
-                        </div>
-                        <span class="basket-text">Basket</span>
-                    </a>
+                    <a href="index.html" class="account-link">Home</a>
+                    <a href="seller-dashboard.html" class="account-link">Sell</a>
                 </div>
             </div>
         </div>
-        <nav class="nav-menu">
-            <div class="container">
-                <a href="index.html" class="nav-item all-menu">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <line x1="3" y1="12" x2="21" y2="12"></line>
-                        <line x1="3" y1="6" x2="21" y2="6"></line>
-                        <line x1="3" y1="18" x2="21" y2="18"></line>
-                    </svg>
-                    All
-                </a>
-                <a href="#" class="nav-item">Today's Deals</a>
-                <a href="#" class="nav-item">Customer Service</a>
-                <a href="#" class="nav-item">Registry</a>
-                <a href="#" class="nav-item">Gift Cards</a>
-                <a href="seller-register.html" class="nav-item">Sell</a>
-                <a href="analytics.html" class="nav-item">Analytics</a>
-            </div>
-        </nav>
     </header>
 
     <!-- Search Results Content -->
-    <div class="search-results-container">
-        <div class="search-results-header">
-            <h1 id="searchQuery">Search Results</h1>
-            <div class="search-filters">
-                <div class="filter-group">
-                    <label>Sort by:</label>
-                    <select id="sortBy" onchange="applyFilters()">
+    <main class="main-content">
+        <div class="container">
+            <a href="index.html" class="back-link">&#8592; Back to Home</a>
+
+            <div class="search-header">
+                <h1 id="searchTitle">Search Results</h1>
+                <p id="searchDescription">Showing results for your search</p>
+            </div>
+
+            <div class="search-controls">
+                <span class="results-count" id="resultsCount">Loading...</span>
+                <div class="sort-wrapper">
+                    <label for="sortSelect">Sort by:</label>
+                    <select id="sortSelect" class="sort-select">
                         <option value="relevance">Relevance</option>
-                        <option value="priceLow">Price: Low to High</option>
-                        <option value="priceHigh">Price: High to Low</option>
-                        <option value="rating">Customer Rating</option>
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="price-low">Price: Low to High</option>
+                        <option value="price-high">Price: High to Low</option>
+                        <option value="name">Name A-Z</option>
                     </select>
                 </div>
-                <div class="filter-group">
-                    <label>Price:</label>
-                    <select id="priceFilter" onchange="applyFilters()">
-                        <option value="all">All Prices</option>
-                        <option value="under25">Under $25</option>
-                        <option value="25to50">$25 to $50</option>
-                        <option value="50to100">$50 to $100</option>
-                        <option value="over100">Over $100</option>
-                    </select>
+                <div class="search-again">
+                    <input type="text" id="searchInput" placeholder="Search again..." value="">
+                    <button onclick="performSearch()">Search</button>
                 </div>
             </div>
-        </div>
-        <div class="results-info" id="resultsInfo">Loading results...</div>
-        <div class="search-results-grid" id="searchResults">
-            <div class="loading-spinner">
+
+            <div id="loadingSpinner" class="loading-spinner">
                 <div class="spinner"></div>
-                <p>Searching products...</p>
+                <p>Searching...</p>
             </div>
+
+            <div id="resultsGrid" class="products-grid"></div>
         </div>
-        <div class="pagination" id="pagination"></div>
-    </div>
+    </main>
 
     <!-- Footer -->
     <footer class="footer">
-        <div class="footer-top">
-            <a href="#" class="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">Back to top</a>
-        </div>
         <div class="footer-content">
             <div class="container">
-                <div class="footer-columns">
-                    <div class="footer-column">
-                        <h3>Get to Know Us</h3>
-                        <ul>
-                            <li><a href="#">Careers</a></li>
-                            <li><a href="#">Blog</a></li>
-                            <li><a href="#">About Mbare Marketplace</a></li>
-                            <li><a href="#">Investor Relations</a></li>
-                            <li><a href="#">Mbare Marketplace Devices</a></li>
-                        </ul>
+                <div class="footer-bottom">
+                    <div class="container">
+                        <span class="footer-copyright">&copy; 2026 Mbare Marketplace. All rights reserved.</span>
+                        <div class="footer-links">
+                            <a href="index.html">Home</a>
+                            <a href="seller-dashboard.html">Sell</a>
+                        </div>
                     </div>
-                    <div class="footer-column">
-                        <h3>Make Money with Us</h3>
-                        <ul>
-                            <li><a href="#">Sell products on Mbare Marketplace</a></li>
-                            <li><a href="#">Sell on Mbare Marketplace Business</a></li>
-                            <li><a href="#">Sell apps on Mbare Marketplace</a></li>
-                            <li><a href="#">Become an Affiliate</a></li>
-                            <li><a href="#">Advertise Your Products</a></li>
-                        </ul>
-                    </div>
-                    <div class="footer-column">
-                        <h3>Mbare Marketplace Payment Products</h3>
-                        <ul>
-                            <li><a href="#">Mbare Marketplace Business Card</a></li>
-                            <li><a href="#">Shop with Points</a></li>
-                            <li><a href="#">Reload Your Balance</a></li>
-                            <li><a href="#">Mbare Marketplace Currency Converter</a></li>
-                        </ul>
-                    </div>
-                    <div class="footer-column">
-                        <h3>Need Help?</h3>
-                        <ul>
-                            <li><a href="#">COVID-19 and Mbare Marketplace</a></li>
-                            <li><a href="#">Your Account</a></li>
-                            <li><a href="#">Your Orders</a></li>
-                            <li><a href="#">Shipping Rates & Policies</a></li>
-                            <li><a href="#">Returns & Replacements</a></li>
-                            <li><a href="#">Help</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <div class="container">
-                <div class="footer-logo">Mbare Marketplace</div>
-                <div class="footer-links">
-                    <a href="#">Conditions of Use</a>
-                    <a href="#">Privacy Notice</a>
-                    <a href="#">Interest-Based Ads</a>
-                </div>
-                <div class="footer-copyright">
-                    &copy; 2026, Mbare Marketplace.com, Inc. or its affiliates
                 </div>
             </div>
         </div>
     </footer>
 
-    <script src="api.js"></script>
-    <script src="script.js"></script>
-        <script src="js/shared/ui-common.js"></script>
-    <script src="js/pages/search-results.js"></script>
+    <script>
+        // Search results functionality
+        const SUPABASE_URL = window.SUPABASE_URL || 'https://fnncerdxfhwlrdopswpx.supabase.co';
+        const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
+
+        let searchQuery = '';
+        let allResults = [];
+        let filteredResults = [];
+
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                q: params.get('q') || ''
+            };
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function performSearch() {
+            const input = document.getElementById('searchInput');
+            const query = input ? input.value.trim() : searchQuery;
+            if (!query) {
+                window.location.href = 'index.html';
+                return;
+            }
+            window.location.href = `search-results.html?q=${encodeURIComponent(query)}`;
+        }
+
+        async function fetchSearchResults(query) {
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const resultsGrid = document.getElementById('resultsGrid');
+            const resultsCount = document.getElementById('resultsCount');
+            const searchTitle = document.getElementById('searchTitle');
+            const searchDescription = document.getElementById('searchDescription');
+
+            if (loadingSpinner) loadingSpinner.style.display = 'block';
+            if (resultsGrid) resultsGrid.innerHTML = '';
+
+            if (searchTitle) searchTitle.textContent = `Search Results for "${escapeHtml(query)}"`;
+            if (searchDescription) searchDescription.textContent = `Showing results for "${escapeHtml(query)}"`;
+
+            try {
+                const response = await fetch(
+                    `${SUPABASE_URL}/rest/v1/products?title=ilike.%25${encodeURIComponent(query)}%25&select=*&order=created_at.desc`,
+                    {
+                        headers: {
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                        }
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error('Search failed');
+                }
+
+                const products = await response.json();
+                allResults = products;
+                filteredResults = products;
+
+                if (loadingSpinner) loadingSpinner.style.display = 'none';
+
+                if (resultsCount) {
+                    resultsCount.textContent = `${products.length} result${products.length !== 1 ? 's' : ''} found`;
+                }
+
+                renderResults(products);
+
+            } catch (error) {
+                console.error('Search error:', error);
+                if (loadingSpinner) loadingSpinner.style.display = 'none';
+                if (resultsGrid) {
+                    resultsGrid.innerHTML = `
+                        <div class="no-results">
+                            <span class="no-results-icon">&#9888;</span>
+                            <p>Something went wrong. Please try again.</p>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        function renderResults(products) {
+            const resultsGrid = document.getElementById('resultsGrid');
+            if (!resultsGrid) return;
+
+            if (!products || products.length === 0) {
+                resultsGrid.innerHTML = `
+                    <div class="no-results">
+                        <span class="no-results-icon">&#128269;</span>
+                        <p>No products found matching your search.</p>
+                        <div class="suggestions">
+                            Try different keywords or <a href="index.html">browse all products</a>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            products.forEach(product => {
+                const stock = product.stock !== null && product.stock !== undefined ? parseInt(product.stock) : 0;
+                const stockText = stock > 0 ? 'In Stock' : 'Out of Stock';
+                const stockClass = stock > 0 ? 'in-stock' : 'out-of-stock';
+                const imageUrl = product.image_url || 'https://via.placeholder.com/300x300?text=Product';
+
+                html += `
+                    <div class="product-card" onclick="goToProduct('${product.id}')">
+                        <img src="${imageUrl}" alt="${escapeHtml(product.title)}" onerror="this.src='https://via.placeholder.com/300x300?text=Product'">
+                        <div class="product-info">
+                            <div class="product-title">${escapeHtml(product.title)}</div>
+                            <div class="product-price">$${parseFloat(product.price).toFixed(2)}</div>
+                            <div class="product-stock ${stockClass}">${stockText}</div>
+                            ${product.category ? `<div class="product-category-tag">${escapeHtml(product.category)}</div>` : ''}
+                            <div class="product-seller">${escapeHtml(product.seller_name || 'Seller')}</div>
+                            <div class="product-actions">
+                                <button class="btn-add-cart" onclick="event.stopPropagation(); addToCart('${product.id}')">Add to Basket</button>
+                                <button class="btn-contact-seller" onclick="event.stopPropagation(); contactSeller('${product.id}')">Contact Seller</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            resultsGrid.innerHTML = html;
+        }
+
+        function sortResults(sortType) {
+            if (!allResults || allResults.length === 0) return;
+
+            let sorted = [...allResults];
+
+            switch (sortType) {
+                case 'newest':
+                    sorted.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                    break;
+                case 'oldest':
+                    sorted.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+                    break;
+                case 'price-low':
+                    sorted.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+                    break;
+                case 'price-high':
+                    sorted.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
+                    break;
+                case 'name':
+                    sorted.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+                    break;
+                case 'relevance':
+                default:
+                    break;
+            }
+
+            filteredResults = sorted;
+            renderResults(sorted);
+        }
+
+        function goToProduct(productId) {
+            window.location.href = `product-detail.html?id=${productId}`;
+        }
+
+        function addToCart(productId) {
+            const sessionData = localStorage.getItem('supabase_session');
+            if (!sessionData) {
+                window.location.href = 'login.html';
+                return;
+            }
+            const session = JSON.parse(sessionData);
+            const basketKey = `basket_${session.user.id}`;
+            let basket = JSON.parse(localStorage.getItem(basketKey)) || [];
+            const product = allResults.find(p => p.id == productId);
+            if (!product) return;
+
+            const existingItem = basket.find(item => item.id == productId);
+            if (existingItem) {
+                existingItem.quantity = (existingItem.quantity || 1) + 1;
+            } else {
+                basket.push({ ...product, quantity: 1 });
+            }
+
+            localStorage.setItem(basketKey, JSON.stringify(basket));
+            const count = basket.reduce((sum, item) => sum + (item.quantity || 1), 0);
+            updateBasketCount(count);
+            showToast('Item added to basket!');
+        }
+
+        function contactSeller(productId) {
+            const product = allResults.find(p => p.id == productId);
+            if (!product) return;
+            if (product.seller_id) {
+                window.location.href = `shop.html?seller=${product.seller_id}`;
+            } else {
+                showToast('Seller information not available', true);
+            }
+        }
+
+        function updateBasketCount(count) {
+            const el = document.getElementById('basketCount');
+            if (el) {
+                el.textContent = count;
+                el.style.display = count > 0 ? 'flex' : 'none';
+            }
+        }
+
+        function showToast(message, isError = false) {
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification' + (isError ? ' error' : '');
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 80px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: var(--bubble-glass);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                border: 1px solid var(--bubble-glass-border);
+                border-radius: 12px;
+                padding: 14px 28px;
+                color: #fff;
+                font-weight: 500;
+                z-index: 99999;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+                animation: fadeIn 0.3s ease;
+                max-width: 90%;
+                text-align: center;
+                ${isError ? 'border-color: #dc3545;' : ''}
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function initSearchPage() {
+            const params = getUrlParams();
+            searchQuery = params.q || '';
+
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.value = searchQuery;
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        performSearch();
+                    }
+                });
+            }
+
+            if (searchQuery) {
+                fetchSearchResults(searchQuery);
+            } else {
+                const loadingSpinner = document.getElementById('loadingSpinner');
+                if (loadingSpinner) loadingSpinner.style.display = 'none';
+                const resultsGrid = document.getElementById('resultsGrid');
+                if (resultsGrid) {
+                    resultsGrid.innerHTML = `
+                        <div class="no-results">
+                            <span class="no-results-icon">&#128269;</span>
+                            <p>Please enter a search term.</p>
+                            <div class="suggestions">
+                                <a href="index.html">Browse all products</a>
+                            </div>
+                        </div>
+                    `;
+                }
+                const resultsCount = document.getElementById('resultsCount');
+                if (resultsCount) resultsCount.textContent = '0 results';
+            }
+
+            const sortSelect = document.getElementById('sortSelect');
+            if (sortSelect) {
+                sortSelect.addEventListener('change', function() {
+                    sortResults(this.value);
+                });
+            }
+
+            const sessionData = localStorage.getItem('supabase_session');
+            if (sessionData) {
+                const session = JSON.parse(sessionData);
+                const basket = JSON.parse(localStorage.getItem(`basket_${session.user.id}`)) || [];
+                updateBasketCount(basket.reduce((sum, item) => sum + (item.quantity || 1), 0));
+            }
+        }
+
+        // Make functions globally available
+        window.performSearch = performSearch;
+        window.goToProduct = goToProduct;
+        window.addToCart = addToCart;
+        window.contactSeller = contactSeller;
+
+        // Start the page
+        document.addEventListener('DOMContentLoaded', initSearchPage);
+    </script>
+
 </body>
 </html>
