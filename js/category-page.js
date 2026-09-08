@@ -2,8 +2,7 @@
 // CATEGORY PAGE - Mbare Marketplace
 // ============================================
 
-// Use existing Supabase Configuration or set fallbacks
-// Using var instead of const to avoid redeclaration errors
+// Safely declare Supabase Configuration
 if (typeof SUPABASE_URL === 'undefined') {
     var SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
 }
