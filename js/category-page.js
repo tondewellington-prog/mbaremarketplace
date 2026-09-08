@@ -2,9 +2,17 @@
 // CATEGORY PAGE - Mbare Marketplace
 // ============================================
 
-// Supabase Configuration
-const SUPABASE_URL = window.SUPABASE_URL || 'https://fnncerdxfhwlrdopswpx.supabase.co';
-const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
+// Safely declare Supabase Configuration - check if already exists
+if (typeof window.SUPABASE_URL === 'undefined') {
+    window.SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
+}
+if (typeof window.SUPABASE_ANON_KEY === 'undefined') {
+    window.SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
+}
+
+// Use the existing variables or fallback to the ones we set
+const SUPABASE_URL = window.SUPABASE_URL;
+const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
 
 // DOM Elements
 const productsGrid = document.getElementById('productsGrid');
