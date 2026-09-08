@@ -219,7 +219,358 @@
         </div>
     </footer>
 
-    <script src="js/pages/trade-in-estimator-1.js"></script>
-    <script src="js/pages/trade-in-estimator-2.js"></script>
+    <script>
+        // ============================================
+        // TRADE-IN ESTIMATOR - JavaScript Engine
+        // ============================================
+
+        // Device database
+        var deviceDatabase = {
+            'iphone-16-pro-max': {
+                name: 'iPhone 16 Pro Max',
+                basePrice: 1200
+            },
+            'iphone-16-pro': {
+                name: 'iPhone 16 Pro',
+                basePrice: 1100
+            },
+            'iphone-16-plus': {
+                name: 'iPhone 16 Plus',
+                basePrice: 900
+            },
+            'iphone-16': {
+                name: 'iPhone 16',
+                basePrice: 800
+            },
+            'iphone-15-pro-max': {
+                name: 'iPhone 15 Pro Max',
+                basePrice: 1000
+            },
+            'iphone-15-pro': {
+                name: 'iPhone 15 Pro',
+                basePrice: 900
+            },
+            'iphone-15-plus': {
+                name: 'iPhone 15 Plus',
+                basePrice: 750
+            },
+            'iphone-15': {
+                name: 'iPhone 15',
+                basePrice: 650
+            },
+            'iphone-14-pro-max': {
+                name: 'iPhone 14 Pro Max',
+                basePrice: 800
+            },
+            'iphone-14-pro': {
+                name: 'iPhone 14 Pro',
+                basePrice: 700
+            },
+            'iphone-14-plus': {
+                name: 'iPhone 14 Plus',
+                basePrice: 550
+            },
+            'iphone-14': {
+                name: 'iPhone 14',
+                basePrice: 500
+            },
+            'iphone-13-pro-max': {
+                name: 'iPhone 13 Pro Max',
+                basePrice: 600
+            },
+            'iphone-13-pro': {
+                name: 'iPhone 13 Pro',
+                basePrice: 500
+            },
+            'iphone-13': {
+                name: 'iPhone 13',
+                basePrice: 400
+            },
+            'iphone-13-mini': {
+                name: 'iPhone 13 mini',
+                basePrice: 350
+            },
+            'iphone-12-pro-max': {
+                name: 'iPhone 12 Pro Max',
+                basePrice: 400
+            },
+            'iphone-12-pro': {
+                name: 'iPhone 12 Pro',
+                basePrice: 350
+            },
+            'iphone-12': {
+                name: 'iPhone 12',
+                basePrice: 300
+            },
+            'iphone-12-mini': {
+                name: 'iPhone 12 mini',
+                basePrice: 250
+            },
+            'iphone-se-3rd-gen': {
+                name: 'iPhone SE (3rd gen)',
+                basePrice: 250
+            },
+            'iphone-11-pro-max': {
+                name: 'iPhone 11 Pro Max',
+                basePrice: 300
+            },
+            'iphone-11-pro': {
+                name: 'iPhone 11 Pro',
+                basePrice: 250
+            },
+            'iphone-11': {
+                name: 'iPhone 11',
+                basePrice: 200
+            }
+        };
+
+        // Condition deduction rules
+        var deductionRules = {
+            screen: {
+                excellent: 0,
+                scratched: 50,
+                cracked: 150
+            },
+            backGlass: {
+                good: 0,
+                scratched: 30,
+                cracked: 100
+            },
+            camera: {
+                fully_working: 0,
+                minor_issue: 40,
+                major_issue: 120
+            },
+            faceId: {
+                true: 0,
+                false: 80
+            }
+        };
+
+        // State tracking
+        var currentState = {
+            deviceId: 'iphone-16-pro-max',
+            batteryHealth: 100,
+            screen: 'excellent',
+            backGlass: 'good',
+            camera: 'fully_working',
+            faceId: 'true'
+        };
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+
+        function initEstimator() {
+            populateDeviceDropdown();
+            setDefaultOptions();
+            runEvaluationEngine();
+        }
+
+        function populateDeviceDropdown() {
+            var select = document.getElementById('deviceModel');
+            if (!select) return;
+
+            select.innerHTML = '';
+            for (var id in deviceDatabase) {
+                if (deviceDatabase.hasOwnProperty(id)) {
+                    var device = deviceDatabase[id];
+                    var option = document.createElement('option');
+                    option.value = id;
+                    option.textContent = device.name;
+                    if (id === 'iphone-16-pro-max') {
+                        option.selected = true;
+                    }
+                    select.appendChild(option);
+                }
+            }
+        }
+
+        function setDefaultOptions() {
+            var groups = ['screenGrid', 'backGlassGrid', 'cameraGrid', 'faceIdGrid'];
+            
+            groups.forEach(function(groupId) {
+                var container = document.getElementById(groupId);
+                if (!container) return;
+                
+                var buttons = container.querySelectorAll('.estimator-option-btn');
+                buttons.forEach(function(btn, index) {
+                    if (index === 0) {
+                        btn.classList.add('active');
+                        var check = btn.querySelector('.estimator-option-check');
+                        if (check) check.textContent = '\u2713';
+                    } else {
+                        btn.classList.remove('active');
+                        var check = btn.querySelector('.estimator-option-check');
+                        if (check) check.textContent = '';
+                    }
+                });
+            });
+        }
+
+        // ============================================
+        // CONDITION SELECTION - FIXED
+        // ============================================
+
+        function setConditionOption(group, button) {
+            // Get the parent container
+            var container = button.closest('.estimator-option-grid');
+            if (!container) return;
+
+            // Remove active class from all buttons in this group
+            var allButtons = container.querySelectorAll('.estimator-option-btn');
+            allButtons.forEach(function(btn) {
+                btn.classList.remove('active');
+                var check = btn.querySelector('.estimator-option-check');
+                if (check) check.textContent = '';
+            });
+
+            // Add active class to clicked button
+            button.classList.add('active');
+            var check = button.querySelector('.estimator-option-check');
+            if (check) check.textContent = '\u2713';
+
+            // Update state
+            var value = button.dataset.value;
+            if (group === 'screen') currentState.screen = value;
+            else if (group === 'backGlass') currentState.backGlass = value;
+            else if (group === 'camera') currentState.camera = value;
+            else if (group === 'faceId') currentState.faceId = value;
+
+            // Recalculate
+            runEvaluationEngine();
+        }
+
+        // ============================================
+        // EVALUATION ENGINE
+        // ============================================
+
+        function runEvaluationEngine() {
+            // Get device selection
+            var select = document.getElementById('deviceModel');
+            if (select) {
+                currentState.deviceId = select.value;
+            }
+
+            // Get battery health
+            var batterySlider = document.getElementById('batteryHealth');
+            if (batterySlider) {
+                currentState.batteryHealth = parseInt(batterySlider.value);
+                var badge = document.getElementById('batteryPercentBadge');
+                if (badge) badge.textContent = currentState.batteryHealth + '%';
+            }
+
+            var device = deviceDatabase[currentState.deviceId];
+            if (!device) return;
+
+            // Calculate base price
+            var basePrice = device.basePrice;
+            
+            // Calculate battery deduction
+            var batteryDeduction = 0;
+            if (currentState.batteryHealth < 80) {
+                batteryDeduction = Math.round((80 - currentState.batteryHealth) * 2.5);
+            }
+
+            // Get condition deductions
+            var screenDeduction = deductionRules.screen[currentState.screen] || 0;
+            var backGlassDeduction = deductionRules.backGlass[currentState.backGlass] || 0;
+            var cameraDeduction = deductionRules.camera[currentState.camera] || 0;
+            var faceIdDeduction = deductionRules.faceId[currentState.faceId] || 0;
+
+            // Calculate total deductions
+            var totalDeductions = batteryDeduction + screenDeduction + backGlassDeduction + cameraDeduction + faceIdDeduction;
+            var finalValue = Math.max(0, basePrice - totalDeductions);
+
+            // Update UI
+            updateSummary(device, basePrice, batteryDeduction, screenDeduction, backGlassDeduction, cameraDeduction, faceIdDeduction, finalValue);
+        }
+
+        // ============================================
+        // UPDATE SUMMARY UI
+        // ============================================
+
+        function updateSummary(device, basePrice, batteryDeduction, screenDeduction, backGlassDeduction, cameraDeduction, faceIdDeduction, finalValue) {
+            var modelName = document.getElementById('summaryModelName');
+            var basePriceEl = document.getElementById('summaryBasePrice');
+            var batteryDeductionEl = document.getElementById('summaryBatteryDeduction');
+            var screenDeductionEl = document.getElementById('summaryScreenDeduction');
+            var backGlassDeductionEl = document.getElementById('summaryBackGlassDeduction');
+            var cameraDeductionEl = document.getElementById('summaryCameraDeduction');
+            var faceIdDeductionEl = document.getElementById('summaryFaceIdDeduction');
+            var finalTotalEl = document.getElementById('summaryFinalTotal');
+
+            if (modelName) modelName.textContent = device.name;
+            if (basePriceEl) basePriceEl.textContent = '$' + basePrice;
+            
+            if (batteryDeductionEl) {
+                batteryDeductionEl.textContent = '-$' + batteryDeduction;
+                var row = document.getElementById('rowBatteryDeduction');
+                if (row) row.style.display = batteryDeduction > 0 ? 'flex' : 'none';
+            }
+            
+            if (screenDeductionEl) {
+                screenDeductionEl.textContent = '-$' + screenDeduction;
+                var row = document.getElementById('rowScreenDeduction');
+                if (row) row.style.display = screenDeduction > 0 ? 'flex' : 'none';
+            }
+            
+            if (backGlassDeductionEl) {
+                backGlassDeductionEl.textContent = '-$' + backGlassDeduction;
+                var row = document.getElementById('rowBackGlassDeduction');
+                if (row) row.style.display = backGlassDeduction > 0 ? 'flex' : 'none';
+            }
+            
+            if (cameraDeductionEl) {
+                cameraDeductionEl.textContent = '-$' + cameraDeduction;
+                var row = document.getElementById('rowCameraDeduction');
+                if (row) row.style.display = cameraDeduction > 0 ? 'flex' : 'none';
+            }
+            
+            if (faceIdDeductionEl) {
+                faceIdDeductionEl.textContent = '-$' + faceIdDeduction;
+                var row = document.getElementById('rowFaceIdDeduction');
+                if (row) row.style.display = faceIdDeduction > 0 ? 'flex' : 'none';
+            }
+
+            if (finalTotalEl) {
+                finalTotalEl.textContent = '$' + finalValue;
+                // Color based on value
+                if (finalValue > 500) {
+                    finalTotalEl.style.color = '#28a745';
+                } else if (finalValue > 200) {
+                    finalTotalEl.style.color = '#f90';
+                } else {
+                    finalTotalEl.style.color = '#ff6b6b';
+                }
+            }
+        }
+
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initEstimator();
+        });
+
+        // Make functions globally available
+        window.setConditionOption = setConditionOption;
+        window.runEvaluationEngine = runEvaluationEngine;
+
+        // Login prompt check
+        document.addEventListener('DOMContentLoaded', function() {
+            var sessionData = localStorage.getItem('supabase_session');
+            var loginModal = document.getElementById('loginPromptModal');
+            
+            if (!sessionData) {
+                if (loginModal) loginModal.classList.add('active');
+            } else {
+                if (loginModal) loginModal.classList.remove('active');
+            }
+        });
+    </script>
+
 </body>
 </html>
