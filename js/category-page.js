@@ -5,16 +5,15 @@
 (function() {
     'use strict';
 
-    // Use existing Supabase Configuration or set fallbacks
-    var SUPABASE_URL = window.SUPABASE_URL || 'https://fnncerdxfhwlrdopswpx.supabase.co';
-    var SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
+    // Get Supabase config from window or use fallback - using different variable names
+    var supabaseUrl = window.SUPABASE_URL || 'https://fnncerdxfhwlrdopswpx.supabase.co';
+    var supabaseAnonKey = window.SUPABASE_ANON_KEY || 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
 
     // DOM Elements
     var productsGrid = document.getElementById('productsGrid');
     var categoryTitle = document.getElementById('categoryTitle');
     var categoryDescription = document.getElementById('categoryDescription');
     var loadingSpinner = document.getElementById('loadingSpinner');
-    var noProductsMessage = document.getElementById('noProductsMessage');
     var sortSelect = document.getElementById('sortSelect');
     var resultsCount = document.getElementById('resultsCount');
 
@@ -52,7 +51,7 @@
 
     async function fetchCategoryProducts(categorySlug, config) {
         try {
-            var query = SUPABASE_URL + '/rest/v1/products?';
+            var query = supabaseUrl + '/rest/v1/products?';
 
             if (config.fetchQuery) {
                 query += config.fetchQuery;
@@ -62,8 +61,8 @@
 
             var response = await fetch(query, {
                 headers: {
-                    'apikey': SUPABASE_ANON_KEY,
-                    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+                    'apikey': supabaseAnonKey,
+                    'Authorization': 'Bearer ' + supabaseAnonKey
                 }
             });
 
