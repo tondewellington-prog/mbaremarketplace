@@ -316,5 +316,27 @@ window.CATEGORY_PAGE_CONFIGS = {
     "emptyMessage": "No vehicle parts found.",
     "placeholderText": "Vehicle+Part",
     "loadLabel": "Vehicle parts"
+  },
+  "outdoor-indoor": {
+    "gridId": "outdoorIndoorGrid",
+    "images": [
+      "outdoor_indoor/1.jpg",
+      "outdoor_indoor/2.jpg",
+      "outdoor_indoor/3.jpg",
+      "outdoor_indoor/4.jpg",
+      "outdoor_indoor/5.jpg",
+      "outdoor_indoor/6.jpg",
+      "outdoor_indoor/7.jpg",
+      "outdoor_indoor/8.jpg",
+      "outdoor_indoor/9.jpg",
+      "outdoor_indoor/10.jpg",
+      "outdoor_indoor/11.jpg",
+      "outdoor_indoor/12.jpg"
+    ],
+    "fetchQuery": "select=*&category=eq.Outdoor%20%26%20Indoor&order=created_at.desc",
+    "sellerFallback": "Outdoor & Indoor Store",
+    "emptyMessage": "No outdoor & indoor products found.",
+    "placeholderText": "Outdoor+Indoor",
+    "loadLabel": "Outdoor & Indoor"
   }
 };
