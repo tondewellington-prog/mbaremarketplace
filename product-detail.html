@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>Product Detail - Mbare Marketplace</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
@@ -277,8 +277,27 @@
         }
 
         // ============================================
-        // RATING MODAL
+        // GENERATE STARS
         // ============================================
+
+        function generateStars(rating) {
+            var stars = '';
+            var fullStars = Math.floor(rating);
+            var hasHalfStar = rating % 1 >= 0.5;
+            for (var i = 0; i < fullStars; i++) stars += '&#9733;';
+            if (hasHalfStar) stars += '&#189;';
+            var emptyStars = 5 - Math.ceil(rating);
+            for (var i = 0; i < emptyStars; i++) stars += '&#9734;';
+            return stars;
+        }
+
+        // ============================================
+        // RATING MODAL - FULLY FUNCTIONAL
+        // ============================================
+
+        var currentSelectedRating = 0;
+        var currentSellerId = null;
+        var currentSellerName = null;
 
         function openRatingModal(sellerId, sellerName) {
             // Check if user is logged in
@@ -288,17 +307,21 @@
                 return;
             }
 
+            currentSellerId = sellerId;
+            currentSellerName = sellerName;
+            currentSelectedRating = 0;
+
+            // Check if user has already rated this seller
             var session = JSON.parse(sessionData);
             var userId = session.user.id;
 
-            // Check if user has already rated this seller
-            checkExistingRating(sellerId, userId, sellerName);
+            checkExistingRating(sellerId, userId);
         }
 
-        async function checkExistingRating(sellerId, userId, sellerName) {
+        async function checkExistingRating(sellerId, userId) {
             try {
                 var response = await fetch(
-                    SUPABASE_URL + '/rest/v1/ratings?seller_id=eq.' + sellerId + '&user_id=eq.' + userId + '&select=rating',
+                    SUPABASE_URL + '/rest/v1/ratings?seller_id=eq.' + sellerId + '&user_id=eq.' + userId + '&select=rating,comment',
                     {
                         headers: {
                             'apikey': SUPABASE_ANON_KEY,
@@ -308,31 +331,34 @@
                 );
 
                 var existingRating = null;
+                var existingComment = '';
                 if (response.ok) {
                     var ratings = await response.json();
                     if (ratings && ratings.length > 0) {
                         existingRating = ratings[0].rating;
+                        existingComment = ratings[0].comment || '';
                     }
                 }
 
-                showRatingModal(sellerId, sellerName, existingRating);
+                showRatingModal(existingRating, existingComment);
 
             } catch (error) {
                 console.error('Error checking existing rating:', error);
-                showRatingModal(sellerId, sellerName, null);
+                showRatingModal(null, '');
             }
         }
 
-        function showRatingModal(sellerId, sellerName, existingRating) {
+        function showRatingModal(existingRating, existingComment) {
             // Remove existing modal if any
             var existingModal = document.getElementById('ratingModal');
             if (existingModal) {
                 existingModal.remove();
             }
 
-            var starsHtml = '';
             var selectedRating = existingRating || 0;
+            currentSelectedRating = selectedRating;
 
+            var starsHtml = '';
             for (var i = 1; i <= 5; i++) {
                 var activeClass = i <= selectedRating ? 'active' : '';
                 starsHtml += '<span class="star-rating ' + activeClass + '" data-value="' + i + '" onclick="setRating(' + i + ')">&#9733;</span>';
@@ -342,7 +368,7 @@
                 <div class="rating-modal-overlay" id="ratingModal">
                     <div class="rating-modal-content">
                         <button class="rating-modal-close" onclick="closeRatingModal()">&times;</button>
-                        <h3>Rate ${escapeHtml(sellerName)}</h3>
+                        <h3>Rate ${escapeHtml(currentSellerName)}</h3>
                         <p>How was your experience with this seller?</p>
                         <div class="rating-stars-container" id="ratingStars">
                             ${starsHtml}
@@ -350,14 +376,14 @@
                         <div class="rating-value-display" id="ratingValueDisplay">
                             ${selectedRating > 0 ? selectedRating + ' out of 5 stars' : 'Select a rating'}
                         </div>
-                        <textarea class="rating-comment" id="ratingComment" placeholder="Leave a comment about your experience (optional)"></textarea>
+                        <textarea class="rating-comment" id="ratingComment" placeholder="Leave a comment about your experience (optional)">${escapeHtml(existingComment || '')}</textarea>
                         <div class="rating-actions">
-                            <button class="btn-submit-rating" onclick="submitRating('${sellerId}', ${selectedRating})">
+                            <button class="btn-submit-rating" id="submitRatingBtn" onclick="submitRating()">
                                 ${existingRating ? 'Update Rating' : 'Submit Rating'}
                             </button>
                             <button class="btn-cancel-rating" onclick="closeRatingModal()">Cancel</button>
                         </div>
-                        <div class="rating-error" id="ratingError" style="display:none;color:#dc3545;margin-top:10px;font-size:14px;"></div>
+                        <div class="rating-error" id="ratingError" style="display:none;"></div>
                     </div>
                 </div>
             `;
@@ -507,22 +533,10 @@
                     .btn-cancel-rating:hover {
                         background: rgba(255,255,255,0.15);
                     }
-                    .btn-rate-seller {
-                        margin-top: 12px;
-                        padding: 10px 24px;
-                        background: linear-gradient(135deg, var(--bubble-accent), var(--bubble-accent2));
-                        color: #fff;
-                        border: none;
-                        border-radius: 50px;
-                        font-weight: 600;
+                    .rating-error {
+                        color: #dc3545;
+                        margin-top: 10px;
                         font-size: 14px;
-                        cursor: pointer;
-                        transition: var(--bubble-transition);
-                        width: 100%;
-                    }
-                    .btn-rate-seller:hover {
-                        transform: translateY(-2px);
-                        box-shadow: 0 4px 20px var(--bubble-glow);
                     }
                     @keyframes fadeIn {
                         from { opacity: 0; }
@@ -532,13 +546,51 @@
                         from { transform: translateY(30px); opacity: 0; }
                         to { transform: translateY(0); opacity: 1; }
                     }
+                    @media (max-width: 480px) {
+                        .rating-modal-content {
+                            padding: 20px;
+                            margin: 10px;
+                            max-width: 100%;
+                        }
+                        .rating-modal-content h3 {
+                            font-size: 18px;
+                        }
+                        .rating-modal-content p {
+                            font-size: 13px;
+                        }
+                        .star-rating {
+                            font-size: 32px;
+                        }
+                        .rating-comment {
+                            font-size: 13px;
+                            padding: 10px 12px;
+                            min-height: 60px;
+                        }
+                        .rating-actions {
+                            flex-direction: column;
+                            gap: 8px;
+                        }
+                        .btn-submit-rating,
+                        .btn-cancel-rating {
+                            width: 100%;
+                            text-align: center;
+                            font-size: 13px;
+                            padding: 10px;
+                        }
+                        .rating-modal-close {
+                            font-size: 22px;
+                            top: 10px;
+                            right: 14px;
+                        }
+                    }
+                    @media (max-width: 360px) {
+                        .star-rating {
+                            font-size: 28px;
+                        }
+                    }
                 `;
                 document.head.appendChild(style);
             }
-
-            // Store current rating and seller ID globally
-            window.currentRating = selectedRating;
-            window.currentSellerId = sellerId;
         }
 
         // ============================================
@@ -546,7 +598,7 @@
         // ============================================
 
         function setRating(value) {
-            window.currentRating = value;
+            currentSelectedRating = value;
             
             var stars = document.querySelectorAll('.star-rating');
             stars.forEach(function(star, index) {
@@ -561,10 +613,16 @@
             if (display) {
                 display.textContent = value + ' out of 5 stars';
             }
+
+            // Clear any previous error
+            var errorEl = document.getElementById('ratingError');
+            if (errorEl) {
+                errorEl.style.display = 'none';
+            }
         }
 
-        async function submitRating(sellerId, existingRating) {
-            var rating = window.currentRating || 0;
+        async function submitRating() {
+            var rating = currentSelectedRating;
             if (rating === 0) {
                 var errorEl = document.getElementById('ratingError');
                 if (errorEl) {
@@ -582,9 +640,9 @@
 
             var session = JSON.parse(sessionData);
             var userId = session.user.id;
-            var comment = document.getElementById('ratingComment') ? document.getElementById('ratingComment').value : '';
+            var comment = document.getElementById('ratingComment') ? document.getElementById('ratingComment').value.trim() : '';
 
-            var btn = document.querySelector('.btn-submit-rating');
+            var btn = document.getElementById('submitRatingBtn');
             btn.disabled = true;
             btn.textContent = 'Submitting...';
 
@@ -596,7 +654,7 @@
             try {
                 // Check if rating exists
                 var checkResponse = await fetch(
-                    SUPABASE_URL + '/rest/v1/ratings?seller_id=eq.' + sellerId + '&user_id=eq.' + userId + '&select=id',
+                    SUPABASE_URL + '/rest/v1/ratings?seller_id=eq.' + currentSellerId + '&user_id=eq.' + userId + '&select=id',
                     {
                         headers: {
                             'apikey': SUPABASE_ANON_KEY,
@@ -604,14 +662,6 @@
                         }
                     }
                 );
-
-                var ratingData = {
-                    seller_id: sellerId,
-                    user_id: userId,
-                    rating: rating,
-                    comment: comment || null,
-                    created_at: new Date().toISOString()
-                };
 
                 var response;
                 if (checkResponse.ok) {
@@ -645,7 +695,13 @@
                                     'apikey': SUPABASE_ANON_KEY,
                                     'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
                                 },
-                                body: JSON.stringify(ratingData)
+                                body: JSON.stringify({
+                                    seller_id: currentSellerId,
+                                    user_id: userId,
+                                    rating: rating,
+                                    comment: comment || null,
+                                    created_at: new Date().toISOString()
+                                })
                             }
                         );
                     }
@@ -660,13 +716,20 @@
                                 'apikey': SUPABASE_ANON_KEY,
                                 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
                             },
-                            body: JSON.stringify(ratingData)
+                            body: JSON.stringify({
+                                seller_id: currentSellerId,
+                                user_id: userId,
+                                rating: rating,
+                                comment: comment || null,
+                                created_at: new Date().toISOString()
+                            })
                         }
                     );
                 }
 
                 if (!response.ok) {
-                    throw new Error('Failed to submit rating');
+                    var errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to submit rating');
                 }
 
                 showToast('Rating submitted successfully!');
@@ -684,7 +747,7 @@
                     errorEl.style.display = 'block';
                 }
                 btn.disabled = false;
-                btn.textContent = existingRating ? 'Update Rating' : 'Submit Rating';
+                btn.textContent = 'Submit Rating';
             }
         }
 
@@ -693,22 +756,12 @@
             if (modal) {
                 modal.remove();
             }
+            currentSelectedRating = 0;
         }
 
         // ============================================
         // HELPER FUNCTIONS
         // ============================================
-
-        function generateStars(rating) {
-            var stars = '';
-            var fullStars = Math.floor(rating);
-            var hasHalfStar = rating % 1 >= 0.5;
-            for (var i = 0; i < fullStars; i++) stars += '&#9733;';
-            if (hasHalfStar) stars += '&#189;';
-            var emptyStars = 5 - Math.ceil(rating);
-            for (var i = 0; i < emptyStars; i++) stars += '&#9734;';
-            return stars;
-        }
 
         function escapeHtml(text) {
             if (!text) return '';
@@ -805,6 +858,18 @@
         }
 
         // ============================================
+        // MAKE FUNCTIONS GLOBALLY AVAILABLE
+        // ============================================
+
+        window.changeMainImage = changeMainImage;
+        window.addToBasket = addToBasket;
+        window.showContactModal = showContactModal;
+        window.openRatingModal = openRatingModal;
+        window.setRating = setRating;
+        window.submitRating = submitRating;
+        window.closeRatingModal = closeRatingModal;
+
+        // ============================================
         // INITIALIZATION
         // ============================================
 
@@ -842,15 +907,6 @@
                 `;
             }
         }
-
-        // Make functions globally available
-        window.changeMainImage = changeMainImage;
-        window.addToBasket = addToBasket;
-        window.showContactModal = showContactModal;
-        window.openRatingModal = openRatingModal;
-        window.setRating = setRating;
-        window.submitRating = submitRating;
-        window.closeRatingModal = closeRatingModal;
 
         // Update basket count on load
         document.addEventListener('DOMContentLoaded', function() {
