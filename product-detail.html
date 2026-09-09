@@ -1,137 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="canonical" href="https://www.mbaremarketplace.com/product-detail.html">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Details - Mbare Marketplace</title>
+    <title>Product Detail - Mbare Marketplace</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        .product-detail-container {
-            max-width: 1200px;
-            margin: 30px auto;
-            padding: 0 20px;
-        }
-        .product-detail {
-            background: white;
-            border-radius: 8px;
-            padding: 30px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .product-detail-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-        }
-        .product-detail-image {
-            width: 100%;
-            max-height: 500px;
-            object-fit: contain;
-        }
-        .product-detail-info h1 {
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-        .product-detail-price {
-            font-size: 28px;
-            color: #B12704;
-            margin: 20px 0;
-        }
-        .product-detail-description {
-            line-height: 1.6;
-            color: #666;
-            margin: 20px 0;
-        }
-        .seller-info {
-            background: #f5f5f5;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-        .seller-info h3 {
-            margin-bottom: 15px;
-        }
-        .seller-info p {
-            margin: 10px 0;
-        }
-        .seller-rating-large {
-            margin: 10px 0;
-            padding: 10px 0;
-            border-top: 1px solid #ddd;
-            border-bottom: 1px solid #ddd;
-        }
-        .rating-stars-large {
-            color: #f90;
-            font-size: 24px;
-            margin-right: 10px;
-        }
-        .rating-text {
-            color: #666;
-            font-size: 14px;
-        }
-        .detail-actions {
-            display: flex;
-            gap: 15px;
-            margin-top: 20px;
-        }
-        .btn-add-cart-large, .btn-buy-now-large {
-            flex: 1;
-            padding: 15px;
-            border: none;
-            border-radius: 4px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            text-align: center;
-            text-decoration: none;
-        }
-        .btn-add-cart-large {
-            background: #f90;
-            color: white;
-        }
-        .btn-buy-now-large {
-            background: #232f3e;
-            color: white;
-        }
-        .btn-rate-seller {
-            display: inline-block;
-            margin-top: 15px;
-            padding: 10px 20px;
-            background: #f90;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-            font-weight: 600;
-        }
-        .view-shop-btn {
-            display: inline-block;
-            padding: 8px 16px;
-            background: #f90;
-            color: white;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: 600;
-            margin-top: 10px;
-            margin-right: 10px;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        @media (max-width: 768px) {
-            .product-detail-content {
-                grid-template-columns: 1fr;
-            }
-            .detail-actions {
-                flex-direction: column;
-            }
-        }
-    </style>
 </head>
 <body>
+
+    <!-- Background Bubbles -->
+    <div class="bubble-bg">
+        <span></span><span></span><span></span><span></span><span></span>
+    </div>
+
     <!-- Header -->
     <header class="header">
         <div class="header-top">
@@ -139,145 +21,413 @@
                 <div class="logo">
                     <a href="index.html">Mbare Marketplace</a>
                 </div>
-                <div class="search-bar">
-                    <select class="search-category">
-                        <option>All</option>
-                        <option>Electronics</option>
-                        <option>Books</option>
-                        <option>Clothing</option>
-                        <option>Home & Kitchen</option>
-                    </select>
-                    <input type="text" id="searchInput" placeholder="Search Mbare Marketplace" class="search-input">
-                    <button class="search-btn" onclick="handleSearch()">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <path d="m21 21-4.35-4.35"></path>
-                        </svg>
-                    </button>
-                </div>
                 <div class="header-right">
-                    <div class="account-menu">
-                        <span class="account-label" id="accountLabel">Hello, Sign in</span>
-                        <a href="login.html" class="account-link" id="accountLink">Account & Lists</a>
-                        <button id="logoutBtn" onclick="logout()" style="display: none; background: none; border: 1px solid #fff; color: #fff; cursor: pointer; margin-left: 10px; padding: 5px 15px; border-radius: 4px;">Logout</button>
-                    </div>
-                    <div class="returns">
-                        <span class="returns-label">Returns</span>
-                        <span class="returns-link">& Orders</span>
-                    </div>
-                    <a href="Basket.html" class="basket">
-                        <div class="basket-icon">
-                            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-                                <line x1="3" y1="6" x2="21" y2="6"></line>
-                                <path d="M16 10a4 4 0 0 1-8 0"></path>
-                            </svg>
-                            <span class="basket-count" id="basketCount">0</span>
-                        </div>
-                        <span class="basket-text">Basket</span>
-                    </a>
+                    <a href="index.html" class="account-link">Home</a>
+                    <a href="seller-dashboard.html" class="account-link">Sell</a>
                 </div>
             </div>
         </div>
-        <nav class="nav-menu">
-            <div class="container">
-                <a href="index.html" class="nav-item all-menu">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <line x1="3" y1="12" x2="21" y2="12"></line>
-                        <line x1="3" y1="6" x2="21" y2="6"></line>
-                        <line x1="3" y1="18" x2="21" y2="18"></line>
-                    </svg>
-                    All
-                </a>
-                <a href="#" class="nav-item">Today's Deals</a>
-                <a href="#" class="nav-item">Customer Service</a>
-                <a href="#" class="nav-item">Registry</a>
-                <a href="#" class="nav-item">Gift Cards</a>
-                <a href="seller-register.html" class="nav-item">Sell</a>
-                <a href="analytics.html" class="nav-item">Analytics</a>
-            </div>
-        </nav>
     </header>
 
-    <!-- Product Detail -->
-    <div class="product-detail-container">
-        <div class="product-detail" id="productDetail">
-            <div style="text-align: center; padding: 40px;">
-                <div style="border: 4px solid #f3f3f3; border-top: 4px solid #f90; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto;"></div>
-                <p style="margin-top: 20px;">Loading product details...</p>
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <a href="index.html" class="back-to-home">&#8592; Back to Home</a>
+
+            <div id="productDetailContent">
+                <div class="product-detail-loading">
+                    <div class="spinner"></div>
+                    <p>Loading product details...</p>
+                </div>
             </div>
         </div>
-    </div>
+    </main>
 
     <!-- Footer -->
     <footer class="footer">
-        <div class="footer-top">
-            <a href="#" class="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">Back to top</a>
-        </div>
         <div class="footer-content">
             <div class="container">
-                <div class="footer-columns">
-                    <div class="footer-column">
-                        <h3>Get to Know Us</h3>
-                        <ul>
-                            <li><a href="#">Careers</a></li>
-                            <li><a href="#">Blog</a></li>
-                            <li><a href="#">About Mbare Marketplace</a></li>
-                            <li><a href="#">Investor Relations</a></li>
-                            <li><a href="#">Mbare Marketplace Devices</a></li>
-                        </ul>
+                <div class="footer-bottom">
+                    <div class="container">
+                        <span class="footer-copyright">&copy; 2026 Mbare Marketplace. All rights reserved.</span>
+                        <div class="footer-links">
+                            <a href="index.html">Home</a>
+                            <a href="seller-dashboard.html">Sell</a>
+                        </div>
                     </div>
-                    <div class="footer-column">
-                        <h3>Make Money with Us</h3>
-                        <ul>
-                            <li><a href="#">Sell products on Mbare Marketplace</a></li>
-                            <li><a href="#">Sell on Mbare Marketplace Business</a></li>
-                            <li><a href="#">Sell apps on Mbare Marketplace</a></li>
-                            <li><a href="#">Become an Affiliate</a></li>
-                            <li><a href="#">Advertise Your Products</a></li>
-                        </ul>
-                    </div>
-                    <div class="footer-column">
-                        <h3>Mbare Marketplace Payment Products</h3>
-                        <ul>
-                            <li><a href="#">Mbare Marketplace Business Card</a></li>
-                            <li><a href="#">Shop with Points</a></li>
-                            <li><a href="#">Reload Your Balance</a></li>
-                            <li><a href="#">Mbare Marketplace Currency Converter</a></li>
-                        </ul>
-                    </div>
-                    <div class="footer-column">
-                        <h3>Need Help?</h3>
-                        <ul>
-                            <li><a href="#">COVID-19 and Mbare Marketplace</a></li>
-                            <li><a href="#">Your Account</a></li>
-                            <li><a href="#">Your Orders</a></li>
-                            <li><a href="#">Shipping Rates & Policies</a></li>
-                            <li><a href="#">Returns & Replacements</a></li>
-                            <li><a href="#">Help</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <div class="container">
-                <div class="footer-logo">Mbare Marketplace</div>
-                <div class="footer-links">
-                    <a href="#">Conditions of Use</a>
-                    <a href="#">Privacy Notice</a>
-                    <a href="#">Interest-Based Ads</a>
-                </div>
-                <div class="footer-copyright">
-                    &copy; 2026, Mbare Marketplace.com, Inc. or its affiliates
                 </div>
             </div>
         </div>
     </footer>
 
-    <script src="api.js"></script>
-    <script src="script.js"></script>
-        <script src="js/shared/ui-common.js"></script>
-    <script src="js/pages/product-detail.js"></script>
+    <script>
+        // ============================================
+        // PRODUCT DETAIL PAGE - JavaScript
+        // ============================================
+
+        const SUPABASE_URL = window.SUPABASE_URL || 'https://fnncerdxfhwlrdopswpx.supabase.co';
+        const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
+
+        // ============================================
+        // GET URL PARAMETERS
+        // ============================================
+
+        function getUrlParams() {
+            var params = new URLSearchParams(window.location.search);
+            return {
+                productId: params.get('id')
+            };
+        }
+
+        // ============================================
+        // FETCH PRODUCT DATA
+        // ============================================
+
+        async function fetchProductData(productId) {
+            try {
+                var response = await fetch(
+                    SUPABASE_URL + '/rest/v1/products?id=eq.' + productId + '&select=*',
+                    {
+                        headers: {
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+                        }
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch product');
+                }
+
+                var products = await response.json();
+                if (!products || products.length === 0) {
+                    throw new Error('Product not found');
+                }
+
+                var product = products[0];
+
+                // Fetch seller data
+                var sellerResponse = await fetch(
+                    SUPABASE_URL + '/rest/v1/sellers?user_id=eq.' + product.seller_id + '&select=*',
+                    {
+                        headers: {
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+                        }
+                    }
+                );
+
+                var seller = null;
+                if (sellerResponse.ok) {
+                    var sellers = await sellerResponse.json();
+                    if (sellers && sellers.length > 0) {
+                        seller = sellers[0];
+                    }
+                }
+
+                // Fetch ratings
+                var ratingsResponse = await fetch(
+                    SUPABASE_URL + '/rest/v1/ratings?product_id=eq.' + productId + '&select=rating',
+                    {
+                        headers: {
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+                        }
+                    }
+                );
+
+                var avgRating = 0;
+                var ratingCount = 0;
+                if (ratingsResponse.ok) {
+                    var ratings = await ratingsResponse.json();
+                    if (ratings && ratings.length > 0) {
+                        var sum = ratings.reduce(function(acc, r) { return acc + r.rating; }, 0);
+                        avgRating = sum / ratings.length;
+                        ratingCount = ratings.length;
+                    }
+                }
+
+                return {
+                    product: product,
+                    seller: seller,
+                    rating: avgRating,
+                    ratingCount: ratingCount
+                };
+
+            } catch (error) {
+                console.error('Error fetching product:', error);
+                throw error;
+            }
+        }
+
+        // ============================================
+        // RENDER PRODUCT DETAIL
+        // ============================================
+
+        function renderProductDetail(data) {
+            var container = document.getElementById('productDetailContent');
+            if (!container) return;
+
+            var product = data.product;
+            var seller = data.seller;
+            var rating = data.rating || 0;
+            var ratingCount = data.ratingCount || 0;
+
+            var stock = product.stock !== null && product.stock !== undefined ? parseInt(product.stock) : 0;
+            var stockText = stock > 0 ? 'In Stock' : 'Out of Stock';
+            var stockClass = stock > 0 ? 'in-stock' : 'out-of-stock';
+            var imageUrl = product.image_url || 'https://via.placeholder.com/600x400?text=Product';
+
+            // Generate stars
+            var starsHtml = '';
+            var fullStars = Math.floor(rating);
+            var hasHalfStar = rating % 1 >= 0.5;
+            for (var i = 0; i < fullStars; i++) starsHtml += '&#9733;';
+            if (hasHalfStar) starsHtml += '&#189;';
+            var emptyStars = 5 - Math.ceil(rating);
+            for (var i = 0; i < emptyStars; i++) starsHtml += '&#9734;';
+
+            var sellerName = seller ? (seller.business_name || 'Unknown Seller') : 'Unknown Seller';
+            var sellerLocation = seller ? (seller.location_display_name || seller.business_address || 'Location not specified') : 'Location not specified';
+            var sellerPhone = seller ? seller.business_phone : null;
+            var sellerRating = 0;
+            var sellerRatingCount = 0;
+            
+            // Get seller rating from data if available
+            if (seller && seller.rating) {
+                sellerRating = seller.rating;
+                sellerRatingCount = seller.rating_count || 0;
+            }
+
+            var html = `
+                <div class="product-detail-wrapper">
+                    <div class="product-detail-container">
+                        <!-- Left Column - Image -->
+                        <div class="product-image-gallery">
+                            <img src="${imageUrl}" alt="${escapeHtml(product.title)}" class="product-main-image" id="mainImage" onerror="this.src='https://via.placeholder.com/600x400?text=Product'">
+                            <div class="product-thumbnails" id="thumbnailsContainer">
+                                <img src="${imageUrl}" alt="${escapeHtml(product.title)}" class="product-thumbnail active" onclick="changeMainImage(this.src, this)">
+                                ${product.images && product.images.length > 0 ? product.images.map(function(img) {
+                                    return '<img src="' + img + '" alt="' + escapeHtml(product.title) + '" class="product-thumbnail" onclick="changeMainImage(this.src, this)">';
+                                }).join('') : ''}
+                            </div>
+                        </div>
+
+                        <!-- Right Column - Info -->
+                        <div class="product-detail-info">
+                            <h1 class="product-detail-title">${escapeHtml(product.title)}</h1>
+                            <div class="product-detail-price">$${parseFloat(product.price).toFixed(2)}</div>
+                            
+                            <div class="product-detail-rating">
+                                <span class="stars">${starsHtml}</span>
+                                <span class="rating-count">${ratingCount > 0 ? '(' + ratingCount + ' ratings)' : 'No ratings yet'}</span>
+                            </div>
+
+                            <div class="product-detail-stock ${stockClass}">${stockText}</div>
+
+                            <div class="product-detail-seller">
+                                Seller: <a href="shop.html?seller=${product.seller_id}">${escapeHtml(sellerName)}</a>
+                            </div>
+
+                            <div class="product-detail-category">
+                                Category: <span>${escapeHtml(product.category || 'Uncategorized')}</span>
+                            </div>
+
+                            <div class="product-detail-description">
+                                ${escapeHtml(product.description || 'No description available.')}
+                            </div>
+
+                            <div class="product-detail-actions">
+                                <button class="btn-primary" onclick="addToBasket('${product.id}')">Add to Basket</button>
+                                ${sellerPhone ? '<a href="https://wa.me/' + sellerPhone.replace(/\\D/g, '') + '?text=' + encodeURIComponent('Hello, I am interested in ' + product.title + ' on Mbare Marketplace.') + '" target="_blank" class="btn-whatsapp">Contact Seller</a>' : '<button class="btn-secondary" onclick="showContactModal()">Contact Seller</button>'}
+                            </div>
+
+                            <!-- Seller Info Card -->
+                            <div class="seller-info-card">
+                                <h3>About the Seller</h3>
+                                <div class="seller-name">${escapeHtml(sellerName)}</div>
+                                <div class="seller-location">&#128205; ${escapeHtml(sellerLocation)}</div>
+                                ${sellerPhone ? '<div class="seller-location">&#128222; ' + escapeHtml(sellerPhone) + '</div>' : ''}
+                                <div class="seller-rating">
+                                    ${sellerRating > 0 ? '<span class="stars">' + generateStars(sellerRating) + '</span> ' + sellerRating.toFixed(1) + ' (' + sellerRatingCount + ' ratings)' : 'No seller ratings yet'}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        // ============================================
+        // HELPER FUNCTIONS
+        // ============================================
+
+        function generateStars(rating) {
+            var stars = '';
+            var fullStars = Math.floor(rating);
+            var hasHalfStar = rating % 1 >= 0.5;
+            for (var i = 0; i < fullStars; i++) stars += '&#9733;';
+            if (hasHalfStar) stars += '&#189;';
+            var emptyStars = 5 - Math.ceil(rating);
+            for (var i = 0; i < emptyStars; i++) stars += '&#9734;';
+            return stars;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function changeMainImage(src, thumbnail) {
+            var mainImage = document.getElementById('mainImage');
+            if (mainImage) {
+                mainImage.src = src;
+            }
+            // Update active thumbnail
+            var thumbnails = document.querySelectorAll('.product-thumbnail');
+            thumbnails.forEach(function(thumb) {
+                thumb.classList.remove('active');
+            });
+            if (thumbnail) {
+                thumbnail.classList.add('active');
+            }
+        }
+
+        function addToBasket(productId) {
+            var sessionData = localStorage.getItem('supabase_session');
+            if (!sessionData) {
+                window.location.href = 'login.html';
+                return;
+            }
+            var session = JSON.parse(sessionData);
+            var basketKey = 'basket_' + session.user.id;
+            var basket = JSON.parse(localStorage.getItem(basketKey)) || [];
+            
+            // Find product in current data
+            var product = window.currentProduct;
+            if (!product) {
+                showToast('Product not found', true);
+                return;
+            }
+
+            var existingItem = basket.find(function(item) { return item.id == productId; });
+            if (existingItem) {
+                existingItem.quantity = (existingItem.quantity || 1) + 1;
+            } else {
+                basket.push({ ...product, quantity: 1 });
+            }
+
+            localStorage.setItem(basketKey, JSON.stringify(basket));
+            var count = basket.reduce(function(sum, item) { return sum + (item.quantity || 1); }, 0);
+            updateBasketCount(count);
+            showToast('Item added to basket!');
+        }
+
+        function updateBasketCount(count) {
+            var el = document.getElementById('basketCount');
+            if (el) {
+                el.textContent = count;
+                el.style.display = count > 0 ? 'flex' : 'none';
+            }
+        }
+
+        function showToast(message, isError) {
+            var toast = document.createElement('div');
+            toast.className = 'toast-notification' + (isError ? ' error' : '');
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 80px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: var(--bubble-glass);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                border: 1px solid var(--bubble-glass-border);
+                border-radius: 12px;
+                padding: 14px 28px;
+                color: #fff;
+                font-weight: 500;
+                z-index: 99999;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+                animation: fadeIn 0.3s ease;
+                max-width: 90%;
+                text-align: center;
+                ${isError ? 'border-color: #dc3545;' : ''}
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(function() {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease';
+                setTimeout(function() { toast.remove(); }, 300);
+            }, 3000);
+        }
+
+        function showContactModal() {
+            showToast('Phone number not available for this seller.', true);
+        }
+
+        // Make functions globally available
+        window.changeMainImage = changeMainImage;
+        window.addToBasket = addToBasket;
+        window.showContactModal = showContactModal;
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+
+        async function initProductDetail() {
+            var container = document.getElementById('productDetailContent');
+            try {
+                var params = getUrlParams();
+                var productId = params.productId;
+
+                if (!productId) {
+                    container.innerHTML = `
+                        <div class="product-detail-error">
+                            <span class="error-icon">&#9888;</span>
+                            <h2>No Product Selected</h2>
+                            <p>Please provide a product ID to view details.</p>
+                            <a href="index.html" style="display:inline-block;padding:12px 32px;background:linear-gradient(135deg,var(--bubble-accent),var(--bubble-accent2));color:#fff;border-radius:50px;text-decoration:none;font-weight:600;transition:var(--bubble-transition);">Return Home</a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                var data = await fetchProductData(productId);
+                window.currentProduct = data.product;
+                renderProductDetail(data);
+
+            } catch (error) {
+                console.error('Product detail error:', error);
+                container.innerHTML = `
+                    <div class="product-detail-error">
+                        <span class="error-icon">&#9888;</span>
+                        <h2>Something went wrong</h2>
+                        <p>${error.message || 'Unable to load product. Please try again later.'}</p>
+                        <a href="index.html" style="display:inline-block;padding:12px 32px;background:linear-gradient(135deg,var(--bubble-accent),var(--bubble-accent2));color:#fff;border-radius:50px;text-decoration:none;font-weight:600;transition:var(--bubble-transition);">Return Home</a>
+                    </div>
+                `;
+            }
+        }
+
+        // Update basket count on load
+        document.addEventListener('DOMContentLoaded', function() {
+            var sessionData = localStorage.getItem('supabase_session');
+            if (sessionData) {
+                var session = JSON.parse(sessionData);
+                var basket = JSON.parse(localStorage.getItem('basket_' + session.user.id)) || [];
+                updateBasketCount(basket.reduce(function(sum, item) { return sum + (item.quantity || 1); }, 0));
+            }
+        });
+
+        // Start the page
+        document.addEventListener('DOMContentLoaded', initProductDetail);
+    </script>
+
 </body>
 </html>
