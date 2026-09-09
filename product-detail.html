@@ -65,8 +65,8 @@
         // PRODUCT DETAIL PAGE - JavaScript
         // ============================================
 
-        const SUPABASE_URL = window.SUPABASE_URL || 'https://fnncerdxfhwlrdopswpx.supabase.co';
-        const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
+        var SUPABASE_URL = window.SUPABASE_URL || 'https://fnncerdxfhwlrdopswpx.supabase.co';
+        var SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
 
         // ============================================
         // GET URL PARAMETERS
@@ -125,7 +125,7 @@
                     }
                 }
 
-                // Fetch ratings
+                // Fetch ratings for this product
                 var ratingsResponse = await fetch(
                     SUPABASE_URL + '/rest/v1/ratings?product_id=eq.' + productId + '&select=rating',
                     {
@@ -147,11 +147,35 @@
                     }
                 }
 
+                // Fetch seller ratings
+                var sellerRatingsResponse = await fetch(
+                    SUPABASE_URL + '/rest/v1/ratings?seller_id=eq.' + product.seller_id + '&select=rating',
+                    {
+                        headers: {
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+                        }
+                    }
+                );
+
+                var sellerAvgRating = 0;
+                var sellerRatingCount = 0;
+                if (sellerRatingsResponse.ok) {
+                    var sellerRatings = await sellerRatingsResponse.json();
+                    if (sellerRatings && sellerRatings.length > 0) {
+                        var sellerSum = sellerRatings.reduce(function(acc, r) { return acc + r.rating; }, 0);
+                        sellerAvgRating = sellerSum / sellerRatings.length;
+                        sellerRatingCount = sellerRatings.length;
+                    }
+                }
+
                 return {
                     product: product,
                     seller: seller,
                     rating: avgRating,
-                    ratingCount: ratingCount
+                    ratingCount: ratingCount,
+                    sellerRating: sellerAvgRating,
+                    sellerRatingCount: sellerRatingCount
                 };
 
             } catch (error) {
@@ -172,6 +196,8 @@
             var seller = data.seller;
             var rating = data.rating || 0;
             var ratingCount = data.ratingCount || 0;
+            var sellerRating = data.sellerRating || 0;
+            var sellerRatingCount = data.sellerRatingCount || 0;
 
             var stock = product.stock !== null && product.stock !== undefined ? parseInt(product.stock) : 0;
             var stockText = stock > 0 ? 'In Stock' : 'Out of Stock';
@@ -179,25 +205,12 @@
             var imageUrl = product.image_url || 'https://via.placeholder.com/600x400?text=Product';
 
             // Generate stars
-            var starsHtml = '';
-            var fullStars = Math.floor(rating);
-            var hasHalfStar = rating % 1 >= 0.5;
-            for (var i = 0; i < fullStars; i++) starsHtml += '&#9733;';
-            if (hasHalfStar) starsHtml += '&#189;';
-            var emptyStars = 5 - Math.ceil(rating);
-            for (var i = 0; i < emptyStars; i++) starsHtml += '&#9734;';
+            var starsHtml = generateStars(rating);
+            var sellerStarsHtml = generateStars(sellerRating);
 
             var sellerName = seller ? (seller.business_name || 'Unknown Seller') : 'Unknown Seller';
             var sellerLocation = seller ? (seller.location_display_name || seller.business_address || 'Location not specified') : 'Location not specified';
             var sellerPhone = seller ? seller.business_phone : null;
-            var sellerRating = 0;
-            var sellerRatingCount = 0;
-            
-            // Get seller rating from data if available
-            if (seller && seller.rating) {
-                sellerRating = seller.rating;
-                sellerRatingCount = seller.rating_count || 0;
-            }
 
             var html = `
                 <div class="product-detail-wrapper">
@@ -249,8 +262,11 @@
                                 <div class="seller-location">&#128205; ${escapeHtml(sellerLocation)}</div>
                                 ${sellerPhone ? '<div class="seller-location">&#128222; ' + escapeHtml(sellerPhone) + '</div>' : ''}
                                 <div class="seller-rating">
-                                    ${sellerRating > 0 ? '<span class="stars">' + generateStars(sellerRating) + '</span> ' + sellerRating.toFixed(1) + ' (' + sellerRatingCount + ' ratings)' : 'No seller ratings yet'}
+                                    ${sellerRating > 0 ? '<span class="stars">' + sellerStarsHtml + '</span> ' + sellerRating.toFixed(1) + ' (' + sellerRatingCount + ' ratings)' : 'No seller ratings yet'}
                                 </div>
+                                <button class="btn-rate-seller" onclick="openRatingModal('${product.seller_id}', '${escapeHtml(sellerName)}')">
+                                    Rate Seller
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -258,6 +274,425 @@
             `;
 
             container.innerHTML = html;
+        }
+
+        // ============================================
+        // RATING MODAL
+        // ============================================
+
+        function openRatingModal(sellerId, sellerName) {
+            // Check if user is logged in
+            var sessionData = localStorage.getItem('supabase_session');
+            if (!sessionData) {
+                window.location.href = 'login.html?redirect=product-detail.html';
+                return;
+            }
+
+            var session = JSON.parse(sessionData);
+            var userId = session.user.id;
+
+            // Check if user has already rated this seller
+            checkExistingRating(sellerId, userId, sellerName);
+        }
+
+        async function checkExistingRating(sellerId, userId, sellerName) {
+            try {
+                var response = await fetch(
+                    SUPABASE_URL + '/rest/v1/ratings?seller_id=eq.' + sellerId + '&user_id=eq.' + userId + '&select=rating',
+                    {
+                        headers: {
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+                        }
+                    }
+                );
+
+                var existingRating = null;
+                if (response.ok) {
+                    var ratings = await response.json();
+                    if (ratings && ratings.length > 0) {
+                        existingRating = ratings[0].rating;
+                    }
+                }
+
+                showRatingModal(sellerId, sellerName, existingRating);
+
+            } catch (error) {
+                console.error('Error checking existing rating:', error);
+                showRatingModal(sellerId, sellerName, null);
+            }
+        }
+
+        function showRatingModal(sellerId, sellerName, existingRating) {
+            // Remove existing modal if any
+            var existingModal = document.getElementById('ratingModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+
+            var starsHtml = '';
+            var selectedRating = existingRating || 0;
+
+            for (var i = 1; i <= 5; i++) {
+                var activeClass = i <= selectedRating ? 'active' : '';
+                starsHtml += '<span class="star-rating ' + activeClass + '" data-value="' + i + '" onclick="setRating(' + i + ')">&#9733;</span>';
+            }
+
+            var modalHtml = `
+                <div class="rating-modal-overlay" id="ratingModal">
+                    <div class="rating-modal-content">
+                        <button class="rating-modal-close" onclick="closeRatingModal()">&times;</button>
+                        <h3>Rate ${escapeHtml(sellerName)}</h3>
+                        <p>How was your experience with this seller?</p>
+                        <div class="rating-stars-container" id="ratingStars">
+                            ${starsHtml}
+                        </div>
+                        <div class="rating-value-display" id="ratingValueDisplay">
+                            ${selectedRating > 0 ? selectedRating + ' out of 5 stars' : 'Select a rating'}
+                        </div>
+                        <textarea class="rating-comment" id="ratingComment" placeholder="Leave a comment about your experience (optional)"></textarea>
+                        <div class="rating-actions">
+                            <button class="btn-submit-rating" onclick="submitRating('${sellerId}', ${selectedRating})">
+                                ${existingRating ? 'Update Rating' : 'Submit Rating'}
+                            </button>
+                            <button class="btn-cancel-rating" onclick="closeRatingModal()">Cancel</button>
+                        </div>
+                        <div class="rating-error" id="ratingError" style="display:none;color:#dc3545;margin-top:10px;font-size:14px;"></div>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+            // Add styles for rating modal if not already present
+            if (!document.getElementById('ratingModalStyles')) {
+                var style = document.createElement('style');
+                style.id = 'ratingModalStyles';
+                style.textContent = `
+                    .rating-modal-overlay {
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0,0,0,0.8);
+                        backdrop-filter: blur(20px);
+                        -webkit-backdrop-filter: blur(20px);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        z-index: 40000;
+                        padding: 20px;
+                        animation: fadeIn 0.3s ease;
+                    }
+                    .rating-modal-content {
+                        background: rgba(10,22,40,0.95);
+                        backdrop-filter: blur(30px);
+                        -webkit-backdrop-filter: blur(30px);
+                        border: 1px solid var(--bubble-glass-border);
+                        border-radius: 24px;
+                        max-width: 450px;
+                        width: 100%;
+                        padding: 30px;
+                        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+                        position: relative;
+                        animation: slideUp 0.3s ease;
+                    }
+                    .rating-modal-content h3 {
+                        color: #fff;
+                        font-size: 22px;
+                        margin-bottom: 6px;
+                    }
+                    .rating-modal-content p {
+                        color: var(--bubble-text-muted);
+                        font-size: 14px;
+                        margin-bottom: 16px;
+                    }
+                    .rating-modal-close {
+                        position: absolute;
+                        top: 15px;
+                        right: 20px;
+                        background: none;
+                        border: none;
+                        color: var(--bubble-text-muted);
+                        font-size: 28px;
+                        cursor: pointer;
+                        transition: var(--bubble-transition);
+                    }
+                    .rating-modal-close:hover {
+                        color: #fff;
+                    }
+                    .rating-stars-container {
+                        display: flex;
+                        gap: 8px;
+                        justify-content: center;
+                        margin: 16px 0;
+                    }
+                    .star-rating {
+                        font-size: 40px;
+                        cursor: pointer;
+                        color: #555;
+                        transition: var(--bubble-transition);
+                        line-height: 1;
+                    }
+                    .star-rating:hover,
+                    .star-rating.active {
+                        color: #f90;
+                        transform: scale(1.1);
+                    }
+                    .rating-value-display {
+                        text-align: center;
+                        color: var(--bubble-text-muted);
+                        font-size: 14px;
+                        margin-bottom: 12px;
+                    }
+                    .rating-comment {
+                        width: 100%;
+                        padding: 12px 16px;
+                        background: rgba(255,255,255,0.06);
+                        border: 1px solid var(--bubble-glass-border);
+                        border-radius: 12px;
+                        color: #fff;
+                        font-size: 14px;
+                        outline: none;
+                        transition: var(--bubble-transition);
+                        font-family: inherit;
+                        resize: vertical;
+                        min-height: 80px;
+                        margin-bottom: 16px;
+                    }
+                    .rating-comment:focus {
+                        border-color: var(--bubble-accent);
+                        box-shadow: 0 0 0 3px var(--bubble-glow);
+                    }
+                    .rating-comment::placeholder {
+                        color: var(--bubble-text-muted);
+                    }
+                    .rating-actions {
+                        display: flex;
+                        gap: 12px;
+                    }
+                    .btn-submit-rating {
+                        flex: 1;
+                        padding: 12px;
+                        background: linear-gradient(135deg, var(--bubble-accent), var(--bubble-accent2));
+                        color: #fff;
+                        border: none;
+                        border-radius: 50px;
+                        font-weight: 600;
+                        font-size: 14px;
+                        cursor: pointer;
+                        transition: var(--bubble-transition);
+                    }
+                    .btn-submit-rating:hover {
+                        transform: translateY(-2px);
+                        box-shadow: 0 4px 20px var(--bubble-glow);
+                    }
+                    .btn-submit-rating:disabled {
+                        opacity: 0.6;
+                        cursor: not-allowed;
+                        transform: none;
+                    }
+                    .btn-cancel-rating {
+                        padding: 12px 24px;
+                        background: var(--bubble-glass);
+                        color: var(--bubble-text-muted);
+                        border: 1px solid var(--bubble-glass-border);
+                        border-radius: 50px;
+                        font-weight: 600;
+                        font-size: 14px;
+                        cursor: pointer;
+                        transition: var(--bubble-transition);
+                    }
+                    .btn-cancel-rating:hover {
+                        background: rgba(255,255,255,0.15);
+                    }
+                    .btn-rate-seller {
+                        margin-top: 12px;
+                        padding: 10px 24px;
+                        background: linear-gradient(135deg, var(--bubble-accent), var(--bubble-accent2));
+                        color: #fff;
+                        border: none;
+                        border-radius: 50px;
+                        font-weight: 600;
+                        font-size: 14px;
+                        cursor: pointer;
+                        transition: var(--bubble-transition);
+                        width: 100%;
+                    }
+                    .btn-rate-seller:hover {
+                        transform: translateY(-2px);
+                        box-shadow: 0 4px 20px var(--bubble-glow);
+                    }
+                    @keyframes fadeIn {
+                        from { opacity: 0; }
+                        to { opacity: 1; }
+                    }
+                    @keyframes slideUp {
+                        from { transform: translateY(30px); opacity: 0; }
+                        to { transform: translateY(0); opacity: 1; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+
+            // Store current rating and seller ID globally
+            window.currentRating = selectedRating;
+            window.currentSellerId = sellerId;
+        }
+
+        // ============================================
+        // RATING FUNCTIONS
+        // ============================================
+
+        function setRating(value) {
+            window.currentRating = value;
+            
+            var stars = document.querySelectorAll('.star-rating');
+            stars.forEach(function(star, index) {
+                if (index < value) {
+                    star.classList.add('active');
+                } else {
+                    star.classList.remove('active');
+                }
+            });
+
+            var display = document.getElementById('ratingValueDisplay');
+            if (display) {
+                display.textContent = value + ' out of 5 stars';
+            }
+        }
+
+        async function submitRating(sellerId, existingRating) {
+            var rating = window.currentRating || 0;
+            if (rating === 0) {
+                var errorEl = document.getElementById('ratingError');
+                if (errorEl) {
+                    errorEl.textContent = 'Please select a rating (1-5 stars)';
+                    errorEl.style.display = 'block';
+                }
+                return;
+            }
+
+            var sessionData = localStorage.getItem('supabase_session');
+            if (!sessionData) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            var session = JSON.parse(sessionData);
+            var userId = session.user.id;
+            var comment = document.getElementById('ratingComment') ? document.getElementById('ratingComment').value : '';
+
+            var btn = document.querySelector('.btn-submit-rating');
+            btn.disabled = true;
+            btn.textContent = 'Submitting...';
+
+            var errorEl = document.getElementById('ratingError');
+            if (errorEl) {
+                errorEl.style.display = 'none';
+            }
+
+            try {
+                // Check if rating exists
+                var checkResponse = await fetch(
+                    SUPABASE_URL + '/rest/v1/ratings?seller_id=eq.' + sellerId + '&user_id=eq.' + userId + '&select=id',
+                    {
+                        headers: {
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+                        }
+                    }
+                );
+
+                var ratingData = {
+                    seller_id: sellerId,
+                    user_id: userId,
+                    rating: rating,
+                    comment: comment || null,
+                    created_at: new Date().toISOString()
+                };
+
+                var response;
+                if (checkResponse.ok) {
+                    var existing = await checkResponse.json();
+                    if (existing && existing.length > 0) {
+                        // Update existing rating
+                        response = await fetch(
+                            SUPABASE_URL + '/rest/v1/ratings?id=eq.' + existing[0].id,
+                            {
+                                method: 'PATCH',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'apikey': SUPABASE_ANON_KEY,
+                                    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+                                },
+                                body: JSON.stringify({
+                                    rating: rating,
+                                    comment: comment || null,
+                                    updated_at: new Date().toISOString()
+                                })
+                            }
+                        );
+                    } else {
+                        // Create new rating
+                        response = await fetch(
+                            SUPABASE_URL + '/rest/v1/ratings',
+                            {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'apikey': SUPABASE_ANON_KEY,
+                                    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+                                },
+                                body: JSON.stringify(ratingData)
+                            }
+                        );
+                    }
+                } else {
+                    // Create new rating
+                    response = await fetch(
+                        SUPABASE_URL + '/rest/v1/ratings',
+                        {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'apikey': SUPABASE_ANON_KEY,
+                                'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+                            },
+                            body: JSON.stringify(ratingData)
+                        }
+                    );
+                }
+
+                if (!response.ok) {
+                    throw new Error('Failed to submit rating');
+                }
+
+                showToast('Rating submitted successfully!');
+                closeRatingModal();
+                
+                // Refresh the page to show updated rating
+                setTimeout(function() {
+                    location.reload();
+                }, 1000);
+
+            } catch (error) {
+                console.error('Rating error:', error);
+                if (errorEl) {
+                    errorEl.textContent = error.message || 'Failed to submit rating. Please try again.';
+                    errorEl.style.display = 'block';
+                }
+                btn.disabled = false;
+                btn.textContent = existingRating ? 'Update Rating' : 'Submit Rating';
+            }
+        }
+
+        function closeRatingModal() {
+            var modal = document.getElementById('ratingModal');
+            if (modal) {
+                modal.remove();
+            }
         }
 
         // ============================================
@@ -287,7 +722,6 @@
             if (mainImage) {
                 mainImage.src = src;
             }
-            // Update active thumbnail
             var thumbnails = document.querySelectorAll('.product-thumbnail');
             thumbnails.forEach(function(thumb) {
                 thumb.classList.remove('active');
@@ -307,7 +741,6 @@
             var basketKey = 'basket_' + session.user.id;
             var basket = JSON.parse(localStorage.getItem(basketKey)) || [];
             
-            // Find product in current data
             var product = window.currentProduct;
             if (!product) {
                 showToast('Product not found', true);
@@ -371,11 +804,6 @@
             showToast('Phone number not available for this seller.', true);
         }
 
-        // Make functions globally available
-        window.changeMainImage = changeMainImage;
-        window.addToBasket = addToBasket;
-        window.showContactModal = showContactModal;
-
         // ============================================
         // INITIALIZATION
         // ============================================
@@ -414,6 +842,15 @@
                 `;
             }
         }
+
+        // Make functions globally available
+        window.changeMainImage = changeMainImage;
+        window.addToBasket = addToBasket;
+        window.showContactModal = showContactModal;
+        window.openRatingModal = openRatingModal;
+        window.setRating = setRating;
+        window.submitRating = submitRating;
+        window.closeRatingModal = closeRatingModal;
 
         // Update basket count on load
         document.addEventListener('DOMContentLoaded', function() {
