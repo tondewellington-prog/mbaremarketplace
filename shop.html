@@ -12,6 +12,8 @@
             position: relative;
             overflow: hidden;
             margin-bottom: 30px;
+            display: block;
+            width: 100%;
         }
 
         .shop-cover {
@@ -20,6 +22,34 @@
             background: linear-gradient(135deg, rgba(179,136,255,0.15), rgba(124,77,255,0.08));
             position: relative;
             border-bottom: 1px solid var(--bubble-glass-border);
+            overflow: hidden;
+        }
+
+        .shop-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            display: block;
+        }
+
+        /* Fade at the bottom of the cover image */
+        .shop-cover::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 60%;
+            background: linear-gradient(
+                to bottom,
+                transparent 0%,
+                rgba(10, 22, 40, 0.4) 40%,
+                rgba(10, 22, 40, 0.8) 75%,
+                #0a1628 100%
+            );
+            pointer-events: none;
+            z-index: 1;
         }
 
         .shop-header {
@@ -29,33 +59,6 @@
             flex-wrap: wrap;
             padding: 20px 0;
         }
-        .shop-cover img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center;
-    display: block;
-}
-
-.shop-banner {
-    display: block;
-    width: 100%;
-}
-
-.shop-header {
-    display: flex;
-    align-items: flex-end;
-    gap: 24px;
-    flex-wrap: wrap;
-    padding: 20px 0;
-}
-
-.shop-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
 
         .shop-avatar {
             width: 120px;
@@ -74,6 +77,7 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
+            display: block;
         }
 
         .shop-avatar .placeholder {
