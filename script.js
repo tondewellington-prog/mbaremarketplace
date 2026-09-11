@@ -30,6 +30,7 @@ const CATEGORY_MATCHES = {
     'Home & Kitchen': ['Home & Kitchen', 'Home', 'Kitchen', 'Home Decor', 'Furniture', 'Cookware', 'Appliances', 'Bedding'],
     'Beauty & Cosmetics': ['Beauty & Cosmetics', 'Beauty', 'Cosmetics', 'Makeup', 'Skincare', 'Hair Care', 'Perfume', 'Lotion', 'Cream', 'Lipstick'],
     'Hardware': ['Hardware', 'Steel', 'Wood', 'Poles', 'locks', 'keys', 'Bricks', 'Tools', 'Building'],
+    'Outdoor & Indoor': ['Outdoor & Indoor', 'Outdoor', 'Indoor', 'Decor', 'Decoration', 'Picnic', 'Garden', 'Event', 'Party', 'Wedding', 'Birthday', 'Camping', 'Braai', 'BBQ', 'Furniture', 'Patio', 'Tent', 'Chair', 'Table', 'Home Decor', 'Catering', 'Venue', 'Rental'],
 };
 
 // ============================================
@@ -141,7 +142,11 @@ async function loadBestSellersBeautyCosmetics() {
 
 async function loadBestSellersHardwareProducts() {
     await loadProductsByCategory('Hardware', 'bestSellersHardware', 6);
-}       
+}
+
+async function loadBestSellersOutdoorIndoor() {
+    await loadProductsByCategory('Outdoor & Indoor', 'bestSellersOutdoorIndoor', 6);
+}
 
 async function loadTodaysDeals() {
     try {
@@ -210,6 +215,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         await loadBestSellersVehicles();
         await loadBestSellersHomeKitchen();
         await loadBestSellersBeautyCosmetics();
+        await loadBestSellersOutdoorIndoor();
         await loadRecommendedProducts();
         await loadAllProductsSection();
         
