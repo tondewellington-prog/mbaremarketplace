@@ -2,425 +2,333 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Outdoor & Indoor - Mbare Marketplace</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Outdoor &amp; Indoor | Mbare Marketplace</title>
+    <meta name="description" content="Shop outdoor &amp; indoor - room decor, picnic essentials, events and services and more at Mbare Marketplace.">
+    
+    <link rel="canonical" href="https://www.mbaremarketplace.com/category-outdoor-indoor.html">
     <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
-        /* Category page specific styles with glassmorphism */
         .category-header {
-            padding: 40px 0 20px;
+            background: linear-gradient(135deg, #232f3e, #1a2533);
+            color: white;
+            padding: 15px 0;
+            text-align: center;
+            position: relative;
+        }
+        
+        .slider-container {
+            display: grid;
+            gap: 10px;
+            padding: 0 15px;
+            grid-template-columns: repeat(4, 1fr);
+            position: relative;
+        }
+
+        .slide-panel {
+            position: relative;
+            height: 200px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #1a2533;
+        }
+
+        .slide-panel img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        .slider-overlay-text {
+            position: absolute;
+            bottom: 15px;
+            left: 0;
+            right: 0;
+            z-index: 10;
+            pointer-events: none;
             text-align: center;
         }
 
         .category-header h1 {
-            font-size: 36px;
-            font-weight: 700;
-            color: #ffffff;
-            margin-bottom: 8px;
-            text-shadow: 0 2px 20px rgba(179, 136, 255, 0.15);
+            font-size: 22px;
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.4);
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 5px;
         }
-
+        
         .category-header p {
-            color: var(--bubble-text-muted);
-            font-size: 16px;
-            max-width: 600px;
-            margin: 0 auto;
+            font-size: 13px;
+            opacity: 0.9;
+            margin-top: 4px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
         }
 
-        .category-controls {
-            background: var(--bubble-glass);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--bubble-glass-border);
-            border-radius: 16px;
-            padding: 16px 20px;
-            margin-bottom: 30px;
+        .filter-bar {
+            background: white;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .filter-bar .container {
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 15px;
         }
+        
+        .category-breadcrumb { padding: 12px 0; background: #f8f9fa; font-size: 14px; }
+        .category-breadcrumb a { color: #232f3e; text-decoration: none; }
+        .category-breadcrumb a:hover { color: #f90; }
 
-        .category-controls .results-count {
-            color: var(--bubble-text-muted);
-            font-size: 14px;
+        .contact-modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            overflow-y: auto;
+            padding: 20px 0;
         }
-
-        .category-controls .sort-wrapper {
+        .contact-modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            animation: slideDown 0.3s ease-out;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        @keyframes slideDown {
+            from { transform: translateY(-100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .close-contact-modal {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            color: #666;
+            cursor: pointer;
+            z-index: 10;
+        }
+        .close-contact-modal:hover {
+            color: #000;
+        }
+        .info-row {
             display: flex;
             align-items: center;
-            gap: 10px;
+            margin-bottom: 15px;
+            padding: 12px;
+            background: #f5f5f5;
+            border-radius: 4px;
         }
-
-        .category-controls .sort-wrapper label {
-            color: var(--bubble-text-muted);
-            font-size: 13px;
-            font-weight: 500;
-        }
-
-        .category-controls select {
-            background: rgba(255,255,255,0.06);
-            border: 1px solid var(--bubble-glass-border);
-            color: #fff;
-            border-radius: 10px;
-            padding: 8px 36px 8px 16px;
-            appearance: none;
-            -webkit-appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(255,255,255,0.5)' stroke-width='2' fill='none'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            cursor: pointer;
-            transition: var(--bubble-transition);
-            font-size: 13px;
-            outline: none;
-        }
-
-        .category-controls select:focus {
-            border-color: var(--bubble-accent);
-            box-shadow: 0 0 0 3px var(--bubble-glow);
-        }
-
-        .category-controls select option {
-            background: #0a1628;
-            color: #fff;
-        }
-
-        .products-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 20px;
-        }
-
-        .product-card {
-            background: var(--bubble-glass);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--bubble-glass-border);
-            border-radius: 16px;
-            overflow: hidden;
-            transition: var(--bubble-transition);
-            cursor: pointer;
-            text-decoration: none;
-            color: inherit;
-            display: block;
-        }
-
-        .product-card:hover {
-            transform: translateY(-6px);
-            border-color: rgba(179,136,255,0.2);
-            box-shadow: 0 12px 48px rgba(0,0,0,0.4), 0 0 40px var(--bubble-glow);
-        }
-
-        .product-card img {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            background: rgba(255,255,255,0.03);
-            transition: var(--bubble-transition);
-        }
-
-        .product-card:hover img {
-            transform: scale(1.03);
-        }
-
-        .product-card .product-info {
-            padding: 16px 18px 18px;
-        }
-
-        .product-card .product-title {
-            font-size: 15px;
-            font-weight: 500;
-            color: #fff;
-            margin-bottom: 4px;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            min-height: 40px;
-        }
-
-        .product-card .product-price {
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--bubble-accent);
-            margin-bottom: 4px;
-        }
-
-        .product-card .product-stock {
-            font-size: 12px;
-            color: var(--bubble-text-muted);
-            margin-top: 2px;
-        }
-
-        .product-card .product-stock.in-stock {
-            color: #28a745;
-        }
-
-        .product-card .product-stock.out-of-stock {
-            color: #dc3545;
-        }
-
-        .product-card .product-category-tag {
-            display: inline-block;
-            background: rgba(255,255,255,0.06);
-            padding: 2px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            color: var(--bubble-text-muted);
-            margin-top: 6px;
-            border: 1px solid var(--bubble-glass-border);
-        }
-
-        .product-card .product-seller {
-            color: var(--bubble-text-muted);
-            font-size: 12px;
-            margin-top: 6px;
-        }
-
-        .product-card .product-actions {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-top: 12px;
-        }
-
-        .product-card .btn-add-cart {
-            padding: 10px;
-            background: linear-gradient(135deg, var(--bubble-accent), var(--bubble-accent2));
-            color: #fff;
-            border: none;
-            border-radius: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--bubble-transition);
-            font-size: 13px;
-            width: 100%;
-        }
-
-        .product-card .btn-add-cart:hover {
-            transform: scale(1.02);
-            box-shadow: 0 4px 20px var(--bubble-glow);
-        }
-
-        .product-card .btn-contact-seller {
-            padding: 10px;
-            background: rgba(255,255,255,0.06);
-            color: #fff;
-            border: 1px solid var(--bubble-glass-border);
-            border-radius: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--bubble-transition);
-            font-size: 13px;
-            width: 100%;
-        }
-
-        .product-card .btn-contact-seller:hover {
-            background: rgba(255,255,255,0.12);
-            border-color: var(--bubble-accent);
-        }
-
-        .no-products {
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--bubble-text-muted);
-            background: var(--bubble-glass);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--bubble-glass-border);
-            border-radius: 16px;
-            grid-column: 1 / -1;
-        }
-
-        .no-products .no-products-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-            display: block;
-        }
-
-        .loading-spinner {
-            text-align: center;
-            padding: 60px 20px;
-        }
-
-        .loading-spinner .spinner {
+        .info-icon {
             width: 40px;
             height: 40px;
-            border: 3px solid var(--bubble-glass-border);
-            border-top: 3px solid var(--bubble-accent);
+            background: #232f3e;
+            color: white;
             border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto 16px;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .loading-spinner p {
-            color: var(--bubble-text-muted);
-        }
-
-        .back-link {
-            display: inline-flex;
+            display: flex;
             align-items: center;
-            gap: 6px;
-            color: var(--bubble-text-muted);
+            justify-content: center;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        .info-text {
+            flex: 1;
+            min-width: 0;
+        }
+        .info-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 3px;
+        }
+        .info-value {
+            font-size: 16px;
+            font-weight: 500;
+            color: #232f3e;
+            word-wrap: break-word;
+        }
+        .contact-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .contact-btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 14px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            text-align: center;
             text-decoration: none;
-            font-size: 14px;
-            transition: var(--bubble-transition);
-            margin-bottom: 20px;
+            transition: opacity 0.2s;
+        }
+        .contact-btn:hover {
+            opacity: 0.9;
+        }
+        .call-btn {
+            background: #28a745;
+            color: white;
+        }
+        .whatsapp-btn {
+            background: #25D366;
+            color: white;
+        }
+        .product-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #232f3e;
+            padding-right: 30px;
         }
 
-        .back-link:hover {
-            color: var(--bubble-accent);
+        @media (min-width: 769px) {
+            .slider-container {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            .slide-panel:nth-child(4) { 
+                display: block; 
+            }
         }
 
         @media (max-width: 768px) {
-            .category-header h1 {
-                font-size: 28px;
+            .slider-container {
+                grid-template-columns: repeat(3, 1fr) !important;
             }
-            .category-controls {
+            .slide-panel:nth-child(4) { 
+                display: none; 
+            }
+            .slide-panel { 
+                height: 140px; 
+            }
+            .category-header h1 { 
+                font-size: 18px; 
+            }
+            .product-grid { 
+                grid-template-columns: repeat(2, 1fr); 
+                gap: 12px; 
+            }
+            .contact-actions {
                 flex-direction: column;
-                align-items: stretch;
-                gap: 10px;
             }
-            .category-controls .sort-wrapper {
-                justify-content: space-between;
-            }
-            .products-grid {
-                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-                gap: 12px;
-            }
-            .product-card img {
-                height: 160px;
-            }
-            .product-card .product-title {
-                font-size: 13px;
-                min-height: 36px;
-            }
-            .product-card .product-price {
-                font-size: 17px;
-            }
-            .product-card .product-info {
-                padding: 12px 14px 14px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .category-header h1 {
-                font-size: 22px;
-            }
-            .category-header p {
-                font-size: 14px;
-            }
-            .products-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 10px;
-            }
-            .product-card img {
-                height: 120px;
-            }
-            .product-card .product-info {
-                padding: 10px 12px 12px;
-            }
-            .product-card .product-title {
-                font-size: 12px;
-                min-height: 32px;
-            }
-            .product-card .product-price {
-                font-size: 15px;
+            .contact-btn {
+                width: 100%;
             }
         }
     </style>
 </head>
-<body>
+<body data-category="outdoor-indoor">
 
-    <!-- Background Bubbles -->
-    <div class="bubble-bg">
-        <span></span><span></span><span></span><span></span><span></span>
+    <div id="sellerContactModal" class="contact-modal">
+        <div class="contact-modal-content">
+            <span class="close-contact-modal" onclick="document.getElementById('sellerContactModal').style.display='none'">&times;</span>
+            <div id="sellerContactContent"></div>
+        </div>
     </div>
 
-    <!-- Header -->
     <header class="header">
         <div class="header-top">
             <div class="container">
-                <div class="logo">
-                    <a href="index.html">Mbare Marketplace</a>
+                <div class="logo"><a href="index.html">Mbare Marketplace</a></div>
+                <div class="search-bar">
+                    <select class="search-category" id="searchCategory">
+                        <option>All</option>
+                        <option selected>Outdoor &amp; Indoor</option>
+                    </select>
+                    <input type="text" id="searchInput" placeholder="Search outdoor &amp; indoor..." class="search-input">
+                    <button class="search-btn" onclick="handleSearch()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+                    </button>
                 </div>
                 <div class="header-right">
-                    <a href="index.html" class="account-link">Home</a>
-                    <a href="seller-dashboard.html" class="account-link">Sell</a>
+                    <div class="account-menu" id="accountMenu">
+                        <span class="account-label">Hello, Sign in</span>
+                        <a href="login.html" class="account-link">Account & Lists</a>
+                        <button id="logoutBtn" class="logout-btn" onclick="logout()" style="display: none;">Logout</button>
+                    </div>
+                    <a href="Basket.html" class="basket">
+                        <div class="basket-icon">
+                            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                                <line x1="3" y1="6" x2="21" y2="6"></line>
+                                <path d="M16 10a4 4 0 0 1-8 0"></path>
+                            </svg>
+                            <span class="basket-count" id="basketCount">0</span>
+                        </div>
+                        <span class="basket-text">Basket</span>
+                    </a>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="main-content">
+    <div class="category-breadcrumb">
+        <div class="container"><a href="index.html">Home</a> > <span>Outdoor &amp; Indoor</span></div>
+    </div>
+
+    <section class="category-header">
         <div class="container">
-            <a href="index.html" class="back-link">&#8592; Back to Home</a>
-
-            <div class="category-header">
-                <h1 id="categoryTitle">Outdoor & Indoor</h1>
-                <p id="categoryDescription">Discover room decors, indoor and outdoor picnic essentials, and more</p>
-            </div>
-
-            <div class="category-controls">
-                <span class="results-count" id="resultsCount">Loading...</span>
-                <div class="sort-wrapper">
-                    <label for="sortSelect">Sort by:</label>
-                    <select id="sortSelect">
-                        <option value="newest">Newest First</option>
-                        <option value="oldest">Oldest First</option>
-                        <option value="price-low">Price: Low to High</option>
-                        <option value="price-high">Price: High to Low</option>
-                        <option value="name">Name A-Z</option>
-                    </select>
+            <div class="slider-container" id="heroSlider">
+                <div class="slide-panel"><img src="outdoor_indoor/1.jpg" alt="outdoor indoor" id="slideImg1"></div>
+                <div class="slide-panel"><img src="outdoor_indoor/2.jpg" alt="outdoor indoor" id="slideImg2"></div>
+                <div class="slide-panel"><img src="outdoor_indoor/3.jpg" alt="outdoor indoor" id="slideImg3"></div>
+                <div class="slide-panel"><img src="outdoor_indoor/4.jpg" alt="outdoor indoor" id="slideImg4"></div>
+                
+                <div class="slider-overlay-text">
+                    <h1> Outdoor &amp; Indoor</h1>
+                    <p>Room decor, picnics, events and services</p>
                 </div>
             </div>
+        </div>
+    </section>
 
-            <div id="loadingSpinner" class="loading-spinner">
-                <div class="spinner"></div>
-                <p>Loading products...</p>
-            </div>
+    <div class="filter-bar">
+        <div class="container">
+            <div class="results-count" id="resultsCount">Loading products...</div>
+            <select id="sortSelect" class="sort-select" onchange="sortProducts()">
+                <option value="newest">Newest First</option>
+                <option value="price_low">Price: Low to High</option>
+                <option value="price_high">Price: High to Low</option>
+            </select>
+        </div>
+    </div>
 
-            <div id="outdoorIndoorGrid" class="products-grid"></div>
+    <main class="main-content">
+        <div class="container">
+            <div class="product-grid" id="outdoorIndoorGrid"></div>
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-content">
-            <div class="container">
-                <div class="footer-bottom">
-                    <div class="container">
-                        <span class="footer-copyright">&copy; 2026 Mbare Marketplace. All rights reserved.</span>
-                        <div class="footer-links">
-                            <a href="index.html">Home</a>
-                            <a href="seller-dashboard.html">Sell</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </footer>
-
-    <script src="category-config.js"></script>
-    <script src="category-page.js"></script>
-    <script>
-        // Auto-initialize the category page for Outdoor & Indoor
-        (function() {
-            if (typeof window.initCategoryPage === 'function') {
-                // Set the body data attribute for auto-init
-                document.body.dataset.category = 'outdoor-indoor';
-                window.initCategoryPage('outdoor-indoor');
-            } else {
-                console.error('initCategoryPage function not found. Make sure category-page.js is loaded.');
-            }
-        })();
-    </script>
+    <script src="api.js"></script>
+    <script src="auth-check.js"></script>
+    
+    <script src="js/category-config.js"></script>
+    <script src="js/category-page.js"></script>
 </body>
 </html>
