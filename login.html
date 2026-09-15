@@ -718,6 +718,22 @@
             }
         }
 
+                // Show banner if we were redirected from wa-confirm.html
+        function showConfirmationBanner() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('confirmed') === '1') {
+                showNotification('✅ Your account is confirmed! Please log in below.', 'success');
+            } else if (params.get('confirm_error')) {
+                const code = params.get('confirm_error');
+                let msg = 'We could not confirm your account.';
+                if (code === 'expired') msg = 'Your confirmation link has expired. Please sign up again.';
+                else if (code === 'invalid') msg = 'This confirmation link is invalid.';
+                else if (code === 'missing_token') msg = 'The confirmation link is missing its token.';
+                else if (code === 'network') msg = 'A network error occurred. Please try again.';
+                showNotification('⚠️ ' + msg, 'error');
+            }
+        }
+
         // NEW: Toggle confirm method UI
         function updateConfirmMethod() {
             var emailRadio = document.getElementById('confirmEmail');
