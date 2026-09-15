@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirming your account…</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at 30% 20%, #0b2b4a 0%, #061525 55%, #020a14 100%);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+        }
+        .wa-confirm-card {
+            text-align: center;
+            padding: 40px 36px;
+            max-width: 420px;
+            width: 90%;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 18px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            color: #fff;
+        }
+        .wa-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(255,255,255,0.15);
+            border-top-color: #00d4ff;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .wa-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+        .wa-sub {
+            font-size: 14px;
+            color: rgba(255,255,255,0.65);
+            line-height: 1.5;
+        }
+        .wa-icon-success, .wa-icon-error {
+            font-size: 44px;
+            margin-bottom: 16px;
+            display: block;
+        }
+        .wa-success-link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 24px;
+            background: rgba(0, 212, 255, 0.15);
+            border: 1px solid #00d4ff;
+            border-radius: 12px;
+            color: #00d4ff;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.25s ease;
+        }
+        .wa-success-link:hover {
+            background: rgba(0, 212, 255, 0.25);
+        }
+    </style>
+</head>
+<body>
+    <div class="wa-confirm-card">
+        <div id="waState">
+            <div class="wa-spinner"></div>
+            <div class="wa-title">Confirming your account…</div>
+            <div class="wa-sub">Please wait a moment while we verify your WhatsApp link.</div>
+        </div>
+    </div>
+
+    <script>
+        (async function () {
+            const SUPABASE_URL = 'https://fnncerdxfhwlrdopswpx.supabase.co';
+            const SUPABASE_ANON_KEY = 'sb_publishable_qjN17tdmLu5yvp9iIUBEjg_ZDZCWMhK';
+            const state = document.getElementById('waState');
+
+            function renderSuccess() {
+                state.innerHTML = `
+                    <span class="wa-icon-success">✅</span>
+                    <div class="wa-title">Account Confirmed!</div>
+                    <div class="wa-sub">Your account has been verified. You can now log in.</div>
+                    <a class="wa-success-link" href="login.html?confirmed=1">Continue to Login</a>
+                `;
+                setTimeout(() => {
+                    window.location.href = 'login.html?confirmed=1';
+                }, 2200);
+            }
+
+            function renderError(message, code) {
+                state.innerHTML = `
+                    <span class="wa-icon-error">⚠️</span>
+                    <div class="wa-title">Confirmation Failed</div>
+                    <div class="wa-sub">${message}</div>
+                    <a class="wa-success-link" href="login.html?confirm_error=${encodeURIComponent(code || 'unknown')}">Back to Login</a>
+                `;
+                setTimeout(() => {
+                    window.location.href = 'login.html?confirm_error=' + encodeURIComponent(code || 'unknown');
+                }, 2800);
+            }
+
+            const params = new URLSearchParams(window.location.search);
+            const token = params.get('token');
+
+            if (!token) {
+                renderError('This link is missing a confirmation token.', 'missing_token');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${SUPABASE_URL}/functions/v1/verify-whatsapp-token`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    },
+                    body: JSON.stringify({ token })
+                });
+
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    renderSuccess();
+                } else {
+                    renderError(data.error || 'We could not verify this link.', 'invalid');
+                }
+            } catch (err) {
+                console.error('Verify error:', err);
+                renderError('Network error while confirming your account.', 'network');
+            }
+        })();
+    </script>
+</body>
+</html>
