@@ -161,6 +161,46 @@
             flex: 1;
         }
 
+        /* NEW: Confirm-method radio buttons */
+        .confirm-method-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 4px;
+        }
+        .confirm-method-option {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 14px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--bubble-glass-border);
+            border-radius: 12px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            transition: var(--bubble-transition);
+            user-select: none;
+        }
+        .confirm-method-option:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--bubble-accent);
+        }
+        .confirm-method-option input[type="radio"] {
+            accent-color: var(--bubble-accent);
+            cursor: pointer;
+        }
+        .confirm-method-option.active {
+            background: rgba(0, 212, 255, 0.12);
+            border-color: var(--bubble-accent);
+            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.15);
+        }
+        .confirm-method-option.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         @media (max-width: 768px) {
             #regCountryCode {
                 width: 100px;
@@ -176,6 +216,9 @@
             .custom-notification {
                 width: 90%;
                 padding: 20px;
+            }
+            .confirm-method-group {
+                flex-direction: column;
             }
         }
     </style>
@@ -505,6 +548,24 @@
                             </div>
                             <small style="color: var(--bubble-text-muted); font-size: 11px;">Enter phone number without the country code (e.g., 712345678)</small>
                         </div>
+
+                        <!-- NEW: Confirm via Email or WhatsApp -->
+                        <div class="form-group">
+                            <label>Confirm my account via</label>
+                            <div class="confirm-method-group">
+                                <label class="confirm-method-option active" id="confirmEmailLabel">
+                                    <input type="radio" name="confirmMethod" value="email" id="confirmEmail" checked>
+                                    <span>📧 Email</span>
+                                </label>
+                                <label class="confirm-method-option" id="confirmWhatsappLabel">
+                                    <input type="radio" name="confirmMethod" value="whatsapp" id="confirmWhatsapp">
+                                    <span>💬 WhatsApp</span>
+                                </label>
+                            </div>
+                            <small id="whatsappConfirmHint" style="color: var(--bubble-text-muted); font-size: 11px; display: none; margin-top: 6px;">
+                                We'll send a confirmation link to the WhatsApp number above.
+                            </small>
+                        </div>
                         
                         <div class="form-group">
                             <label>Account Type</label>
@@ -626,41 +687,13 @@
             }
         }
 
-        // Register form handler
+        // Register form handler — delegates to login.js
         function handleRegister(event) {
             event.preventDefault();
-            var name = document.getElementById('regName').value;
-            var email = document.getElementById('regEmail').value;
-            var password = document.getElementById('regPassword').value;
-            var countryCode = document.getElementById('regCountryCode').value;
-            var phone = document.getElementById('regPhone').value;
-            var role = document.getElementById('regRole').value;
-
-            if (window.api && window.api.register) {
-                window.api.register({
-                    name: name,
-                    email: email,
-                    password: password,
-                    phone: phone,
-                    country_code: countryCode,
-                    role: role
-                })
-                .then(function(result) {
-                    if (result.success) {
-                        if (result.requiresConfirmation) {
-                            alert('Account created! Please check your email to confirm your account.');
-                            document.getElementById('registerForm').style.display = 'none';
-                        } else {
-                            alert('Account created successfully! Please login.');
-                            document.getElementById('registerForm').style.display = 'none';
-                        }
-                    }
-                })
-                .catch(function(err) {
-                    alert('Registration failed: ' + err.message);
-                });
+            if (window.__handleRegisterImpl) {
+                window.__handleRegisterImpl(event);
             } else {
-                alert('API not loaded. Please try again.');
+                alert('Registration handler not loaded. Please refresh the page.');
             }
         }
 
@@ -684,6 +717,36 @@
                 window.location.href = 'index.html';
             }
         }
+
+        // NEW: Toggle confirm method UI
+        function updateConfirmMethod() {
+            var emailRadio = document.getElementById('confirmEmail');
+            var whatsappRadio = document.getElementById('confirmWhatsapp');
+            var emailLabel = document.getElementById('confirmEmailLabel');
+            var whatsappLabel = document.getElementById('confirmWhatsappLabel');
+            var phoneInput = document.getElementById('regPhone');
+            var hint = document.getElementById('whatsappConfirmHint');
+
+            if (whatsappRadio.checked) {
+                emailLabel.classList.remove('active');
+                whatsappLabel.classList.add('active');
+                phoneInput.required = true;
+                hint.style.display = 'block';
+            } else {
+                whatsappLabel.classList.remove('active');
+                emailLabel.classList.add('active');
+                phoneInput.required = false;
+                hint.style.display = 'none';
+            }
+        }
+
+        // Wire up the radios after DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            var emailRadio = document.getElementById('confirmEmail');
+            var whatsappRadio = document.getElementById('confirmWhatsapp');
+            if (emailRadio) emailRadio.addEventListener('change', updateConfirmMethod);
+            if (whatsappRadio) whatsappRadio.addEventListener('change', updateConfirmMethod);
+        });
     </script>
 
     <script src="api.js"></script>
