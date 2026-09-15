@@ -757,11 +757,12 @@
         }
 
         // Wire up the radios after DOM is ready
-        document.addEventListener('DOMContentLoaded', function() {
+              document.addEventListener('DOMContentLoaded', function() {
             var emailRadio = document.getElementById('confirmEmail');
             var whatsappRadio = document.getElementById('confirmWhatsapp');
             if (emailRadio) emailRadio.addEventListener('change', updateConfirmMethod);
             if (whatsappRadio) whatsappRadio.addEventListener('change', updateConfirmMethod);
+            showConfirmationBanner();
         });
     </script>
 
