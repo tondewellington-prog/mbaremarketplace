@@ -4368,3 +4368,184 @@ canvas {
         padding: 18px;
     }
 }
+/* ============================================
+   ANALYTICS - ADDITIONAL GLASS COMPONENTS
+   ============================================ */
+
+/* Badge spacing */
+.badge-spaced {
+    margin-right: 10px;
+}
+
+/* Download Funnel */
+.funnel-card {
+    background: var(--bubble-glass);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--bubble-glass-border);
+    padding: 20px;
+    border-radius: 20px;
+    margin: 20px 0;
+    box-shadow: var(--bubble-shadow);
+}
+
+.funnel-title {
+    margin-bottom: 15px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.funnel-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.funnel-step {
+    flex: 1;
+    min-width: 150px;
+    padding: 15px;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid var(--bubble-glass-border);
+}
+
+.funnel-step-blue {
+    background: rgba(63, 81, 181, 0.15);
+    border-color: rgba(63, 81, 181, 0.3);
+}
+
+.funnel-step-teal {
+    background: rgba(0, 105, 92, 0.15);
+    border-color: rgba(0, 105, 92, 0.3);
+}
+
+.funnel-step-orange {
+    background: rgba(179, 136, 255, 0.15);
+    border-color: rgba(179, 136, 255, 0.3);
+}
+
+.funnel-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.funnel-label {
+    font-size: 12px;
+    color: var(--bubble-text-muted);
+    margin-top: 4px;
+}
+
+.funnel-arrow {
+    font-size: 14px;
+    color: var(--bubble-text-muted);
+}
+
+/* Subsection title */
+.subsection-title {
+    margin: 20px 0 10px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+/* Insights Grid */
+.insights-grid {
+    display: flex;
+    gap: 20px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.insight-card {
+    flex: 1;
+    min-width: 200px;
+    background: var(--bubble-glass);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--bubble-glass-border);
+    padding: 20px;
+    border-radius: 20px;
+    box-shadow: var(--bubble-shadow);
+    color: #fff;
+}
+
+.insight-card-wide {
+    flex: 2;
+    min-width: 300px;
+}
+
+.insight-title {
+    margin-bottom: 15px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.insight-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    color: var(--bubble-text-muted);
+    font-size: 14px;
+}
+
+.insight-row-total {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--bubble-glass-border);
+}
+
+.insight-value {
+    font-weight: 700;
+    color: #fff;
+}
+
+.insight-value-success {
+    color: #28a745;
+}
+
+.insight-card p {
+    margin-bottom: 8px;
+    color: var(--bubble-text-muted);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.insight-card p strong {
+    color: var(--bubble-accent);
+}
+
+/* Refresh button small variant */
+.refresh-btn-small {
+    padding: 5px 15px;
+    font-size: 12px;
+}
+
+/* Empty activities message */
+.activities-empty {
+    text-align: center;
+    padding: 20px;
+    color: var(--bubble-text-muted);
+}
+
+/* Stat icon text rendering (since we replaced emoji with letters) */
+.stat-icon {
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--bubble-accent);
+}
+
+.stat-card.app-download .stat-icon {
+    color: var(--bubble-accent);
+}
+
+.device-icon,
+.os-icon {
+    font-weight: 700;
+    font-size: 20px;
+    color: var(--bubble-accent);
+}
