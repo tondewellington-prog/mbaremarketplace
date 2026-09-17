@@ -24,6 +24,17 @@ const DASHBOARD_VERSION = '2.5.0';
 
 let charts = {};
 
+// Reusable Back to Home link markup
+const BACK_TO_HOME_LINK = `
+    <a href="index.html" class="back-to-home">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        Back to Home
+    </a>
+`;
+
 document.addEventListener('DOMContentLoaded', function() {
     checkAdminAccess();
     updateHeader();
@@ -45,6 +56,7 @@ function checkAdminAccess() {
 
     if (!isLoggedIn || !sessionData) {
         document.getElementById('analyticsContent').innerHTML = `
+            ${BACK_TO_HOME_LINK}
             <div class="no-access">
                 <h2>Access Restricted</h2>
                 <p>Please login to view analytics.</p>
@@ -60,6 +72,7 @@ function checkAdminAccess() {
 
     if (!adminEmails.includes(userEmail)) {
         document.getElementById('analyticsContent').innerHTML = `
+            ${BACK_TO_HOME_LINK}
             <div class="no-access">
                 <h2>Admin Access Only</h2>
                 <p>You don't have permission to view analytics.</p>
@@ -77,6 +90,7 @@ async function loadAnalytics() {
         // Check if Chart.js loaded
         if (typeof Chart === 'undefined') {
             document.getElementById('analyticsContent').innerHTML = `
+                ${BACK_TO_HOME_LINK}
                 <div class="no-access">
                     <h2>Chart.js Loading Failed</h2>
                     <p>Please disable tracking prevention for this site or try a different browser.</p>
@@ -88,6 +102,7 @@ async function loadAnalytics() {
 
         // Show loading state
         document.getElementById('analyticsContent').innerHTML = `
+            ${BACK_TO_HOME_LINK}
             <div class="loading-spinner">
                 <div class="spinner"></div>
                 <p>Loading analytics...</p>
@@ -142,6 +157,7 @@ async function loadAnalytics() {
     } catch (error) {
         console.error('Error loading analytics:', error);
         document.getElementById('analyticsContent').innerHTML = `
+            ${BACK_TO_HOME_LINK}
             <div class="no-access">
                 <h2>Error Loading Data</h2>
                 <p>${error.message}</p>
@@ -268,6 +284,8 @@ function processChartData(users, activities, sellers, products) {
 
 function renderDashboard(stats, chartData, downloadStats) {
     document.getElementById('analyticsContent').innerHTML = `
+        ${BACK_TO_HOME_LINK}
+
         <div class="analytics-header">
             <h1>Mbare Marketplace Analytics</h1>
             <div>
