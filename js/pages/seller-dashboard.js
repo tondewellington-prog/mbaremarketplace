@@ -277,7 +277,7 @@ async function activateSubscription(planType, reference) {
     }
 }
 
-// ==================== PAYMENT FLOW ====================
+// ==================== PAYMENT FLOW (Redirect Method) ====================
 async function openPayNowPayment(planType) {
     const plan = tierMap[planType];
     
@@ -1070,13 +1070,11 @@ function renderTiers() {
         let buttonText = isCurrent ? (subscriptionStatus === 'paused' ? 'Paused' : 'Current Plan') :
                          (isDowngrade ? 'Cannot Downgrade' : 'Subscribe');
 
-        // Build the badge HTML with star indicator for free tier
         let badgeHtml = '';
         if (d.badge) {
             badgeHtml = `<span class="badge-pro">${d.badge}</span>`;
         }
         if (d.isFree && isCurrent) {
-            // Professional star badge for free tier - no emojis
             badgeHtml = `
                 <span class="badge-free" style="
                     background: #8B5CF6; 
@@ -1097,7 +1095,6 @@ function renderTiers() {
                 </span>
             `;
         } else if (d.isFree && !isCurrent) {
-            // Show subtle star for free tier even when not active
             badgeHtml = `
                 <span class="badge-free-inactive" style="
                     background: #E9E6FF; 
@@ -1118,7 +1115,6 @@ function renderTiers() {
             `;
         }
 
-        // Determine if subscription is active (for paid plans)
         let statusIndicator = '';
         if (isCurrent && !d.isFree) {
             if (subscriptionStatus === 'paused') {
@@ -1351,7 +1347,6 @@ window.openCamera = function() {
     i.click();
 };
 
-// ==================== handleAddProduct with TIER-BASED LIMIT CHECK ====================
 window.handleAddProduct = async function() {
     console.log('🔄 handleAddProduct called');
     console.log('Current Tier:', currentTier);
@@ -1359,12 +1354,10 @@ window.handleAddProduct = async function() {
     
     const ed = document.getElementById('submitProductBtn').getAttribute('data-editing');
     
-    // Get the correct product limit based on current tier
     const max = getCurrentLimit();
     const activeProducts = sellerProducts.filter(p => !p.paused);
     const activeCount = activeProducts.length;
     
-    // Check if user is at or above their tier limit
     if (!ed && activeCount >= max) {
         const tierName = tierMap[currentTier]?.name || 'Free';
         showToast(`Product limit reached! You have ${activeCount} active products out of ${max} allowed for your ${tierName}.`, true);
@@ -1372,7 +1365,6 @@ window.handleAddProduct = async function() {
         return;
     }
     
-    // Validate form fields
     const t = document.getElementById('prodTitle').value.trim();
     const pr = parseFloat(document.getElementById('prodPrice').value);
     const st = parseInt(document.getElementById('prodStock').value);
@@ -1390,7 +1382,6 @@ window.handleAddProduct = async function() {
     btn.textContent = 'Processing...';
     
     try {
-        // Upload image if new file selected
         if (selectedImageFile) {
             try {
                 img = await uploadImageToImgBB(selectedImageFile);
@@ -1409,7 +1400,6 @@ window.handleAddProduct = async function() {
             return;
         }
         
-        // Check again for pause condition (after upload)
         const isPaused = (!ed && activeCount >= max);
         const pd = { title: t, description: desc, price: pr, category: cat, stock: st, image_url: img, paused: isPaused };
         
@@ -1530,20 +1520,16 @@ function initializeDashboardData() {
 }
 
 // ==================== FORCE FIX: Add Product Button ====================
-// This ensures the Add Product button works regardless of HTML structure
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🔧 Running force fix for Add Product button...');
     
-    // Find the Add Product button
     let addBtn = document.getElementById('submitProductBtn');
     
     if (addBtn) {
-        // Remove all existing click listeners by cloning
         const newBtn = addBtn.cloneNode(true);
         addBtn.parentNode.replaceChild(newBtn, addBtn);
         addBtn = newBtn;
         
-        // Attach the click handler
         addBtn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
@@ -1562,7 +1548,6 @@ document.addEventListener('DOMContentLoaded', function() {
         console.warn('⚠️ Add Product button not found in DOM');
     }
     
-    // Fix Toggle Form button
     const toggleBtn = document.getElementById('toggleFormBtn');
     if (toggleBtn) {
         const newBtn = toggleBtn.cloneNode(true);
@@ -1576,7 +1561,6 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('✅ Force fix: Toggle Form button attached');
     }
     
-    // Fix Cancel button
     const cancelBtn = document.getElementById('cancelProductBtn');
     if (cancelBtn) {
         const newBtn = cancelBtn.cloneNode(true);
@@ -1591,7 +1575,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Ensure all functions are globally available
 window.handleAddProduct = handleAddProduct;
 window.toggleProductForm = toggleProductForm;
 window.editProduct = editProduct;
@@ -1606,7 +1589,6 @@ window.closeModalAndPay = closeModalAndPay;
 
 console.log('✅ All dashboard functions exposed globally');
 
-// ==================== TEST FUNCTION ====================
 window.testAddProduct = function() {
     console.log('🧪 Testing Add Product...');
     if (typeof window.handleAddProduct === 'function') {
@@ -1623,19 +1605,15 @@ async function init() {
     if (!await checkAuth()) return;
     console.log('Dashboard initializing...');
     try {
-        // Check payment return
         checkLocalStoragePaymentStatus();
-        // Fetch subscription (retries internally)
         const sub = await fetchSubscription(1);
         currentTier = sub || localStorage.getItem(`mbare_tier_${currentSellerId}`) || 'free';
         localStorage.setItem(`mbare_tier_${currentSellerId}`, currentTier);
         console.log('Current tier after init:', currentTier);
-        // Load products
         await loadProductsFromSupabase(1);
         if (!sellerProducts.length) {
             sellerProducts = JSON.parse(localStorage.getItem(`mbare_products_${currentSellerId}`) || '[]');
         }
-        // Render everything
         renderTiers();
         updateExpiryBanner();
         updateSubscriptionControls();
@@ -1648,7 +1626,6 @@ async function init() {
         console.log('Dashboard fully initialized.');
     } catch (e) {
         console.error('Init error:', e);
-        // Only redirect if session is missing
         if (!localStorage.getItem('supabase_session')) {
             window.location.href = 'login.html';
         }
