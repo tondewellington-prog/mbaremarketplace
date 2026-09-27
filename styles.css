@@ -4549,3 +4549,69 @@ canvas {
     font-size: 20px;
     color: var(--bubble-accent);
 }
+
+/* ============================================
+   WHATSAPP SHARE BUTTONS
+   ============================================ */
+
+.btn-whatsapp-share-lg {
+    padding: 14px 30px;
+    background: linear-gradient(135deg, #25D366, #128C7E);
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    transition: var(--bubble-transition);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 160px;
+    font-family: inherit;
+}
+
+.btn-whatsapp-share-lg:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 24px rgba(37, 211, 102, 0.4);
+}
+
+.btn-whatsapp-share {
+    padding: 10px;
+    background: linear-gradient(135deg, #25D366, #128C7E);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--bubble-transition);
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-family: inherit;
+    width: 100%;
+}
+
+.btn-whatsapp-share svg { width: 14px; height: 14px; flex-shrink: 0; }
+.btn-whatsapp-share:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 20px rgba(37, 211, 102, 0.35);
+}
+
+@media (max-width: 480px) {
+    .btn-whatsapp-share-lg {
+        padding: 12px 20px;
+        font-size: 14px;
+        width: 100%;
+        min-width: auto;
+    }
+    .btn-whatsapp-share {
+        padding: 6px 4px;
+        font-size: 10px;
+        border-radius: 6px;
+    }
+}
