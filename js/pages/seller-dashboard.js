@@ -61,6 +61,64 @@ function showToast(message, isError = false) {
     setTimeout(() => toast.remove(), 5000);
 }
 
+// ==================== IMAGE COMPRESSION ====================
+// Resize and compress images before upload. This fixes:
+//   - Slow product pages (2.9MB images become ~150-250KB)
+//   - WhatsApp share previews (WhatsApp drops images over ~600KB)
+async function compressImage(file, maxWidth = 1200, quality = 0.8) {
+    if (!file || !file.type.match('image.*')) return file;
+
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+
+        img.onload = () => {
+            URL.revokeObjectURL(url);
+
+            // Scale down if wider than maxWidth
+            let width = img.naturalWidth;
+            let height = img.naturalHeight;
+            if (width > maxWidth) {
+                height = Math.round((height * maxWidth) / width);
+                width = maxWidth;
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            canvas.toBlob(
+                (blob) => {
+                    if (!blob) {
+                        reject(new Error('Compression failed'));
+                        return;
+                    }
+                    const compressedFile = new File(
+                        [blob],
+                        file.name.replace(/\.[^.]+$/, '.jpg'),
+                        { type: 'image/jpeg', lastModified: Date.now() }
+                    );
+                    const before = (file.size / 1024).toFixed(0);
+                    const after = (blob.size / 1024).toFixed(0);
+                    console.log('🗜️ Compressed image: ' + before + 'KB → ' + after + 'KB');
+                    resolve(compressedFile);
+                },
+                'image/jpeg',
+                quality
+            );
+        };
+
+        img.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error('Failed to load image for compression'));
+        };
+
+        img.src = url;
+    });
+}
+
 // ==================== REFRESH SESSION ====================
 async function refreshSession() {
     if (isRefreshing) {
@@ -510,10 +568,12 @@ async function handleProfileImage(event) {
         document.getElementById('profileStatus').textContent = 'Uploading...';
     };
     reader.readAsDataURL(file);
-    const formData = new FormData();
-    formData.append('image', file);
-    formData.append('key', IMGBB_API_KEY);
     try {
+        // Compress before uploading (profile avatars don't need to be huge)
+        const compressed = await compressImage(file, 600, 0.85);
+        const formData = new FormData();
+        formData.append('image', compressed);
+        formData.append('key', IMGBB_API_KEY);
         const response = await fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: formData });
         const data = await response.json();
         if (data.success) {
@@ -552,10 +612,12 @@ async function handleCoverImage(event) {
         document.getElementById('coverStatus').textContent = 'Uploading...';
     };
     reader.readAsDataURL(file);
-    const formData = new FormData();
-    formData.append('image', file);
-    formData.append('key', IMGBB_API_KEY);
     try {
+        // Compress cover (shop banner — max width 1600 for crispness on wide screens)
+        const compressed = await compressImage(file, 1600, 0.82);
+        const formData = new FormData();
+        formData.append('image', compressed);
+        formData.append('key', IMGBB_API_KEY);
         const response = await fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: formData });
         const data = await response.json();
         if (data.success) {
@@ -1028,10 +1090,23 @@ async function updateProductPausedStatus(productId, paused) {
 
 async function uploadImageToImgBB(file) {
     const bar = document.getElementById('uploadProgressBar'), fill = document.getElementById('uploadProgressFill');
-    bar.style.display = 'block'; fill.style.width = '30%';
-    const fd = new FormData(); fd.append('image', file); fd.append('key', IMGBB_API_KEY);
+    bar.style.display = 'block'; fill.style.width = '20%';
+
+    // Compress before upload — fixes slow pages and WhatsApp previews
+    let fileToUpload = file;
+    try {
+        fileToUpload = await compressImage(file, 1200, 0.8);
+    } catch (err) {
+        console.warn('Compression failed, uploading original:', err);
+        fileToUpload = file;
+    }
+    fill.style.width = '50%';
+
+    const fd = new FormData();
+    fd.append('image', fileToUpload);
+    fd.append('key', IMGBB_API_KEY);
     const resp = await fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: fd });
-    fill.style.width = '80%';
+    fill.style.width = '85%';
     const data = await resp.json();
     if (data.success) { fill.style.width = '100%'; setTimeout(() => bar.style.display = 'none', 1000); return data.data.url; }
     throw new Error(data.error?.message || 'Upload failed');
