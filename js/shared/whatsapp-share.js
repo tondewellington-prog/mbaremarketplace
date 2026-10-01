@@ -111,15 +111,38 @@
     /**
      * Extract product info from a card. Tries data-* attributes first,
      * then falls back to reading DOM elements.
+     *
+     * Supports the following onclick patterns on the card OR any child:
+     *   goToProduct('33')
+     *   checkLoginAndNavigate('33')
+     *   viewProduct('33')
+     *   addToBasket('33')
+     *   showSellerContact('33')
+     *   goToProductDetail('33')
+     *   viewProductDetail('33')
+     *
+     * Also falls back to scanning for "rating-33" style IDs, and any
+     * <a href="product-detail.html?id=33"> links.
      */
     function extractProductFromCard(card) {
-        // Product ID — try several sources
+        // ---- Product ID ----
         let id = card.dataset.productId;
+
+        // Look for onclick handlers on the card OR any child element
         if (!id) {
-            const onclick = card.getAttribute("onclick") || "";
-            const m = onclick.match(/goToProduct\(['"]?([^'")\s]+)['"]?\)/);
-            if (m) id = m[1];
+            const candidates = [card, ...card.querySelectorAll("[onclick]")];
+            const onclickPattern = /(?:goToProduct|checkLoginAndNavigate|viewProduct|viewProductDetail|goToProductDetail|addToBasket|showSellerContact|shareProductToWhatsApp)\(['"]?([^'")\s,]+)['"]?\)/;
+            for (const el of candidates) {
+                const onclick = el.getAttribute("onclick") || "";
+                const m = onclick.match(onclickPattern);
+                if (m && m[1]) {
+                    id = m[1];
+                    break;
+                }
+            }
         }
+
+        // Fallback 1: <a href="product-detail.html?id=33">
         if (!id) {
             const link = card.querySelector('a[href*="product-detail.html"]');
             if (link) {
@@ -129,19 +152,29 @@
                 } catch (e) {}
             }
         }
+
+        // Fallback 2: look for elements with id="rating-33" or similar patterns
         if (!id) {
-            const el = card.querySelector("[data-product-id], [data-id]");
-            if (el) id = el.getAttribute("data-product-id") || el.getAttribute("data-id");
+            const match = (card.innerHTML || "").match(/(?:rating|product)-(\d+)/i);
+            if (match) id = match[1];
         }
 
-        // Title
+        // Fallback 3: any element with data-product-id / data-id
+        if (!id) {
+            const el = card.querySelector("[data-product-id], [data-id]");
+            if (el) {
+                id = el.getAttribute("data-product-id") || el.getAttribute("data-id");
+            }
+        }
+
+        // ---- Title ----
         let title = card.dataset.productTitle;
         if (!title) {
             const el = card.querySelector(".product-title, .title, h3, h4, .card-title");
             title = el ? el.textContent.trim() : "Product";
         }
 
-        // Price
+        // ---- Price ----
         let price = null;
         if (card.dataset.productPrice) {
             const v = parseFloat(card.dataset.productPrice);
@@ -156,7 +189,7 @@
             }
         }
 
-        // Image (not used in the message text, but WhatsApp reads it from the OG tags via the share endpoint)
+        // ---- Image (informational only; WhatsApp gets it from the OG tags) ----
         let image = card.dataset.productImage;
         if (!image) {
             const img = card.querySelector("img");
@@ -184,14 +217,22 @@
 
     function injectButton(card) {
         if (card.getAttribute(PROCESSED_ATTR)) return;
-        card.setAttribute(PROCESSED_ATTR, "1");
 
         // If the card already has a share button (e.g. shop.js adds one), skip.
-        if (alreadyHasShareButton(card)) return;
+        if (alreadyHasShareButton(card)) {
+            card.setAttribute(PROCESSED_ATTR, "1");
+            return;
+        }
 
         // Don't inject if we can't determine the product ID
         const product = extractProductFromCard(card);
-        if (!product.id) return;
+        if (!product.id) {
+            // Don't mark as processed — MutationObserver may retry when
+            // the card is fully populated.
+            return;
+        }
+
+        card.setAttribute(PROCESSED_ATTR, "1");
 
         // Where to inject: prefer a product-actions area, else .info / .product-info, else the card
         const target =
@@ -212,10 +253,8 @@
             '</svg>' +
             '<span class="share-label">Share</span>';
 
-        // Manual stopPropagation so we don't trigger the card's own onclick
-        const stop = (e) => {
-            if (e && e.stopPropagation) e.stopPropagation();
-        };
+        // Stop propagation so tapping Share doesn't trigger the card's own onclick
+        const stop = (e) => { if (e && e.stopPropagation) e.stopPropagation(); };
         btn.addEventListener("mousedown", stop);
         btn.addEventListener("touchstart", stop, { passive: true });
 
