@@ -14,6 +14,9 @@ let ratingsCache = {};
 // Website URL constant
 const WEBSITE_URL = 'https://www.mbaremarketplace.com';
 
+// WhatsApp share endpoint (Supabase Edge Function)
+const SHARE_ENDPOINT = 'https://fnncerdxfhwlrdopswpx.supabase.co/functions/v1/product-share';
+
 // ============================================
 // CATEGORY MAPPINGS
 // ============================================
@@ -890,8 +893,17 @@ window.chooseWhatsApp = function() {
         } catch(e) {}
     }
     
-    const websiteUrl = 'https://www.mbaremarketplace.com';
-    const message = 'Hello! I am interested in ' + productData.title + ', I saw it on ' + websiteUrl + buyerInfo;
+    // Share URL — WhatsApp will fetch this and render the product
+    // preview (photo + title + price) using the OG tags served by the
+    // Supabase Edge Function.
+    const shareUrl = SHARE_ENDPOINT + '?id=' + encodeURIComponent(productData.id);
+    
+    const message = 'Hello! I am interested in this product on Mbare Marketplace.\n\n'
+        + '*' + productData.title + '*\n'
+        + 'Price: $' + Number(productData.price || 0).toFixed(2) + '\n\n'
+        + shareUrl
+        + buyerInfo;
+    
     const encodedMessage = encodeURIComponent(message);
     const whatsappLink = 'https://wa.me/' + phone + '?text=' + encodedMessage;
     
@@ -1166,7 +1178,13 @@ function displayProductDetail(product, ratingInfo) {
     const whatsappNumber = seller.business_phone || '';
     const shopLocation = seller.business_address || 'Location not specified';
     const ratingDisplay = ratingInfo ? ratingInfo.display : '<span style="color: #999;">No ratings yet</span>';
-    const whatsappMessage = 'Hello! I am interested in ' + product.title + ', I saw it on ' + WEBSITE_URL;
+    
+    // Share URL — WhatsApp will render the product preview (photo + title + price).
+    const shareUrl = SHARE_ENDPOINT + '?id=' + encodeURIComponent(product.id);
+    const whatsappMessage = 'Hello! I am interested in this product on Mbare Marketplace.\n\n'
+        + '*' + product.title + '*\n'
+        + 'Price: $' + Number(product.price || 0).toFixed(2) + '\n\n'
+        + shareUrl;
     const encodedMessage = encodeURIComponent(whatsappMessage);
     const formattedWhatsappNumber = whatsappNumber ? whatsappNumber.replace(/[^0-9]/g, '') : '';
     const whatsappLink = formattedWhatsappNumber ? 'https://wa.me/' + formattedWhatsappNumber + '?text=' + encodedMessage : '#';
