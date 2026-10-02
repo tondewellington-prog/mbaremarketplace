@@ -1,5 +1,16 @@
 (function () {
   const WEBSITE_URL = 'https://www.mbaremarketplace.com';
+  const SHARE_ENDPOINT = 'https://fnncerdxfhwlrdopswpx.supabase.co/functions/v1/product-share';
+
+  // Auto-load the WhatsApp share script on every category page.
+  // Injects a Share button into each .product-card.
+  (function loadWhatsAppShare() {
+      if (document.querySelector('script[src*="whatsapp-share.js"]')) return;
+      var s = document.createElement('script');
+      s.src = '/js/shared/whatsapp-share.js';
+      s.defer = true;
+      document.head.appendChild(s);
+  })();
 
   function checkLogin() {
     if (localStorage.getItem('isLoggedIn') !== 'true') {
@@ -222,7 +233,16 @@
 
       const phone = seller.business_phone || 'Not provided';
       const phoneDigits = phone.replace(/\D/g, '');
-      const whatsappMessage = `Hello! I am interested in ${product.title}, I saw it on ${WEBSITE_URL}`;
+
+      // Share URL — WhatsApp fetches this and renders the product
+      // preview card (photo + title + price) in the chat.
+      const shareUrl = `${SHARE_ENDPOINT}?id=${encodeURIComponent(product.id)}`;
+      const whatsappMessage =
+        'Hello! I am interested in this product on Mbare Marketplace.\n\n' +
+        `*${product.title}*\n` +
+        `Price: $${Number(product.price || 0).toFixed(2)}\n\n` +
+        shareUrl;
+
       const encodedMessage = encodeURIComponent(whatsappMessage);
       const whatsappLink = phoneDigits ? `https://wa.me/${phoneDigits}?text=${encodedMessage}` : '#';
       const callLink = phoneDigits ? `tel:${phoneDigits}` : '#';
