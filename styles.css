@@ -4615,3 +4615,186 @@ canvas {
         border-radius: 6px;
     }
 }
+
+/* ============================================
+   PRODUCT DETAIL — GALLERY THUMBNAILS
+   ============================================ */
+
+.product-thumbnails {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+}
+
+.product-thumbnails::-webkit-scrollbar { height: 4px; }
+.product-thumbnails::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 10px; }
+.product-thumbnails::-webkit-scrollbar-thumb { background: var(--bubble-accent); border-radius: 10px; }
+
+.product-thumbnail {
+    width: 84px;
+    height: 84px;
+    object-fit: cover;
+    border-radius: 10px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: var(--bubble-transition);
+    flex-shrink: 0;
+    background: rgba(255,255,255,0.03);
+}
+
+.product-thumbnail:hover {
+    border-color: rgba(179,136,255,0.4);
+    transform: scale(1.03);
+}
+
+.product-thumbnail.active {
+    border-color: var(--bubble-accent);
+    box-shadow: 0 0 16px var(--bubble-glow);
+}
+
+.product-main-image {
+    cursor: zoom-in;
+}
+
+@media (max-width: 480px) {
+    .product-thumbnail {
+        width: 64px;
+        height: 64px;
+        border-radius: 8px;
+    }
+    .product-thumbnails {
+        gap: 8px;
+        padding-bottom: 4px;
+    }
+}
+
+/* ============================================
+   FULL-PAGE LIGHTBOX
+   ============================================ */
+
+.image-lightbox-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.94);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50000;
+    padding: 20px;
+    animation: lightboxFadeIn 0.25s ease;
+}
+
+@keyframes lightboxFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.lightbox-image {
+    max-width: 96%;
+    max-height: 92%;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 20px 80px rgba(0, 0, 0, 0.8);
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+.lightbox-close {
+    position: absolute;
+    top: 18px;
+    right: 22px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--bubble-transition);
+    z-index: 50001;
+}
+
+.lightbox-close:hover {
+    background: rgba(255, 255, 255, 0.22);
+    transform: scale(1.05);
+}
+
+.lightbox-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--bubble-transition);
+    z-index: 50001;
+}
+
+.lightbox-nav:hover {
+    background: rgba(255, 255, 255, 0.22);
+    transform: translateY(-50%) scale(1.08);
+}
+
+.lightbox-prev { left: 18px; }
+.lightbox-next { right: 18px; }
+
+.lightbox-counter {
+    position: absolute;
+    bottom: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #fff;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 8px 18px;
+    border-radius: 40px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    z-index: 50001;
+}
+
+@media (max-width: 480px) {
+    .lightbox-close {
+        top: 12px;
+        right: 14px;
+        width: 38px;
+        height: 38px;
+        font-size: 22px;
+    }
+    .lightbox-nav {
+        width: 42px;
+        height: 42px;
+        font-size: 16px;
+    }
+    .lightbox-prev { left: 10px; }
+    .lightbox-next { right: 10px; }
+    .lightbox-counter {
+        bottom: 16px;
+        padding: 6px 14px;
+        font-size: 12px;
+    }
+}
