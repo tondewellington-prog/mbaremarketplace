@@ -20,6 +20,10 @@ let currentTier = 'free', subscriptionStatus = 'inactive', subscriptionExpiry = 
 let sellerProducts = [], selectedImageFile = null, renewalCheckInterval = null;
 let isRefreshing = false;  // Prevent concurrent refresh calls
 
+// Multi-image upload state (NEW)
+let selectedImageFiles = [];   // [{ file, dataUrl, existingUrl }]
+const MAX_PRODUCT_IMAGES = 5;
+
 const tierMap = {
     free: { 
         name: 'Starter Plan', 
@@ -1061,6 +1065,7 @@ async function saveProductToSupabase(pd) {
             category: pd.category,
             stock: pd.stock,
             image_url: pd.image_url,
+            images: pd.images || [],
             paused: pd.paused || false,
             created_at: new Date().toISOString()
         })
@@ -1322,13 +1327,22 @@ function renderProducts() {
     const c = document.getElementById('productsList');
     if (!c) return;
     if (!sellerProducts.length) { c.innerHTML = '<p class="text-center" style="padding:40px;color:#666;">No products yet.</p>'; return; }
-    c.innerHTML = sellerProducts.map(p => `
+    c.innerHTML = sellerProducts.map(p => {
+        // Count how many images this product has
+        let imageCount = 0;
+        if (Array.isArray(p.images) && p.images.length > 0) imageCount = p.images.length;
+        else if (p.image_url) imageCount = 1;
+        const imageCountBadge = imageCount > 1
+            ? `<div style="font-size:11px;color:#666;margin-top:2px;">📷 ${imageCount} photos</div>`
+            : '';
+        return `
         <div class="product-card ${p.paused ? 'paused' : ''}">
             <img src="${p.image_url || 'https://placehold.co/400x300?text=No+Image'}" alt="${esc(p.title)}" onerror="this.src='https://placehold.co/400x300?text=No+Image'">
             <div class="product-info">
                 <h3>${esc(p.title)}</h3>
                 <div style="font-size:20px;font-weight:600;color:#B12704;">$${parseFloat(p.price || 0).toFixed(2)}</div>
                 <div>Stock: ${p.stock || 0} | ${p.category || 'N/A'}${p.paused ? ' | PAUSED' : ''}</div>
+                ${imageCountBadge}
                 ${!p.paused ? '<button class="whatsapp-btn" onclick="whatsappInquiry(\'' + esc(p.title) + '\')">WhatsApp Inquiry</button>' : '<div style="color:#dc3545;font-size:12px;">Paused - Limit Reached</div>'}
                 <div style="display:flex;gap:8px;margin-top:8px;">
                     <button class="btn-secondary" style="flex:1;" onclick="editProduct('${p.id}')">Edit</button>
@@ -1336,7 +1350,8 @@ function renderProducts() {
                 </div>
             </div>
         </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 window.whatsappInquiry = function(t) { window.open('https://wa.me/?text=' + encodeURIComponent('Hello, interested in "' + t + '" on Mbare Marketplace.'), '_blank'); };
@@ -1360,7 +1375,18 @@ window.editProduct = function(id) {
     document.getElementById('prodCategory').value = p.category || '';
     document.getElementById('prodStock').value = p.stock || '';
     document.getElementById('prodImage').value = p.image_url || '';
-    if (p.image_url) { document.getElementById('imagePreview').src = p.image_url; document.getElementById('imagePreviewContainer').style.display = 'block'; document.getElementById('uploadPlaceholder').style.display = 'none'; }
+
+    // Pre-load existing images into the multi-image grid.
+    // Each entry has an existingUrl (already uploaded), so we don't re-upload on save.
+    selectedImageFiles = [];
+    const existingList = Array.isArray(p.images) && p.images.length > 0
+        ? p.images.slice()
+        : (p.image_url ? [p.image_url] : []);
+    existingList.forEach((url, i) => {
+        selectedImageFiles.push({ existingUrl: url, dataUrl: url, file: null, index: i });
+    });
+    renderMultiImageGrid();
+
     sellerProducts = sellerProducts.filter(x => x.id != id);
     saveProductsLocal();
     renderProducts();
@@ -1387,30 +1413,132 @@ window.toggleProductForm = function() {
 };
 
 window.removeImage = function() {
+    // Clear all multi-image state
+    selectedImageFiles = [];
     selectedImageFile = null;
-    document.getElementById('imagePreview').src = '';
-    document.getElementById('imagePreviewContainer').style.display = 'none';
-    document.getElementById('uploadPlaceholder').style.display = 'block';
+    renderMultiImageGrid();
     document.getElementById('prodImage').value = '';
-    document.getElementById('imageFileInput').value = '';
+    const fileInput = document.getElementById('imageFileInput');
+    if (fileInput) fileInput.value = '';
     document.getElementById('uploadProgressBar').style.display = 'none';
+    document.getElementById('imageStatus').textContent = 'You can upload up to 5 images. The first is the main product image.';
+    const placeholder = document.getElementById('uploadPlaceholder');
+    if (placeholder) placeholder.style.display = 'block';
 };
 
-window.handleFileSelect = function(e) { if (e.target.files[0]) handleImageFile(e.target.files[0]); };
+// ==================== MULTI-IMAGE UI (NEW) ====================
 
+/**
+ * Renders the current selectedImageFiles array as a grid of thumbnails
+ * with an X button on each. The first image is tagged "MAIN".
+ */
+function renderMultiImageGrid() {
+    const grid = document.getElementById('multiImageGrid');
+    const placeholder = document.getElementById('uploadPlaceholder');
+    if (!grid) return;
+
+    if (!selectedImageFiles.length) {
+        grid.innerHTML = '';
+        if (placeholder) placeholder.style.display = 'block';
+        return;
+    }
+
+    if (placeholder) placeholder.style.display = 'none';
+
+    grid.innerHTML = selectedImageFiles.map((item, i) => {
+        const src = item.dataUrl || item.existingUrl || '';
+        const primaryTag = i === 0 ? '<span class="primary-tag">MAIN</span>' : '';
+        return `
+            <div class="multi-image-item">
+                <img src="${src}" alt="Image ${i + 1}" onerror="this.style.opacity='0.3'">
+                ${primaryTag}
+                <span class="img-index">${i + 1}</span>
+                <button type="button" class="remove-btn" onclick="removeMultiImage(${i})" title="Remove">×</button>
+            </div>
+        `;
+    }).join('');
+}
+
+/**
+ * Remove one image from the selected list by index.
+ */
+window.removeMultiImage = function(index) {
+    if (index < 0 || index >= selectedImageFiles.length) return;
+    selectedImageFiles.splice(index, 1);
+    // Re-index remaining entries (just for tidiness)
+    selectedImageFiles.forEach((item, i) => { item.index = i; });
+    renderMultiImageGrid();
+    updateImageStatusText();
+};
+
+/**
+ * Update the small helper text below the grid.
+ */
+function updateImageStatusText() {
+    const status = document.getElementById('imageStatus');
+    if (!status) return;
+    const n = selectedImageFiles.length;
+    if (n === 0) {
+        status.textContent = 'You can upload up to 5 images. The first is the main product image.';
+    } else if (n === 1) {
+        status.textContent = '1 image ready. Add more to show different angles.';
+    } else {
+        status.textContent = n + ' images ready. The first is the main product image.';
+    }
+}
+
+/**
+ * Collect image files from the file picker (multiple selection).
+ * Replaces/adds to selectedImageFiles, capped at MAX_PRODUCT_IMAGES.
+ */
+function addImageFiles(files) {
+    if (!files || !files.length) return;
+    const remaining = MAX_PRODUCT_IMAGES - selectedImageFiles.length;
+    if (remaining <= 0) {
+        showToast('Maximum ' + MAX_PRODUCT_IMAGES + ' images allowed per product.', true);
+        return;
+    }
+
+    const toAdd = Array.from(files).slice(0, remaining);
+
+    toAdd.forEach((file) => {
+        if (!file.type.match('image.*')) {
+            showToast('Skipped "' + file.name + '" — not an image.', true);
+            return;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+            showToast('Skipped "' + file.name + '" — over 10MB.', true);
+            return;
+        }
+        const dataUrl = URL.createObjectURL(file);
+        selectedImageFiles.push({
+            file: file,
+            dataUrl: dataUrl,
+            existingUrl: null,
+            index: selectedImageFiles.length
+        });
+    });
+
+    if (Array.from(files).length > remaining) {
+        showToast('Only ' + MAX_PRODUCT_IMAGES + ' images allowed. Extra files were skipped.', true);
+    }
+
+    renderMultiImageGrid();
+    updateImageStatusText();
+}
+
+window.handleFileSelect = function(e) {
+    if (e.target.files && e.target.files.length > 0) {
+        addImageFiles(e.target.files);
+        // Reset the input so selecting the same file again still triggers onChange
+        e.target.value = '';
+    }
+};
+
+// Legacy single-file handler (kept for compatibility with openCamera fallback)
 function handleImageFile(file) {
-    if (!file.type.match('image.*')) return alert('Please select an image file');
-    if (file.size > 10 * 1024 * 1024) return alert('Image must be under 10MB');
-    selectedImageFile = file;
-    const r = new FileReader();
-    r.onload = function(e) {
-        document.getElementById('imagePreview').src = e.target.result;
-        document.getElementById('imagePreviewContainer').style.display = 'block';
-        document.getElementById('uploadPlaceholder').style.display = 'none';
-        document.getElementById('imageStatus').textContent = 'Image ready.';
-    };
-    r.readAsDataURL(file);
-    document.getElementById('prodImage').value = '';
+    if (!file) return;
+    addImageFiles([file]);
 }
 
 window.openCamera = function() {
@@ -1445,10 +1573,14 @@ window.handleAddProduct = async function() {
     const st = parseInt(document.getElementById('prodStock').value);
     const cat = document.getElementById('prodCategory').value;
     const desc = document.getElementById('prodDescription').value.trim();
-    let img = document.getElementById('prodImage').value.trim();
     
     if (!t || isNaN(pr) || isNaN(st) || !cat) {
         showToast('Please fill all required fields', true);
+        return;
+    }
+    
+    if (selectedImageFiles.length === 0) {
+        showToast('Please upload at least one product image', true);
         return;
     }
     
@@ -1457,26 +1589,47 @@ window.handleAddProduct = async function() {
     btn.textContent = 'Processing...';
     
     try {
-        if (selectedImageFile) {
-            try {
-                img = await uploadImageToImgBB(selectedImageFile);
-            } catch (e) {
-                showToast('Image upload failed: ' + e.message, true);
-                btn.disabled = false;
-                btn.innerText = ed ? 'Update' : 'Add Product';
-                return;
+        // Upload any new files (entries with file != null).
+        // Existing URLs stay as-is.
+        const finalUrls = [];
+        for (let i = 0; i < selectedImageFiles.length; i++) {
+            const item = selectedImageFiles[i];
+            if (item.existingUrl) {
+                finalUrls.push(item.existingUrl);
+            } else if (item.file) {
+                try {
+                    const url = await uploadImageToImgBB(item.file);
+                    finalUrls.push(url);
+                } catch (e) {
+                    showToast('Image ' + (i + 1) + ' upload failed: ' + e.message, true);
+                    btn.disabled = false;
+                    btn.innerText = ed ? 'Update' : 'Add Product';
+                    return;
+                }
             }
         }
         
-        if (!img) {
-            showToast('Please upload a product image', true);
+        if (finalUrls.length === 0) {
+            showToast('Please upload at least one product image', true);
             btn.disabled = false;
             btn.innerText = ed ? 'Update' : 'Add Product';
             return;
         }
         
+        // First image is the main image (backward compatible with image_url)
+        const mainImage = finalUrls[0];
+        
         const isPaused = (!ed && activeCount >= max);
-        const pd = { title: t, description: desc, price: pr, category: cat, stock: st, image_url: img, paused: isPaused };
+        const pd = {
+            title: t,
+            description: desc,
+            price: pr,
+            category: cat,
+            stock: st,
+            image_url: mainImage,
+            images: finalUrls,
+            paused: isPaused
+        };
         
         const sv = await saveProductToSupabase(pd);
         const newProduct = { id: sv?.[0]?.id || Date.now().toString(), ...pd };
@@ -1495,7 +1648,6 @@ window.handleAddProduct = async function() {
         toggleProductForm();
         document.getElementById('productForm').reset();
         removeImage();
-        selectedImageFile = null;
         btn.disabled = false;
         btn.innerText = 'Add Product';
         btn.removeAttribute('data-editing');
@@ -1513,7 +1665,11 @@ window.handleAddProduct = async function() {
     if (!a) return;
     a.addEventListener('dragover', e => { e.preventDefault(); a.classList.add('dragover'); });
     a.addEventListener('dragleave', () => a.classList.remove('dragover'));
-    a.addEventListener('drop', e => { e.preventDefault(); a.classList.remove('dragover'); if (e.dataTransfer.files.length > 0) handleImageFile(e.dataTransfer.files[0]); });
+    a.addEventListener('drop', e => {
+        e.preventDefault();
+        a.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) addImageFiles(e.dataTransfer.files);
+    });
 })();
 
 // Analytics button with subscription check
