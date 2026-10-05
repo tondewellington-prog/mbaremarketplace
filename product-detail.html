@@ -272,6 +272,7 @@
                             <div class="seller-info-card">
                                 <h3>About the Seller</h3>
                                 <div class="seller-name">${escapeHtml(sellerName)}</div>
+                                <a href="shop.html?seller=${product.seller_id}" class="visit-shop-link" style="color:#f90;text-decoration:underline;font-size:13px;display:inline-block;margin:4px 0 8px 0;">Visit Shop</a>
                                 <div class="seller-location">&#128205; ${escapeHtml(sellerLocation)}</div>
                                 ${sellerPhone ? '<div class="seller-location">&#128222; ' + escapeHtml(sellerPhone) + '</div>' : ''}
                                 <div class="seller-rating">
