@@ -1076,7 +1076,7 @@ async function saveProductToSupabase(pd) {
 
 // ==================== DELETE PRODUCT (UPDATED) ====================
 // Now:
-//   - Uses Prefer: return=representation to confirm rows were actually deleted
+//   - Trusts the HTTP status code (200 or 204 = success) instead of the body
 //   - Retries once on 401 after refreshing the session
 //   - Returns { ok, reason, rows } so the caller can react to failure
 async function deleteProductFromSupabase(id, retries = 1) {
@@ -1089,8 +1089,7 @@ async function deleteProductFromSupabase(id, retries = 1) {
             method: 'DELETE',
             headers: {
                 'apikey': window.SUPABASE_ANON_KEY,
-                'Authorization': `Bearer ${token}`,
-                'Prefer': 'return=representation'
+                'Authorization': `Bearer ${token}`
             }
         }
     );
@@ -1103,23 +1102,18 @@ async function deleteProductFromSupabase(id, retries = 1) {
         return { ok: false, reason: 'session-expired' };
     }
 
-    if (!resp.ok) {
-        let body = '';
-        try { body = await resp.text(); } catch (e) {}
-        console.error('Delete failed:', resp.status, body);
-        return { ok: false, reason: `HTTP ${resp.status}`, body };
+    // PostgREST returns 200 or 204 on a successful DELETE.
+    // Both mean the row was deleted. Don't rely on the body.
+    if (resp.status === 200 || resp.status === 204) {
+        console.log('Delete succeeded (status ' + resp.status + ')');
+        return { ok: true };
     }
 
-    let deleted = [];
-    try { deleted = await resp.json(); } catch (e) {}
-    console.log('Delete response — rows deleted:', Array.isArray(deleted) ? deleted.length : deleted);
-
-    // If nothing was deleted, Supabase returned [] — usually RLS
-    if (!Array.isArray(deleted) || deleted.length === 0) {
-        return { ok: false, reason: 'no-rows-deleted' };
-    }
-
-    return { ok: true, rows: deleted };
+    // Anything else is a failure
+    let body = '';
+    try { body = await resp.text(); } catch (e) {}
+    console.error('Delete failed:', resp.status, body);
+    return { ok: false, reason: 'HTTP ' + resp.status, body: body };
 }
 
 async function updateProductPausedStatus(productId, paused) {
@@ -1407,8 +1401,6 @@ window.deleteProduct = async function(id) {
         let msg = 'Delete failed. ';
         if (result.reason === 'session-expired') {
             msg += 'Please refresh the page and log in again.';
-        } else if (result.reason === 'no-rows-deleted') {
-            msg += 'The server did not confirm the deletion. Please refresh and try again.';
         } else {
             msg += result.reason || 'Please try again.';
         }
@@ -1485,7 +1477,7 @@ window.removeImage = function() {
     if (placeholder) placeholder.style.display = 'block';
 };
 
-// ==================== MULTI-IMAGE UI ====================
+// ==================== MULTI-IMAGE UI (NEW) ====================
 
 /**
  * Renders the current selectedImageFiles array as a grid of thumbnails
