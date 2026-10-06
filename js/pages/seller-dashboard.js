@@ -1074,13 +1074,52 @@ async function saveProductToSupabase(pd) {
     throw new Error((await r.json()).message || 'Save failed');
 }
 
-async function deleteProductFromSupabase(id) {
+// ==================== DELETE PRODUCT (UPDATED) ====================
+// Now:
+//   - Uses Prefer: return=representation to confirm rows were actually deleted
+//   - Retries once on 401 after refreshing the session
+//   - Returns { ok, reason, rows } so the caller can react to failure
+async function deleteProductFromSupabase(id, retries = 1) {
     const session = JSON.parse(localStorage.getItem('supabase_session'));
     const token = session?.access_token || currentAccessToken;
-    return (await fetch(`${window.SUPABASE_URL}/rest/v1/products?id=eq.${id}&seller_id=eq.${currentSellerId}`, {
-        method: 'DELETE',
-        headers: { 'apikey': window.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` }
-    })).ok;
+
+    const resp = await fetch(
+        `${window.SUPABASE_URL}/rest/v1/products?id=eq.${id}&seller_id=eq.${currentSellerId}`,
+        {
+            method: 'DELETE',
+            headers: {
+                'apikey': window.SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${token}`,
+                'Prefer': 'return=representation'
+            }
+        }
+    );
+
+    // 401 — try refreshing the session once, then retry
+    if (resp.status === 401 && retries > 0) {
+        console.log('Delete got 401, refreshing session...');
+        const refreshed = await refreshSession();
+        if (refreshed) return deleteProductFromSupabase(id, 0);
+        return { ok: false, reason: 'session-expired' };
+    }
+
+    if (!resp.ok) {
+        let body = '';
+        try { body = await resp.text(); } catch (e) {}
+        console.error('Delete failed:', resp.status, body);
+        return { ok: false, reason: `HTTP ${resp.status}`, body };
+    }
+
+    let deleted = [];
+    try { deleted = await resp.json(); } catch (e) {}
+    console.log('Delete response — rows deleted:', Array.isArray(deleted) ? deleted.length : deleted);
+
+    // If nothing was deleted, Supabase returned [] — usually RLS
+    if (!Array.isArray(deleted) || deleted.length === 0) {
+        return { ok: false, reason: 'no-rows-deleted' };
+    }
+
+    return { ok: true, rows: deleted };
 }
 
 async function updateProductPausedStatus(productId, paused) {
@@ -1356,14 +1395,34 @@ function renderProducts() {
 
 window.whatsappInquiry = function(t) { window.open('https://wa.me/?text=' + encodeURIComponent('Hello, interested in "' + t + '" on Mbare Marketplace.'), '_blank'); };
 
+// ==================== DELETE PRODUCT (UPDATED) ====================
+// Only removes the product from local state if the server confirms
+// the row was actually deleted. Shows a specific error otherwise.
 window.deleteProduct = async function(id) {
-    if (!confirm('Delete this product?')) return;
-    await deleteProductFromSupabase(id);
-    sellerProducts = sellerProducts.filter(p => p.id !== id);
+    if (!confirm('Delete this product? This cannot be undone.')) return;
+
+    const result = await deleteProductFromSupabase(id);
+
+    if (!result.ok) {
+        let msg = 'Delete failed. ';
+        if (result.reason === 'session-expired') {
+            msg += 'Please refresh the page and log in again.';
+        } else if (result.reason === 'no-rows-deleted') {
+            msg += 'The server did not confirm the deletion. Please refresh and try again.';
+        } else {
+            msg += result.reason || 'Please try again.';
+        }
+        showToast(msg, true);
+        return;
+    }
+
+    // Server confirmed the row was deleted — now update local state
+    sellerProducts = sellerProducts.filter(p => p.id != id);
     saveProductsLocal();
     renderProducts();
     updateStatsAndLimits();
     enforceProductLimit();
+    showToast('Product deleted.');
 };
 
 window.editProduct = function(id) {
@@ -1426,7 +1485,7 @@ window.removeImage = function() {
     if (placeholder) placeholder.style.display = 'block';
 };
 
-// ==================== MULTI-IMAGE UI (NEW) ====================
+// ==================== MULTI-IMAGE UI ====================
 
 /**
  * Renders the current selectedImageFiles array as a grid of thumbnails
